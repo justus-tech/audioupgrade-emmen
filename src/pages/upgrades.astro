@@ -13,6 +13,7 @@
 import Base from '../layouts/Base.astro';
 import PackageCard from '../components/PackageCard.astro';
 import PakketSchets from '../components/PakketSchets.astro';
+import AutoSchets from '../components/AutoSchets.astro';
 import { PACKAGES, SITE } from '../data/site.js';
 import { autoTabel } from '../data/autos.js';
 import { GARANTIE, CTA } from '../data/generiek.js';
@@ -46,11 +47,19 @@ import { MERKEN } from '../data/merken.js';
   <section class="alt" id="auto-blok" hidden>
     <div class="wrap">
       <figure class="auto-figuur">
+        {/* Straks kan hier een ingekochte studiofoto komen; tot die tijd
+            tekenen we de auto zelf, in de juiste carrosserie én kleur. */}
         <img id="auto-foto" class="auto-foto" alt="" hidden width="1600" height="900" />
-        <div id="auto-fallback" class="auto-fallback">
-          <span class="auto-fallback-merk" id="auto-fallback-merk"></span>
-          <span class="auto-fallback-model" id="auto-fallback-model"></span>
+
+        <div id="auto-tekening" class="auto-tekening">
+          {['hatchback', 'stationwagen', 'sedan', 'mpv', 'coupe', 'cabriolet', 'bus'].map((t) => (
+            <div class="auto-variant" data-type={t} hidden={t !== 'hatchback'}>
+              <AutoSchets type={t} />
+            </div>
+          ))}
+          <span class="auto-naam" id="auto-naam"></span>
         </div>
+
         <figcaption id="auto-bijschrift"></figcaption>
       </figure>
     </div>
@@ -114,6 +123,7 @@ import { MERKEN } from '../data/merken.js';
     netteNaam,
   } from '../lib/match.js';
   import { normaliseerType } from '../lib/carrosserie.js';
+  import { kleurVan } from '../lib/kleuren.js';
 
   const tabel = JSON.parse(document.getElementById('auto-tabel').textContent);
 
@@ -124,9 +134,8 @@ import { MERKEN } from '../data/merken.js';
   const sub = document.getElementById('upgrade-sub');
   const blok = document.getElementById('auto-blok');
   const foto = document.getElementById('auto-foto');
-  const fallback = document.getElementById('auto-fallback');
-  const fbMerk = document.getElementById('auto-fallback-merk');
-  const fbModel = document.getElementById('auto-fallback-model');
+  const tekening = document.getElementById('auto-tekening');
+  const autoNaam = document.getElementById('auto-naam');
   const bijschrift = document.getElementById('auto-bijschrift');
   const pakkettenKop = document.getElementById('pakketten-kop');
 
@@ -143,28 +152,36 @@ import { MERKEN } from '../data/merken.js';
     sub.textContent =
       'Alle prijzen zijn all-in: inclusief montage en btw, met behoud van je fabrieksgarantie.';
 
+    // De RDW registreert bij elk kenteken het carrosserietype én de kleur.
+    // Daarmee tekenen we de auto van de bezoeker: juiste vorm, juiste kleur.
+    const soort = normaliseerType(voertuig.inrichting);
+    const kleur = kleurVan(voertuig.eerste_kleur);
+
     if (auto && auto.foto) {
+      // Is er een ingekochte studiofoto voor dit model? Die wint.
       foto.src = auto.foto;
       foto.alt = naam;
       foto.hidden = false;
-      fallback.hidden = true;
+      tekening.hidden = true;
     } else {
-      // Geen foto? Dan een nette naamweergave in plaats van een leeg vlak.
       foto.hidden = true;
-      fallback.hidden = false;
-      fbMerk.textContent = auto ? auto.merk : voertuig.merk;
-      fbModel.textContent = auto ? auto.model : voertuig.handelsbenaming;
+      tekening.hidden = false;
+      tekening.style.setProperty('--auto-kleur', kleur.hex);
+      tekening.querySelectorAll('.auto-variant').forEach((v) => {
+        v.hidden = v.dataset.type !== soort;
+      });
+      autoNaam.textContent = naam;
     }
 
-    // De RDW registreert bij elk kenteken het carrosserietype. Daarmee tonen
-    // we de doorkijk die bij déze auto past: in een bus zit de subwoofer
-    // ergens anders dan in een hatchback.
-    const soort = normaliseerType(voertuig.inrichting);
+    // De doorkijk laat zien waar alles komt; ook die volgt het carrosserietype,
+    // want in een bus zit de subwoofer ergens anders dan in een hatchback.
     document.querySelectorAll('.schets-variant').forEach((v) => {
       v.hidden = v.dataset.type !== soort;
     });
 
-    bijschrift.textContent = `${naam} · kenteken ${voertuig.kenteken}`;
+    bijschrift.textContent = kleur.bijvoeglijk
+      ? `Jouw ${kleur.bijvoeglijk} ${naam} · kenteken ${voertuig.kenteken}`
+      : `${naam} · kenteken ${voertuig.kenteken}`;
     blok.hidden = false;
     melding.textContent = '';
     blok.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -190,7 +207,7 @@ import { MERKEN } from '../data/merken.js';
       const res = await fetch(
         'https://opendata.rdw.nl/resource/m9d7-ebf2.json?kenteken=' +
           encodeURIComponent(kenteken) +
-          '&$select=kenteken,merk,handelsbenaming,voertuigsoort,inrichting'
+          '&$select=kenteken,merk,handelsbenaming,voertuigsoort,inrichting,eerste_kleur'
       );
       if (!res.ok) throw new Error('rdw');
       const data = await res.json();
@@ -224,26 +241,22 @@ import { MERKEN } from '../data/merken.js';
   .auto-figuur { margin: 0; }
   .auto-foto { width: 100%; height: auto; border: 1px solid var(--line); }
 
-  /* Zolang er geen eigen werkfoto is, tonen we de naam groot in beeld.
-     Dat oogt bewust in plaats van als een ontbrekend plaatje. */
-  .auto-fallback {
+  /* De auto van de bezoeker: juiste carrosserie, juiste kleur uit de RDW.
+     De omtreklijn blijft licht, zodat ook een zwarte auto zichtbaar blijft
+     op onze donkere achtergrond. */
+  .auto-tekening {
     display: flex; flex-direction: column; justify-content: center; align-items: center;
-    aspect-ratio: 16 / 7;
     border: 1px solid var(--line-strong);
     background:
-      radial-gradient(ellipse at 50% 120%, color-mix(in srgb, var(--accent) 18%, transparent) 0%, transparent 62%),
+      radial-gradient(ellipse at 50% 118%, color-mix(in srgb, var(--accent) 16%, transparent) 0%, transparent 62%),
       var(--bg);
-    text-align: center;
-    padding: 24px;
+    padding: 28px 24px 22px;
   }
-  .auto-fallback-merk {
+  .auto-variant { width: 100%; max-width: 560px; }
+  .auto-naam {
     font-family: 'Oswald', sans-serif; text-transform: uppercase;
-    letter-spacing: .4em; font-size: .8rem; color: var(--accent); margin-bottom: .6em;
-  }
-  .auto-fallback-model {
-    font-family: 'Oswald', sans-serif; text-transform: uppercase;
-    letter-spacing: .12em; font-size: clamp(1.8rem, 6vw, 3.4rem); line-height: 1.1;
-    color: var(--text);
+    letter-spacing: .16em; font-size: clamp(1.1rem, 3.4vw, 1.7rem);
+    color: var(--text); margin-top: 6px; text-align: center;
   }
   .auto-figuur figcaption {
     margin-top: 12px; font-size: .82rem; color: var(--text-dim);

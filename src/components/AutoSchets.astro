@@ -31,7 +31,10 @@ const soort = normaliseerType(type);
   stroke-linecap="round"
   stroke-linejoin="round"
 >
-  <path d={carrosseriePad(soort)} />
+  {/* De vulling komt uit --auto-kleur. Die zet de kenteken-check op basis van
+      het veld `eerste_kleur` van de RDW, zodat de bezoeker zijn eigen auto in
+      zijn eigen kleur ziet. Niet gezet? Dan blijft het een lijntekening. */}
+  <path d={carrosseriePad(soort)} fill="var(--auto-kleur, none)" />
 
   {WIELEN.map((w) => (
     <>
