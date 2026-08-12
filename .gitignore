@@ -15,3 +15,6 @@ Thumbs.db
 # Lokale instellingen met eventuele sleutels
 .env
 .env.*
+
+# Screenshots ter controle (lokaal genereren met: node screenshot.mjs)
+shots/

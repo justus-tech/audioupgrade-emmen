@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import { SITE } from '../data/site.js';
 import { BRAND, cssVariables } from '../data/brand.js';
+import Logo from '../components/Logo.astro';
 
 const { title, description, path = '/' } = Astro.props;
 const canonical = new URL(path, Astro.site).href;
@@ -30,6 +31,11 @@ const nav = [
   <meta property="og:type" content="website" />
   <meta property="og:url" content={canonical} />
   <meta property="og:locale" content="nl_NL" />
+  <meta property="og:image" content={new URL('/og-image.png', Astro.site).href} />
+  <meta property="og:image:alt" content="Audio Upgrade Emmen" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="apple-touch-icon" href="/og-image.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -48,7 +54,10 @@ const nav = [
 <body>
   <header class="site">
     <div class="wrap">
-      <a class="logo" href="/">Audio Upgrade <span>Emmen</span></a>
+      <a class="logo" href="/" aria-label={`${SITE.name} — naar de homepage`}>
+        <Logo height={26} decoratief={true} />
+        <span class="logo-text">Audio Upgrade <span>Emmen</span></span>
+      </a>
       <nav class="main">
         {nav.map((item) => (
           <a href={item.href} aria-current={path === item.href ? 'page' : undefined}>{item.label}</a>
@@ -64,6 +73,7 @@ const nav = [
   <footer class="site">
     <div class="wrap">
       <div>
+        <Logo height={34} class="footer-logo" />
         <strong>{SITE.name}</strong><br />
         Uitsluitend op afspraak<br />
         <a href={`tel:${SITE.phone}`}>{SITE.phoneDisplay}</a><br />

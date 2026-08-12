@@ -18,9 +18,11 @@ const server = createServer(async (req, res) => {
     res.writeHead(404); res.end('not found');
   }
 });
-await new Promise((r) => server.listen(4321, r));
+// 4321 is van `npm run dev`, dus die laten we met rust.
+const PORT = 4322;
+await new Promise((r) => server.listen(PORT, r));
 
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 
 const shots = [
@@ -33,7 +35,7 @@ const shots = [
 ];
 
 for (const [path, name] of shots) {
-  await page.goto(`http://localhost:4321${path}`, { waitUntil: 'networkidle' });
+  await page.goto(`http://localhost:${PORT}${path}`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(400);
   await page.screenshot({ path: `shots/${name}.png`, fullPage: true });
   console.log('shot:', name);
@@ -41,7 +43,7 @@ for (const [path, name] of shots) {
 
 // mobiele weergave van de homepage
 await page.setViewportSize({ width: 390, height: 844 });
-await page.goto('http://localhost:4321/', { waitUntil: 'networkidle' });
+await page.goto(`http://localhost:${PORT}/`, { waitUntil: 'networkidle' });
 await page.screenshot({ path: 'shots/home-mobiel.png', fullPage: true });
 console.log('shot: home-mobiel');
 

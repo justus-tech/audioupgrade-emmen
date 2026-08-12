@@ -115,8 +115,18 @@ header.site .wrap {
   display: flex; align-items: center; justify-content: space-between;
   height: 72px;
 }
-.logo { font-family: 'Oswald'; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; text-decoration: none; font-size: 1rem; }
-.logo span { color: var(--accent); }
+.logo {
+  display: flex; align-items: center; gap: 14px;
+  font-family: 'Oswald'; font-weight: 600; letter-spacing: .2em;
+  text-transform: uppercase; text-decoration: none; font-size: 1rem;
+  color: var(--text);
+  transition: color .2s;
+}
+.logo:hover { color: var(--accent); }
+.logo-text span { color: var(--accent); }
+
+/* Het beeldmerk zit in de footer boven de bedrijfsnaam. */
+.footer-logo { margin-bottom: 14px; color: var(--text); }
 nav.main { display: flex; gap: 34px; }
 nav.main a {
   text-decoration: none; font-size: .8rem; color: var(--text-dim);
@@ -155,9 +165,13 @@ nav.main a[aria-current="page"] { color: var(--text); border-bottom-color: var(-
   transition: transform .2s, border-color .2s;
 }
 .card:hover { transform: translateY(-4px); border-color: var(--accent); }
-.card .price { font-family: 'Oswald'; font-size: 1.6rem; letter-spacing: .05em; color: var(--text); }
-.card .price small { font-size: .75rem; color: var(--text-dim); letter-spacing: .1em; }
-.card p { font-size: .95rem; flex: 1; }
+.card .price { font-family: 'Oswald'; font-size: 1.6rem; letter-spacing: .05em; color: var(--text); line-height: 1.2; }
+/* Eigen regel, anders breekt "incl. montage & btw" halverwege af. */
+.card .price small { display: block; font-size: .75rem; color: var(--text-dim); letter-spacing: .1em; margin-top: 4px; }
+.card p { font-size: .95rem; }
+/* Duwt de scorebalken naar onderen, zodat ze over alle kaarten op één lijn
+   staan ook als de ene titel over twee regels loopt en de andere niet. */
+.card .scores { margin-top: auto; padding-top: 6px; }
 .card .btn { align-self: flex-start; margin-top: 6px; }
 
 /* Kaarten op een .alt-sectie hebben dezelfde ondergrond als de sectie,
@@ -251,7 +265,35 @@ footer.site .legal { font-size: .78rem; }
   aspect-ratio: 16/9;
 }
 
+@media (max-width: 860px) {
+  /* Op smalle schermen alleen het beeldmerk: de volledige bedrijfsnaam brak
+     over drie regels en botste met het menu. De link houdt zijn aria-label,
+     dus schermlezers horen nog steeds "Audio Upgrade Emmen". */
+  .logo-text { display: none; }
+}
+
 @media (max-width: 700px) {
-  nav.main { gap: 18px; }
+  /* Menu onder het logo in plaats van ernaast. Naast elkaar paste het niet:
+     de menu-items liepen over het logo heen en "Jouw auto" brak doormidden.
+     Het menu schuift horizontaal mee, zodat er niets afbreekt. */
+  header.site .wrap {
+    height: auto;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+  nav.main {
+    width: 100%;
+    gap: 20px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  nav.main::-webkit-scrollbar { display: none; }
+  nav.main a { flex: none; white-space: nowrap; font-size: .75rem; }
+
   section { padding: 60px 0; }
 }

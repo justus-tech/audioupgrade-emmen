@@ -7,7 +7,7 @@ const { pkg, showScores = true } = Astro.props;
   <div class="price">{pkg.price} {pkg.priceNote && <small>{pkg.priceNote}</small>}</div>
   <p>{pkg.short}</p>
   {showScores && (
-    <div>
+    <div class="scores">
       <div class="score">
         <label>Geluidskwaliteit <span>{pkg.scores.kwaliteit}%</span></label>
         <div class="bar"><i style={`width:${pkg.scores.kwaliteit}%`}></i></div>

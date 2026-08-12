@@ -1,0 +1,45 @@
+---
+/**
+ * Het AUE-beeldmerk als vector.
+ *
+ * De bron is src/assets/logo.svg. Die staat op `currentColor`, dus het logo
+ * neemt automatisch de tekstkleur van zijn omgeving over. Wil je hem oranje,
+ * zet dan color: var(--accent) op het element eromheen — niet de SVG aanpassen.
+ *
+ * De originele SVG is een vierkant van 1500x1500 met veel lege ruimte eromheen.
+ * We snijden bij op de werkelijke inhoud (gemeten: x 167, y 419, 1194x504),
+ * anders hangt het logo in een zee van witruimte en lijkt het veel te klein.
+ */
+import raw from '../assets/logo.svg?raw';
+
+const {
+  height = 30,
+  label = 'Audio Upgrade Emmen',
+  /**
+   * Staat de bedrijfsnaam er in tekst naast? Zet dan decorative,
+   * anders leest een schermlezer de naam twee keer voor.
+   */
+  decoratief = false,
+  class: className = '',
+} = Astro.props;
+
+const VIEWBOX = '167 419 1194 504';
+
+const a11y = decoratief
+  ? 'aria-hidden="true" focusable="false"'
+  : `role="img" aria-label="${label}"`;
+
+const svg = raw.replace(
+  /<svg[^>]*>/,
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${VIEWBOX}" height="${height}" fill="currentColor" ${a11y} class="logo-mark ${className}">`
+);
+---
+<Fragment set:html={svg} />
+
+<style is:global>
+  .logo-mark {
+    display: block;
+    width: auto;
+    flex: none;
+  }
+</style>
