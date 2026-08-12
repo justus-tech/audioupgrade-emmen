@@ -48,6 +48,28 @@ Merken: Alpine, Pioneer, JL Audio, Musway, Gladen Mosconi, STEG.
 2. "Stuur een foto van je dashboard via WhatsApp" als drempelloze CTA
 3. 100% behoud van fabrieksgarantie
 
+## Kleuren — één bron van waarheid
+
+Alle kleuren staan in **`src/data/brand.js`**. Dat is de enige plek. `Base.astro` zet ze om naar CSS-variabelen, de rest van de site gebruikt alleen `var(--...)`.
+
+| Kleur | Code | Waarvoor |
+|---|---|---|
+| Neon oranje | `#FF5E1F` | Signatuur: accenten, eyebrows, hoofdknoppen, scorebalken |
+| Bijna wit | `#F5F5F5` | Koppen en belangrijke tekst |
+| Grijs | `#878787` | Bodytekst en bijschriften |
+| Donkergrijs | `#1A1A1A` | Afwisselende secties en kaarten |
+| Bijna zwart | `#121212` | Ondergrond van de pagina |
+
+**Nooit een losse kleurcode in een `.css` of `.astro` zetten.** Staat een kleur er niet bij, voeg hem dan toe in `brand.js` met een duidelijke naam. Lijnen zijn het grijs op lage dekking, geen zesde kleur.
+
+Eén bewuste uitzondering: de kentekenplaat in de kenteken-check blijft de echte Nederlandse geel/blauw. Dat is herkenning, geen huisstijl — bezoekers moeten meteen zien dat daar hun kenteken in moet.
+
+Controleren of er geen losse kleuren zijn ingeslopen:
+
+```bash
+grep -rnoE "#[0-9a-fA-F]{3,6}\b" src/ --include=*.css --include=*.astro
+```
+
 ## Hoe het project in elkaar zit
 
 Astro 5, statische site. Geen database, geen server.
