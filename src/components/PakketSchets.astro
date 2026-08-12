@@ -1,0 +1,236 @@
+---
+/**
+ * Doorkijk van bovenaf: waar komt wat, per pakket.
+ *
+ * Dit is een verkooptool. Iemand die twijfelt tussen de Akoestische Basis en
+ * The OEM+ Executive ziet hier in één oogopslag wat hij er extra voor krijgt:
+ * de versterker, de subwoofer en de demping achterin lichten op.
+ *
+ * De tekening is zelf getekend (geen fabrieksbeeld) en gebruikt alleen
+ * huisstijlkleuren, dus hij past overal op de site.
+ */
+import { PACKAGES } from '../data/site.js';
+
+/**
+ * Alle onderdelen met hun plek in de auto en bij welke pakketten ze horen.
+ * Coördinaten: auto met de neus naar boven, midden op x=260.
+ */
+const ONDERDELEN = [
+  { id: 'carplay', naam: 'Draadloos CarPlay', plek: 'In het originele scherm', x: 260, y: 122,
+    pakketten: ['carplay-upgrade', 'oem-plus-executive', 'reference-edition'] },
+
+  { id: 'tweeter-l', naam: 'Tweeter links', plek: 'Spiegeldriehoek', x: 178, y: 158,
+    pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition'] },
+  { id: 'tweeter-r', naam: 'Tweeter rechts', plek: 'Spiegeldriehoek', x: 342, y: 158,
+    pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition'] },
+
+  { id: 'front-l', naam: 'Speaker linksvoor', plek: 'Voordeur', x: 166, y: 232,
+    pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition'] },
+  { id: 'front-r', naam: 'Speaker rechtsvoor', plek: 'Voordeur', x: 354, y: 232,
+    pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition'] },
+
+  { id: 'rear-l', naam: 'Speaker linksachter', plek: 'Achterdeur', x: 166, y: 352,
+    pakketten: ['reference-edition'] },
+  { id: 'rear-r', naam: 'Speaker rechtsachter', plek: 'Achterdeur', x: 354, y: 352,
+    pakketten: ['reference-edition'] },
+
+  { id: 'dsp', naam: 'DSP-versterker', plek: 'Onder de stoel of in de zijwand', x: 318, y: 292,
+    pakketten: ['oem-plus-executive', 'reference-edition'] },
+
+  { id: 'sub', naam: 'Subwoofer', plek: 'Onder de stoel of in de reservewielbak', x: 260, y: 470,
+    pakketten: ['oem-plus-executive', 'reference-edition'] },
+];
+
+/** Demping tekenen we als dikke lijnen langs de panelen, niet als punt. */
+const DEMPING = [
+  { id: 'demp-vl', d: 'M 152,196 L 150,272', pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition', 'akoestische-isolatie'] },
+  { id: 'demp-vr', d: 'M 368,196 L 370,272', pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition', 'akoestische-isolatie'] },
+  { id: 'demp-al', d: 'M 150,312 L 152,392', pakketten: ['oem-plus-executive', 'reference-edition', 'akoestische-isolatie'] },
+  { id: 'demp-ar', d: 'M 370,312 L 368,392', pakketten: ['oem-plus-executive', 'reference-edition', 'akoestische-isolatie'] },
+  { id: 'demp-vloer', d: 'M 186,420 L 334,420 M 186,444 L 334,444', pakketten: ['akoestische-isolatie', 'reference-edition'] },
+];
+
+const pakketten = PACKAGES;
+const start = 'akoestische-basis';
+---
+<div class="schets-blok" data-actief={start}>
+  <div class="schets-knoppen" role="tablist" aria-label="Kies een pakket">
+    {pakketten.map((p) => (
+      <button
+        type="button"
+        class="schets-knop"
+        data-pakket={p.slug}
+        role="tab"
+        aria-selected={p.slug === start ? 'true' : 'false'}
+      >{p.name}</button>
+    ))}
+  </div>
+
+  <div class="schets-inhoud">
+    <svg class="schets-svg" viewBox="0 0 520 560" role="img"
+         aria-label="Bovenaanzicht van een auto met de plek van de speakers en onderdelen">
+      {/* --- carrosserie --- */}
+      <g class="lijn">
+        <path d="M 200,42 C 172,48 152,72 150,112 L 146,300 L 150,470 C 152,502 172,516 200,518
+                 L 320,518 C 348,516 368,502 370,470 L 374,300 L 370,112 C 368,72 348,48 320,42 Z" />
+        {/* voorruit en achterruit */}
+        <path d="M 186,136 L 334,136 L 316,178 L 204,178 Z" opacity="0.65" />
+        <path d="M 204,404 L 316,404 L 332,442 L 188,442 Z" opacity="0.65" />
+        {/* deurscheidingen */}
+        <path d="M 148,190 L 168,190 M 148,290 L 168,290 M 148,396 L 168,396" opacity="0.5" />
+        <path d="M 372,190 L 352,190 M 372,290 L 352,290 M 372,396 L 352,396" opacity="0.5" />
+        {/* stoelen */}
+        <rect x="186" y="206" width="52" height="62" rx="12" opacity="0.55" />
+        <rect x="282" y="206" width="52" height="62" rx="12" opacity="0.55" />
+        <rect x="186" y="318" width="148" height="62" rx="12" opacity="0.45" />
+        {/* dashboard */}
+        <path d="M 168,120 L 352,120" opacity="0.55" />
+      </g>
+
+      {/* --- demping --- */}
+      {DEMPING.map((d) => (
+        <path class="demping" d={d.d} data-pakketten={d.pakketten.join(' ')} />
+      ))}
+
+      {/* --- onderdelen --- */}
+      {ONDERDELEN.map((o) => (
+        <g class="onderdeel" data-id={o.id} data-pakketten={o.pakketten.join(' ')}>
+          <circle cx={o.x} cy={o.y} r="15" class="punt-halo" />
+          <circle cx={o.x} cy={o.y} r="8" class="punt" />
+        </g>
+      ))}
+    </svg>
+
+    <div class="schets-legenda">
+      <h3 id="schets-kop">Akoestische Basis</h3>
+      <p class="schets-prijs" id="schets-prijs"></p>
+      <ul id="schets-lijst"></ul>
+      <p class="schets-voet">Plaatsing verschilt per auto. Wij bepalen de exacte plek op basis van jouw model.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const blok = document.querySelector('.schets-blok');
+  if (blok) {
+    const knoppen = blok.querySelectorAll('.schets-knop');
+    const kop = blok.querySelector('#schets-kop');
+    const prijs = blok.querySelector('#schets-prijs');
+    const lijst = blok.querySelector('#schets-lijst');
+
+    // Namen en prijzen komen uit de pakketten in site.js, via de knoppen zelf.
+    const pakketData = {};
+    knoppen.forEach((k) => { pakketData[k.dataset.pakket] = k.textContent.trim(); });
+
+    function toon(slug) {
+      blok.dataset.actief = slug;
+
+      knoppen.forEach((k) => {
+        const aan = k.dataset.pakket === slug;
+        k.classList.toggle('aan', aan);
+        k.setAttribute('aria-selected', aan ? 'true' : 'false');
+      });
+
+      blok.querySelectorAll('[data-pakketten]').forEach((el) => {
+        el.classList.toggle('aan', el.dataset.pakketten.split(' ').includes(slug));
+      });
+
+      kop.textContent = pakketData[slug] ?? '';
+
+      const items = [];
+      blok.querySelectorAll('.onderdeel.aan').forEach((el) => {
+        const o = ONDERDELEN_INFO[el.dataset.id];
+        if (o) items.push(o);
+      });
+      const heeftDemping = blok.querySelectorAll('.demping.aan').length > 0;
+
+      lijst.innerHTML = '';
+      items.forEach((o) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<strong></strong><span></span>`;
+        li.querySelector('strong').textContent = o.naam;
+        li.querySelector('span').textContent = o.plek;
+        lijst.appendChild(li);
+      });
+      if (heeftDemping) {
+        const li = document.createElement('li');
+        li.innerHTML = `<strong></strong><span></span>`;
+        li.querySelector('strong').textContent = 'Akoestische demping';
+        li.querySelector('span').textContent =
+          blok.querySelectorAll('.demping.aan').length > 2
+            ? 'Voor- en achterdeuren'
+            : 'Voordeuren';
+        lijst.appendChild(li);
+      }
+    }
+
+    const ONDERDELEN_INFO = JSON.parse(document.getElementById('onderdelen-info').textContent);
+
+    knoppen.forEach((k) => k.addEventListener('click', () => toon(k.dataset.pakket)));
+    toon(blok.dataset.actief);
+  }
+</script>
+
+<script type="application/json" id="onderdelen-info" set:html={JSON.stringify(
+  Object.fromEntries(ONDERDELEN.map((o) => [o.id, { naam: o.naam, plek: o.plek }]))
+)}></script>
+
+<style>
+  .schets-blok { --uit: color-mix(in srgb, var(--text-dim) 40%, transparent); }
+
+  .schets-knoppen {
+    display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px;
+  }
+  .schets-knop {
+    font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: .12em;
+    font-size: .78rem; padding: 10px 18px; cursor: pointer;
+    background: transparent; color: var(--text-dim);
+    border: 1px solid var(--line-strong); transition: all .2s;
+  }
+  .schets-knop:hover { color: var(--text); border-color: var(--text-dim); }
+  .schets-knop.aan {
+    background: var(--accent); border-color: var(--accent); color: var(--accent-ink);
+  }
+
+  .schets-inhoud {
+    display: grid; grid-template-columns: minmax(260px, 1fr) 1fr;
+    gap: 40px; align-items: start;
+  }
+  @media (max-width: 760px) {
+    .schets-inhoud { grid-template-columns: 1fr; }
+  }
+
+  .schets-svg { width: 100%; height: auto; max-width: 420px; margin: 0 auto; display: block; }
+
+  .lijn { fill: none; stroke: var(--text-dim); stroke-width: 2.5; stroke-linejoin: round; }
+
+  /* Alles begint uit en licht op als het bij het pakket hoort. */
+  .demping {
+    stroke: var(--uit); stroke-width: 5; stroke-linecap: round; fill: none;
+    transition: stroke .25s;
+  }
+  .demping.aan { stroke: var(--accent); }
+
+  .onderdeel .punt { fill: var(--uit); transition: fill .25s; }
+  .onderdeel .punt-halo { fill: transparent; transition: fill .25s; }
+  .onderdeel.aan .punt { fill: var(--accent); }
+  .onderdeel.aan .punt-halo { fill: color-mix(in srgb, var(--accent) 22%, transparent); }
+
+  .schets-legenda h3 { margin-bottom: .4em; }
+  .schets-legenda ul { list-style: none; padding: 0; margin: 1.2em 0 0; }
+
+  /* :global() is hier nodig. Astro schermt opmaak af per component door een
+     attribuut op de elementen te zetten, maar deze lijstitems maken we met
+     JavaScript aan — die krijgen dat attribuut niet en vallen dus buiten de
+     gewone regels. Zonder :global() plakt de naam tegen de plek aan. */
+  .schets-legenda ul :global(li) {
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 12px 0; border-bottom: 1px solid var(--line);
+  }
+  .schets-legenda ul :global(li strong) {
+    font-family: 'Oswald', sans-serif; text-transform: uppercase;
+    letter-spacing: .1em; font-size: .82rem; color: var(--text);
+  }
+  .schets-legenda ul :global(li span) { font-size: .88rem; color: var(--text-dim); }
+  .schets-voet { font-size: .8rem; margin-top: 1.6em; }
+</style>

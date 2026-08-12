@@ -1,0 +1,47 @@
+---
+/**
+ * Tijdelijke proefpagina om de autoschetsen te bekijken.
+ * Niet bedoeld voor bezoekers — staat op noindex en wordt na de keuze
+ * weer verwijderd.
+ */
+import Base from '../layouts/Base.astro';
+import AutoSchets from '../components/AutoSchets.astro';
+import PakketSchets from '../components/PakketSchets.astro';
+
+const types = [
+  ['hatchback', 'Hatchback', '3.923.014 auto\'s'],
+  ['stationwagen', 'Stationwagen', '3.235.524 auto\'s'],
+  ['mpv', 'MPV / SUV', '2.237.996 auto\'s'],
+  ['sedan', 'Sedan', '624.927 auto\'s'],
+  ['cabriolet', 'Cabriolet', '263.781 auto\'s'],
+  ['coupe', 'Coupé', '138.004 auto\'s'],
+  ['bus', 'Bus / camper', '189.201 auto\'s'],
+];
+---
+<Base title="Schetsen (proef)" description="Interne proefpagina" path="/schetsen" noindex={true}>
+  <section>
+    <div class="wrap">
+      <span class="eyebrow">Proef</span>
+      <h1>Wat komt waar, per pakket</h1>
+      <p style="margin-bottom:2.4em">Klik op een pakket en zie wat er in de auto komt.</p>
+      <PakketSchets />
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap">
+      <span class="eyebrow">Proef</span>
+      <h1>Autoschetsen per carrosserietype</h1>
+      <p>Zes tekeningen dekken vrijwel het hele Nederlandse wagenpark.</p>
+      <div class="grid cols-2 mt">
+        {types.map(([type, naam, aantal]) => (
+          <div class="card">
+            <h3>{naam}</h3>
+            <div class="price"><small>{aantal}</small></div>
+            <AutoSchets type={type} />
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>

@@ -4,7 +4,7 @@ import { SITE } from '../data/site.js';
 import { BRAND, cssVariables } from '../data/brand.js';
 import Logo from '../components/Logo.astro';
 
-const { title, description, path = '/' } = Astro.props;
+const { title, description, path = '/', noindex = false } = Astro.props;
 const canonical = new URL(path, Astro.site).href;
 
 const nav = [
@@ -26,6 +26,7 @@ const nav = [
   <title>{title}</title>
   <meta name="description" content={description} />
   <link rel="canonical" href={canonical} />
+  {noindex && <meta name="robots" content="noindex, nofollow" />}
   <meta property="og:title" content={title} />
   <meta property="og:description" content={description} />
   <meta property="og:type" content="website" />
