@@ -1,0 +1,88 @@
+---
+/**
+ * Merkpagina: /merk/bmw, /merk/audi, ...
+ *
+ * Dit is de verzamelplek per merk. Hij legt uit wat er bij dit merk af fabriek
+ * misgaat en linkt door naar de losse modelpagina's. Die modelpagina's zijn
+ * wat er in Google rankt op "BMW X5 audio upgrade"; deze pagina helpt de
+ * bezoeker kiezen als hij nog niet weet waar hij moet zijn.
+ */
+import Base from '../../layouts/Base.astro';
+import PackageCard from '../../components/PackageCard.astro';
+import { MERKEN } from '../../data/merken.js';
+import { modellenVanMerk } from '../../data/models.js';
+import { PACKAGES, SITE } from '../../data/site.js';
+import { GARANTIE, CTA } from '../../data/generiek.js';
+
+export function getStaticPaths() {
+  return MERKEN.map((merk) => ({ params: { slug: merk.slug }, props: { merk } }));
+}
+
+const { merk } = Astro.props;
+const modellen = modellenVanMerk(merk.slug);
+const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
+---
+<Base title={merk.titel} description={merk.beschrijving} path={`/merk/${merk.slug}`}>
+  <section>
+    <div class="wrap">
+      <span class="eyebrow">Audio upgrade per merk</span>
+      <h1 class="merk-titel">{merk.naam}</h1>
+      <p style="margin-top:1.4em">{merk.intro}</p>
+      <p style="margin-top:1em"><strong>Af fabriek:</strong> {merk.fabriekssystemen}</p>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap">
+      <h2>Wat er bij {merk.naam} af fabriek misgaat</h2>
+      <p style="margin-top:1.4em">{merk.probleem}</p>
+    </div>
+  </section>
+
+  {modellen.length > 0 && (
+    <section>
+      <div class="wrap">
+        <h2>Kies je model</h2>
+        <p style="margin-bottom:2em">Elke pagina beschrijft wat er specifiek voor dat model mogelijk is.</p>
+        <div class="grid cols-4">
+          {modellen.map((m) => (
+            <a class="btn" href={`/audio-upgrade/${m.slug}`}>{m.model}</a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <section class="alt">
+    <div class="wrap">
+      <h2>Onze pakketten</h2>
+      <div class="grid cols-4 mt">
+        {pakketten.map((pkg) => <PackageCard pkg={pkg} />)}
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>{GARANTIE.kop}</h2>
+      <p style="margin-top:1.4em">{GARANTIE.tekst}</p>
+    </div>
+  </section>
+
+  <section class="alt center">
+    <div class="wrap">
+      <h2>Rijd je een {merk.naam}?</h2>
+      <p style="margin:0 auto 2em;">{CTA.tekst}</p>
+      <a class="btn wa" href={SITE.whatsapp}>{CTA.knop}</a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* De merknaam in onze eigen typografie — we gebruiken bewust geen
+     officiële automerklogo's, die zijn merkrechtelijk beschermd. */
+  .merk-titel {
+    font-size: clamp(2.4rem, 7vw, 4.4rem);
+    letter-spacing: .2em;
+  }
+</style>

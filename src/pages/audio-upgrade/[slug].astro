@@ -1,15 +1,30 @@
 ---
+/**
+ * Modelpagina: /audio-upgrade/bmw-x5, /audio-upgrade/volkswagen-golf, ...
+ *
+ * Eén pagina per model, met een eigen webadres — dat is precies waarom deze
+ * pagina's ranken op zoektermen als "BMW X5 audio upgrade". De VASTE blokken
+ * (pakketten, garantie, oproep) komen uit src/data/generiek.js en site.js,
+ * dus die staan maar op één plek. Alleen het modelspecifieke deel komt uit
+ * src/data/models.js.
+ */
 import Base from '../../layouts/Base.astro';
 import PackageCard from '../../components/PackageCard.astro';
-import { MODELS } from '../../data/models.js';
+import { MODELS, merkSlug } from '../../data/models.js';
+import { merkenPerSlug } from '../../data/merken.js';
 import { PACKAGES, SITE } from '../../data/site.js';
+import { GARANTIE, CTA, STANDAARD_PAKKETTEN } from '../../data/generiek.js';
 
 export function getStaticPaths() {
   return MODELS.map((m) => ({ params: { slug: m.slug }, props: { model: m } }));
 }
 
 const { model } = Astro.props;
-const pakketten = model.packages.map((slug) => PACKAGES.find((p) => p.slug === slug)).filter(Boolean);
+
+const merk = merkenPerSlug[merkSlug(model.brand)];
+const pakketten = (model.packages ?? STANDAARD_PAKKETTEN)
+  .map((slug) => PACKAGES.find((p) => p.slug === slug))
+  .filter(Boolean);
 
 const faqSchema = {
   '@context': 'https://schema.org',
@@ -26,9 +41,18 @@ const faqSchema = {
 
   <section>
     <div class="wrap">
-      <span class="eyebrow">{model.brand}</span>
-      <h1>{model.model} Audio Upgrade</h1>
+      {merk
+        ? <a class="eyebrow eyebrow-link" href={`/merk/${merk.slug}`}>{model.brand} — alle modellen</a>
+        : <span class="eyebrow">{model.brand}</span>}
+      <h1>{model.model} audio upgrade</h1>
+      {model.generaties && <p class="generaties">Voor {model.generaties}</p>}
       <p style="margin-top:1.4em">{model.intro}</p>
+
+      {/* Fotoplek: zodra Justus eigen werkfoto's aanlevert, komen die hier.
+          Zet daarvoor `foto` en `fotoAlt` op het model in models.js. */}
+      {model.foto
+        ? <img class="model-foto mt" src={model.foto} alt={model.fotoAlt ?? `${model.brand} ${model.model}`} loading="lazy" width="1200" height="675" />
+        : <div class="placeholder-img mt">Foto {model.brand} {model.model} volgt</div>}
     </div>
   </section>
 
@@ -71,6 +95,13 @@ const faqSchema = {
 
   <section class="alt">
     <div class="wrap">
+      <h2>{GARANTIE.kop}</h2>
+      <p style="margin-top:1.4em">{GARANTIE.tekst}</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
       <h2>Veelgestelde vragen</h2>
       <div class="mt">
         {model.faq.map((f) => (
@@ -83,11 +114,18 @@ const faqSchema = {
     </div>
   </section>
 
-  <section class="center">
+  <section class="alt center">
     <div class="wrap">
       <h2>Klaar om je {model.model} te horen zoals hij bedoeld is?</h2>
-      <p style="margin:0 auto 2em;">Geen lange formulieren. Stuur een foto van je dashboard via WhatsApp en ontvang binnen 24 uur een eerlijk advies met transparante all-in prijs.</p>
-      <a class="btn wa" href={SITE.whatsapp}>Stuur foto dashboard 💬</a>
+      <p style="margin:0 auto 2em;">{CTA.tekst}</p>
+      <a class="btn wa" href={SITE.whatsapp}>{CTA.knop}</a>
     </div>
   </section>
 </Base>
+
+<style>
+  .eyebrow-link { text-decoration: none; }
+  .eyebrow-link:hover { text-decoration: underline; }
+  .generaties { color: var(--text-dim); font-size: .95rem; margin-top: .6em; }
+  .model-foto { width: 100%; height: auto; border: 1px solid var(--line); }
+</style>

@@ -423,4 +423,21 @@ export const MODELS = [
   },
 ];
 
+/**
+ * Zet een merknaam om naar de slug van de merkpagina:
+ * 'Mercedes-Benz' -> 'mercedes-benz', 'Land Rover' -> 'land-rover'.
+ * Zo hoeft het merk niet twee keer in de data te staan.
+ */
+export const merkSlug = (brand) =>
+  String(brand || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+
+/** Alle modellen van één merk, in de volgorde waarin ze hierboven staan. */
+export const modellenVanMerk = (slug) =>
+  MODELS.filter((m) => merkSlug(m.brand) === slug);
+
+export const modelPerSlug = Object.fromEntries(MODELS.map((m) => [m.slug, m]));
+
 export default MODELS;
