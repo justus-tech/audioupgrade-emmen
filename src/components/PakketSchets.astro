@@ -43,19 +43,19 @@ const ONDERDELEN = [
   { id: 'tweeter-l', naam: 'Tweeters', plek: 'In de spiegeldriehoek',
     boven: [178, 158], zij: [122, 64],
     pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition'] },
-  { id: 'tweeter-r', naam: null, plek: null, boven: [342, 158], zij: null,
+  { id: 'tweeter-r', spiegelVan: 'tweeter-l', naam: null, plek: null, boven: [342, 158], zij: null,
     pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition'] },
 
   { id: 'front-l', naam: 'Speakers voorin', plek: 'In beide voordeuren',
     boven: [166, 232], zij: [164, 98],
     pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition'] },
-  { id: 'front-r', naam: null, plek: null, boven: [354, 232], zij: null,
+  { id: 'front-r', spiegelVan: 'front-l', naam: null, plek: null, boven: [354, 232], zij: null,
     pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition'] },
 
   { id: 'rear-l', naam: 'Speakers achterin', plek: 'In beide achterdeuren',
     boven: [166, 352], zij: [230, 98],
     pakketten: ['reference-edition'] },
-  { id: 'rear-r', naam: null, plek: null, boven: [354, 352], zij: null,
+  { id: 'rear-r', spiegelVan: 'rear-l', naam: null, plek: null, boven: [354, 352], zij: null,
     pakketten: ['reference-edition'] },
 
   { id: 'dsp', naam: 'DSP-versterker', plek: 'Onder de stoel of in de zijwand',
@@ -76,38 +76,51 @@ const ONDERDELEN = [
 const ZONES = [
   // De zij-balken lopen bewust tússen de wielkasten door (x 148-256),
   // anders tekenen ze dwars over de wielen heen.
-  { id: 'demp-voor', naam: 'Demping voordeuren', plek: 'Buiten- en binnenblik',
+  { id: 'demp-voor', badge: [126, 234], naam: 'Demping voordeuren', plek: 'Buiten- en binnenblik',
     boven: 'M 152,196 L 150,272 M 368,196 L 370,272',
     zij: 'M 148,110 L 196,110',
     pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition', 'akoestische-isolatie'] },
 
-  { id: 'demp-achter', naam: 'Demping achterdeuren', plek: 'Buiten- en binnenblik',
+  { id: 'demp-achter', badge: [126, 352], naam: 'Demping achterdeuren', plek: 'Buiten- en binnenblik',
     boven: 'M 150,312 L 152,392 M 370,312 L 368,392',
     zij: 'M 204,110 L 256,110',
     pakketten: ['oem-plus-executive', 'reference-edition', 'akoestische-isolatie'] },
 
-  { id: 'demp-klep', naam: 'Demping achterklep', plek: 'Tegen resonantie en rammel',
+  { id: 'demp-klep', badge: [300, 494], naam: 'Demping achterklep', plek: 'Tegen resonantie en rammel',
     boven: 'M 186,492 L 334,492',
     zij: zij.klep,
     pakketten: ['reference-edition', 'akoestische-isolatie'] },
 
-  { id: 'demp-kap', naam: 'Demping motorkap', plek: 'Minder motorgeluid in de cabine',
+  { id: 'demp-kap', badge: [260, 62], naam: 'Demping motorkap', plek: 'Minder motorgeluid in de cabine',
     boven: 'M 190,74 L 330,74',
     zij: MOTORKAP,
     pakketten: ['akoestische-isolatie'] },
 
-  { id: 'demp-vloer', naam: 'Demping vloer', plek: 'Tegen rolgeluid van de banden',
+  { id: 'demp-vloer', badge: [126, 424], naam: 'Demping vloer', plek: 'Tegen rolgeluid van de banden',
     boven: 'M 190,424 L 330,424',
     zij: 'M 150,118 L 256,118',
     pakketten: ['akoestische-isolatie', 'reference-edition'] },
 ];
 
+/**
+ * Nummering loopt van voor naar achter door de auto, zoals je hem zou
+ * inbouwen. De nummers in de tekening en in de lijst horen bij elkaar.
+ */
+const VOLGORDE = [
+  'carplay', 'tweeter-l', 'front-l', 'demp-voor',
+  'rear-l', 'demp-achter', 'dsp', 'sub',
+  'demp-klep', 'demp-kap', 'demp-vloer',
+];
+
 /** Voor de legenda: alleen items met een naam (links/rechts tellen als één). */
-const legendaInfo = Object.fromEntries(
-  [...ONDERDELEN, ...ZONES]
-    .filter((o) => o.naam)
-    .map((o) => [o.id, { naam: o.naam, plek: o.plek }])
-);
+const legendaInfo = {
+  volgorde: VOLGORDE,
+  info: Object.fromEntries(
+    [...ONDERDELEN, ...ZONES]
+      .filter((o) => o.naam)
+      .map((o) => [o.id, { naam: o.naam, plek: o.plek }])
+  ),
+};
 ---
 <div class="schets-blok" data-actief={start}>
   <div class="schets-knoppen" role="tablist" aria-label="Kies een pakket">
@@ -140,10 +153,23 @@ const legendaInfo = Object.fromEntries(
             <path class="zone" d={z.boven} data-id={z.id} data-pakketten={z.pakketten.join(' ')} />
           ))}
 
+          {/* Genummerde bolletjes bij de dempingszones, buiten de carrosserie
+              zodat ze niet over de speakerpunten vallen. */}
+          {ZONES.map((z) => (
+            <g class="onderdeel zone-badge" data-id={z.id} data-pakketten={z.pakketten.join(' ')}>
+              <circle cx={z.badge[0]} cy={z.badge[1]} r="15" class="punt-halo" />
+              <circle cx={z.badge[0]} cy={z.badge[1]} r="13" class="punt" />
+              <text class="punt-nr" x={z.badge[0]} y={z.badge[1]}
+                    text-anchor="middle" dominant-baseline="central"></text>
+            </g>
+          ))}
+
           {ONDERDELEN.map((o) => (
-            <g class="onderdeel" data-id={o.id} data-pakketten={o.pakketten.join(' ')}>
+            <g class="onderdeel" data-id={o.spiegelVan ?? o.id} data-pakketten={o.pakketten.join(' ')}>
               <circle cx={o.boven[0]} cy={o.boven[1]} r="15" class="punt-halo" />
-              <circle cx={o.boven[0]} cy={o.boven[1]} r="8" class="punt" />
+              <circle cx={o.boven[0]} cy={o.boven[1]} r="13" class="punt" />
+              <text class="punt-nr" x={o.boven[0]} y={o.boven[1]}
+                    text-anchor="middle" dominant-baseline="central"></text>
             </g>
           ))}
         </svg>
@@ -167,9 +193,11 @@ const legendaInfo = Object.fromEntries(
           ))}
 
           {ONDERDELEN.filter((o) => o.zij).map((o) => (
-            <g class="onderdeel" data-id={o.id} data-pakketten={o.pakketten.join(' ')}>
-              <circle cx={o.zij[0]} cy={o.zij[1]} r="11" class="punt-halo" />
-              <circle cx={o.zij[0]} cy={o.zij[1]} r="6" class="punt" />
+            <g class="onderdeel" data-id={o.spiegelVan ?? o.id} data-pakketten={o.pakketten.join(' ')}>
+              <circle cx={o.zij[0]} cy={o.zij[1]} r="12" class="punt-halo" />
+              <circle cx={o.zij[0]} cy={o.zij[1]} r="10" class="punt" />
+              <text class="punt-nr zij-nr" x={o.zij[0]} y={o.zij[1]}
+                    text-anchor="middle" dominant-baseline="central"></text>
             </g>
           ))}
         </svg>
@@ -191,7 +219,7 @@ const legendaInfo = Object.fromEntries(
 
 <script>
   document.querySelectorAll('.schets-blok').forEach((blok) => {
-    const info = JSON.parse(blok.querySelector('.schets-info').textContent);
+    const { info, volgorde } = JSON.parse(blok.querySelector('.schets-info').textContent);
     const knoppen = blok.querySelectorAll('.schets-knop');
     const kop = blok.querySelector('.schets-kop');
     const lijst = blok.querySelector('.schets-lijst');
@@ -214,20 +242,29 @@ const legendaInfo = Object.fromEntries(
 
       kop.textContent = namen[slug] ?? '';
 
-      // Elk onderdeel één keer in de lijst, ook al staan er twee punten in de
-      // tekening (links en rechts).
-      const gezien = new Set();
+      // Nummeren in vaste volgorde, van voor naar achter. Alleen wat bij dit
+      // pakket hoort krijgt een nummer, zodat de lijst altijd bij 1 begint.
       lijst.innerHTML = '';
-      blok.querySelectorAll('.boven [data-pakketten].aan').forEach((el) => {
-        const id = el.dataset.id;
-        if (!id || !info[id] || gezien.has(id)) return;
-        gezien.add(id);
+      blok.querySelectorAll('.punt-nr').forEach((t) => { t.textContent = ''; });
+
+      let nr = 0;
+      volgorde.forEach((id) => {
+        if (!info[id]) return;
+        const inTekening = blok.querySelector(`[data-id="${id}"][data-pakketten]`);
+        if (!inTekening || !inTekening.classList.contains('aan')) return;
+
+        nr += 1;
+        // Zelfde nummer in beide aanzichten, links én rechts.
+        blok.querySelectorAll(`[data-id="${id}"] .punt-nr`).forEach((t) => {
+          t.textContent = String(nr);
+        });
+
         const li = document.createElement('li');
-        const naam = document.createElement('strong');
+        const kop = document.createElement('strong');
         const plek = document.createElement('span');
-        naam.textContent = info[id].naam;
+        kop.textContent = `${nr}. ${info[id].naam}`;
         plek.textContent = info[id].plek;
-        li.append(naam, plek);
+        li.append(kop, plek);
         lijst.appendChild(li);
       });
     }
@@ -292,6 +329,16 @@ const legendaInfo = Object.fromEntries(
   .onderdeel .punt-halo { fill: transparent; transition: fill .25s; }
   .onderdeel.aan .punt { fill: var(--accent); }
   .onderdeel.aan .punt-halo { fill: color-mix(in srgb, var(--accent) 22%, transparent); }
+
+  /* Het nummer in het bolletje. Donkere tekst op oranje leest het beste. */
+  .punt-nr {
+    font-family: 'Oswald', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    fill: var(--accent-ink);
+    pointer-events: none;
+  }
+  .zij-nr { font-size: 12px; }
 
   .schets-legenda h3 { margin-bottom: .4em; }
   .schets-legenda ul { list-style: none; padding: 0; margin: 1.2em 0 0; }
