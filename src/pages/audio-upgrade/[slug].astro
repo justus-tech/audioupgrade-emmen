@@ -1,0 +1,93 @@
+---
+import Base from '../../layouts/Base.astro';
+import PackageCard from '../../components/PackageCard.astro';
+import { MODELS } from '../../data/models.js';
+import { PACKAGES, SITE } from '../../data/site.js';
+
+export function getStaticPaths() {
+  return MODELS.map((m) => ({ params: { slug: m.slug }, props: { model: m } }));
+}
+
+const { model } = Astro.props;
+const pakketten = model.packages.map((slug) => PACKAGES.find((p) => p.slug === slug)).filter(Boolean);
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: model.faq.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+};
+---
+<Base title={model.title} description={model.description} path={`/audio-upgrade/${model.slug}`}>
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <section>
+    <div class="wrap">
+      <span class="eyebrow">{model.brand}</span>
+      <h1>{model.model} Audio Upgrade</h1>
+      <p style="margin-top:1.4em">{model.intro}</p>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap">
+      <h2>Waarom klinkt de {model.model} af fabriek zo mager?</h2>
+      <div class="grid cols-3 mt">
+        {model.problems.map((p, i) => (
+          <div class="step">
+            <span class="num">0{i + 1}</span>
+            <p style="margin-top:12px">{p}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>{model.solution.title}</h2>
+      <p style="margin-top:1.4em">{model.solution.text}</p>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap">
+      <h2>{model.carplay.possible ? `Draadloos CarPlay in je ${model.model}` : `En CarPlay in je ${model.model}?`}</h2>
+      <p style="margin-top:1.4em">{model.carplay.text}</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>Onze upgrades voor de {model.model}</h2>
+      <div class="grid cols-2 mt">
+        {pakketten.map((pkg) => <PackageCard pkg={pkg} />)}
+      </div>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap">
+      <h2>Veelgestelde vragen</h2>
+      <div class="mt">
+        {model.faq.map((f) => (
+          <details>
+            <summary>{f.q}</summary>
+            <p>{f.a}</p>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="center">
+    <div class="wrap">
+      <h2>Klaar om je {model.model} te horen zoals hij bedoeld is?</h2>
+      <p style="margin:0 auto 2em;">Geen lange formulieren. Stuur een foto van je dashboard via WhatsApp en ontvang binnen 24 uur een eerlijk advies met transparante all-in prijs.</p>
+      <a class="btn wa" href={SITE.whatsapp}>Stuur foto dashboard 💬</a>
+    </div>
+  </section>
+</Base>

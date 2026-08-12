@@ -1,0 +1,61 @@
+---
+import { MODELS } from '../data/models.js';
+import { SITE } from '../data/site.js';
+
+// Compacte matchtabel voor de client: [slug, merk, modelregex-als-string]
+const table = MODELS.map((m) => [m.slug, m.matchers.merk, m.matchers.model.source]);
+---
+<div class="kenteken-box">
+  <span class="eyebrow">Kenteken-check</span>
+  <h2>Wat kan jouw auto?</h2>
+  <p style="margin: 0 auto;">Vul je kenteken in en zie direct welke upgrades er voor jouw auto mogelijk zijn.</p>
+  <form class="kenteken-form" id="kenteken-form" autocomplete="off">
+    <input class="plate" id="kenteken-input" type="text" placeholder="XX-99-XX" maxlength="8" aria-label="Kenteken" />
+    <button class="btn solid" type="submit">Check mijn auto</button>
+  </form>
+  <div id="kenteken-result" aria-live="polite"></div>
+</div>
+
+<script define:vars={{ table, whatsapp: SITE.whatsapp }}>
+  const form = document.getElementById('kenteken-form');
+  const input = document.getElementById('kenteken-input');
+  const result = document.getElementById('kenteken-result');
+
+  // RDW-tekst nooit rauw in de pagina zetten: eerst onschadelijk maken.
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const plate = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    // Een Nederlands kenteken is altijd precies 6 tekens.
+    if (!/^[A-Z0-9]{6}$/.test(plate)) {
+      result.innerHTML = '<span>Vul een geldig kenteken in, bijvoorbeeld XX-99-XX.</span>';
+      return;
+    }
+    result.innerHTML = '<span>Even kijken wat je rijdt…</span>';
+    try {
+      const res = await fetch(`https://opendata.rdw.nl/resource/m9d7-ebf2.json?kenteken=${plate}`);
+      const data = await res.json();
+      if (!data.length) {
+        result.innerHTML = `<span>Kenteken niet gevonden. Typfout? Of <a href="${whatsapp}">stuur ons een foto van je dashboard 💬</a></span>`;
+        return;
+      }
+      const car = data[0];
+      const merk = (car.merk || '').toUpperCase();
+      const model = (car.handelsbenaming || '').toUpperCase();
+      const niceName = esc(`${car.merk} ${car.handelsbenaming}`.replace(/\s+/g, ' ').trim());
+
+      const hit = table.find(([slug, m, re]) => merk.includes(m) && new RegExp(re).test(model));
+      if (hit) {
+        result.innerHTML = `<span class="found">Gevonden: <strong>${niceName}</strong> — we sturen je door…</span>`;
+        setTimeout(() => { window.location.href = `/audio-upgrade/${hit[0]}`; }, 900);
+      } else {
+        result.innerHTML = `<span class="found">Mooie auto, die <strong>${niceName}</strong>! We hebben er (nog) geen aparte pagina voor, maar upgraden hem graag.<br/><a href="${whatsapp}">Stuur een foto van je dashboard 💬</a> en je hoort binnen 24 uur wat er kan.</span>`;
+      }
+    } catch (err) {
+      result.innerHTML = `<span>De kenteken-check is even niet bereikbaar. <a href="${whatsapp}">App ons gerust direct 💬</a></span>`;
+    }
+  });
+</script>

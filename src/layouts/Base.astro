@@ -1,0 +1,80 @@
+---
+import '../styles/global.css';
+import { SITE } from '../data/site.js';
+
+const { title, description, path = '/' } = Astro.props;
+const canonical = new URL(path, Astro.site).href;
+
+const nav = [
+  { href: '/', label: 'Home' },
+  { href: '/upgrades', label: 'Upgrades' },
+  { href: '/audio-upgrade', label: 'Jouw auto' },
+  { href: '/werkwijze', label: 'Werkwijze' },
+  { href: '/contact', label: 'Contact' },
+];
+---
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href={canonical} />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content={canonical} />
+  <meta property="og:locale" content="nl_NL" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'AutoRepair',
+    name: SITE.name,
+    url: 'https://audioupgradeemmen.nl',
+    telephone: SITE.phone,
+    email: SITE.email,
+    areaServed: 'Drenthe, Nederland',
+    address: { '@type': 'PostalAddress', addressLocality: SITE.city, addressRegion: SITE.region, addressCountry: 'NL' },
+    description: 'Premium car audio, CarPlay-inbouw, DSP-tuning en akoestische deurdemping in Emmen. Uitsluitend op afspraak.',
+  })} />
+</head>
+<body>
+  <header class="site">
+    <div class="wrap">
+      <a class="logo" href="/">Audio Upgrade <span>Emmen</span></a>
+      <nav class="main">
+        {nav.map((item) => (
+          <a href={item.href} aria-current={path === item.href ? 'page' : undefined}>{item.label}</a>
+        ))}
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <slot />
+  </main>
+
+  <footer class="site">
+    <div class="wrap">
+      <div>
+        <strong>{SITE.name}</strong><br />
+        Uitsluitend op afspraak<br />
+        <a href={`tel:${SITE.phone}`}>{SITE.phoneDisplay}</a><br />
+        <a href={`mailto:${SITE.email}`}>{SITE.email}</a>
+      </div>
+      <div>
+        <a href={SITE.whatsapp}>Stuur foto dashboard 💬</a><br />
+        <a href="/upgrades">Upgrades</a><br />
+        <a href="/audio-upgrade">Upgrade per automodel</a>
+      </div>
+      <div class="legal">
+        KVK: {SITE.kvk} · Btw: {SITE.btw}<br />
+        © {new Date().getFullYear()} {SITE.name}
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

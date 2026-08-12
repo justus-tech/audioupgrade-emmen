@@ -1,0 +1,34 @@
+---
+import Base from '../layouts/Base.astro';
+import PackageCard from '../components/PackageCard.astro';
+import { PACKAGES } from '../data/site.js';
+import { MODELS } from '../data/models.js';
+---
+<Base
+  title="Pakketten & Prijzen — Car Audio Upgrades | Audio Upgrade Emmen"
+  description="Van draadloze CarPlay (v.a. €695) tot The Reference Edition met 8-kanaals versterker. Bekijk alle car audio pakketten van Audio Upgrade Emmen, incl. montage en btw."
+  path="/upgrades"
+>
+  <section>
+    <div class="wrap">
+      <span class="eyebrow">Transparante all-in prijzen · incl. montage &amp; btw</span>
+      <h1>Upgrades &amp; prijzen</h1>
+      <div class="grid cols-3 mt">
+        {PACKAGES.map((pkg) => <PackageCard pkg={pkg} />)}
+      </div>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap center">
+      <h2>Populaire modellen</h2>
+      <p style="margin:0 auto 2em;">Bekijk wat er mogelijk is voor jouw auto.</p>
+      <div class="grid cols-4">
+        {MODELS.map((m) => (
+          <a class="btn" href={`/audio-upgrade/${m.slug}`}>{m.brand} {m.model}</a>
+        ))}
+      </div>
+      <p class="mt" style="margin-left:auto;margin-right:auto;">Staat jouw auto er niet bij? <a href="/audio-upgrade">Doe de kenteken-check →</a></p>
+    </div>
+  </section>
+</Base>

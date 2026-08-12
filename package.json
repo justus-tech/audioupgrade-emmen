@@ -1,0 +1,15 @@
+{
+  "name": "audioupgrade-emmen",
+  "type": "module",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "test:kenteken": "node scripts/valideer-kenteken.mjs"
+  },
+  "dependencies": {
+    "astro": "^5.0.0",
+    "playwright": "^1.62.1"
+  }
+}

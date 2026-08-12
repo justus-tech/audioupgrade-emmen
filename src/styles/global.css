@@ -1,0 +1,211 @@
+/* ============================================
+   Audio Upgrade Emmen — design tokens & basis
+   ============================================ */
+:root {
+  --bg: #141414;
+  --bg-alt: #1c1c1c;
+  --panel: #202020;
+  --line: #333;
+  --text: #f2f2f2;
+  --text-dim: #b5b5b5;
+  --accent: #ffffff;
+  --whatsapp: #25d366;
+  --max: 1200px;
+  --radius: 4px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .btn, nav a, .eyebrow {
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+}
+
+h1 { font-size: clamp(1.9rem, 4.5vw, 3.2rem); line-height: 1.15; font-weight: 600; }
+h2 { font-size: clamp(1.3rem, 2.6vw, 1.9rem); font-weight: 600; margin-bottom: .75em; }
+h3 { font-size: 1.05rem; font-weight: 500; letter-spacing: .18em; }
+
+p { color: var(--text-dim); max-width: 65ch; }
+
+a { color: inherit; }
+
+img { max-width: 100%; display: block; }
+
+.wrap { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
+
+section { padding: 88px 0; }
+section.alt { background: var(--bg-alt); }
+
+.eyebrow {
+  font-size: .8rem;
+  color: var(--text-dim);
+  letter-spacing: .3em;
+  display: block;
+  margin-bottom: 1em;
+}
+
+/* ---- knoppen ---- */
+.btn {
+  display: inline-block;
+  padding: 14px 30px;
+  border: 1px solid var(--text);
+  color: var(--text);
+  text-decoration: none;
+  font-size: .85rem;
+  font-weight: 500;
+  transition: background .2s, color .2s, transform .15s;
+  background: transparent;
+  cursor: pointer;
+}
+.btn:hover { background: var(--text); color: var(--bg); transform: translateY(-2px); }
+.btn.solid { background: var(--text); color: var(--bg); }
+.btn.solid:hover { background: transparent; color: var(--text); }
+.btn.wa { border-color: var(--whatsapp); color: var(--whatsapp); }
+.btn.wa:hover { background: var(--whatsapp); color: #fff; }
+
+/* ---- header ---- */
+header.site {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(20,20,20,.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+header.site .wrap {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 72px;
+}
+.logo { font-family: 'Oswald'; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; text-decoration: none; font-size: 1rem; }
+.logo span { color: var(--text-dim); }
+nav.main { display: flex; gap: 34px; }
+nav.main a { text-decoration: none; font-size: .8rem; color: var(--text-dim); transition: color .2s; }
+nav.main a:hover, nav.main a[aria-current="page"] { color: var(--text); }
+
+/* ---- hero ---- */
+.hero {
+  min-height: 62vh;
+  display: flex; align-items: center;
+  background:
+    linear-gradient(180deg, rgba(20,20,20,.55), rgba(20,20,20,.92)),
+    radial-gradient(ellipse at 70% 20%, #2a2a2a 0%, #141414 60%);
+  border-bottom: 1px solid var(--line);
+  text-align: center;
+}
+.hero .wrap { width: 100%; }
+.hero p.lead { margin: 1.4em auto 2em; font-size: 1.1rem; }
+
+/* ---- pakketkaarten ---- */
+.grid { display: grid; gap: 28px; }
+.grid.cols-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.grid.cols-3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.grid.cols-4 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 34px 30px;
+  display: flex; flex-direction: column; gap: 14px;
+  transition: transform .2s, border-color .2s;
+}
+.card:hover { transform: translateY(-4px); border-color: #555; }
+.card .price { font-family: 'Oswald'; font-size: 1.6rem; letter-spacing: .05em; }
+.card .price small { font-size: .75rem; color: var(--text-dim); letter-spacing: .1em; }
+.card p { font-size: .95rem; flex: 1; }
+.card .btn { align-self: flex-start; margin-top: 6px; }
+
+/* ---- scorebalkjes ---- */
+.score { margin: 4px 0; }
+.score label { font-size: .7rem; letter-spacing: .2em; text-transform: uppercase; color: var(--text-dim); display: flex; justify-content: space-between; margin-bottom: 4px; font-family: 'Oswald'; }
+.score .bar { height: 5px; background: #333; border-radius: 3px; overflow: hidden; }
+.score .bar i { display: block; height: 100%; background: var(--text); border-radius: 3px; }
+
+/* ---- stappen (werkwijze) ---- */
+.step { text-align: center; padding: 0 12px; }
+.step .num { font-family: 'Oswald'; font-size: .85rem; letter-spacing: .35em; color: var(--text-dim); }
+.step h3 { margin: 12px 0; }
+.step p { margin: 0 auto; font-size: .95rem; }
+
+/* ---- FAQ ---- */
+details {
+  border-bottom: 1px solid var(--line);
+  padding: 18px 0;
+}
+details summary {
+  font-family: 'Oswald'; text-transform: uppercase; letter-spacing: .12em;
+  cursor: pointer; font-size: .95rem; list-style: none;
+  display: flex; justify-content: space-between; align-items: center;
+}
+details summary::after { content: "+"; font-size: 1.3rem; color: var(--text-dim); }
+details[open] summary::after { content: "–"; }
+details p { padding-top: 12px; }
+
+/* ---- kenteken-check ---- */
+.kenteken-box {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 44px 36px;
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto;
+}
+.kenteken-form {
+  display: flex; gap: 12px; justify-content: center; margin-top: 26px; flex-wrap: wrap;
+}
+.plate {
+  background: #f8b500;
+  color: #111;
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  border: 2px solid #111;
+  border-radius: 6px;
+  padding: 10px 18px 10px 44px;
+  width: 240px;
+  text-align: center;
+  position: relative;
+  background-image: linear-gradient(90deg, #003399 34px, transparent 34px);
+  outline: none;
+}
+.plate::placeholder { color: rgba(0,0,0,.4); }
+#kenteken-result { margin-top: 22px; min-height: 30px; font-size: 1rem; }
+#kenteken-result .found { color: var(--text); }
+#kenteken-result a { color: var(--whatsapp); }
+
+/* ---- footer ---- */
+footer.site {
+  border-top: 1px solid var(--line);
+  padding: 56px 0 40px;
+  background: var(--bg-alt);
+}
+footer.site .wrap { display: flex; flex-wrap: wrap; gap: 40px; justify-content: space-between; font-size: .88rem; color: var(--text-dim); }
+footer.site a { color: var(--text-dim); }
+footer.site .legal { font-size: .78rem; }
+
+/* ---- misc ---- */
+.center { text-align: center; }
+.mt { margin-top: 2.2rem; }
+.placeholder-img {
+  background: linear-gradient(135deg, #232323, #1a1a1a);
+  border: 1px dashed #3a3a3a;
+  display: flex; align-items: center; justify-content: center;
+  color: #555; font-size: .8rem; letter-spacing: .2em; text-transform: uppercase; font-family: 'Oswald';
+  aspect-ratio: 16/9;
+}
+
+@media (max-width: 700px) {
+  nav.main { gap: 18px; }
+  section { padding: 60px 0; }
+}

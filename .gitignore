@@ -1,0 +1,17 @@
+# Afhankelijkheden (worden opnieuw opgehaald met: npm install)
+node_modules/
+
+# Build-resultaat en tijdelijke bestanden van Astro
+dist/
+.astro/
+
+# Systeem- en editorbestanden
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/
+
+# Lokale instellingen met eventuele sleutels
+.env
+.env.*

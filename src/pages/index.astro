@@ -1,0 +1,68 @@
+---
+import Base from '../layouts/Base.astro';
+import PackageCard from '../components/PackageCard.astro';
+import KentekenCheck from '../components/KentekenCheck.astro';
+import { PACKAGES, SITE } from '../data/site.js';
+
+const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
+---
+<Base
+  title="Car Audio & CarPlay Upgrades in Emmen | Audio Upgrade Emmen"
+  description="Klaar met blikkerig geluid? Audio Upgrade Emmen (Drenthe) levert premium car audio, CarPlay-inbouw, DSP-tuning en onzichtbare deurdemping — met 100% behoud van je fabrieksgarantie."
+  path="/"
+>
+  <div class="hero">
+    <div class="wrap">
+      <span class="eyebrow">Emmen · Drenthe · Uitsluitend op afspraak</span>
+      <h1>Premium Audio &amp; CarPlay upgrades op maat</h1>
+      <p class="lead">Klaar met blikkerig geluid? Wij bouwen premium car audio onzichtbaar in — met 100% behoud van je fabrieksgarantie.</p>
+      <a class="btn solid" href="/upgrades">Bekijk de upgrades</a>
+      <a class="btn wa" href={SITE.whatsapp} style="margin-left:12px">Stuur foto dashboard 💬</a>
+    </div>
+  </div>
+
+  <section>
+    <div class="wrap">
+      <span class="eyebrow">Pasklaar maatwerk voor jouw auto</span>
+      <h2>Upgrades</h2>
+      <div class="grid cols-4 mt">
+        {pakketten.map((pkg) => <PackageCard pkg={pkg} />)}
+      </div>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap">
+      <KentekenCheck />
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <span class="eyebrow">Compromisloos vakmanschap</span>
+      <h2>Geen hout. Geen vocht. Geen half werk.</h2>
+      <div class="grid cols-3 mt">
+        <div class="step">
+          <h3>Massieve montage</h3>
+          <p>Hout (MDF) neemt vocht op, zet uit en gaat rotten. Wij gebruiken uitsluitend CNC-gefreesde, massieve kunststof of aluminium adapterringen. Waterbestendig en akoestisch dood.</p>
+        </div>
+        <div class="step">
+          <h3>100% gesoldeerd</h3>
+          <p>Wij haten knijpstekkers. Elke verbinding wordt vakkundig gesoldeerd, voorzien van krimpkous en afgewerkt met originele stoftape (TESA). 100% storingsvrij.</p>
+        </div>
+        <div class="step">
+          <h3>Akoestische DSP-tuning</h3>
+          <p>Een dure speaker klinkt nergens naar zonder de juiste afstelling. Wij stemmen looptijden en frequenties exact af op de akoestiek van jóuw specifieke auto.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt center">
+    <div class="wrap">
+      <h2>Klaar voor de ultieme geluidservaring?</h2>
+      <p style="margin: 0 auto 2em;">Geen lange formulieren. Stuur een foto van je dashboard en ontvang binnen 24 uur een eerlijk advies met transparante all-in prijs.</p>
+      <a class="btn wa" href={SITE.whatsapp}>Stuur foto dashboard 💬</a>
+    </div>
+  </section>
+</Base>

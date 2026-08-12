@@ -1,0 +1,26 @@
+---
+import { SITE } from '../data/site.js';
+const { pkg, showScores = true } = Astro.props;
+---
+<div class="card">
+  <h3>{pkg.name}</h3>
+  <div class="price">{pkg.price} {pkg.priceNote && <small>{pkg.priceNote}</small>}</div>
+  <p>{pkg.short}</p>
+  {showScores && (
+    <div>
+      <div class="score">
+        <label>Geluidskwaliteit <span>{pkg.scores.kwaliteit}%</span></label>
+        <div class="bar"><i style={`width:${pkg.scores.kwaliteit}%`}></i></div>
+      </div>
+      <div class="score">
+        <label>Volume <span>{pkg.scores.volume}%</span></label>
+        <div class="bar"><i style={`width:${pkg.scores.volume}%`}></i></div>
+      </div>
+      <div class="score">
+        <label>Bas <span>{pkg.scores.bas}%</span></label>
+        <div class="bar"><i style={`width:${pkg.scores.bas}%`}></i></div>
+      </div>
+    </div>
+  )}
+  <a class="btn" href={SITE.whatsapp}>{pkg.cta}</a>
+</div>

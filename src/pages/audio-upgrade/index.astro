@@ -1,0 +1,31 @@
+---
+import Base from '../../layouts/Base.astro';
+import KentekenCheck from '../../components/KentekenCheck.astro';
+import { MODELS } from '../../data/models.js';
+---
+<Base
+  title="Audio Upgrade per Automodel — Check je Kenteken | Audio Upgrade Emmen"
+  description="Vul je kenteken in en zie direct welke audio-upgrades er voor jouw auto mogelijk zijn. Van VW Golf tot Tesla Model 3 — premium car audio in Emmen."
+  path="/audio-upgrade"
+>
+  <section>
+    <div class="wrap">
+      <KentekenCheck />
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap">
+      <h2 class="center">Of kies je model</h2>
+      <div class="grid cols-4 mt">
+        {MODELS.map((m) => (
+          <a class="card" href={`/audio-upgrade/${m.slug}`} style="text-decoration:none">
+            <h3>{m.brand}</h3>
+            <div class="price">{m.model}</div>
+            <p>{m.description.slice(0, 90)}…</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>
