@@ -54,6 +54,11 @@ a { color: inherit; }
 
 img { max-width: 100%; display: block; }
 
+/* Moet ná de img-regel hierboven staan. Een `hidden`-attribuut wordt anders
+   overruled door `display: block`, waardoor een verborgen afbeelding tóch
+   ruimte inneemt en je een leeg kader op de pagina krijgt. */
+[hidden] { display: none !important; }
+
 /* Toetsenbordgebruikers moeten altijd zien waar ze zijn. */
 :focus-visible {
   outline: 2px solid var(--accent);

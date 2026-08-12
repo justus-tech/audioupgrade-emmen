@@ -1,100 +1,171 @@
 /**
- * Toetst de `matchers` uit src/data/models.js tegen ECHTE RDW-data, met exact
- * dezelfde matchlogica als KentekenCheck.astro gebruikt:
- *     merk.includes(m) && re.test(handelsbenaming)
+ * Toetst de matchers uit src/data/autos.js tegen ECHTE RDW-data, met exact
+ * dezelfde functie als de browser gebruikt (src/lib/match.js).
  *
  * Draaien:  npm run test:kenteken
  *
- * Draai dit altijd na het wijzigen van een `matchers`-patroon. De test let niet
- * alleen op wat moet matchen, maar vooral op wat NIET mag matchen: een Mercedes
- * CLA is geen C-klasse, een BMW iX3 is geen 3-serie.
+ * Draai dit altijd na het wijzigen van een matcher. De test let vooral op wat
+ * NIET mag matchen: een Mercedes CLA is geen C-klasse, een BMW iX3 geen X3,
+ * en een Range Rover Sport is geen gewone Range Rover.
  */
-import { MODELS } from '../src/data/models.js';
-
-const tabel = MODELS.map((m) => [m.slug, m.matchers.merk, m.matchers.model]);
-
-function matchZip(merkRuw, benamingRuw) {
-  const merk = (merkRuw || '').toUpperCase();
-  const model = (benamingRuw || '').toUpperCase();
-  const hit = tabel.find(([, m, re]) => merk.includes(m) && re.test(model));
-  return hit ? hit[0] : null;
-}
+import { AUTOS } from '../src/data/autos.js';
+import { matchAuto, normaliseerKenteken, isGeldigKenteken, netteNaam } from '../src/lib/match.js';
 
 const groen = (s) => `\x1b[32m${s}\x1b[0m`;
 const rood = (s) => `\x1b[31m${s}\x1b[0m`;
+const grijs = (s) => `\x1b[90m${s}\x1b[0m`;
 let fout = 0;
 
-function check(oms, merk, benaming, verwacht) {
-  const kreeg = matchZip(merk, benaming);
+const slugVan = (merk, benaming, soort = 'Personenauto') => {
+  const a = matchAuto({ merk, handelsbenaming: benaming, voertuigsoort: soort }, AUTOS);
+  return a ? a.slug : null;
+};
+
+function check(oms, merk, benaming, verwacht, soort = 'Personenauto') {
+  const kreeg = slugVan(merk, benaming, soort);
   const ok = kreeg === verwacht;
   if (!ok) fout++;
   console.log(
-    `  ${ok ? groen('OK  ') : rood('MIS ')} ${oms.padEnd(46)} ${
-      ok ? '' : rood(`verwacht ${verwacht}, kreeg ${kreeg}`)
-    }`
+    `  ${ok ? groen('OK  ') : rood('MIS ')} ${oms.padEnd(44)}` +
+      (ok ? '' : rood(` verwacht ${verwacht}, kreeg ${kreeg}`))
   );
 }
 
-console.log('\n=== Moet matchen ===');
-check('VW GOLF', 'VOLKSWAGEN', 'GOLF', 'volkswagen-golf');
+console.log('\n=== Kenteken en naamweergave ===');
+check.total = 0;
+console.log(
+  `  ${normaliseerKenteken('12-ab-3c') === '12AB3C' ? groen('OK  ') : rood('MIS ')} kenteken normaliseren`
+);
+console.log(
+  `  ${isGeldigKenteken('12AB3') === false ? groen('OK  ') : rood('MIS ')} 5 tekens is ongeldig`
+);
+console.log(
+  `  ${netteNaam('VOLKSWAGEN', 'GOLF') === 'Volkswagen Golf' ? groen('OK  ') : rood('MIS ')} nette naam: Volkswagen Golf`
+);
+console.log(
+  `  ${netteNaam('BENTLEY', 'BENTLEY CONTINENTAL GT') === 'Bentley Continental GT' ? groen('OK  ') : rood('MIS ')} merk niet dubbel tonen`
+);
+
+console.log('\n=== Volumeauto\'s moeten matchen ===');
 check('VW POLO', 'VOLKSWAGEN', 'POLO', 'volkswagen-polo');
-check('VW TRANSPORTER', 'VOLKSWAGEN', 'TRANSPORTER', 'volkswagen-transporter');
-check('VW TIGUAN', 'VOLKSWAGEN', 'TIGUAN', 'volkswagen-tiguan');
-check('AUDI A3 SPORTBACK', 'AUDI', 'A3 SPORTBACK', 'audi-a3');
-check('AUDI A4 AVANT', 'AUDI', 'A4 AVANT', 'audi-a4');
+check('KIA PICANTO', 'KIA', 'PICANTO', 'kia-picanto');
+check('FORD FIESTA', 'FORD', 'FIESTA', 'ford-fiesta');
+check('TOYOTA AYGO (merk dubbel)', 'TOYOTA', 'TOYOTA AYGO', 'toyota-aygo');
+check('RENAULT CLIO', 'RENAULT', 'CLIO', 'renault-clio');
+check('OPEL CORSA', 'OPEL', 'CORSA', 'opel-corsa');
+check('PEUGEOT 208', 'PEUGEOT', '208', 'peugeot-208');
+check('PEUGEOT 2008', 'PEUGEOT', '2008', 'peugeot-2008');
+check('FIAT 500 (merk dubbel)', 'FIAT', 'FIAT 500', 'fiat-500');
+check('CITROEN C1 (merk dubbel)', 'CITROEN', 'CITROEN C1', 'citroen-c1');
+check('SKODA OCTAVIA', 'SKODA', 'OCTAVIA', 'skoda-octavia');
+check('VW UP!', 'VOLKSWAGEN', 'UP!', 'volkswagen-up');
+check('VW T-ROC', 'VOLKSWAGEN', 'T-ROC', 'volkswagen-t-roc');
+check('HYUNDAI I10', 'HYUNDAI', 'I10', 'hyundai-i10');
+check('NISSAN QASHQAI (merk dubbel)', 'NISSAN', 'NISSAN QASHQAI', 'nissan-qashqai');
+check('VOLVO XC40', 'VOLVO', 'XC40', 'volvo-xc40');
+
+console.log('\n=== Premium moet matchen ===');
 check('BMW 3ER REIHE', 'BMW', '3ER REIHE', 'bmw-3-serie');
 check('BMW 320I', 'BMW', '320I', 'bmw-3-serie');
-check('BMW 330E', 'BMW', '330E', 'bmw-3-serie');
+check('BMW 118I', 'BMW', '118I', 'bmw-1-serie');
+check('BMW 520D', 'BMW', '520D', 'bmw-5-serie');
+check('BMW 740I', 'BMW', '740I', 'bmw-7-serie');
+check('BMW X1 SDRIVE20I', 'BMW', 'X1 SDRIVE20I', 'bmw-x1');
+check('BMW X5 XDRIVE40I', 'BMW', 'X5 XDRIVE40I', 'bmw-x5');
 check('MB C 180', 'MERCEDES-BENZ', 'C 180', 'mercedes-c-klasse');
-check('MB C 180 KOMPRESSOR', 'MERCEDES-BENZ', 'C 180 KOMPRESSOR', 'mercedes-c-klasse');
-check('VOLVO V60', 'VOLVO', 'V60', 'volvo-v60');
-check('TESLA MODEL 3', 'TESLA', 'MODEL 3', 'tesla-model-3');
-check('TESLA Model 3 kleine letters', 'TESLA', 'Model 3', 'tesla-model-3');
+check('MB A 180', 'MERCEDES-BENZ', 'A 180', 'mercedes-a-klasse');
+check('MB E 200', 'MERCEDES-BENZ', 'E 200', 'mercedes-e-klasse');
+check('MB CLA 180', 'MERCEDES-BENZ', 'CLA 180', 'mercedes-cla');
+check('MB GLC 300 E 4MATIC', 'MERCEDES-BENZ', 'GLC 300 E 4MATIC', 'mercedes-glc');
+check('AUDI A3 SPORTBACK', 'AUDI', 'A3 SPORTBACK', 'audi-a3');
+check('AUDI Q5', 'AUDI', 'Q5', 'audi-q5');
+check('PORSCHE 911 CARRERA 4S', 'PORSCHE', '911 CARRERA 4S', 'porsche-911');
+check('PORSCHE CAYENNE E-HYBRID', 'PORSCHE', 'CAYENNE E-HYBRID', 'porsche-cayenne');
+check('RANGE ROVER SPORT', 'LAND ROVER', 'RANGE ROVER SPORT', 'range-rover-sport');
+check('RANGE ROVER EVOQUE', 'LAND ROVER', 'RANGE ROVER EVOQUE', 'range-rover-evoque');
+check('RANGE ROVER (kaal)', 'LAND ROVER', 'RANGE ROVER', 'range-rover');
+check('DISCOVERY SPORT', 'LAND ROVER', 'DISCOVERY SPORT', 'land-rover-discovery-sport');
+check('DISCOVERY (kaal)', 'LAND ROVER', 'DISCOVERY', 'land-rover-discovery');
+check('BENTLEY CONTINENTAL GT (dubbel)', 'BENTLEY', 'BENTLEY CONTINENTAL GT', 'bentley-continental-gt');
+check('BENTAYGA V8', 'BENTLEY', 'BENTAYGA V8', 'bentley-bentayga');
+check('FERRARI 488', 'FERRARI', '488', 'ferrari-488');
+check('FERRARI 812 SUPERFAST', 'FERRARI', '812 SUPERFAST', 'ferrari-812-superfast');
+check('TESLA MODEL S', 'TESLA', 'MODEL S', 'tesla-model-s');
+check('TESLA Model 3 (kleine letters)', 'TESLA', 'Model 3', 'tesla-model-3');
 
-console.log('\n=== Mag NIET matchen ===');
-check('MB CLA 180', 'MERCEDES-BENZ', 'CLA 180', null);
-check('MB GLC 300 E 4MATIC', 'MERCEDES-BENZ', 'GLC 300 E 4MATIC', null);
-check('MB CITAN', 'MERCEDES-BENZ', 'CITAN', null);
+console.log('\n=== Valkuilen: dit mag JUIST NIET matchen ===');
+check('MB CLS 350 is geen C-klasse', 'MERCEDES-BENZ', 'CLS 350', 'mercedes-cls');
 check('MB SPRINTER', 'MERCEDES-BENZ', 'SPRINTER', null);
-check('BMW IX3', 'BMW', 'IX3', null);
-check('BMW M3', 'BMW', 'M3', null);
-check('BMW X3', 'BMW', 'X3', null);
-check('BMW 1ER REIHE', 'BMW', '1ER REIHE', null);
-check('BMW X1 SDRIVE20I', 'BMW', 'X1 SDRIVE20I', null);
+check('MB CITAN', 'MERCEDES-BENZ', 'CITAN', null);
+check('BMW IX3 is geen X3', 'BMW', 'IX3', null);
+check('BMW IX1 is geen X1', 'BMW', 'IX1 EDRIVE20', null);
+check('BMW M3 is geen 3-serie', 'BMW', 'M3', null);
 check('BMW motor R 1200 GS', 'BMW', 'R 1200 GS', null);
-check('TESLA MODEL Y', 'TESLA', 'MODEL Y', null);
-check('VOLVO XC60', 'VOLVO', 'XC60', null);
-check('VOLVO V40', 'VOLVO', 'V40', null);
-check('VW CADDY', 'VOLKSWAGEN', 'CADDY', null);
-check('VW CRAFTER', 'VOLKSWAGEN', 'CRAFTER', null);
-check('VW UP', 'VOLKSWAGEN', 'UP', null);
+check('CITROEN C15 is geen C1', 'CITROEN', 'C15', null);
+check('FIAT 500L is geen 500', 'FIAT', 'FIAT 500L', null);
+check('FORD KUGA is geen Ka', 'FORD', 'KUGA', null);
+check('LAND ROVER DEFENDER', 'LAND ROVER', 'DEFENDER', null);
+check('PORSCHE TAYCAN', 'PORSCHE', 'TAYCAN', null);
+check('TESLA MODEL Y is geen Model 3', 'TESLA', 'MODEL Y', 'tesla-model-y');
+check('Vrachtwagen wordt geweigerd', 'VOLVO', 'V60', null, 'Vrachtauto');
+console.log(
+  `  ${slugVan('VOLVO', 'FH', 'Vrachtauto') === null ? groen('OK  ') : rood('MIS ')} Volvo FH vrachtwagen geweigerd`
+);
 
-// --------------------------------------------------- live scan op valse hits
-console.log('\n=== Live scan: valse treffers in de top-200 per merk ===');
-const merken = ['VOLKSWAGEN', 'AUDI', 'BMW', 'MERCEDES-BENZ', 'VOLVO', 'TESLA'];
+// ---------------------------------------------------- live scan RDW
+console.log('\n=== Live scan: wat matcht er per merk in de top-150? ===');
+const merken = [
+  'VOLKSWAGEN', 'AUDI', 'BMW', 'MERCEDES-BENZ', 'VOLVO', 'TESLA',
+  'PORSCHE', 'LAND ROVER', 'BENTLEY', 'FERRARI',
+  'KIA', 'FORD', 'TOYOTA', 'RENAULT', 'OPEL', 'PEUGEOT', 'CITROEN', 'FIAT',
+];
+
+let totaalGedekt = 0;
+let totaalGezien = 0;
+
 for (const merk of merken) {
-  const url =
-    `https://opendata.rdw.nl/resource/m9d7-ebf2.json?$select=handelsbenaming,count(*) as n` +
-    `&$where=merk='${encodeURIComponent(merk)}'&$group=handelsbenaming&$order=n DESC&$limit=200`;
-  const rijen = await (await fetch(url)).json();
-  const verdacht = [];
-  for (const r of rijen) {
-    const slug = matchZip(merk, r.handelsbenaming);
-    if (!slug) continue;
-    // Ruwe controle: hoort de modelnaam echt bij deze slug?
-    const kern = slug.split('-').slice(1).join(' ').toUpperCase();
-    const b = r.handelsbenaming.toUpperCase();
-    const plausibel =
-      b.includes(kern.split(' ')[0]) ||
-      /^3ER|^3\d{2}/.test(b) ||
-      /^C ?\d{3}/.test(b) ||
-      /MODEL ?3/.test(b) ||
-      /TRANSPORTER|MULTIVAN|CARAVELLE/.test(b);
-    if (!plausibel) verdacht.push(`${r.handelsbenaming}  -> ${slug}  (${r.n}x)`);
+  let rijen;
+  try {
+    rijen = await (
+      await fetch(
+        `https://opendata.rdw.nl/resource/m9d7-ebf2.json?$select=handelsbenaming,count(*) as n` +
+          `&$where=merk='${encodeURIComponent(merk)}' AND voertuigsoort='Personenauto'` +
+          `&$group=handelsbenaming&$order=n DESC&$limit=150`
+      )
+    ).json();
+  } catch (err) {
+    console.log(rood(`  ${merk}: niet bereikbaar`));
+    continue;
   }
-  console.log(`  ${merk}:`);
-  if (verdacht.length) verdacht.forEach((v) => console.log(rood(`      ${v}`)));
-  else console.log(groen('      geen verdachte treffers'));
+
+  let gedekt = 0, gezien = 0;
+  const treffers = new Map();
+  for (const r of rijen) {
+    const n = Number(r.n) || 0;
+    gezien += n;
+    const a = matchAuto({ merk, handelsbenaming: r.handelsbenaming, voertuigsoort: 'Personenauto' }, AUTOS);
+    if (a) {
+      gedekt += n;
+      if (!treffers.has(a.slug)) treffers.set(a.slug, []);
+      const l = treffers.get(a.slug);
+      if (l.length < 3) l.push(r.handelsbenaming);
+    }
+  }
+  totaalGedekt += gedekt;
+  totaalGezien += gezien;
+  const pct = gezien ? ((gedekt / gezien) * 100).toFixed(0) : '0';
+  console.log(
+    `  ${merk.padEnd(15)} ${String(pct).padStart(3)}% gedekt  ${grijs(
+      `${gedekt.toLocaleString('nl-NL')} van ${gezien.toLocaleString('nl-NL')} · ${treffers.size} modellen`
+    )}`
+  );
 }
 
-console.log(fout ? rood(`\n${fout} testgeval(len) fout.\n`) : groen('\nAlles goed.\n'));
+const totPct = totaalGezien ? ((totaalGedekt / totaalGezien) * 100).toFixed(1) : '0';
+console.log(
+  `\n  ${groen('TOTAAL')} ${totPct}% van de auto's van deze merken valt op een herkend model` +
+    grijs(`  (${totaalGedekt.toLocaleString('nl-NL')} van ${totaalGezien.toLocaleString('nl-NL')})`)
+);
+
+console.log(fout ? rood(`\n${fout} test(s) mislukt.\n`) : groen('\nAlle tests geslaagd.\n'));
+process.exit(fout ? 1 : 0);

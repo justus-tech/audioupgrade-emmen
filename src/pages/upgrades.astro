@@ -1,18 +1,63 @@
 ---
+/**
+ * De upgradepagina. Eén pagina, die zich aanpast aan de auto van de bezoeker.
+ *
+ * Vult iemand zijn kenteken in, dan halen we merk en handelsbenaming op bij de
+ * RDW en tonen we "Upgrades voor jouw <auto>" met een foto erboven. De vier
+ * pakketten eronder zijn voor iedereen hetzelfde — die komen uit site.js.
+ *
+ * De officiële naam komt rechtstreeks van de RDW, dus dit werkt voor ELKE auto
+ * in Nederland, ook eentje die niet in autos.js staat. Alleen de foto hebben we
+ * per model nodig.
+ */
 import Base from '../layouts/Base.astro';
 import PackageCard from '../components/PackageCard.astro';
-import { PACKAGES } from '../data/site.js';
-import { MODELS } from '../data/models.js';
+import { PACKAGES, SITE } from '../data/site.js';
+import { autoTabel } from '../data/autos.js';
+import { GARANTIE, CTA } from '../data/generiek.js';
+import { MERKEN } from '../data/merken.js';
 ---
 <Base
-  title="Pakketten & Prijzen — Car Audio Upgrades | Audio Upgrade Emmen"
-  description="Van draadloze CarPlay (v.a. €695) tot The Reference Edition met 8-kanaals versterker. Bekijk alle car audio pakketten van Audio Upgrade Emmen, incl. montage en btw."
+  title="Upgrades & prijzen — check je kenteken | Audio Upgrade Emmen"
+  description="Vul je kenteken in en zie direct wat er voor jouw auto mogelijk is. Van draadloos CarPlay (v.a. €695) tot The Reference Edition. All-in prijzen, incl. montage en btw."
   path="/upgrades"
 >
+  <script type="application/json" id="auto-tabel" set:html={JSON.stringify(autoTabel)}></script>
+
+  <section>
+    <div class="wrap center">
+      <span class="eyebrow">Transparante all-in prijzen · incl. montage &amp; btw</span>
+      <h1 id="upgrade-titel">Upgrades &amp; prijzen</h1>
+      <p id="upgrade-sub" style="margin:1.2em auto 0;">
+        Vul je kenteken in en we laten zien wat er voor jouw auto mogelijk is.
+      </p>
+
+      <form class="kenteken-form" id="upgrade-form" autocomplete="off">
+        <input class="plate" id="upgrade-kenteken" type="text" placeholder="XX-99-XX"
+               maxlength="8" aria-label="Kenteken" />
+        <button class="btn solid" type="submit">Toon mijn auto</button>
+      </form>
+      <div id="upgrade-melding" aria-live="polite"></div>
+    </div>
+  </section>
+
+  {/* Verschijnt pas als er een auto herkend is. */}
+  <section class="alt" id="auto-blok" hidden>
+    <div class="wrap">
+      <figure class="auto-figuur">
+        <img id="auto-foto" class="auto-foto" alt="" hidden width="1600" height="900" />
+        <div id="auto-fallback" class="auto-fallback">
+          <span class="auto-fallback-merk" id="auto-fallback-merk"></span>
+          <span class="auto-fallback-model" id="auto-fallback-model"></span>
+        </div>
+        <figcaption id="auto-bijschrift"></figcaption>
+      </figure>
+    </div>
+  </section>
+
   <section>
     <div class="wrap">
-      <span class="eyebrow">Transparante all-in prijzen · incl. montage &amp; btw</span>
-      <h1>Upgrades &amp; prijzen</h1>
+      <h2 id="pakketten-kop">Onze pakketten</h2>
       <div class="grid cols-3 mt">
         {PACKAGES.map((pkg) => <PackageCard pkg={pkg} />)}
       </div>
@@ -20,15 +65,163 @@ import { MODELS } from '../data/models.js';
   </section>
 
   <section class="alt">
+    <div class="wrap">
+      <h2>{GARANTIE.kop}</h2>
+      <p style="margin-top:1.4em">{GARANTIE.tekst}</p>
+    </div>
+  </section>
+
+  <section>
     <div class="wrap center">
-      <h2>Populaire modellen</h2>
-      <p style="margin:0 auto 2em;">Bekijk wat er mogelijk is voor jouw auto.</p>
+      <h2>Of kies je merk</h2>
+      <p style="margin:0 auto 2em;">Per merk leggen we uit wat er af fabriek misgaat.</p>
       <div class="grid cols-4">
-        {MODELS.map((m) => (
-          <a class="btn" href={`/audio-upgrade/${m.slug}`}>{m.brand} {m.model}</a>
-        ))}
+        {MERKEN.map((m) => <a class="btn" href={`/merk/${m.slug}`}>{m.naam}</a>)}
       </div>
-      <p class="mt" style="margin-left:auto;margin-right:auto;">Staat jouw auto er niet bij? <a href="/audio-upgrade">Doe de kenteken-check →</a></p>
+    </div>
+  </section>
+
+  <section class="alt center">
+    <div class="wrap">
+      <h2>Weet je het nog niet zeker?</h2>
+      <p style="margin:0 auto 2em;">{CTA.tekst}</p>
+      <a class="btn wa" href={SITE.whatsapp}>{CTA.knop}</a>
     </div>
   </section>
 </Base>
+
+<script>
+  import {
+    matchAuto,
+    isGeldigKenteken,
+    normaliseerKenteken,
+    netteNaam,
+  } from '../lib/match.js';
+
+  const tabel = JSON.parse(document.getElementById('auto-tabel').textContent);
+
+  const form = document.getElementById('upgrade-form');
+  const input = document.getElementById('upgrade-kenteken');
+  const melding = document.getElementById('upgrade-melding');
+  const titel = document.getElementById('upgrade-titel');
+  const sub = document.getElementById('upgrade-sub');
+  const blok = document.getElementById('auto-blok');
+  const foto = document.getElementById('auto-foto');
+  const fallback = document.getElementById('auto-fallback');
+  const fbMerk = document.getElementById('auto-fallback-merk');
+  const fbModel = document.getElementById('auto-fallback-model');
+  const bijschrift = document.getElementById('auto-bijschrift');
+  const pakkettenKop = document.getElementById('pakketten-kop');
+
+  function toon(voertuig) {
+    const auto = matchAuto(voertuig, tabel);
+    // Kennen we de auto? Dan onze eigen nette schrijfwijze (Škoda Octavia),
+    // anders de RDW-tekst netjes gemaakt (werkt voor élke auto in Nederland).
+    const naam = auto
+      ? `${auto.merk} ${auto.model}`
+      : netteNaam(voertuig.merk, voertuig.handelsbenaming);
+
+    titel.textContent = `Upgrades voor jouw ${naam}`;
+    pakkettenKop.textContent = `Wat we voor jouw ${naam} kunnen doen`;
+    sub.textContent =
+      'Alle prijzen zijn all-in: inclusief montage en btw, met behoud van je fabrieksgarantie.';
+
+    if (auto && auto.foto) {
+      foto.src = auto.foto;
+      foto.alt = naam;
+      foto.hidden = false;
+      fallback.hidden = true;
+    } else {
+      // Geen foto? Dan een nette naamweergave in plaats van een leeg vlak.
+      foto.hidden = true;
+      fallback.hidden = false;
+      fbMerk.textContent = auto ? auto.merk : voertuig.merk;
+      fbModel.textContent = auto ? auto.model : voertuig.handelsbenaming;
+    }
+
+    bijschrift.textContent = `${naam} · kenteken ${voertuig.kenteken}`;
+    blok.hidden = false;
+    melding.textContent = '';
+    blok.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    try {
+      sessionStorage.setItem('aue-auto', JSON.stringify(voertuig));
+    } catch (e) {
+      /* privémodus: dan onthouden we het gewoon niet */
+    }
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const kenteken = normaliseerKenteken(input.value);
+
+    if (!isGeldigKenteken(kenteken)) {
+      melding.textContent = 'Vul een geldig kenteken in, bijvoorbeeld XX-99-XX.';
+      return;
+    }
+
+    melding.textContent = 'Even kijken wat je rijdt…';
+    try {
+      const res = await fetch(
+        'https://opendata.rdw.nl/resource/m9d7-ebf2.json?kenteken=' +
+          encodeURIComponent(kenteken) +
+          '&$select=kenteken,merk,handelsbenaming,voertuigsoort'
+      );
+      if (!res.ok) throw new Error('rdw');
+      const data = await res.json();
+
+      if (!Array.isArray(data) || !data.length) {
+        melding.textContent = 'Dat kenteken kennen we niet. Typfout? Anders helpen we je graag via WhatsApp.';
+        return;
+      }
+      toon(data[0]);
+    } catch (err) {
+      melding.textContent = 'De kenteken-check is even niet bereikbaar. App ons gerust direct.';
+    }
+  });
+
+  // Kwam iemand hier al eerder met zijn kenteken? Dan meteen weer tonen.
+  try {
+    const bewaard = sessionStorage.getItem('aue-auto');
+    if (bewaard) {
+      const v = JSON.parse(bewaard);
+      input.value = v.kenteken || '';
+      toon(v);
+    }
+  } catch (e) {
+    /* niets aan de hand, dan begint de bezoeker gewoon opnieuw */
+  }
+</script>
+
+<style>
+  #upgrade-melding { margin-top: 18px; min-height: 24px; color: var(--text-dim); }
+
+  .auto-figuur { margin: 0; }
+  .auto-foto { width: 100%; height: auto; border: 1px solid var(--line); }
+
+  /* Zolang er geen eigen werkfoto is, tonen we de naam groot in beeld.
+     Dat oogt bewust in plaats van als een ontbrekend plaatje. */
+  .auto-fallback {
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    aspect-ratio: 16 / 7;
+    border: 1px solid var(--line-strong);
+    background:
+      radial-gradient(ellipse at 50% 120%, color-mix(in srgb, var(--accent) 18%, transparent) 0%, transparent 62%),
+      var(--bg);
+    text-align: center;
+    padding: 24px;
+  }
+  .auto-fallback-merk {
+    font-family: 'Oswald', sans-serif; text-transform: uppercase;
+    letter-spacing: .4em; font-size: .8rem; color: var(--accent); margin-bottom: .6em;
+  }
+  .auto-fallback-model {
+    font-family: 'Oswald', sans-serif; text-transform: uppercase;
+    letter-spacing: .12em; font-size: clamp(1.8rem, 6vw, 3.4rem); line-height: 1.1;
+    color: var(--text);
+  }
+  .auto-figuur figcaption {
+    margin-top: 12px; font-size: .82rem; color: var(--text-dim);
+    letter-spacing: .1em; text-transform: uppercase; font-family: 'Oswald', sans-serif;
+  }
+</style>
