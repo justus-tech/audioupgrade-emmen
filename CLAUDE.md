@@ -35,6 +35,18 @@ Premium car audio, CarPlay-inbouw, DSP-tuning en akoestische deurdemping. Emmen,
 
 Merken: Alpine, Pioneer, JL Audio, Musway, Gladen Mosconi, STEG.
 
+## Mobiel is de site
+
+**99% van de bezoekers zit op een telefoon (Android of iPhone).** Behandel de mobiele weergave dus niet als een afgeleide van desktop, maar als het hoofdontwerp. Controleer elke wijziging op 390px breed voordat je hem oplevert.
+
+Vaste aandachtspunten:
+
+- Geen horizontale overflow. Controleer met `document.documentElement.scrollWidth`.
+- Zet `:hover`-effecten altijd in `@media (hover: hover)`. Op een telefoon blijft hover na een tik plakken, waardoor een knop er leeg of uitgeschakeld uitziet.
+- Knoppen vullen op mobiel de breedte, zodat je ze met een duim raakt.
+- De zwevende WhatsApp-knop rechtsonder is de belangrijkste conversieknop. Weghalen mag alleen als Justus dat vraagt.
+- De kopbalk is sticky; houd `scroll-margin-top` in stand, anders verdwijnt de bovenkant van een sectie eronder.
+
 ## Schrijfstijl op de site
 
 - **Aanspreekvorm: "je"**, nooit "u". Consequent op de hele site.

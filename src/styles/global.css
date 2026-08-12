@@ -94,19 +94,24 @@ section.alt { background: var(--bg-alt); }
   background: transparent;
   cursor: pointer;
 }
-.btn:hover { background: var(--text); color: var(--bg); transform: translateY(-2px); }
-
 .btn.solid,
 .btn.wa {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-ink);
 }
-.btn.solid:hover,
-.btn.wa:hover {
-  background: transparent;
-  color: var(--accent);
-  border-color: var(--accent);
+
+/* Hover-effecten alleen op apparaten die écht een muisaanwijzer hebben.
+   Op een telefoon blijft :hover na een tik "plakken", waardoor een knop er
+   daarna uitziet alsof hij leeg of uitgeschakeld is. */
+@media (hover: hover) {
+  .btn:hover { background: var(--text); color: var(--bg); transform: translateY(-2px); }
+  .btn.solid:hover,
+  .btn.wa:hover {
+    background: transparent;
+    color: var(--accent);
+    border-color: var(--accent);
+  }
 }
 
 /* ---- header ---- */
@@ -169,7 +174,9 @@ nav.main a[aria-current="page"] { color: var(--text); border-bottom-color: var(-
   display: flex; flex-direction: column; gap: 14px;
   transition: transform .2s, border-color .2s;
 }
-.card:hover { transform: translateY(-4px); border-color: var(--accent); }
+@media (hover: hover) {
+  .card:hover { transform: translateY(-4px); border-color: var(--accent); }
+}
 .card .price { font-family: 'Oswald'; font-size: 1.6rem; letter-spacing: .05em; color: var(--text); line-height: 1.2; }
 /* Eigen regel, anders breekt "incl. montage & btw" halverwege af. */
 .card .price small { display: block; font-size: .75rem; color: var(--text-dim); letter-spacing: .1em; margin-top: 4px; }
@@ -278,27 +285,66 @@ footer.site .legal { font-size: .78rem; }
 }
 
 @media (max-width: 700px) {
-  /* Menu onder het logo in plaats van ernaast. Naast elkaar paste het niet:
-     de menu-items liepen over het logo heen en "Jouw auto" brak doormidden.
-     Het menu schuift horizontaal mee, zodat er niets afbreekt. */
+  /* Vrijwel al het bezoek komt van een telefoon, dus dit is de belangrijkste
+     weergave. Menu onder het logo: naast elkaar liepen de items over het logo
+     heen en brak "Jouw auto" doormidden. */
   header.site .wrap {
     height: auto;
     flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
-    padding-top: 12px;
-    padding-bottom: 12px;
+    gap: 8px;
+    padding-top: 10px;
+    padding-bottom: 10px;
   }
   nav.main {
     width: 100%;
-    gap: 20px;
+    gap: 14px;
     overflow-x: auto;
     flex-wrap: nowrap;
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
   nav.main::-webkit-scrollbar { display: none; }
-  nav.main a { flex: none; white-space: nowrap; font-size: .75rem; }
+  /* Kleiner én krappere letterafstand, zodat alle vijf de items passen en
+     "Contact" niet half afgesneden aan de rand hangt. */
+  nav.main a { flex: none; white-space: nowrap; font-size: .68rem; letter-spacing: .06em; }
 
-  section { padding: 60px 0; }
+  section { padding: 56px 0; }
+
+  /* Knoppen vullen de breedte: makkelijker raken met een duim. */
+  .btn { display: block; text-align: center; }
+  .btn + .btn { margin-top: 12px; margin-left: 0 !important; }
+  .card .btn { align-self: stretch; }
+}
+
+/* De koptekst blijft bovenaan staan. Zonder deze regel verdwijnt de bovenkant
+   van een sectie eronder zodra we ergens naartoe scrollen. */
+section, .schets-blok, [id] { scroll-margin-top: 104px; }
+
+/* ---- zwevende WhatsApp-knop (alleen telefoon) ---- */
+.wa-zwevend { display: none; }
+
+@media (max-width: 700px) {
+  .wa-zwevend {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 60;
+    padding: 14px 20px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    text-decoration: none;
+    border-radius: 40px;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    font-size: .74rem;
+    font-weight: 500;
+    box-shadow: 0 6px 22px rgba(0, 0, 0, .45);
+  }
+  /* Ruimte onderaan, anders dekt de knop de laatste footerregel af. */
+  footer.site { padding-bottom: 96px; }
 }

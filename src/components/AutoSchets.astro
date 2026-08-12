@@ -2,76 +2,23 @@
 /**
  * Lijntekening van een auto, per carrosserietype.
  *
- * Waarom dit werkt: de RDW registreert bij élk kenteken het type carrosserie
- * (`inrichting`). Zes tekeningen dekken daarmee vrijwel de hele Nederlandse
- * autopark — we hebben dus geen 96 losse plaatjes nodig.
+ * De vorm komt uit src/lib/carrosserie.js, zodat deze schets en de doorkijk
+ * per pakket dezelfde bron gebruiken.
  *
- * Deze tekeningen zijn zelf getekend. Dat is bewust: foto's van fabrikanten
- * zijn auteursrechtelijk beschermd en automerklogo's merkrechtelijk. Een eigen
- * stilering van een carrosserievorm is dat geen van beide.
- *
- * Kleuren komen uit het palet (currentColor + var(--accent)), dus de schets
- * volgt automatisch de huisstijl.
+ * Zelf getekend, bewust: foto's van fabrikanten zijn auteursrechtelijk
+ * beschermd en automerklogo's merkrechtelijk. Een eigen stilering van een
+ * carrosserievorm is dat geen van beide.
  */
+import {
+  carrosseriePad,
+  normaliseerType,
+  stijlHoogte,
+  WIELEN,
+  GROND,
+} from '../lib/carrosserie.js';
+
 const { type = 'hatchback', klasse = '' } = Astro.props;
-
-/**
- * RDW-waarde -> tekening. De RDW schrijft dit in kleine letters, maar we
- * normaliseren voor de zekerheid.
- */
-const TYPES = {
-  hatchback: 'hatchback',
-  stationwagen: 'stationwagen',
-  sedan: 'sedan',
-  mpv: 'mpv',
-  coupe: 'coupe',
-  cabriolet: 'cabriolet',
-  terreinvoertuig: 'mpv',
-  kampeerwagen: 'bus',
-  bus: 'bus',
-};
-
-const soort = TYPES[String(type).toLowerCase().trim()] ?? 'hatchback';
-
-/** De daklijn per type — dat is wat de silhouetten van elkaar onderscheidt. */
-const DAKEN = {
-  // Loopt van het einde van de motorkap over het dak naar de achterkant.
-  hatchback:     'L 132,50 L 232,48 L 258,56 L 286,92',
-  stationwagen:  'L 132,50 L 268,48 L 300,52 L 306,92',
-  sedan:         'L 132,52 L 226,50 L 262,78 L 300,86',
-  mpv:           'L 126,40 L 250,38 L 288,52 L 300,92',
-  coupe:         'L 140,54 L 214,54 L 268,84 L 300,92',
-  cabriolet:     'L 134,60 L 152,58 L 300,86',
-  bus:           'L 122,32 L 316,32 L 320,92',
-};
-
-const WIELEN = [
-  { x: 112, r: 27 },
-  { x: 296, r: 27 },
-];
-const GROND = 128;   // hart van de wielen
-const ONDER = 120;   // onderkant carrosserie
-const ARCH = 34;     // straal van de wielkast
-
-/**
- * Eén doorlopend pad: voorbumper omhoog, over de motorkap, het dak (per type),
- * achterkant omlaag, en dan langs de onderkant terug met twee wielkasten erin.
- * Die wielkasten zitten dus ín de omtrek — anders loopt de carrosserielijn
- * dwars door de wielen heen.
- */
-const carrosserie = [
-  `M 26,${ONDER}`,
-  'C 26,104 32,99 44,97',
-  'L 86,90',
-  DAKEN[soort],
-  'L 352,97',
-  `C 366,99 372,104 372,${ONDER}`,
-  `L ${WIELEN[1].x + ARCH},${ONDER}`,
-  `A ${ARCH},${ARCH} 0 0 1 ${WIELEN[1].x - ARCH},${ONDER}`,
-  `L ${WIELEN[0].x + ARCH},${ONDER}`,
-  `A ${ARCH},${ARCH} 0 0 1 ${WIELEN[0].x - ARCH},${ONDER}`,
-  'Z',
-].join(' ');
+const soort = normaliseerType(type);
 ---
 <svg
   class={`auto-schets ${klasse}`}
@@ -84,21 +31,19 @@ const carrosserie = [
   stroke-linecap="round"
   stroke-linejoin="round"
 >
-  {/* De carrosserie, inclusief wielkasten */}
-  <path d={carrosserie} />
+  <path d={carrosseriePad(soort)} />
 
-  {/* Banden en velgen */}
   {WIELEN.map((w) => (
     <>
-      <circle cx={w.x} cy={GROND} r={w.r} stroke="currentColor" />
-      <circle cx={w.x} cy={GROND} r={w.r - 11} stroke="var(--accent)" stroke-width="3" />
+      <circle cx={w.x} cy={GROND} r={w.r} />
+      <circle cx={w.x} cy={GROND} r={w.r - 11} stroke="var(--accent)" />
     </>
   ))}
 
-  {/* Zijruit-scheiding (B-stijl), niet bij de cabriolet */}
-  {soort !== 'cabriolet' && <path d={`M 186,${soort === 'mpv' ? 37 : 49} L 186,88`} stroke-width="2" opacity="0.75" />}
+  {soort !== 'cabriolet' && (
+    <path d={`M 186,${stijlHoogte(soort)} L 186,88`} stroke-width="2" opacity="0.75" />
+  )}
 
-  {/* Grondlijn */}
   <path d="M 8,156 L 392,156" stroke="var(--accent)" stroke-width="2" opacity="0.5" />
 </svg>
 

@@ -12,6 +12,7 @@
  */
 import Base from '../layouts/Base.astro';
 import PackageCard from '../components/PackageCard.astro';
+import PakketSchets from '../components/PakketSchets.astro';
 import { PACKAGES, SITE } from '../data/site.js';
 import { autoTabel } from '../data/autos.js';
 import { GARANTIE, CTA } from '../data/generiek.js';
@@ -64,6 +65,21 @@ import { MERKEN } from '../data/merken.js';
     </div>
   </section>
 
+  {/* Doorkijk per pakket. We renderen één blok per carrosserietype en tonen
+      alleen het blok dat bij de auto van de bezoeker hoort. Zo hoeft er geen
+      SVG in JavaScript opgebouwd te worden. */}
+  <section class="alt">
+    <div class="wrap">
+      <h2>Wat komt waar in je auto?</h2>
+      <p style="margin-bottom:2.4em">Klik op een pakket en zie wat we inbouwen, en waar.</p>
+      {['hatchback', 'stationwagen', 'sedan', 'mpv', 'coupe', 'cabriolet', 'bus'].map((t) => (
+        <div class="schets-variant" data-type={t} hidden={t !== 'hatchback'}>
+          <PakketSchets type={t} />
+        </div>
+      ))}
+    </div>
+  </section>
+
   <section class="alt">
     <div class="wrap">
       <h2>{GARANTIE.kop}</h2>
@@ -97,6 +113,7 @@ import { MERKEN } from '../data/merken.js';
     normaliseerKenteken,
     netteNaam,
   } from '../lib/match.js';
+  import { normaliseerType } from '../lib/carrosserie.js';
 
   const tabel = JSON.parse(document.getElementById('auto-tabel').textContent);
 
@@ -139,6 +156,14 @@ import { MERKEN } from '../data/merken.js';
       fbModel.textContent = auto ? auto.model : voertuig.handelsbenaming;
     }
 
+    // De RDW registreert bij elk kenteken het carrosserietype. Daarmee tonen
+    // we de doorkijk die bij déze auto past: in een bus zit de subwoofer
+    // ergens anders dan in een hatchback.
+    const soort = normaliseerType(voertuig.inrichting);
+    document.querySelectorAll('.schets-variant').forEach((v) => {
+      v.hidden = v.dataset.type !== soort;
+    });
+
     bijschrift.textContent = `${naam} · kenteken ${voertuig.kenteken}`;
     blok.hidden = false;
     melding.textContent = '';
@@ -165,7 +190,7 @@ import { MERKEN } from '../data/merken.js';
       const res = await fetch(
         'https://opendata.rdw.nl/resource/m9d7-ebf2.json?kenteken=' +
           encodeURIComponent(kenteken) +
-          '&$select=kenteken,merk,handelsbenaming,voertuigsoort'
+          '&$select=kenteken,merk,handelsbenaming,voertuigsoort,inrichting'
       );
       if (!res.ok) throw new Error('rdw');
       const data = await res.json();
