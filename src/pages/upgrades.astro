@@ -47,10 +47,9 @@ import { MERKEN } from '../data/merken.js';
   <section class="alt" id="auto-blok" hidden>
     <div class="wrap">
       <figure class="auto-figuur">
-        {/* Straks kan hier een ingekochte studiofoto komen; tot die tijd
-            tekenen we de auto zelf, in de juiste carrosserie én kleur. */}
-        <img id="auto-foto" class="auto-foto" alt="" hidden width="1600" height="900" />
-
+        {/* Bewust geen foto's: ingekochte studiobeelden bleken te veel gedoe
+            en fabrieksfoto's mogen niet. We tekenen de auto zelf, in de
+            juiste carrosserie én de kleur die de RDW bij het kenteken kent. */}
         <div id="auto-tekening" class="auto-tekening">
           {['hatchback', 'stationwagen', 'sedan', 'mpv', 'coupe', 'cabriolet', 'bus'].map((t) => (
             <div class="auto-variant" data-type={t} hidden={t !== 'hatchback'}>
@@ -133,7 +132,6 @@ import { MERKEN } from '../data/merken.js';
   const titel = document.getElementById('upgrade-titel');
   const sub = document.getElementById('upgrade-sub');
   const blok = document.getElementById('auto-blok');
-  const foto = document.getElementById('auto-foto');
   const tekening = document.getElementById('auto-tekening');
   const autoNaam = document.getElementById('auto-naam');
   const bijschrift = document.getElementById('auto-bijschrift');
@@ -157,21 +155,11 @@ import { MERKEN } from '../data/merken.js';
     const soort = normaliseerType(voertuig.inrichting);
     const kleur = kleurVan(voertuig.eerste_kleur);
 
-    if (auto && auto.foto) {
-      // Is er een ingekochte studiofoto voor dit model? Die wint.
-      foto.src = auto.foto;
-      foto.alt = naam;
-      foto.hidden = false;
-      tekening.hidden = true;
-    } else {
-      foto.hidden = true;
-      tekening.hidden = false;
-      tekening.style.setProperty('--auto-kleur', kleur.hex);
-      tekening.querySelectorAll('.auto-variant').forEach((v) => {
-        v.hidden = v.dataset.type !== soort;
-      });
-      autoNaam.textContent = naam;
-    }
+    tekening.style.setProperty('--auto-kleur', kleur.hex);
+    tekening.querySelectorAll('.auto-variant').forEach((v) => {
+      v.hidden = v.dataset.type !== soort;
+    });
+    autoNaam.textContent = naam;
 
     // De doorkijk laat zien waar alles komt; ook die volgt het carrosserietype,
     // want in een bus zit de subwoofer ergens anders dan in een hatchback.
@@ -239,7 +227,6 @@ import { MERKEN } from '../data/merken.js';
   #upgrade-melding { margin-top: 18px; min-height: 24px; color: var(--text-dim); }
 
   .auto-figuur { margin: 0; }
-  .auto-foto { width: 100%; height: auto; border: 1px solid var(--line); }
 
   /* De auto van de bezoeker: juiste carrosserie, juiste kleur uit de RDW.
      De omtreklijn blijft licht, zodat ook een zwarte auto zichtbaar blijft
