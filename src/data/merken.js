@@ -133,6 +133,19 @@ export const MERKEN = [
       'Ferrari besteedt zijn gewichtsbudget niet aan speakers, en dat is te horen: weinig vermogen, geen fundament en veel reflectie in een cabine vol hard materiaal. Ingrijpen vraagt hier uiterste terughoudendheid. Wij werken bij dit soort auto\'s uitsluitend volledig omkeerbaar en in overleg — waarbij we ook eerlijk zeggen wanneer de winst het werk niet waard is.',
   },
   {
+    slug: 'saab',
+    naam: 'Saab',
+    kort: 'Saab',
+    titel: 'Saab audio upgrade | Audio Upgrade Emmen',
+    beschrijving:
+      'Beter geluid in je Saab 9-3, 9-5 of 900. Speakers vervangen, deuren dempen en het originele dashboard intact laten.',
+    fabriekssystemen: 'Saab standaard audio, optioneel Saab Prestige of Harman Kardon',
+    intro:
+      'Saab bouwde auto\'s voor mensen die zelf nadenken, en Saab-rijders zijn dat gebleven. Het zijn inmiddels wel auto\'s van twintig jaar en ouder — en dat is precies waar de winst zit.',
+    probleem:
+      'Bij een Saab is het grootste probleem meestal niet het ontwerp maar de leeftijd. De schuimrand rond de originele speakerconussen vergaat na twintig jaar; dat hoor je als een dunne, rammelende bas terwijl er niets kapot lijkt. Daar komt bij dat de radio in veel Saabs samenwerkt met het informatiescherm in het dashboard, dus zomaar een andere radio inbouwen kost je functies die je liever houdt.',
+  },
+  {
     slug: 'volvo',
     naam: 'Volvo',
     kort: 'Volvo',

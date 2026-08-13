@@ -90,6 +90,11 @@ check('BENTLEY CONTINENTAL GT (dubbel)', 'BENTLEY', 'BENTLEY CONTINENTAL GT', 'b
 check('BENTAYGA V8', 'BENTLEY', 'BENTAYGA V8', 'bentley-bentayga');
 check('FERRARI 488', 'FERRARI', '488', 'ferrari-488');
 check('FERRARI 812 SUPERFAST', 'FERRARI', '812 SUPERFAST', 'ferrari-812-superfast');
+check('SAAB 9-3 (merk dubbel)', 'SAAB', 'SAAB 9-3', 'saab-9-3');
+check('SAAB 9-3 kaal', 'SAAB', '9-3', 'saab-9-3');
+check('SAAB 9-5', 'SAAB', 'SAAB 9-5', 'saab-9-5');
+check('SAAB 900 S CV U9', 'SAAB', '900 S CV U9', 'saab-900');
+check('SAAB 9000 is geen 900', 'SAAB', '9000 CS', 'saab-9000');
 check('TESLA MODEL S', 'TESLA', 'MODEL S', 'tesla-model-s');
 check('TESLA Model 3 (kleine letters)', 'TESLA', 'Model 3', 'tesla-model-3');
 

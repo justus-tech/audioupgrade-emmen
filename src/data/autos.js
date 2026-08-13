@@ -146,6 +146,15 @@ export const AUTOS = [
   { slug: 'bentley-continental-gt', merk: 'Bentley', model: 'Continental GT', matchers: { merk: 'BENTLEY', model: /^CONTINENTAL GT\b/ }, foto: null },
   { slug: 'bentley-bentayga', merk: 'Bentley', model: 'Bentayga', matchers: { merk: 'BENTLEY', model: /^BENTAYGA\b/ }, foto: null },
 
+  // ---- Saab. LET OP: de RDW schrijft "SAAB 9-3" (merk dubbel) én "9-3".
+  //      Na het normaliseren wordt het streepje een spatie, dus het patroon
+  //      is "9 3" en niet "9-3". Zie de uitleg bovenaan dit bestand.
+  { slug: 'saab-9-3', merk: 'Saab', model: '9-3', nl: 18397, matchers: { merk: 'SAAB', model: /^9 3\b/ }, foto: null },
+  { slug: 'saab-9-5', merk: 'Saab', model: '9-5', nl: 4793, matchers: { merk: 'SAAB', model: /^9 5\b/ }, foto: null },
+  // "9000" vóór "900": anders vangt 900 de 9000 weg.
+  { slug: 'saab-9000', merk: 'Saab', model: '9000', matchers: { merk: 'SAAB', model: /^9000\b/ }, foto: null },
+  { slug: 'saab-900', merk: 'Saab', model: '900', matchers: { merk: 'SAAB', model: /^900\b/ }, foto: null },
+
   // ---- Ferrari
   { slug: 'ferrari-488', merk: 'Ferrari', model: '488', matchers: { merk: 'FERRARI', model: /^488\b/ }, foto: null },
   { slug: 'ferrari-812-superfast', merk: 'Ferrari', model: '812 Superfast', matchers: { merk: 'FERRARI', model: /^812\b/ }, foto: null },
