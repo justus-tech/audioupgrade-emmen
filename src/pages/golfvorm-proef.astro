@@ -1,0 +1,80 @@
+---
+/**
+ * Vergelijkpagina: de balken naast de lijn.
+ *
+ * Tijdelijk, om te kiezen. Staat op noindex en in robots.txt, dus Google
+ * ziet hem niet. Zodra de keuze gemaakt is mag deze pagina weg, samen met
+ * het onderdeel dat het niet geworden is.
+ */
+import Base from '../layouts/Base.astro';
+import Golfvorm from '../components/Golfvorm.astro';
+import Golflijn from '../components/Golflijn.astro';
+import { SITE } from '../data/site.js';
+---
+<Base
+  title="Golfvorm: balken of lijn — proefpagina"
+  description="Intern: de twee varianten van de golfvorm naast elkaar."
+  path="/golfvorm-proef"
+  noindex={true}
+>
+  <section class="center">
+    <div class="wrap">
+      <span class="eyebrow">Intern — kies er één</span>
+      <h1>Balken of lijn?</h1>
+      <p style="margin:1.4em auto 0;">
+        Twee keer dezelfde hero. Scroll naar beneden en kijk welke je mooier
+        vindt. Beide bewegen op hetzelfde ritme.
+      </p>
+    </div>
+  </section>
+
+  <div class="proef">
+    <div class="wrap">
+      <span class="eyebrow">Variant 1 — de balken (staat er nu)</span>
+      <h2>Groots geluid.<br /><span class="accent">Onzichtbaar ingebouwd.</span></h2>
+      <p class="lead">
+        Klaar met blikkerig geluid? Wij bouwen premium car audio weg achter je
+        originele panelen.
+      </p>
+      <a class="btn wa" href={SITE.whatsapp}>Stuur foto dashboard</a>
+    </div>
+    <Golfvorm />
+  </div>
+
+  <div class="proef">
+    <div class="wrap">
+      <span class="eyebrow">Variant 2 — de oscilloscooplijn</span>
+      <h2>Groots geluid.<br /><span class="accent">Onzichtbaar ingebouwd.</span></h2>
+      <p class="lead">
+        Klaar met blikkerig geluid? Wij bouwen premium car audio weg achter je
+        originele panelen.
+      </p>
+      <a class="btn wa" href={SITE.whatsapp}>Stuur foto dashboard</a>
+    </div>
+    <Golflijn />
+  </div>
+</Base>
+
+<style>
+  /* Zelfde opbouw als de echte hero, zodat de vergelijking eerlijk is. */
+  .proef {
+    position: relative;
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    padding-bottom: clamp(150px, 21vh, 220px);
+    border-top: 1px solid var(--line);
+    background:
+      linear-gradient(180deg,
+        color-mix(in srgb, var(--bg) 55%, transparent),
+        color-mix(in srgb, var(--bg) 94%, transparent)),
+      radial-gradient(ellipse at 70% 20%,
+        color-mix(in srgb, var(--accent) 16%, transparent) 0%, var(--bg) 62%);
+  }
+  .proef .wrap { position: relative; z-index: 1; width: 100%; }
+  .proef h2 { font-size: clamp(1.8rem, 5.4vw, 3.4rem); line-height: 1.06; margin-top: .4em; }
+  .proef .accent { color: var(--accent-text); }
+  .proef .lead { margin: 1.4em auto 2em; max-width: 46ch; }
+  .proef .btn { display: inline-block; }
+</style>
