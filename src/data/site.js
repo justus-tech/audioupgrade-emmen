@@ -3,7 +3,12 @@ export const SITE = {
   /** Zonder schuine streep aan het eind — overal waar we adressen bouwen. */
   url: 'https://audioupgradeemmen.nl',
   phone: '+31644379844',
-  phoneDisplay: '06 44 37 98 44',
+  /**
+   * Internationaal genoteerd, dus zonder de nul vooraan. Die nul hoort alleen
+   * bij binnenlands bellen; in de +31-vorm vervangt de landcode hem. "+31 06"
+   * is een veelgemaakte fout en werkt op sommige toestellen niet.
+   */
+  phoneDisplay: '+31 6 44 37 98 44',
   email: 'info@audioupgradeemmen.nl',
   whatsapp: 'https://wa.me/message/RDCWOKTCKSPIF1',
   kvk: '96356723',
