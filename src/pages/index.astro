@@ -5,7 +5,7 @@ import KentekenCheck from '../components/KentekenCheck.astro';
 import Merken from '../components/Merken.astro';
 import Golfvorm from '../components/Golfvorm.astro';
 import { PACKAGES, SITE } from '../data/site.js';
-import { ONTZORGEN, DEMO, VERTROUWEN } from '../data/generiek.js';
+import { ONTZORGEN, DEMO } from '../data/generiek.js';
 
 const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
 ---
@@ -93,25 +93,6 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
     </div>
   </section>
 
-  {/* Zolang er nog geen recensies zijn, nemen deze vier beloftes het risico
-      bij de klant weg. Dat overtuigt meer dan een cijfer dat hij toch niet
-      kan nakijken. Zie src/data/generiek.js. */}
-  <section>
-    <div class="wrap">
-      <span class="eyebrow center">Nog jong, wel duidelijk</span>
-      <h2 class="center">{VERTROUWEN.kop}</h2>
-      <p class="vertrouwen-intro">{VERTROUWEN.tekst}</p>
-      <div class="grid cols-4 mt">
-        {VERTROUWEN.punten.map((p) => (
-          <div class="belofte">
-            <h3>{p.kop}</h3>
-            <p>{p.tekst}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  </section>
-
   <section class="center">
     <div class="wrap">
       <h2>Klaar voor de ultieme geluidservaring?</h2>
@@ -140,14 +121,6 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
     text-transform: uppercase; letter-spacing: .24em;
     font-size: .68rem; color: var(--text-dim);
   }
-  .vertrouwen-intro { margin: 0 auto; text-align: center; max-width: 62ch; }
-
-  /* Elke belofte krijgt een oranje cijferloos streepje: het leest als een
-     lijst waar je doorheen scant, niet als vier alinea's. */
-  .belofte { border-top: 2px solid var(--accent); padding-top: 18px; }
-  .belofte h3 { margin-bottom: 12px; }
-  .belofte p { font-size: .92rem; }
-
   /* De twee troeven staan naast elkaar, elk met een eigen streep erboven zodat
      ze als losse argumenten lezen en niet als één lap tekst. */
   .troef { border-top: 2px solid var(--accent); padding-top: 22px; }

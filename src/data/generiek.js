@@ -76,52 +76,6 @@ export const DEMO = {
   knop: 'Boek een luisterdemo',
 };
 
-/**
- * VERTROUWEN ZONDER RECENSIES.
- *
- * Zolang er nog geen Google-recensies zijn, is "wij hebben alleen tevreden
- * klanten" een zwakke zet: dat schrijft iedereen op zijn site en niemand
- * gelooft het, want de klant kan het niet nakijken.
- *
- * Wat wél werkt is het risico bij de klant weghalen. Elk punt hieronder is
- * iets wat hij kan controleren voordat hij betaalt, of iets wat hij kan
- * terugdraaien als het tegenvalt. Dat is sterker dan welk cijfer ook.
- *
- * De uitspraak over tevreden klanten staat er wél in, maar als opstapje naar
- * die beloftes en niet als bewijs op zichzelf.
- *
- * LET OP: dit zijn toezeggingen aan de klant. Justus moet ze alle vier
- * bevestigen voordat de site live gaat. Wat hier staat moet hij ook echt
- * waarmaken, anders werkt het tegen je.
- */
-export const VERTROUWEN = {
-  kop: 'Waarom je ons kunt vertrouwen',
-  tekst:
-    'Wij zijn een jong bedrijf, dus je vindt online nog weinig over ons. Wat we wel kunnen zeggen: tot nu toe is elke auto hier tevreden de deur uit gegaan. Dat willen we zo houden, en daarom hebben we het zo geregeld dat jij nooit voor een verrassing komt te staan.',
-  punten: [
-    {
-      kop: 'Eerst horen, dan beslissen',
-      tekst:
-        'In onze demobus hoor je met je eigen muziek wat een pakket doet, voordat je ergens ja tegen zegt.',
-    },
-    {
-      kop: 'Alles is terug te bouwen',
-      tekst:
-        'Wij knippen niets door en werken met pasklare kabelbomen. Bevalt het niet, dan gaat je auto terug naar origineel alsof er niets gebeurd is.',
-    },
-    {
-      kop: 'Ook als het antwoord nee is',
-      tekst:
-        'Levert een upgrade bij jouw auto weinig op, dan zeggen we dat. Liever een klant die niets koopt dan een klant die spijt heeft.',
-    },
-    {
-      kop: 'Eén aanspreekpunt',
-      tekst:
-        'Je hebt van het eerste bericht tot de oplevering met dezelfde persoon te maken. Geen balie, geen doorverbinden.',
-    },
-  ],
-};
-
 /** De afsluitende oproep onderaan elke modelpagina. */
 export const CTA = {
   tekst:
@@ -141,6 +95,4 @@ export const STANDAARD_PAKKETTEN = [
   'reference-edition',
 ];
 
-export default {
-  GARANTIE, WERKWIJZE, VAKMANSCHAP, ONTZORGEN, DEMO, VERTROUWEN, CTA, STANDAARD_PAKKETTEN,
-};
+export default { GARANTIE, WERKWIJZE, VAKMANSCHAP, ONTZORGEN, DEMO, CTA, STANDAARD_PAKKETTEN };
