@@ -16,6 +16,9 @@ import PackageCard from '../components/PackageCard.astro';
 import PakketSchets from '../components/PakketSchets.astro';
 import Kentekenplaat from '../components/Kentekenplaat.astro';
 import Merken from '../components/Merken.astro';
+import Fotoband from '../components/Fotoband.astro';
+/* Foto: Unsplash — vrij te gebruiken. Zie src/components/Fotoband.astro. */
+import speakerconus from '../assets/foto/speakerconus.jpg';
 import { PACKAGES, SITE } from '../data/site.js';
 import { autoTabel } from '../data/autos.js';
 import { GARANTIE, CTA } from '../data/generiek.js';
@@ -73,6 +76,14 @@ import { MERKEN_MET_MODELLEN as MERKEN } from '../data/merken.js';
       <div style="margin-top:4rem"><Merken /></div>
     </div>
   </section>
+
+  <Fotoband
+    foto={speakerconus}
+    hoogte="laag"
+    alt="Close-up van een geweven speakerconus met de tweeter in het midden"
+    kop="Geweven conus, geen papier"
+    tekst="Waar de fabriek papier gebruikt, gebruiken wij materiaal dat vorm houdt — ook na tien jaar in een deur vol vocht."
+  />
 
   {/* Doorkijk per pakket. Eén tekening: het bovenaanzicht verschilt niet
       per carrosserie, dus er is geen reden om zeven varianten te renderen. */}

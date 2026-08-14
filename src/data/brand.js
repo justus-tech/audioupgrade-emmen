@@ -60,6 +60,7 @@ export const BRAND = {
   tekenVul: 'rgba(135, 135, 135, .28)',
   tekenDiep: 'rgba(18, 18, 18, .8)',
   tekenGloed: '.22',
+  tekstOpFoto: PALETTE.white,
 };
 
 /**
@@ -102,6 +103,9 @@ export const LICHT = {
   tekenVul: 'rgba(18, 18, 18, .17)',
   tekenDiep: 'rgba(18, 18, 18, .13)',
   tekenGloed: '.13',
+  // Een foto blijft donker, ook in de lichte stand. De tekst erop dus ook
+  // altijd licht — anders staat er zwart op zwart.
+  tekstOpFoto: PALETTE.white,
 };
 
 /** Voor terugwaartse compatibiliteit met code die LINES importeert. */
@@ -135,6 +139,7 @@ function naarVariabelen(set) {
     `--teken-vul: ${set.tekenVul}`,
     `--teken-diep: ${set.tekenDiep}`,
     `--teken-gloed: ${set.tekenGloed}`,
+    `--tekst-op-foto: ${set.tekstOpFoto}`,
   ].join('; ');
 }
 

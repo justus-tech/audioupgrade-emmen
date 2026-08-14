@@ -47,6 +47,7 @@ describe('de twee standen', () => {
     'bg', 'bgAlt', 'panel', 'text', 'textDim', 'accent', 'accentInk',
     'accentText', 'line', 'lineStrong', 'schaduw', 'korrel',
     'tekenLijn', 'tekenVlak', 'tekenVul', 'tekenDiep', 'tekenGloed',
+    'tekstOpFoto',
   ];
 
   test('beide standen vullen exact dezelfde rollen in', () => {
@@ -98,6 +99,13 @@ describe('leesbaarheid (WCAG)', () => {
     // die tweede tint bestaat, zodat niemand hem "opruimt".
     const merkoranjeOpWit = contrast(PALETTE.orange, LICHT.bg);
     assert.ok(merkoranjeOpWit < eis, 'als dit slaagt, mag accentText weer gewoon het merkoranje zijn');
+  });
+
+  test('tekst op een foto is in beide standen licht', () => {
+    // Een foto blijft donker, ook als de site licht staat. Zou deze kleur
+    // meeveranderen, dan komt er zwarte tekst op een donkere foto.
+    assert.equal(BRAND.tekstOpFoto, LICHT.tekstOpFoto);
+    assert.ok(helderheid(BRAND.tekstOpFoto) > 0.7, 'tekst op foto moet licht zijn');
   });
 
   test('tekst op een oranje knop is leesbaar', () => {

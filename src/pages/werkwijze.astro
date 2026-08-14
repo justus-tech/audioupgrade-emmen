@@ -1,6 +1,9 @@
 ---
 import Base from '../layouts/Base.astro';
+import Fotoband from '../components/Fotoband.astro';
 import { SITE } from '../data/site.js';
+/* Foto: Unsplash — vrij te gebruiken. Zie src/components/Fotoband.astro. */
+import deurspeaker from '../assets/foto/deurspeaker.jpg';
 ---
 <Base
   title="Werkwijze — zo upgraden wij je autogeluid | Audio Upgrade Emmen"
@@ -39,6 +42,13 @@ import { SITE } from '../data/site.js';
       </div>
     </div>
   </section>
+
+  <Fotoband
+    foto={deurspeaker}
+    alt="Speakerrooster in een deurpaneel, verlicht door de sfeerverlichting van de auto"
+    kop="Onzichtbaar ingebouwd"
+    tekst="Aan de buitenkant verandert er niets. Het verschil zit achter het paneel."
+  />
 
   <section>
     <div class="wrap">
