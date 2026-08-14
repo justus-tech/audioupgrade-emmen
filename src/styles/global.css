@@ -323,7 +323,10 @@ footer.site {
 footer.site .wrap { display: flex; flex-wrap: wrap; gap: 40px; justify-content: space-between; font-size: .88rem; color: var(--text-dim); }
 footer.site a { color: var(--text-dim); transition: color .2s; }
 footer.site a:hover { color: var(--accent-text); }
-footer.site .legal { font-size: .78rem; }
+footer.site .legal { font-size: .82rem; }
+/* De bedrijfsnummers zijn de minst interessante regel van de site; de
+   juridische links erboven moeten het eerst opvallen. */
+footer.site .legal-klein { display: inline-block; margin-top: 14px; font-size: .76rem; opacity: .8; }
 
 /* ---- misc ---- */
 .center { text-align: center; }

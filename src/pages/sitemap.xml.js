@@ -11,6 +11,7 @@
  */
 import { MODELS } from '../data/models.js';
 import { MERKEN_MET_MODELLEN } from '../data/merken.js';
+import { JURIDISCHE_PAGINAS } from '../data/juridisch.js';
 import { SITE } from '../data/site.js';
 
 /** De vaste pagina's, met hoe belangrijk ze zijn. */
@@ -20,6 +21,9 @@ const VAST = [
   ['/audio-upgrade', 0.8],
   ['/werkwijze', 0.7],
   ['/contact', 0.7],
+  // De juridische pagina's horen wel in de sitemap — mensen zoeken er soms
+  // gericht op — maar hoeven niet hoog te scoren.
+  ...JURIDISCHE_PAGINAS.map((d) => [`/${d.slug}`, 0.3]),
 ];
 
 export async function GET() {

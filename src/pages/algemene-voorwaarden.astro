@@ -1,0 +1,8 @@
+---
+import Base from '../layouts/Base.astro';
+import JuridischeTekst from '../components/JuridischeTekst.astro';
+import { ALGEMENE_VOORWAARDEN as doc } from '../data/juridisch.js';
+---
+<Base title={doc.titel} description={doc.beschrijving} path={`/${doc.slug}`}>
+  <JuridischeTekst doc={doc} />
+</Base>

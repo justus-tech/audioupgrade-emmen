@@ -1,0 +1,91 @@
+---
+/**
+ * Opmaak voor de drie juridische pagina's.
+ *
+ * Lange lappen tekst worden alleen gelezen als ze er rustig uitzien. Daarom:
+ * smalle regels, genummerde artikelen en veel wit. Niemand leest dit voor de
+ * lol, maar wie het opzoekt moet zijn antwoord snel kunnen vinden.
+ *
+ * De teksten mogen **vet** gebruiken; dat wordt hier omgezet. Meer opmaak
+ * dan dat is er bewust niet, zodat de inhoud in src/data/juridisch.js
+ * leesbaar blijft voor wie geen HTML kent.
+ */
+import { BIJGEWERKT } from '../data/juridisch.js';
+
+const { doc } = Astro.props;
+
+/** **vet** wordt <strong>. Alles daarbuiten wordt onschadelijk gemaakt. */
+function opmaak(tekst) {
+  return String(tekst)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+}
+---
+<section>
+  <div class="wrap">
+    <span class="eyebrow">Bijgewerkt in {BIJGEWERKT}</span>
+    <h1>{doc.kop}</h1>
+    <p class="juridisch-intro">{doc.intro}</p>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <div class="juridisch">
+      {doc.artikelen.map((artikel) => (
+        <article>
+          <h2>{artikel.kop}</h2>
+          {artikel.alineas?.map((a) => <p set:html={opmaak(a)} />)}
+          {artikel.lijst && (
+            <ul>
+              {artikel.lijst.map((punt) => <li set:html={opmaak(punt)} />)}
+            </ul>
+          )}
+          {artikel.naAlineas?.map((a) => <p set:html={opmaak(a)} />)}
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .juridisch-intro { max-width: 62ch; margin-top: 1.4em; }
+
+  .juridisch { max-width: 74ch; }
+  .juridisch article + article {
+    margin-top: 3rem;
+    padding-top: 3rem;
+    border-top: 1px solid var(--line);
+  }
+  .juridisch h2 {
+    font-size: clamp(1rem, 2.4vw, 1.2rem);
+    color: var(--accent-text);
+    margin-bottom: 1.2em;
+  }
+  .juridisch p { margin-bottom: 1.2em; }
+  .juridisch p:last-child { margin-bottom: 0; }
+
+  .juridisch ul { list-style: none; padding: 0; margin: 0; }
+  .juridisch li {
+    position: relative;
+    padding-left: 24px;
+    margin-bottom: 1.1em;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+  .juridisch li:last-child { margin-bottom: 0; }
+  /* Streepje in de merkkleur in plaats van een bolletje: rustiger bij lange
+     opsommingen, en het loopt niet in de weg bij een punt van vijf regels. */
+  .juridisch li::before {
+    content: '';
+    position: absolute; left: 0; top: .78em;
+    width: 12px; height: 1px;
+    background: var(--accent);
+  }
+  .juridisch :global(strong) { color: var(--text); font-weight: 500; }
+
+  /* Staat er een lijst én tekst in één artikel, dan moet daar lucht tussen. */
+  .juridisch ul + p { margin-top: 1.4em; }
+</style>

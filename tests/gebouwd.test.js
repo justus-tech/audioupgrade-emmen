@@ -16,6 +16,7 @@ import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MODELS } from '../src/data/models.js';
 import { MERKEN_MET_MODELLEN } from '../src/data/merken.js';
+import { JURIDISCHE_PAGINAS } from '../src/data/juridisch.js';
 import { PACKAGES, SITE } from '../src/data/site.js';
 
 const DIST = fileURLToPath(new URL('../dist/', import.meta.url));
@@ -63,6 +64,27 @@ describe('opgeleverde pagina\'s', alsGebouwd, () => {
   test('de vaste pagina\'s staan er', () => {
     for (const pad of ['/', '/upgrades', '/werkwijze', '/contact', '/audio-upgrade']) {
       assert.ok(inhoud.has(pad), `ontbreekt: ${pad}`);
+    }
+  });
+
+  test('de drie juridische pagina\'s staan er en zijn compleet', () => {
+    // Zonder privacyverklaring voldoe je niet aan de AVG. Deze test is er
+    // om te voorkomen dat ze ooit stilletjes verdwijnen.
+    for (const doc of JURIDISCHE_PAGINAS) {
+      const html = inhoud.get(`/${doc.slug}`);
+      assert.ok(html, `ontbreekt: /${doc.slug}`);
+      // Elk artikel moet ook echt op de pagina terechtkomen.
+      for (const artikel of doc.artikelen) {
+        assert.ok(html.includes(artikel.kop), `/${doc.slug}: "${artikel.kop}" ontbreekt`);
+      }
+    }
+  });
+
+  test('elke pagina linkt naar de juridische pagina\'s', () => {
+    for (const [pad, html] of inhoud) {
+      for (const doc of JURIDISCHE_PAGINAS) {
+        assert.ok(html.includes(`href="/${doc.slug}"`), `${pad}: geen link naar /${doc.slug}`);
+      }
     }
   });
 
