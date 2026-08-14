@@ -1,6 +1,7 @@
 ---
 import { MODELS } from '../data/models.js';
 import { SITE } from '../data/site.js';
+import Logo from './Logo.astro';
 
 // Compacte matchtabel voor de client: [slug, merk, modelregex-als-string]
 const table = MODELS.map((m) => [m.slug, m.matchers.merk, m.matchers.model.source]);
@@ -21,7 +22,12 @@ const { compact = false } = Astro.props;
     </>
   )}
   <form class="kenteken-form" id="kenteken-form" autocomplete="off">
-    <input class="plate" id="kenteken-input" type="text" placeholder="XX-99-XX" maxlength="8" aria-label="Kenteken" />
+    {/* Een <input> kan geen kindelementen hebben, dus het logo ligt er als
+        apart element overheen, precies op de oranje band. */}
+    <span class="plaat-veld">
+      <input class="plate" id="kenteken-input" type="text" placeholder="XX-99-XX" maxlength="8" aria-label="Kenteken" />
+      <Logo height={18} decoratief={true} class="plaat-veld-logo" />
+    </span>
     <button class="btn solid" type="submit">Check mijn auto</button>
   </form>
   <div id="kenteken-result" aria-live="polite"></div>
@@ -50,7 +56,7 @@ const { compact = false } = Astro.props;
       const res = await fetch(`https://opendata.rdw.nl/resource/m9d7-ebf2.json?kenteken=${plate}`);
       const data = await res.json();
       if (!data.length) {
-        result.innerHTML = `<span>Kenteken niet gevonden. Typfout? Of <a href="${whatsapp}">stuur ons een foto van je dashboard 💬</a></span>`;
+        result.innerHTML = `<span>Kenteken niet gevonden. Typfout? Of <a href="${whatsapp}">stuur ons een foto van je dashboard</a></span>`;
         return;
       }
       const car = data[0];
@@ -78,10 +84,10 @@ const { compact = false } = Astro.props;
         result.innerHTML = `<span class="found">Gevonden: <strong>${niceName}</strong> — we sturen je door…</span>`;
         setTimeout(() => { window.location.href = `/audio-upgrade/${hit[0]}`; }, 900);
       } else {
-        result.innerHTML = `<span class="found">Mooie auto, die <strong>${niceName}</strong>! We hebben er (nog) geen aparte pagina voor, maar upgraden hem graag.<br/><a href="${whatsapp}">Stuur een foto van je dashboard 💬</a> en je hoort binnen 24 uur wat er kan.</span>`;
+        result.innerHTML = `<span class="found">Mooie auto, die <strong>${niceName}</strong>! We hebben er (nog) geen aparte pagina voor, maar upgraden hem graag.<br/><a href="${whatsapp}">Stuur een foto van je dashboard</a> en je hoort binnen 24 uur wat er kan.</span>`;
       }
     } catch (err) {
-      result.innerHTML = `<span>De kenteken-check is even niet bereikbaar. <a href="${whatsapp}">App ons gerust direct 💬</a></span>`;
+      result.innerHTML = `<span>De kenteken-check is even niet bereikbaar. <a href="${whatsapp}">App ons gerust direct</a></span>`;
     }
   });
 </script>

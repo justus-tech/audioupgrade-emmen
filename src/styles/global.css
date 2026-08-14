@@ -456,3 +456,19 @@ h1 { letter-spacing: .06em; }
   margin-top: 2.2em;
 }
 .kenteken-kaal .kenteken-form { margin-top: 0; }
+
+/* Het AUE-logo op de oranje band van het invulveld. Ligt eroverheen omdat
+   een <input> geen kindelementen kan bevatten. */
+.plaat-veld { position: relative; display: inline-block; line-height: 0; }
+/* Specifieker dan .logo-mark uit het Logo-component, dat width:auto zet. */
+.plaat-veld .plaat-veld-logo {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--accent-ink);
+  opacity: .92;
+  pointer-events: none;
+  width: 24px;
+  height: auto;
+}

@@ -61,7 +61,7 @@ export const VAKMANSCHAP = [
 export const CTA = {
   tekst:
     'Geen lange formulieren. Stuur een foto van je dashboard via WhatsApp en ontvang binnen 24 uur een eerlijk advies met transparante all-in prijs.',
-  knop: 'Stuur foto dashboard 💬',
+  knop: 'Stuur foto dashboard',
 };
 
 /**

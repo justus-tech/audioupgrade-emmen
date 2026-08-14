@@ -1,233 +1,251 @@
 ---
 /**
- * Doorkijk: waar komt wat, per pakket — in twee aanzichten.
+ * Doorkijk: waar komt wat, per pakket.
  *
- * Bovenaanzicht laat links/rechts zien (welke deuren, welke stoelen).
- * Zijaanzicht laat hoogte en diepte zien (onder de stoel, in de kofferbak)
- * en verschilt per carrosserie: in een bus zit de subwoofer ergens anders
- * dan in een hatchback.
+ * Eén groot bovenaanzicht met genummerde punten. Tik of hover op een punt en
+ * de uitleg verschijnt ernaast. Bewust geen lange lijst meer onder de
+ * tekening: de uitleg komt naar het punt toe in plaats van andersom.
  *
- * Waarom het bovenaanzicht NIET per type verschilt: van bovenaf lijken een
- * hatchback en een sedan sterk op elkaar. Het verschil zit in de zijkant, en
- * daar tekenen we het dus ook. Wat wél meebeweegt zijn de plekken van de
- * subwoofer en de versterker.
+ * Het zijaanzicht is eruit. Dat was klein, onduidelijk en voegde weinig toe
+ * naast het bovenaanzicht.
  *
- * Dit is een verkooptool: iemand die twijfelt tussen de Akoestische Basis en
- * The OEM+ Executive ziet hier in twee seconden wat hij er extra voor krijgt.
+ * LET OP: hoveren bestaat niet op een telefoon, en daar komt vrijwel al het
+ * bezoek vandaan. De bediening werkt daarom op tikken; hoveren is alleen een
+ * extraatje op desktop. De punten zijn ook met het toetsenbord te bereiken.
  */
 import { PACKAGES } from '../data/site.js';
-import {
-  carrosseriePad,
-  normaliseerType,
-  stijlHoogte,
-  ZIJ_POSITIES,
-  MOTORKAP,
-  WIELEN,
-  GROND,
-} from '../lib/carrosserie.js';
 
-const { type = 'hatchback', start = 'akoestische-basis' } = Astro.props;
-const soort = normaliseerType(type);
-const zij = ZIJ_POSITIES[soort] ?? ZIJ_POSITIES.hatchback;
+const { start = 'akoestische-basis' } = Astro.props;
 
 /**
- * Onderdelen met hun plek in beide aanzichten.
- * boven: auto met de neus omhoog, midden op x=260.
- * zij:   auto met de neus naar links, viewBox 400x170.
+ * Alle onderdelen met hun plek in de tekening en een uitleg van een paar
+ * regels. Auto met de neus omhoog, midden op x=220.
+ *
+ * `spiegel` betekent: teken ook een punt op deze plek aan de andere kant,
+ * zonder eigen nummer. Links en rechts horen bij hetzelfde onderdeel.
  */
 const ONDERDELEN = [
-  { id: 'carplay', naam: 'Draadloos CarPlay', plek: 'In het originele scherm',
-    boven: [260, 122], zij: [104, 82],
-    pakketten: ['carplay-upgrade', 'oem-plus-executive', 'reference-edition'] },
-
-  { id: 'tweeter-l', naam: 'Tweeters', plek: 'In de spiegeldriehoek',
-    boven: [178, 158], zij: [122, 64],
-    pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition'] },
-  { id: 'tweeter-r', spiegelVan: 'tweeter-l', naam: null, plek: null, boven: [342, 158], zij: null,
-    pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition'] },
-
-  { id: 'front-l', naam: 'Speakers voorin', plek: 'In beide voordeuren',
-    boven: [166, 232], zij: [164, 98],
-    pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition'] },
-  { id: 'front-r', spiegelVan: 'front-l', naam: null, plek: null, boven: [354, 232], zij: null,
-    pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition'] },
-
-  { id: 'rear-l', naam: 'Speakers achterin', plek: 'In beide achterdeuren',
-    boven: [166, 352], zij: [230, 98],
-    pakketten: ['reference-edition'] },
-  { id: 'rear-r', spiegelVan: 'rear-l', naam: null, plek: null, boven: [354, 352], zij: null,
-    pakketten: ['reference-edition'] },
-
-  { id: 'dsp', naam: 'DSP-versterker', plek: 'Onder de stoel of in de zijwand',
-    boven: [318, 292], zij: zij.versterker,
-    pakketten: ['oem-plus-executive', 'reference-edition'] },
-
-  { id: 'sub', naam: 'Subwoofer', plek: soort === 'bus'
-      ? 'Onder de bank of tegen de zijwand'
-      : 'Onder de stoel of in de reservewielbak',
-    boven: soort === 'bus' ? [212, 470] : [260, 470], zij: zij.sub,
-    pakketten: ['oem-plus-executive', 'reference-edition'] },
+  {
+    id: 'carplay',
+    naam: 'Draadloos CarPlay',
+    plek: 'In je originele scherm',
+    uitleg:
+      'Apple CarPlay en Android Auto draadloos in het scherm dat er al zit. Je stuurknoppen, navigatie en parkeersensoren blijven precies zoals ze waren — er verandert niets zichtbaars aan je dashboard.',
+    x: 220, y: 138,
+    pakketten: ['carplay-upgrade', 'oem-plus-executive', 'reference-edition'],
+  },
+  {
+    id: 'tweeters',
+    naam: 'Tweeters',
+    plek: 'In de spiegeldriehoek',
+    uitleg:
+      'De hoge tonen komen los van de deur en gaan naar de spiegeldriehoek. Daardoor zit het geluidsbeeld ineens vóór je op het dashboard in plaats van bij je knieën. Dit is het verschil dat mensen het eerst horen.',
+    x: 152, y: 176, spiegel: 288,
+    pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition'],
+  },
+  {
+    id: 'front',
+    naam: 'Speakers voorin',
+    plek: 'In beide voordeuren',
+    uitleg:
+      'Een echte componentenset vervangt de papieren fabrieksspeakers. Wij monteren ze op CNC-gefreesde ringen op de originele bevestigingspunten, dus er wordt niet geboord of gezaagd.',
+    x: 140, y: 240, spiegel: 300,
+    pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition'],
+  },
+  {
+    id: 'rear',
+    naam: 'Speakers achterin',
+    plek: 'In beide achterdeuren',
+    uitleg:
+      'Voor wie ook achterin passagiers heeft. Wij stemmen ze bewust terughoudend af, zodat ze het beeld vóór je aanvullen in plaats van het naar achteren trekken.',
+    x: 140, y: 370, spiegel: 300,
+    pakketten: ['reference-edition'],
+  },
+  {
+    id: 'dsp',
+    naam: 'DSP-versterker',
+    plek: 'Onder de stoel of in de zijwand',
+    uitleg:
+      'Het hart van de installatie. Geeft de speakers het vermogen waarvoor ze gemaakt zijn en corrigeert met tijdcorrectie het feit dat je dichter bij de linkerdeur zit dan bij de rechter. Onzichtbaar weggewerkt.',
+    x: 286, y: 318,
+    pakketten: ['oem-plus-executive', 'reference-edition'],
+  },
+  {
+    id: 'sub',
+    naam: 'Subwoofer',
+    plek: 'Onder de stoel of in de reservewielbak',
+    uitleg:
+      'Het fundament dat de fabriek weglaat. Compact uitgevoerd, zodat je laadvloer vlak blijft en je bagageruimte volledig bruikbaar. Waar hij precies komt hangt van je auto af.',
+    x: 220, y: 528,
+    pakketten: ['oem-plus-executive', 'reference-edition'],
+  },
 ];
 
 /**
- * Zones: vlakken die oplichten in plaats van een punt. Demping is geen
- * onderdeel dat ergens ligt, het zit óp een paneel.
+ * Dempingszones. Die tonen we als opgelicht paneel in plaats van als punt,
+ * want demping zit óp een vlak en niet op één plek.
  */
 const ZONES = [
-  // De zij-balken lopen bewust tússen de wielkasten door (x 148-256),
-  // anders tekenen ze dwars over de wielen heen.
-  { id: 'demp-voor', badge: [126, 234], naam: 'Demping voordeuren', plek: 'Buiten- en binnenblik',
-    boven: 'M 152,196 L 150,272 M 368,196 L 370,272',
-    zij: 'M 148,110 L 196,110',
-    pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition', 'akoestische-isolatie'] },
-
-  { id: 'demp-achter', badge: [126, 352], naam: 'Demping achterdeuren', plek: 'Buiten- en binnenblik',
-    boven: 'M 150,312 L 152,392 M 370,312 L 368,392',
-    zij: 'M 204,110 L 256,110',
-    pakketten: ['oem-plus-executive', 'reference-edition', 'akoestische-isolatie'] },
-
-  { id: 'demp-klep', badge: [300, 494], naam: 'Demping achterklep', plek: 'Tegen resonantie en rammel',
-    boven: 'M 186,492 L 334,492',
-    zij: zij.klep,
-    pakketten: ['reference-edition', 'akoestische-isolatie'] },
-
-  { id: 'demp-kap', badge: [260, 62], naam: 'Demping motorkap', plek: 'Minder motorgeluid in de cabine',
-    boven: 'M 190,74 L 330,74',
-    zij: MOTORKAP,
-    pakketten: ['akoestische-isolatie'] },
-
-  { id: 'demp-vloer', badge: [126, 424], naam: 'Demping vloer', plek: 'Tegen rolgeluid van de banden',
-    boven: 'M 190,424 L 330,424',
-    zij: 'M 150,118 L 256,118',
-    pakketten: ['akoestische-isolatie', 'reference-edition'] },
+  {
+    id: 'demp-voor',
+    naam: 'Demping voordeuren',
+    plek: 'Buiten- en binnenblik',
+    uitleg:
+      'Je deur is een holle bak met open gaten. De achterkant van de speaker straalt daarin en heft de bas grotendeels op. Dichtmaken en dempen levert direct hoorbaar meer bas op, zonder dat er één watt bij komt.',
+    x: 120, y: 292,
+    vlak: 'M 110,200 L 130,200 L 130,312 L 112,312 Z',
+    spiegelVlak: 'M 330,200 L 310,200 L 310,312 L 328,312 Z',
+    pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition', 'akoestische-isolatie'],
+  },
+  {
+    id: 'demp-achter',
+    naam: 'Demping achterdeuren',
+    plek: 'Buiten- en binnenblik',
+    uitleg:
+      'Dezelfde behandeling als voorin. Naast betere bas maakt dit de auto merkbaar stiller op de snelweg, ook als je de muziek uit laat.',
+    x: 120, y: 422,
+    vlak: 'M 112,332 L 130,332 L 130,442 L 114,442 Z',
+    spiegelVlak: 'M 328,332 L 310,332 L 310,442 L 326,442 Z',
+    pakketten: ['oem-plus-executive', 'reference-edition', 'akoestische-isolatie'],
+  },
+  {
+    id: 'demp-kap',
+    naam: 'Demping motorkap',
+    plek: 'Tegen motorgeluid',
+    uitleg:
+      'Houdt motorgeluid buiten de cabine. Vooral merkbaar bij een dieselmotor of als je veel stad rijdt met veel optrekken.',
+    x: 220, y: 74,
+    vlak: 'M 150,64 L 290,64 L 290,86 L 150,86 Z',
+    pakketten: ['akoestische-isolatie'],
+  },
+  {
+    id: 'demp-vloer',
+    naam: 'Demping vloer',
+    plek: 'Tegen rolgeluid van de banden',
+    uitleg:
+      'De grootste bron van herrie op de snelweg komt van onderen. Vloerdemping haalt daar hoorbaar wat vanaf, waardoor je zachter kunt luisteren en toch alles hoort.',
+    x: 178, y: 446,
+    vlak: 'M 140,430 L 300,430 L 300,462 L 140,462 Z',
+    pakketten: ['akoestische-isolatie', 'reference-edition'],
+  },
+  {
+    id: 'demp-klep',
+    naam: 'Demping achterklep',
+    plek: 'Tegen resonantie en rammel',
+    uitleg:
+      'De achterklep werkt als een trommelvel: hij dreunt mee op elke basnoot. Dat klinkt als bas maar het is resonantie, en het maskeert juist de echte lage tonen.',
+    x: 220, y: 574,
+    vlak: 'M 150,562 L 290,562 L 290,586 L 150,586 Z',
+    pakketten: ['reference-edition', 'akoestische-isolatie'],
+  },
 ];
 
-/**
- * Nummering loopt van voor naar achter door de auto, zoals je hem zou
- * inbouwen. De nummers in de tekening en in de lijst horen bij elkaar.
- */
+/** Nummering loopt van voor naar achter door de auto. */
 const VOLGORDE = [
-  'carplay', 'tweeter-l', 'front-l', 'demp-voor',
-  'rear-l', 'demp-achter', 'dsp', 'sub',
-  'demp-klep', 'demp-kap', 'demp-vloer',
+  'demp-kap', 'carplay', 'tweeters', 'front', 'demp-voor',
+  'rear', 'demp-achter', 'dsp', 'demp-vloer', 'sub', 'demp-klep',
 ];
 
-/** Voor de legenda: alleen items met een naam (links/rechts tellen als één). */
-const legendaInfo = {
-  volgorde: VOLGORDE,
-  info: Object.fromEntries(
-    [...ONDERDELEN, ...ZONES]
-      .filter((o) => o.naam)
-      .map((o) => [o.id, { naam: o.naam, plek: o.plek }])
-  ),
-};
+const info = Object.fromEntries(
+  [...ONDERDELEN, ...ZONES].map((o) => [o.id, { naam: o.naam, plek: o.plek, uitleg: o.uitleg }])
+);
 ---
-<div class="schets-blok" data-actief={start}>
-  <div class="schets-knoppen" role="tablist" aria-label="Kies een pakket">
+<div class="ds" data-actief={start}>
+  <div class="ds-knoppen" role="tablist" aria-label="Kies een pakket">
     {PACKAGES.map((p) => (
-      <button type="button" class="schets-knop" data-pakket={p.slug} role="tab"
+      <button type="button" class="ds-knop" data-pakket={p.slug} role="tab"
               aria-selected={p.slug === start ? 'true' : 'false'}>{p.name}</button>
     ))}
   </div>
 
-  <div class="schets-inhoud">
-    <div class="schets-tekeningen">
-      {/* ---------------- bovenaanzicht ---------------- */}
-      <figure class="schets-figuur">
-        <svg class="schets-svg boven" viewBox="0 0 520 560" role="img"
-             aria-label="Bovenaanzicht met de plek van de speakers en onderdelen">
-          <g class="lijn">
-            <path d="M 200,42 C 172,48 152,72 150,112 L 146,300 L 150,470 C 152,502 172,516 200,518
-                     L 320,518 C 348,516 368,502 370,470 L 374,300 L 370,112 C 368,72 348,48 320,42 Z" />
-            <path d="M 186,136 L 334,136 L 316,178 L 204,178 Z" opacity="0.6" />
-            <path d="M 204,404 L 316,404 L 332,442 L 188,442 Z" opacity="0.6" />
-            <path d="M 148,190 L 168,190 M 148,290 L 168,290 M 148,396 L 168,396" opacity="0.5" />
-            <path d="M 372,190 L 352,190 M 372,290 L 352,290 M 372,396 L 352,396" opacity="0.5" />
-            <rect x="186" y="206" width="52" height="62" rx="12" opacity="0.5" />
-            <rect x="282" y="206" width="52" height="62" rx="12" opacity="0.5" />
-            <rect x="186" y="318" width="148" height="62" rx="12" opacity="0.4" />
-            <path d="M 168,120 L 352,120" opacity="0.5" />
-          </g>
+  <div class="ds-inhoud">
+    <figure class="ds-figuur">
+      <svg class="ds-svg" viewBox="0 0 440 640" role="img"
+           aria-label="Bovenaanzicht van een auto met de plek van de onderdelen">
+        {/* --- carrosserie --- */}
+        <g class="ds-lijn">
+          <path d="M 220,28 C 152,32 118,64 114,118 L 108,320 L 112,532
+                   C 116,574 150,596 200,600 L 240,600
+                   C 290,596 324,574 328,532 L 332,320 L 326,118
+                   C 322,64 288,32 220,28 Z" />
+          <path d="M 152,120 L 288,120 L 272,166 L 168,166 Z" class="ds-ruit" />
+          <path d="M 168,470 L 272,470 L 292,516 L 148,516 Z" class="ds-ruit" />
+          <path d="M 138,104 L 302,104" class="ds-dun" />
+          <path d="M 108,196 L 128,196 M 108,306 L 128,306 M 110,436 L 130,436" class="ds-dun" />
+          <path d="M 332,196 L 312,196 M 332,306 L 312,306 M 330,436 L 310,436" class="ds-dun" />
+          <rect x="152" y="212" width="56" height="72" rx="16" class="ds-stoel" />
+          <rect x="232" y="212" width="56" height="72" rx="16" class="ds-stoel" />
+          <rect x="152" y="346" width="136" height="72" rx="16" class="ds-stoel" />
+        </g>
 
-          {ZONES.map((z) => (
-            <path class="zone" d={z.boven} data-id={z.id} data-pakketten={z.pakketten.join(' ')} />
-          ))}
-
-          {/* Genummerde bolletjes bij de dempingszones, buiten de carrosserie
-              zodat ze niet over de speakerpunten vallen. */}
-          {ZONES.map((z) => (
-            <g class="onderdeel zone-badge" data-id={z.id} data-pakketten={z.pakketten.join(' ')}>
-              <circle cx={z.badge[0]} cy={z.badge[1]} r="15" class="punt-halo" />
-              <circle cx={z.badge[0]} cy={z.badge[1]} r="13" class="punt" />
-              <text class="punt-nr" x={z.badge[0]} y={z.badge[1]}
-                    text-anchor="middle" dominant-baseline="central"></text>
-            </g>
-          ))}
-
-          {ONDERDELEN.map((o) => (
-            <g class="onderdeel" data-id={o.spiegelVan ?? o.id} data-pakketten={o.pakketten.join(' ')}>
-              <circle cx={o.boven[0]} cy={o.boven[1]} r="15" class="punt-halo" />
-              <circle cx={o.boven[0]} cy={o.boven[1]} r="13" class="punt" />
-              <text class="punt-nr" x={o.boven[0]} y={o.boven[1]}
-                    text-anchor="middle" dominant-baseline="central"></text>
-            </g>
-          ))}
-        </svg>
-        <figcaption>Van boven</figcaption>
-      </figure>
-
-      {/* ---------------- zijaanzicht ---------------- */}
-      <figure class="schets-figuur">
-        <svg class="schets-svg zij" viewBox="0 0 400 170" role="img"
-             aria-label={`Zijaanzicht van een ${soort} met de plek van de onderdelen`}>
-          <g class="lijn">
-            <path d={carrosseriePad(soort)} />
-            {soort !== 'cabriolet' && (
-              <path d={`M 186,${stijlHoogte(soort)} L 186,88`} opacity="0.6" />
+        {/* --- dempingsvlakken --- */}
+        {ZONES.map((z) => (
+          <>
+            <path class="ds-vlak" d={z.vlak} data-id={z.id}
+                  data-pakketten={z.pakketten.join(' ')} />
+            {z.spiegelVlak && (
+              <path class="ds-vlak" d={z.spiegelVlak} data-id={z.id}
+                    data-pakketten={z.pakketten.join(' ')} />
             )}
-            {WIELEN.map((w) => <circle cx={w.x} cy={GROND} r={w.r} />)}
+          </>
+        ))}
+
+        {/* --- gespiegelde punten zonder eigen nummer --- */}
+        {ONDERDELEN.filter((o) => o.spiegel).map((o) => (
+          <circle class="ds-spiegel" cx={o.spiegel} cy={o.y} r="7"
+                  data-id={o.id} data-pakketten={o.pakketten.join(' ')} />
+        ))}
+
+        {/* --- de aanklikbare punten --- */}
+        {[...ONDERDELEN, ...ZONES].map((o) => (
+          <g class="ds-punt" data-id={o.id} data-pakketten={o.pakketten.join(' ')}
+             role="button" tabindex="0" aria-label={o.naam}>
+            <circle class="ds-halo" cx={o.x} cy={o.y} r="26" />
+            <circle class="ds-bol" cx={o.x} cy={o.y} r="16" />
+            <text class="ds-nr" x={o.x} y={o.y} text-anchor="middle"
+                  dominant-baseline="central"></text>
           </g>
+        ))}
+      </svg>
+      <figcaption class="ds-hint">Tik op een nummer voor uitleg</figcaption>
+    </figure>
 
-          {ZONES.filter((z) => z.zij).map((z) => (
-            <path class="zone zone-zij" d={z.zij} data-pakketten={z.pakketten.join(' ')} />
-          ))}
-
-          {ONDERDELEN.filter((o) => o.zij).map((o) => (
-            <g class="onderdeel" data-id={o.spiegelVan ?? o.id} data-pakketten={o.pakketten.join(' ')}>
-              <circle cx={o.zij[0]} cy={o.zij[1]} r="12" class="punt-halo" />
-              <circle cx={o.zij[0]} cy={o.zij[1]} r="10" class="punt" />
-              <text class="punt-nr zij-nr" x={o.zij[0]} y={o.zij[1]}
-                    text-anchor="middle" dominant-baseline="central"></text>
-            </g>
-          ))}
-        </svg>
-        <figcaption>Van opzij</figcaption>
-      </figure>
-    </div>
-
-    <div class="schets-legenda">
-      <h3 class="schets-kop">Akoestische Basis</h3>
-      <ul class="schets-lijst"></ul>
-      <p class="schets-voet">
-        Plaatsing verschilt per auto. Wij bepalen de exacte plek op basis van jouw model.
-      </p>
-    </div>
+    <aside class="ds-uitleg" aria-live="polite">
+      <span class="ds-uitleg-nr" id="ds-nr"></span>
+      <h3 class="ds-uitleg-kop" id="ds-kop"></h3>
+      <p class="ds-uitleg-plek" id="ds-plek"></p>
+      <p class="ds-uitleg-tekst" id="ds-tekst"></p>
+      <p class="ds-voet">Plaatsing verschilt per auto. Wij bepalen de exacte plek op basis van jouw model.</p>
+    </aside>
   </div>
 
-  <script type="application/json" class="schets-info" set:html={JSON.stringify(legendaInfo)}></script>
+  <script type="application/json" class="ds-info" set:html={JSON.stringify({ info, volgorde: VOLGORDE })}></script>
 </div>
 
 <script>
-  document.querySelectorAll('.schets-blok').forEach((blok) => {
-    const { info, volgorde } = JSON.parse(blok.querySelector('.schets-info').textContent);
-    const knoppen = blok.querySelectorAll('.schets-knop');
-    const kop = blok.querySelector('.schets-kop');
-    const lijst = blok.querySelector('.schets-lijst');
+  document.querySelectorAll('.ds').forEach((blok) => {
+    const { info, volgorde } = JSON.parse(blok.querySelector('.ds-info').textContent);
+    const knoppen = blok.querySelectorAll('.ds-knop');
+    const nrEl = blok.querySelector('#ds-nr');
+    const kopEl = blok.querySelector('#ds-kop');
+    const plekEl = blok.querySelector('#ds-plek');
+    const tekstEl = blok.querySelector('#ds-tekst');
 
-    const namen = {};
-    knoppen.forEach((k) => { namen[k.dataset.pakket] = k.textContent.trim(); });
+    let nummers = {};
 
-    function toon(slug) {
+    /** Toont de uitleg van één onderdeel en licht het bijbehorende punt op. */
+    function kies(id) {
+      if (!info[id]) return;
+      blok.querySelectorAll('[data-id]').forEach((el) => {
+        el.classList.toggle('gekozen', el.dataset.id === id);
+      });
+      nrEl.textContent = nummers[id] ?? '';
+      kopEl.textContent = info[id].naam;
+      plekEl.textContent = info[id].plek;
+      tekstEl.textContent = info[id].uitleg;
+    }
+
+    function toonPakket(slug) {
       blok.dataset.actief = slug;
 
       knoppen.forEach((k) => {
@@ -240,120 +258,127 @@ const legendaInfo = {
         el.classList.toggle('aan', el.dataset.pakketten.split(' ').includes(slug));
       });
 
-      kop.textContent = namen[slug] ?? '';
-
-      // Nummeren in vaste volgorde, van voor naar achter. Alleen wat bij dit
-      // pakket hoort krijgt een nummer, zodat de lijst altijd bij 1 begint.
-      lijst.innerHTML = '';
-      blok.querySelectorAll('.punt-nr').forEach((t) => { t.textContent = ''; });
-
-      let nr = 0;
+      // Nummeren in vaste volgorde, alleen wat bij dit pakket hoort.
+      nummers = {};
+      let n = 0;
       volgorde.forEach((id) => {
-        if (!info[id]) return;
-        const inTekening = blok.querySelector(`[data-id="${id}"][data-pakketten]`);
-        if (!inTekening || !inTekening.classList.contains('aan')) return;
-
-        nr += 1;
-        // Zelfde nummer in beide aanzichten, links én rechts.
-        blok.querySelectorAll(`[data-id="${id}"] .punt-nr`).forEach((t) => {
-          t.textContent = String(nr);
-        });
-
-        const li = document.createElement('li');
-        const kop = document.createElement('strong');
-        const plek = document.createElement('span');
-        kop.textContent = `${nr}. ${info[id].naam}`;
-        plek.textContent = info[id].plek;
-        li.append(kop, plek);
-        lijst.appendChild(li);
+        const punt = blok.querySelector(`.ds-punt[data-id="${id}"]`);
+        if (!punt || !punt.classList.contains('aan')) return;
+        n += 1;
+        nummers[id] = n;
+        punt.querySelector('.ds-nr').textContent = String(n);
       });
+
+      // Meteen het eerste onderdeel tonen, zodat het paneel nooit leeg is.
+      const eerste = volgorde.find((id) => nummers[id]);
+      if (eerste) kies(eerste);
     }
 
-    // Zones hebben geen data-id in de HTML; die zetten we hier alsnog,
-    // zodat de legenda ze kan opzoeken.
-    knoppen.forEach((k) => k.addEventListener('click', () => toon(k.dataset.pakket)));
-    toon(blok.dataset.actief);
+    blok.querySelectorAll('.ds-punt').forEach((punt) => {
+      const id = punt.dataset.id;
+      punt.addEventListener('click', () => kies(id));
+      punt.addEventListener('mouseenter', () => kies(id));
+      punt.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          kies(id);
+        }
+      });
+    });
 
-    // Van buitenaf het carrosserietype wisselen is niet nodig; de pagina
-    // rendert per type een eigen blok.
-    blok.toonPakket = toon;
+    knoppen.forEach((k) => k.addEventListener('click', () => toonPakket(k.dataset.pakket)));
+    toonPakket(blok.dataset.actief);
   });
 </script>
 
 <style>
-  .schets-blok { --uit: color-mix(in srgb, var(--text-dim) 38%, transparent); }
+  .ds { --uit: color-mix(in srgb, var(--text-dim) 30%, transparent); }
 
-  .schets-knoppen { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px; }
-  .schets-knop {
+  /* ---- pakketknoppen ---- */
+  .ds-knoppen { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 34px; }
+  .ds-knop {
     font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: .12em;
-    font-size: .78rem; padding: 10px 18px; cursor: pointer;
+    font-size: .76rem; padding: 11px 20px; cursor: pointer;
     background: transparent; color: var(--text-dim);
-    border: 1px solid var(--line-strong); transition: all .2s;
+    border: 1px solid var(--line-strong); border-radius: 3px;
+    transition: all .2s;
   }
-  .schets-knop:hover { color: var(--text); border-color: var(--text-dim); }
-  .schets-knop.aan { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-
-  .schets-inhoud {
-    display: grid; grid-template-columns: 1.15fr 1fr; gap: 40px; align-items: start;
+  @media (hover: hover) {
+    .ds-knop:hover { color: var(--text); border-color: var(--text-dim); }
   }
-  .schets-tekeningen { display: flex; flex-direction: column; gap: 26px; }
-  @media (max-width: 820px) { .schets-inhoud { grid-template-columns: 1fr; } }
-
-  /* Op een telefoon nemen twee gestapelde tekeningen anders het halve scherm
-     in beslag. Het bovenaanzicht is staand, dus dat knijpen we het hardst. */
-  @media (max-width: 560px) {
-    .schets-tekeningen { gap: 18px; }
-    .schets-svg.boven { max-width: 190px; }
-    .schets-knoppen { gap: 8px; }
-    .schets-knop { font-size: .68rem; padding: 9px 12px; letter-spacing: .08em; }
+  .ds-knop.aan {
+    background: var(--accent); border-color: var(--accent); color: var(--accent-ink);
   }
 
-  .schets-figuur { margin: 0; }
-  .schets-svg { width: 100%; height: auto; display: block; }
-  .schets-svg.boven { max-width: 320px; margin: 0 auto; }
-  .schets-figuur figcaption {
-    text-align: center; margin-top: 8px; font-size: .72rem; letter-spacing: .28em;
-    text-transform: uppercase; color: var(--text-dim); font-family: 'Oswald', sans-serif;
+  /* ---- indeling ---- */
+  .ds-inhoud {
+    display: grid; grid-template-columns: minmax(240px, 380px) 1fr;
+    gap: 56px; align-items: center;
+  }
+  @media (max-width: 820px) {
+    .ds-inhoud { grid-template-columns: 1fr; gap: 30px; }
   }
 
-  .lijn { fill: none; stroke: var(--text-dim); stroke-width: 2.5; stroke-linejoin: round; }
-
-  .zone {
-    stroke: var(--uit); stroke-width: 5; stroke-linecap: round; fill: none;
-    transition: stroke .25s;
-  }
-  .zone.aan { stroke: var(--accent); }
-  .zone-zij { stroke-width: 4; }
-
-  .onderdeel .punt { fill: var(--uit); transition: fill .25s; }
-  .onderdeel .punt-halo { fill: transparent; transition: fill .25s; }
-  .onderdeel.aan .punt { fill: var(--accent); }
-  .onderdeel.aan .punt-halo { fill: color-mix(in srgb, var(--accent) 22%, transparent); }
-
-  /* Het nummer in het bolletje. Donkere tekst op oranje leest het beste. */
-  .punt-nr {
-    font-family: 'Oswald', sans-serif;
-    font-size: 15px;
-    font-weight: 600;
-    fill: var(--accent-ink);
-    pointer-events: none;
-  }
-  .zij-nr { font-size: 12px; }
-
-  .schets-legenda h3 { margin-bottom: .4em; }
-  .schets-legenda ul { list-style: none; padding: 0; margin: 1.2em 0 0; }
-
-  /* :global() is nodig: Astro schermt opmaak af per component met een
-     attribuut op de elementen, maar deze lijstitems maken we met JavaScript
-     aan. Zonder :global() plakt de naam tegen de plek aan. */
-  .schets-legenda ul :global(li) {
-    display: flex; flex-direction: column; gap: 2px;
-    padding: 12px 0; border-bottom: 1px solid var(--line);
-  }
-  .schets-legenda ul :global(li strong) {
+  .ds-figuur { margin: 0; }
+  .ds-svg { width: 100%; height: auto; display: block; max-width: 380px; margin: 0 auto; }
+  .ds-hint {
+    text-align: center; margin-top: 14px;
     font-family: 'Oswald', sans-serif; text-transform: uppercase;
-    letter-spacing: .1em; font-size: .82rem; color: var(--text);
+    letter-spacing: .24em; font-size: .64rem; color: var(--text-dim);
   }
-  .schets-legenda ul :global(li span) { font-size: .88rem; color: var(--text-dim); }
-  .schets-voet { font-size: .8rem; margin-top: 1.6em; }
+
+  /* ---- de auto ---- */
+  .ds-lijn { fill: none; stroke: var(--text-dim); stroke-width: 2; stroke-linejoin: round; }
+  .ds-lijn path:first-child { stroke-width: 2.5; opacity: .9; }
+  .ds-ruit { opacity: .4; }
+  .ds-dun { opacity: .3; }
+  .ds-stoel { fill: none; stroke: var(--text-dim); opacity: .32; }
+
+  /* ---- dempingsvlakken ---- */
+  .ds-vlak {
+    /* Uit = onzichtbaar. Grijze blokken van zones die niet bij het pakket
+       horen maakten de tekening onrustig. */
+    fill: transparent; stroke: none;
+    transition: fill .3s ease;
+  }
+  .ds-vlak.aan { fill: color-mix(in srgb, var(--accent) 40%, transparent); }
+  .ds-vlak.gekozen { fill: var(--accent); }
+
+  /* ---- punten ---- */
+  .ds-punt { cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .3s ease; }
+  .ds-punt.aan { opacity: 1; pointer-events: auto; }
+  .ds-punt:focus { outline: none; }
+  .ds-punt:focus-visible .ds-halo { fill: color-mix(in srgb, var(--accent) 40%, transparent); }
+
+  .ds-halo { fill: transparent; transition: fill .25s ease; }
+  .ds-bol { fill: var(--uit); transition: fill .25s ease; }
+  .ds-nr {
+    font-family: 'Oswald', sans-serif; font-size: 17px; font-weight: 600;
+    fill: var(--accent-ink); pointer-events: none;
+  }
+  .ds-punt.aan .ds-bol { fill: var(--accent); }
+  .ds-punt.gekozen .ds-halo { fill: color-mix(in srgb, var(--accent) 26%, transparent); }
+  @media (hover: hover) {
+    .ds-punt.aan:hover .ds-halo { fill: color-mix(in srgb, var(--accent) 26%, transparent); }
+  }
+
+  .ds-spiegel { fill: var(--uit); opacity: 0; transition: opacity .3s ease, fill .25s ease; }
+  .ds-spiegel.aan { opacity: 1; fill: var(--accent); }
+
+  /* ---- uitlegpaneel ---- */
+  .ds-uitleg { min-height: 210px; }
+  .ds-uitleg-nr {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--accent); color: var(--accent-ink);
+    font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 1rem;
+    margin-bottom: 16px;
+  }
+  .ds-uitleg-kop { margin: 0 0 6px; }
+  .ds-uitleg-plek {
+    font-family: 'Oswald', sans-serif; text-transform: uppercase;
+    letter-spacing: .2em; font-size: .68rem; color: var(--accent); margin: 0 0 16px;
+  }
+  .ds-uitleg-tekst { font-size: .98rem; margin: 0; max-width: 46ch; }
+  .ds-voet { font-size: .78rem; margin-top: 22px; opacity: .7; }
 </style>
