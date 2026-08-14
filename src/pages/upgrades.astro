@@ -57,6 +57,10 @@ import { MERKEN } from '../data/merken.js';
           meer: een gestileerde auto oogde goedkoop naast de rest van de site,
           en zijn eigen kenteken zegt hem meer dan een plaatje van een auto. */}
       <Kentekenplaat />
+
+      {/* Wat de RDW-gegevens betekenen voor het geluid in déze auto. Wordt
+          door het script gevuld; zie src/lib/voertuig.js voor de teksten. */}
+      <ul class="inzichten" id="auto-inzichten"></ul>
     </div>
   </section>
 
@@ -115,6 +119,7 @@ import { MERKEN } from '../data/merken.js';
     formatteerKenteken,
   } from '../lib/match.js';
   import { kleurVan } from '../lib/kleuren.js';
+  import { inzichten, kenmerken } from '../lib/voertuig.js';
 
   const tabel = JSON.parse(document.getElementById('auto-tabel').textContent);
 
@@ -129,7 +134,9 @@ import { MERKEN } from '../data/merken.js';
   const plaatDetails = document.getElementById('plaat-details');
   const pakkettenKop = document.getElementById('pakketten-kop');
 
-  function toon(voertuig) {
+  const lijst = document.getElementById('auto-inzichten');
+
+  function toon(voertuig, brandstof = []) {
     const auto = matchAuto(voertuig, tabel);
     // Kennen we de auto? Dan onze eigen nette schrijfwijze (Škoda Octavia),
     // anders de RDW-tekst netjes gemaakt (werkt voor élke auto in Nederland).
@@ -150,15 +157,19 @@ import { MERKEN } from '../data/merken.js';
 
     // Alleen tonen wat de RDW ook echt weet, zodat er nooit een lege
     // scheidingsstip blijft staan.
-    const details = [];
-    if (kleur.naam) details.push(kleur.naam);
-    if (voertuig.inrichting && voertuig.inrichting !== 'Niet geregistreerd') {
-      details.push(voertuig.inrichting);
+    plaatDetails.textContent = kenmerken(voertuig, brandstof, kleur.naam).join(' · ');
+
+    // Wat die gegevens betekenen voor het geluid in déze auto.
+    lijst.replaceChildren();
+    for (const punt of inzichten(voertuig, brandstof)) {
+      const li = document.createElement('li');
+      const kop = document.createElement('strong');
+      kop.textContent = punt.kop;
+      const tekst = document.createElement('span');
+      tekst.textContent = punt.tekst;
+      li.append(kop, tekst);
+      lijst.append(li);
     }
-    if (voertuig.datum_eerste_toelating) {
-      details.push(String(voertuig.datum_eerste_toelating).slice(0, 4));
-    }
-    plaatDetails.textContent = details.join(' · ');
 
     blok.hidden = false;
     melding.textContent = '';
@@ -166,8 +177,12 @@ import { MERKEN } from '../data/merken.js';
 
     try {
       // `slug` erbij, zodat een modelpagina kan zien of dit kenteken bij
-      // die pagina hoort en het dan als bevestiging kan tonen.
-      sessionStorage.setItem('aue-auto', JSON.stringify({ ...voertuig, slug: auto ? auto.slug : null }));
+      // die pagina hoort en het dan als bevestiging kan tonen. `brandstof`
+      // erbij zodat we die niet opnieuw hoeven op te halen.
+      sessionStorage.setItem(
+        'aue-auto',
+        JSON.stringify({ ...voertuig, brandstof, slug: auto ? auto.slug : null })
+      );
     } catch (e) {
       /* privémodus: dan onthouden we het gewoon niet */
     }
@@ -184,11 +199,22 @@ import { MERKEN } from '../data/merken.js';
 
     melding.textContent = 'Even kijken wat je rijdt…';
     try {
-      const res = await fetch(
-        'https://opendata.rdw.nl/resource/m9d7-ebf2.json?kenteken=' +
-          encodeURIComponent(kenteken) +
-          '&$select=kenteken,merk,handelsbenaming,voertuigsoort,inrichting,eerste_kleur,datum_eerste_toelating'
-      );
+      // Twee datasets tegelijk: het voertuig zelf, en de brandstofregels.
+      // Die tweede vertelt of het een elektrische, hybride of dieselauto is —
+      // en dat verandert wat er akoestisch speelt.
+      const [res, brandstofRes] = await Promise.all([
+        fetch(
+          'https://opendata.rdw.nl/resource/m9d7-ebf2.json?kenteken=' +
+            encodeURIComponent(kenteken) +
+            '&$select=kenteken,merk,handelsbenaming,voertuigsoort,inrichting,eerste_kleur,' +
+            'datum_eerste_toelating,aantal_zitplaatsen,aantal_deuren'
+        ),
+        fetch(
+          'https://opendata.rdw.nl/resource/8ys7-d773.json?kenteken=' +
+            encodeURIComponent(kenteken) +
+            '&$select=brandstof_omschrijving'
+        ),
+      ]);
       if (!res.ok) throw new Error('rdw');
       const data = await res.json();
 
@@ -196,7 +222,17 @@ import { MERKEN } from '../data/merken.js';
         melding.textContent = 'Dat kenteken kennen we niet. Typfout? Anders helpen we je graag via WhatsApp.';
         return;
       }
-      toon(data[0]);
+
+      // De brandstofregels zijn een extraatje: gaat die mis, dan tonen we
+      // de auto gewoon zonder dat stukje.
+      let brandstof = [];
+      try {
+        if (brandstofRes.ok) brandstof = await brandstofRes.json();
+      } catch (e) {
+        /* geen brandstofgegevens: niet erg */
+      }
+
+      toon(data[0], Array.isArray(brandstof) ? brandstof : []);
     } catch (err) {
       melding.textContent = 'De kenteken-check is even niet bereikbaar. App ons gerust direct.';
     }
@@ -208,7 +244,7 @@ import { MERKEN } from '../data/merken.js';
     if (bewaard) {
       const v = JSON.parse(bewaard);
       input.value = v.kenteken || '';
-      toon(v);
+      toon(v, Array.isArray(v.brandstof) ? v.brandstof : []);
     }
   } catch (e) {
     /* niets aan de hand, dan begint de bezoeker gewoon opnieuw */
@@ -217,6 +253,26 @@ import { MERKEN } from '../data/merken.js';
 
 <style>
   #upgrade-melding { margin-top: 18px; min-height: 24px; color: var(--text-dim); }
+
+  /* De inzichten onder de plaat. Twee kolommen op een breed scherm, want
+     vier los onder elkaar duwt de pakketten te ver naar beneden. */
+  .inzichten {
+    list-style: none; padding: 0;
+    margin: 3.2rem auto 0;
+    max-width: 900px;
+    display: grid; gap: 26px 40px;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+  .inzichten:empty { display: none; }
+  .inzichten li { padding-top: 16px; border-top: 1px solid var(--line-strong); }
+  .inzichten strong {
+    display: block; margin-bottom: 8px;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase; letter-spacing: .16em;
+    font-size: .76rem; color: var(--accent-text);
+    font-weight: 500;
+  }
+  .inzichten span { font-size: .92rem; color: var(--text-dim); line-height: 1.6; }
 
   .auto-figuur { margin: 0; }
 

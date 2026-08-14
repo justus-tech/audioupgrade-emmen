@@ -53,39 +53,63 @@ const { compact = false } = Astro.props;
     }
     result.innerHTML = '<span>Even kijken wat je rijdt…</span>';
     try {
-      const res = await fetch(`https://opendata.rdw.nl/resource/m9d7-ebf2.json?kenteken=${plate}`);
+      // Twee datasets tegelijk: het voertuig en de brandstofregels. Die
+      // tweede geven we door aan de volgende pagina, zodat die niet nog een
+      // keer hoeft te wachten op de RDW.
+      const [res, brandstofRes] = await Promise.all([
+        fetch(`https://opendata.rdw.nl/resource/m9d7-ebf2.json?kenteken=${plate}`),
+        fetch(`https://opendata.rdw.nl/resource/8ys7-d773.json?kenteken=${plate}&$select=brandstof_omschrijving`),
+      ]);
       const data = await res.json();
       if (!data.length) {
         result.innerHTML = `<span>Kenteken niet gevonden. Typfout? Of <a href="${whatsapp}">stuur ons een foto van je dashboard</a></span>`;
         return;
       }
       const car = data[0];
+
+      let brandstof = [];
+      try {
+        if (brandstofRes.ok) brandstof = await brandstofRes.json();
+      } catch (e) {
+        /* geen brandstofgegevens: dan tonen we dat stukje straks gewoon niet */
+      }
       const merk = (car.merk || '').toUpperCase();
       const model = (car.handelsbenaming || '').toUpperCase();
       const niceName = esc(`${car.merk} ${car.handelsbenaming}`.replace(/\s+/g, ' ').trim());
 
       const hit = table.find(([slug, m, re]) => merk.includes(m) && new RegExp(re).test(model));
-      if (hit) {
-        // Onthouden welke auto het is, zodat de modelpagina het kenteken kan
-        // tonen. Zo ziet de bezoeker meteen dat het écht om zíjn auto gaat.
-        try {
-          sessionStorage.setItem('aue-auto', JSON.stringify({
-            kenteken: plate,
-            merk: car.merk,
-            handelsbenaming: car.handelsbenaming,
-            voertuigsoort: car.voertuigsoort,
-            inrichting: car.inrichting,
-            eerste_kleur: car.eerste_kleur,
-            slug: hit[0],
-          }));
-        } catch (e) {
-          /* privémodus: dan onthouden we het gewoon niet */
-        }
-        result.innerHTML = `<span class="found">Gevonden: <strong>${niceName}</strong> — we sturen je door…</span>`;
-        setTimeout(() => { window.location.href = `/audio-upgrade/${hit[0]}`; }, 900);
-      } else {
-        result.innerHTML = `<span class="found">Mooie auto, die <strong>${niceName}</strong>! We hebben er (nog) geen aparte pagina voor, maar upgraden hem graag.<br/><a href="${whatsapp}">Stuur een foto van je dashboard</a> en je hoort binnen 24 uur wat er kan.</span>`;
+
+      // Onthouden wat we weten, zodat de volgende pagina het kenteken kan
+      // tonen en zich op deze auto kan aanpassen. Zo ziet de bezoeker meteen
+      // dat het écht om zíjn auto gaat.
+      try {
+        sessionStorage.setItem('aue-auto', JSON.stringify({
+          kenteken: plate,
+          merk: car.merk,
+          handelsbenaming: car.handelsbenaming,
+          voertuigsoort: car.voertuigsoort,
+          inrichting: car.inrichting,
+          eerste_kleur: car.eerste_kleur,
+          datum_eerste_toelating: car.datum_eerste_toelating,
+          aantal_zitplaatsen: car.aantal_zitplaatsen,
+          aantal_deuren: car.aantal_deuren,
+          brandstof,
+          slug: hit ? hit[0] : null,
+        }));
+      } catch (e) {
+        /* privémodus: dan onthouden we het gewoon niet */
       }
+
+      /**
+       * Kennen we het model, dan gaat hij naar die pagina. Zo niet, dan naar
+       * de upgradepagina — die haalt de naam rechtstreeks uit de RDW en werkt
+       * dus voor élke auto in Nederland. Vroeger kreeg zo iemand alleen de
+       * mededeling dat we geen pagina hadden, en dat is een doodlopende weg
+       * voor bijna een kwart van de bezoekers.
+       */
+      const bestemming = hit ? `/audio-upgrade/${hit[0]}` : '/upgrades';
+      result.innerHTML = `<span class="found">Gevonden: <strong>${niceName}</strong> — we sturen je door…</span>`;
+      setTimeout(() => { window.location.href = bestemming; }, 900);
     } catch (err) {
       result.innerHTML = `<span>De kenteken-check is even niet bereikbaar. <a href="${whatsapp}">App ons gerust direct</a></span>`;
     }
