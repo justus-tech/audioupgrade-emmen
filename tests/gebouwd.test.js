@@ -347,7 +347,7 @@ describe('huisregels van Justus', alsGebouwd, () => {
     // voorwerpen (geborsteld aluminium), geen vlakken van de site.
     const uitzonderingen = [
       'Kentekenplaat.astro', 'Logo.astro', 'audio-upgrade' + sep + '[slug].astro',
-      'brand.js', 'kleuren.js', 'global.css', 'Golfvorm.astro',
+      'brand.js', 'kleuren.js', 'global.css', 'Golflijn.astro',
     ];
     const bronMap = fileURLToPath(new URL('../src/', import.meta.url));
     const overtreders = [];

@@ -52,7 +52,6 @@ export async function GET() {
     'User-agent: *',
     'Allow: /',
     'Disallow: /schetsen',
-    'Disallow: /golfvorm-proef',
     '',
     `Sitemap: ${SITE.url}/sitemap.xml`,
     '',

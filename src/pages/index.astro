@@ -3,7 +3,7 @@ import Base from '../layouts/Base.astro';
 import PackageCard from '../components/PackageCard.astro';
 import KentekenCheck from '../components/KentekenCheck.astro';
 import Merken from '../components/Merken.astro';
-import Golfvorm from '../components/Golfvorm.astro';
+import Golflijn from '../components/Golflijn.astro';
 import Fotoband from '../components/Fotoband.astro';
 /* Foto: Unsplash — vrij te gebruiken. Zie src/components/Fotoband.astro. */
 import deurspeaker from '../assets/foto/deurspeaker.jpg';
@@ -18,7 +18,7 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
   path="/"
 >
   <div class="hero">
-    <Golfvorm />
+    <Golflijn />
     <div class="wrap">
       <span class="eyebrow">Emmen · Drenthe · Uitsluitend op afspraak</span>
       <h1>Groots geluid.<br /><span class="hero-accent">Onzichtbaar ingebouwd.</span></h1>
@@ -117,7 +117,7 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
 <style>
   /* De hero is het enige wat 99% van je bezoekers zeker ziet. Daarom hier
      meer lucht, grotere letters en de belangrijkste knop vooraan. */
-  /* De golfvorm ligt als vloer onderin. De inhoud krijgt onderruimte zodat
+  /* De golflijn ligt als vloer onderin. De inhoud krijgt onderruimte zodat
      de bewijsregel er niet doorheen loopt — die moet leesbaar blijven. */
   .hero { position: relative; min-height: 78vh; padding-bottom: clamp(150px, 21vh, 220px); }
   .hero .wrap { position: relative; z-index: 1; }
