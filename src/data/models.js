@@ -6307,8 +6307,17 @@ export const MODELS = [
  * 'Mercedes-Benz' -> 'mercedes-benz', 'Land Rover' -> 'land-rover'.
  * Zo hoeft het merk niet twee keer in de data te staan.
  */
+/**
+ * "Škoda" -> "skoda", "Citroën" -> "citroen", "Lynk & Co" -> "lynk-co".
+ *
+ * De normalize('NFD') haalt accenten los van de letter, waarna we ze
+ * weggooien. Zonder die stap werd Škoda namelijk "koda" en Citroën "citro-n":
+ * webadressen waar niemand op zoekt en die eruitzien alsof er iets stuk is.
+ */
 export const merkSlug = (brand) =>
   String(brand || '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');

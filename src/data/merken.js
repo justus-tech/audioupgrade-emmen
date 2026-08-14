@@ -163,6 +163,262 @@ export const MERKEN = [
     probleem:
       'De basis is breed opgezet maar onderbemeten: veel speakers, weinig vermogen per speaker, en geen echte subwoofer. Je hoort alles, maar niets heeft gewicht. Bij de stationwagens komt daar een grote open laadruimte bij die lage tonen wegslikt en tegelijk meeresoneert.',
   },
+
+  // ============================================================
+  // DE VOLUMEMERKEN — hier rijdt Drenthe in rond.
+  //
+  // Bij deze merken is het verhaal anders dan bij de premiummerken
+  // hierboven. Daar zet je je af tegen een duur fabriekssysteem; hier
+  // is er meestal helemaal geen fabriekssysteem om je tegen af te
+  // zetten, en gaat het om papieren speakers in een holle deur.
+  // ============================================================
+  {
+    slug: 'toyota',
+    naam: 'Toyota',
+    kort: 'Toyota',
+    titel: 'Toyota audio upgrade — alle modellen | Audio Upgrade Emmen',
+    beschrijving:
+      'Beter geluid in je Toyota. Premium speakers, deurdemping, DSP-tuning en draadloos CarPlay voor Aygo, Yaris, Corolla, C-HR en RAV4.',
+    fabriekssystemen: 'Toyota Touch 2 / Smart Connect, optioneel JBL',
+    intro:
+      'Toyota bouwt auto\'s die het eeuwig volhouden. De audio is daar de uitzondering op: dat is het onderdeel waar het budget als eerste vanaf ging.',
+    probleem:
+      'De speakers zijn licht en van papier, en zitten in deuren die af fabriek nauwelijks zijn afgedicht. Bij de hybrides komt daar iets bij wat je bij andere merken niet hebt: op elektrische snelheid is de auto zó stil dat je precies hoort wat het systeem niet kan. Het optionele JBL-systeem klinkt luider, maar zit in dezelfde ongedempte deur.',
+  },
+  {
+    slug: 'ford',
+    naam: 'Ford',
+    kort: 'Ford',
+    titel: 'Ford audio upgrade — alle modellen | Audio Upgrade Emmen',
+    beschrijving:
+      'Meer uit de audio van je Ford halen. Speakers, deurdemping en DSP-tuning voor Fiesta, Focus, Puma, Kuga en Transit — met behoud van SYNC.',
+    fabriekssystemen: 'SYNC 3 of SYNC 4, optioneel Bang & Olufsen (eerder Sony)',
+    intro:
+      'Ford heeft met SYNC een van de prettigste schermsystemen van allemaal. Wat eronder hangt is een ander verhaal.',
+    probleem:
+      'De basisinstallatie draait op het eindtrapje in de radio, en dat loopt bij een beetje volume tegen zijn grens aan — je hoort het geluid dan eerder harder dan beter worden. De deuren van de Fiesta en Focus zijn bovendien grote holle klankkasten met open gaten, waar de achterkant van de speaker de bas grotendeels opheft. Het Bang & Olufsen-systeem is een echte verbetering, maar verandert niets aan die deur.',
+  },
+  {
+    slug: 'opel',
+    naam: 'Opel',
+    kort: 'Opel',
+    titel: 'Opel audio upgrade — alle modellen | Audio Upgrade Emmen',
+    beschrijving:
+      'Beter geluid in je Opel. Premium speakers, akoestische deurdemping en draadloos CarPlay voor Corsa, Astra, Mokka en Grandland.',
+    fabriekssystemen: 'Multimedia / Multimedia Navi, optioneel Bose (Insignia)',
+    intro:
+      'Opel levert al jaren keurige auto\'s waar je verder weinig aan hoeft te doen. De audio is het onderdeel waar dat niet voor geldt.',
+    probleem:
+      'Sinds Opel op de platformen van Stellantis bouwt, deelt hij zijn audio-opzet met Peugeot en Citroën: weinig vermogen, geen aparte versterker en speakers die vooral goedkoop moesten zijn. Bij de kleinere modellen zitten de voorspeakers laag in de deur, waardoor het geluid bij je knieën blijft hangen in plaats van voor je op het dashboard te staan.',
+  },
+  {
+    slug: 'peugeot',
+    naam: 'Peugeot',
+    kort: 'Peugeot',
+    titel: 'Peugeot audio upgrade — alle modellen | Audio Upgrade Emmen',
+    beschrijving:
+      'Haal meer uit de audio van je Peugeot. Speakers, deurdemping en DSP-afstemming voor 108, 208, 2008, 308, 3008 en 5008.',
+    fabriekssystemen: 'i-Connect / i-Cockpit, optioneel FOCAL Premium Hi-Fi',
+    intro:
+      'Peugeot doet met het i-Cockpit iets eigenzinnigs, en met FOCAL heeft het merk een van de betere fabrieksopties in dit segment. Alleen zit die er bijna nooit in.',
+    probleem:
+      'Zonder de FOCAL-optie rijd je met lichte papieren speakers en een radio die zijn eigen vermogen levert. De hoge tonen komen bij de meeste modellen uit een speakertje laag in het portier, waardoor het geluidsbeeld onder het dashboard blijft zitten. Het scherm zelf is modern; wat eruit komt hoort daar niet bij.',
+  },
+  {
+    slug: 'renault',
+    naam: 'Renault',
+    kort: 'Renault',
+    titel: 'Renault audio upgrade — alle modellen | Audio Upgrade Emmen',
+    beschrijving:
+      'Beter geluid in je Renault. Premium speakers, akoestische deurdemping en draadloos CarPlay voor Twingo, Clio, Captur en Mégane.',
+    fabriekssystemen: 'EASY LINK / openR link, optioneel Bose Sound System',
+    intro:
+      'Renault is een van de weinige merken die in de kleinste modellen een echt premiumsysteem aanbiedt. Bij de meeste auto\'s die wij binnenkrijgen zit dat er niet in.',
+    probleem:
+      'De standaardinstallatie is een radio met vier speakers en verder niets: geen versterker, geen subwoofer, geen afstemming op het interieur. De deuren zijn licht gebouwd — goed voor het gewicht, slecht voor de bas, want het paneel gaat meetrillen zodra er iets van niveau uit de speaker komt. Het Bose-systeem lost dat deels op met meer vermogen, maar de deur blijft dezelfde.',
+  },
+  {
+    slug: 'citroen',
+    naam: 'Citroën',
+    kort: 'Citroën',
+    titel: 'Citroën audio upgrade — alle modellen | Audio Upgrade Emmen',
+    beschrijving:
+      'Meer uit de audio van je Citroën halen. Speakers, deurdemping en DSP-tuning voor C1, C3, C4 en C5 Aircross — met behoud van je scherm.',
+    fabriekssystemen: 'Citroën Connect Nav met Arkamys-geluidsbewerking',
+    intro:
+      'Citroën richt zich op comfort, en dat is precies het uitgangspunt waar goed geluid bij hoort. Het systeem dat erin zit maakt die belofte alleen niet waar.',
+    probleem:
+      'Citroën gebruikt Arkamys-geluidsbewerking om met eenvoudige speakers toch een breed geluidsbeeld te maken. Dat werkt verrassend aardig op zacht volume, maar het is een softwaretruc: de speakers zelf zijn licht en de deuren zijn niet gedempt. Draai je open, dan valt de truc uit elkaar en hoor je wat er werkelijk hangt.',
+  },
+  {
+    slug: 'skoda',
+    naam: 'Škoda',
+    kort: 'Škoda',
+    titel: 'Škoda audio upgrade — alle modellen | Audio Upgrade Emmen',
+    beschrijving:
+      'Beter geluid in je Škoda. Premium speakers, akoestische deurdemping en DSP-tuning voor Fabia, Octavia, Superb, Karoq en Kodiaq.',
+    fabriekssystemen: 'Swing / Bolero / Amundsen / Columbus, optioneel Canton',
+    intro:
+      'Škoda geeft je de techniek van Volkswagen voor minder geld. Bij de audio zie je waar dat verschil vandaan komt.',
+    probleem:
+      'Dezelfde MQB-deuren als bij Volkswagen: grote holle bakken met open gaten, waar de achterkant van de speaker de bas van de voorkant grotendeels opheft. Het vermogen komt uit de radio zelf. Het optionele Canton-systeem voegt een versterker en een subwoofer toe en is een duidelijke stap, maar zit in dezelfde ongedempte deur — en zit in de meeste tweedehands Octavia\'s niet.',
+  },
+  {
+    slug: 'seat',
+    naam: 'Seat',
+    kort: 'Seat',
+    titel: 'Seat audio upgrade — alle modellen | Audio Upgrade Emmen',
+    beschrijving:
+      'Haal meer uit de audio van je Seat. Speakers, deurdemping en DSP-afstemming voor Ibiza, Leon en Arona — met behoud van fabrieksgarantie.',
+    fabriekssystemen: 'Media System Plus, optioneel BeatsAudio',
+    intro:
+      'Seat verkoopt zichzelf als het sportieve merk binnen de VW-groep, en met BeatsAudio als optie kiest het bewust voor een jonger publiek.',
+    probleem:
+      'BeatsAudio klinkt indrukwekkend in de showroom omdat het laag flink is opgetild, maar dat is een afstemming en geen fundament: de bas is dik in plaats van diep, en op hoger volume wordt het rommelig. Zonder die optie heb je de kale MQB-opzet — vier lichte speakers in een ongedempte deur, gevoed door de radio.',
+  },
+  {
+    slug: 'kia',
+    naam: 'Kia',
+    kort: 'Kia',
+    titel: 'Kia audio upgrade — alle modellen | Audio Upgrade Emmen',
+    beschrijving:
+      'Beter geluid in je Kia. Premium speakers, akoestische demping en DSP-tuning voor Picanto, Rio, Ceed, Sportage en Niro.',
+    fabriekssystemen: 'Kia Connect, optioneel Harman Kardon of Meridian (EV6)',
+    intro:
+      'Kia is in tien jaar van goedkoop naar goed gegaan. De audio-opzet is dat pad nog niet helemaal gevolgd.',
+    probleem:
+      'De basisinstallatie heeft genoeg speakers maar te weinig vermogen per speaker: veel gaatjes in het paneel, weinig geluid dat eruit komt. Bij de elektrische modellen wordt dat extra hoorbaar, omdat er geen motorgeluid meer is dat de tekortkomingen maskeert. Het Harman Kardon-systeem laat horen wat er in deze carrosserieën zit, maar zit alleen in de duurdere uitvoeringen.',
+  },
+  {
+    slug: 'hyundai',
+    naam: 'Hyundai',
+    kort: 'Hyundai',
+    titel: 'Hyundai audio upgrade — alle modellen | Audio Upgrade Emmen',
+    beschrijving:
+      'Meer uit de audio van je Hyundai halen. Speakers, deurdemping en DSP-tuning voor i10, i20, i30, Tucson en Kona.',
+    fabriekssystemen: 'Bluelink-scherm, optioneel Bose of KRELL (oudere modellen)',
+    intro:
+      'Hyundai levert veel auto voor je geld en heeft de laatste jaren enorme stappen gezet in afwerking. De audio is het onderdeel dat is achtergebleven.',
+    probleem:
+      'Bij de kleinere modellen zit er letterlijk niets tussen de radio en de speakers: geen versterker, geen afstemming. De deurpanelen zijn dun en gaan al bij matig volume meeklapperen, wat je als "slechte bas" hoort terwijl het eigenlijk het paneel is dat je hoort. Bij de elektrische modellen valt dat extra op, omdat de cabine zelf muisstil is.',
+  },
+  {
+    slug: 'mazda',
+    naam: 'Mazda',
+    kort: 'Mazda',
+    titel: 'Mazda audio upgrade — alle modellen | Audio Upgrade Emmen',
+    beschrijving:
+      'Beter geluid in je Mazda. Premium speakers, akoestische deurdemping en DSP-afstemming voor Mazda 2, 3, 6, CX-5 en MX-5.',
+    fabriekssystemen: 'Mazda Connect, optioneel Bose Premium',
+    intro:
+      'Mazda bouwt interieurs waar duurdere merken jaloers op mogen zijn, en denkt echt na over waar dingen zitten. Ook over de speakers — maar niet ver genoeg.',
+    probleem:
+      'Mazda plaatst de woofers bewust laag bij de deurscharnieren en de tweeters in de spiegeldriehoek. Dat is akoestisch precies goed gedacht. Alleen zijn de speakers zelf licht uitgevoerd en is er geen versterking, waardoor het slimme ontwerp niet tot zijn recht komt. Dit is een van de merken waar een speakerset alleen al een groter verschil maakt dan gemiddeld — het huiswerk van de plaatsing is namelijk al gedaan.',
+  },
+  {
+    slug: 'nissan',
+    naam: 'Nissan',
+    kort: 'Nissan',
+    titel: 'Nissan audio upgrade — alle modellen | Audio Upgrade Emmen',
+    beschrijving:
+      'Haal meer uit de audio van je Nissan. Speakers, deurdemping en DSP-tuning voor Micra, Juke, Qashqai en X-Trail.',
+    fabriekssystemen: 'NissanConnect, optioneel Bose Personal Plus',
+    intro:
+      'Nissan maakte met de Qashqai de cross-over populair in Nederland. Wat er in de deuren zit is in al die jaren nauwelijks veranderd.',
+    probleem:
+      'De standaardspeakers zijn licht en zitten in een deur die niet is afgedicht, waardoor de bas letterlijk wegloopt in het portier. De hogere zitpositie werkt daarbij tegen je: je oren zitten verder van de speakers vandaan, waardoor het geluid dunner overkomt dan in een lage auto. Het Bose-systeem in de Juke en Qashqai voegt vermogen toe maar laat de deur ongemoeid.',
+  },
+  {
+    slug: 'suzuki',
+    naam: 'Suzuki',
+    kort: 'Suzuki',
+    titel: 'Suzuki audio upgrade — alle modellen | Audio Upgrade Emmen',
+    beschrijving:
+      'Beter geluid in je Suzuki. Premium speakers, akoestische demping en draadloos CarPlay voor Swift, Vitara, S-Cross en Ignis.',
+    fabriekssystemen: 'SLDA-scherm, geen premium fabrieksoptie',
+    intro:
+      'Suzuki maakt lichte, eerlijke auto\'s zonder franje. Bij de audio betekent "zonder franje" helaas ook zonder fundament.',
+    probleem:
+      'Er is geen premiumoptie: wat erin zit, is wat je krijgt. Vier lichte speakers, gevoed door de radio, in een carrosserie die bewust licht is gebouwd. Dat laatste is het echte punt — een lichte auto laat meer rolgeluid door, en dat rolgeluid zit precies in het gebied waar je stem en muziek ook zitten. Bij Suzuki doet demping daarom vaak meer dan een nieuwe speaker.',
+  },
+  {
+    slug: 'fiat',
+    naam: 'Fiat',
+    kort: 'Fiat',
+    titel: 'Fiat audio upgrade — alle modellen | Audio Upgrade Emmen',
+    beschrijving:
+      'Meer uit de audio van je Fiat halen. Speakers, deurdemping en draadloos CarPlay voor 500, Panda en Tipo.',
+    fabriekssystemen: 'Uconnect, optioneel BeatsAudio (500)',
+    intro:
+      'Een Fiat 500 koop je om hoe hij eruitziet en hoe hij rijdt. Het geluid staat op geen enkel verlanglijstje — tot je er dagelijks in zit.',
+    probleem:
+      'De cabine is klein, en dat is akoestisch juist gunstig: je hebt weinig vermogen nodig om hem te vullen. Alleen staat daar een kleine, harde ruimte tegenover waarin alles terugkaatst, met speakers die te licht zijn om daar iets tegenover te zetten. Het resultaat is scherp en vermoeiend op de lange rit. Dit is een van de auto\'s waar goede afstemming meer doet dan meer vermogen.',
+  },
+  {
+    slug: 'mitsubishi',
+    naam: 'Mitsubishi',
+    kort: 'Mitsubishi',
+    titel: 'Mitsubishi audio upgrade — alle modellen | Audio Upgrade Emmen',
+    beschrijving:
+      'Beter geluid in je Mitsubishi. Premium speakers, akoestische deurdemping en DSP-tuning voor Space Star, ASX en Outlander.',
+    fabriekssystemen: 'SDA-scherm, optioneel Rockford Fosgate (Outlander)',
+    intro:
+      'Mitsubishi heeft met de Outlander PHEV jarenlang de Nederlandse zakelijke markt bediend. Die auto\'s rijden nu tweedehands rond, en het geluid is er niet beter op geworden.',
+    probleem:
+      'De plug-in hybrides schakelen voortdurend tussen elektrisch en benzine, en juist in die stille elektrische momenten hoor je hoe weinig het systeem eigenlijk kan. Daar komt bij dat de accu onder de vloer zit, waardoor de fabriek de demping onder de bodem heeft weggelaten om gewicht te sparen — precies waar het rolgeluid binnenkomt.',
+  },
+  {
+    slug: 'dacia',
+    naam: 'Dacia',
+    kort: 'Dacia',
+    titel: 'Dacia audio upgrade — alle modellen | Audio Upgrade Emmen',
+    beschrijving:
+      'Beter geluid in je Dacia. Premium speakers, akoestische demping en draadloos CarPlay voor Sandero en Duster.',
+    fabriekssystemen: 'Media Display / Media Nav, geen premium fabrieksoptie',
+    intro:
+      'Dacia is eerlijk over wat je krijgt: een auto zonder overbodige dingen, voor een prijs die klopt. De audio hoort bij de dingen die eraf zijn gelaten.',
+    probleem:
+      'Er is geen premiumoptie en er zijn af fabriek vaak maar twee speakers voorin. Het echte punt zit elders: om de prijs te halen is er nauwelijks isolatiemateriaal gebruikt, waardoor het op de snelweg zó luid is in de cabine dat je de radio harder zet om de weg te overstemmen. Bij een Dacia beginnen wij daarom bijna altijd bij demping en niet bij speakers — het rendement per euro is daar het hoogst.',
+  },
+  {
+    slug: 'honda',
+    naam: 'Honda',
+    kort: 'Honda',
+    titel: 'Honda audio upgrade — alle modellen | Audio Upgrade Emmen',
+    beschrijving:
+      'Haal meer uit de audio van je Honda. Speakers, akoestische deurdemping en DSP-afstemming voor Jazz, Civic, HR-V en CR-V.',
+    fabriekssystemen: 'Honda Connect, premium alleen op de hoogste uitvoeringen',
+    intro:
+      'Honda bouwt techniek die het langer volhoudt dan de auto eromheen. De speakers vormen daarop de uitzondering.',
+    probleem:
+      'De speakers zijn licht en werken zonder aparte versterker. Bij de Jazz komt daar de vorm van de auto bij: veel glas en een rechtopstaande voorruit, waardoor het geluid hard terugkaatst en de hoge tonen scherp worden. Bij de hybrides valt het systeem extra door de mand, omdat de auto op elektrische snelheid vrijwel geen eigen geluid maakt.',
+  },
+  {
+    slug: 'mini',
+    naam: 'Mini',
+    kort: 'Mini',
+    titel: 'Mini audio upgrade — alle modellen | Audio Upgrade Emmen',
+    beschrijving:
+      'Beter geluid in je Mini. Premium speakers, akoestische deurdemping en DSP-tuning met behoud van je originele scherm.',
+    fabriekssystemen: 'MINI Connected, optioneel Harman Kardon',
+    intro:
+      'Een Mini is klein vanbinnen en hard afgeveerd. Dat maakt hem leuk om te rijden en lastig om goed te laten klinken.',
+    probleem:
+      'De cabine is kort, dus je zit dicht op de speakers en hoort elk gebrek. De strakke ophanging brengt daarbij veel wegcontact de auto in — dat hoor je als een constante ondergrond die precies over je muziek heen valt. Het optionele Harman Kardon-systeem geeft vermogen, maar tegen dat rolgeluid helpt alleen demping. Bij een Mini is de volgorde daarom omgekeerd: eerst stil maken, dan pas beter maken.',
+  },
+  {
+    slug: 'lynk-co',
+    naam: 'Lynk & Co',
+    kort: 'Lynk & Co',
+    titel: 'Lynk & Co audio upgrade | Audio Upgrade Emmen',
+    beschrijving:
+      'Meer uit de audio van je Lynk & Co 01 halen. Speakers, akoestische deurdemping en DSP-afstemming, met behoud van fabrieksgarantie.',
+    fabriekssystemen: 'Harman Kardon af fabriek, op elke uitvoering',
+    intro:
+      'Lynk & Co doet iets wat bijna geen enkel merk doet: het premiumsysteem zit er standaard in, op elke auto. Dat is een prettig vertrekpunt — en meteen de reden dat de vraag hier anders ligt.',
+    probleem:
+      'Het Harman Kardon-systeem in de 01 heeft genoeg vermogen en een fatsoenlijke opzet. Wat het niet heeft, is een deur die daar tegen bestand is: bij hogere niveaus tikt en klappert het paneel mee, wat je hoort als een bas die wel hard is maar niet strak. Bij deze auto beginnen wij daarom bij demping en afstemming, niet bij vervanging. Vaak zit het verschil niet in nieuwe speakers maar in wat eromheen zit.',
+  },
 ];
 
 export const merkenPerSlug = Object.fromEntries(MERKEN.map((m) => [m.slug, m]));
