@@ -21,6 +21,12 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
         Klaar met blikkerig geluid? Wij bouwen premium car audio weg achter je
         originele panelen — met 100% behoud van je fabrieksgarantie.
       </p>
+      {/* De kenteken-check als eerste actie. Zes tekens invullen is een veel
+          kleinere stap dan een bericht opstellen, en de bezoeker ziet direct
+          zijn eigen auto. Wie al weet wat hij wil, kan er meteen onder
+          doorklikken naar WhatsApp. */}
+      <KentekenCheck compact={true} />
+
       <div class="hero-knoppen">
         <a class="btn wa" href={SITE.whatsapp}>Stuur foto dashboard 💬</a>
         <a class="btn" href="/upgrades">Bekijk de upgrades</a>
@@ -38,12 +44,6 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
       <div class="grid cols-4 mt">
         {pakketten.map((pkg) => <PackageCard pkg={pkg} />)}
       </div>
-    </div>
-  </section>
-
-  <section class="alt">
-    <div class="wrap">
-      <KentekenCheck />
     </div>
   </section>
 

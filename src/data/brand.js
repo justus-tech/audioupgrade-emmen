@@ -45,15 +45,11 @@ export const LINES = {
 };
 
 /**
- * De echte Nederlandse kentekenplaat in de kenteken-check. Bewust GEEN
- * huisstijlkleur: bezoekers moeten in één oogopslag herkennen dat daar hun
- * kenteken in moet. Dit is herkenning, geen branding.
+ * De AUE-plaat gebruikt gewoon het huisstijloranje en een aluminiumverloop
+ * in CSS. De Nederlandse geel/blauw hebben we losgelaten: die was wel
+ * herkenbaar maar vloekte met de rest van de site. De herkenning komt nu uit
+ * de vórm van de plaat en de gekleurde band links.
  */
-export const PLATE = {
-  yellow: '#f8b500',
-  blue: '#003399',
-  ink: '#111111',
-};
 
 /** Zet de kleuren om naar CSS-variabelen voor in <style> op :root. */
 export const cssVariables = [
@@ -66,9 +62,6 @@ export const cssVariables = [
   `--accent-ink: ${BRAND.accentInk}`,
   `--line: ${LINES.line}`,
   `--line-strong: ${LINES.lineStrong}`,
-  `--plate-yellow: ${PLATE.yellow}`,
-  `--plate-blue: ${PLATE.blue}`,
-  `--plate-ink: ${PLATE.ink}`,
 ].join('; ');
 
 export default BRAND;

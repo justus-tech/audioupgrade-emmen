@@ -160,16 +160,23 @@ const faqSchema = {
     border: 1px solid var(--line-strong);
     background: var(--panel);
   }
-  /* Echte NL-plaat: geel met blauwe band. Herkenning gaat hier voor huisstijl. */
+  /* Dezelfde AUE-plaat als op de upgradepagina, alleen kleiner. */
   .jouw-plaat {
-    background: var(--plate-yellow);
-    color: var(--plate-ink);
+    color: #16181a;
     font-family: 'Oswald', sans-serif;
-    font-size: 1.25rem; font-weight: 600; letter-spacing: .12em;
-    border: 2px solid var(--plate-ink); border-radius: 5px;
-    padding: 6px 14px 6px 34px;
-    background-image: linear-gradient(90deg, var(--plate-blue) 24px, transparent 24px);
+    font-size: 1.15rem; font-weight: 600; letter-spacing: .12em;
+    border: 2px solid rgba(0, 0, 0, .42); border-radius: 6px;
+    padding: 6px 16px 6px 46px;
     white-space: nowrap;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, .7);
+    background-image:
+      linear-gradient(90deg, var(--accent) 0 32px, transparent 32px),
+      repeating-linear-gradient(180deg,
+        rgba(255,255,255,.5) 0px, rgba(255,255,255,0) 1px,
+        rgba(0,0,0,.035) 2px, rgba(0,0,0,0) 3px),
+      linear-gradient(180deg, #fafafa 0%, #dcdcdc 16%, #ffffff 40%,
+        #c6c6c6 56%, #eeeeee 78%, #b4b4b4 100%);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .5);
   }
   .jouw-tekst {
     font-family: 'Oswald', sans-serif; text-transform: uppercase;

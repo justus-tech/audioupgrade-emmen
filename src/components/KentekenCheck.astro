@@ -4,11 +4,22 @@ import { SITE } from '../data/site.js';
 
 // Compacte matchtabel voor de client: [slug, merk, modelregex-als-string]
 const table = MODELS.map((m) => [m.slug, m.matchers.merk, m.matchers.model.source]);
+
+/**
+ * `compact` laat het kader en de kop weg. Zo past dezelfde check in de hero
+ * van de homepage, waar de kop er al boven staat, zonder dat er twee
+ * verschillende versies van deze logica hoeven te bestaan.
+ */
+const { compact = false } = Astro.props;
 ---
-<div class="kenteken-box">
-  <span class="eyebrow">Kenteken-check</span>
-  <h2>Wat kan jouw auto?</h2>
-  <p style="margin: 0 auto;">Vul je kenteken in en zie direct welke upgrades er voor jouw auto mogelijk zijn.</p>
+<div class:list={['kenteken-box', compact && 'kenteken-kaal']}>
+  {!compact && (
+    <>
+      <span class="eyebrow">Kenteken-check</span>
+      <h2>Wat kan jouw auto?</h2>
+      <p style="margin: 0 auto;">Vul je kenteken in en zie direct welke upgrades er voor jouw auto mogelijk zijn.</p>
+    </>
+  )}
   <form class="kenteken-form" id="kenteken-form" autocomplete="off">
     <input class="plate" id="kenteken-input" type="text" placeholder="XX-99-XX" maxlength="8" aria-label="Kenteken" />
     <button class="btn solid" type="submit">Check mijn auto</button>

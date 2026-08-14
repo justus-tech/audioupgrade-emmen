@@ -230,26 +230,41 @@ details p { padding-top: 12px; }
 .kenteken-form {
   display: flex; gap: 12px; justify-content: center; margin-top: 26px; flex-wrap: wrap;
 }
-/* Bewust de echte NL-plaat: geel met blauwe band. Herkenning gaat hier
-   voor huisstijl — zie de toelichting bovenaan dit bestand. */
+/* ---- De AUE-plaat ----
+   Was eerst de echte Nederlandse geel/blauw. Die was herkenbaar maar vloekte
+   met de rest van de site. Nu een eigen plaat in geborsteld aluminium met
+   een oranje band: even herkenbaar door de vorm en de band links, maar wel
+   passend bij de huisstijl. Zelfde stijl als de grote plaat na de check.
+
+   Een <input> kan geen kindelementen hebben, dus de oranje band zit hier in
+   de achtergrond in plaats van in een apart element. */
 .plate {
-  background: var(--plate-yellow);
-  color: var(--plate-ink);
+  color: #16181a;
   font-family: 'Oswald', sans-serif;
   font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: .18em;
   text-transform: uppercase;
-  border: 2px solid var(--plate-ink);
-  border-radius: 6px;
-  padding: 10px 18px 10px 44px;
-  width: 240px;
+  border: 2px solid rgba(0, 0, 0, .42);
+  border-radius: 8px;
+  padding: 10px 18px 10px 62px;
+  width: 250px;
   text-align: center;
-  position: relative;
-  background-image: linear-gradient(90deg, var(--plate-blue) 34px, transparent 34px);
   outline: none;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .7);
+  background-image:
+    linear-gradient(90deg, var(--accent) 0 46px, transparent 46px),
+    repeating-linear-gradient(180deg,
+      rgba(255,255,255,.5) 0px, rgba(255,255,255,0) 1px,
+      rgba(0,0,0,.035) 2px, rgba(0,0,0,0) 3px),
+    linear-gradient(180deg,
+      #fafafa 0%, #dcdcdc 16%, #ffffff 40%,
+      #c6c6c6 56%, #eeeeee 78%, #b4b4b4 100%);
+  box-shadow:
+    inset 0 0 0 3px rgba(255, 255, 255, .5),
+    0 10px 26px rgba(0, 0, 0, .45);
 }
-.plate::placeholder { color: rgba(0, 0, 0, .4); }
+.plate::placeholder { color: rgba(0, 0, 0, .38); letter-spacing: .12em; }
 .plate:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 #kenteken-result { margin-top: 22px; min-height: 30px; font-size: 1rem; color: var(--text-dim); }
 #kenteken-result .found { color: var(--text); }
@@ -431,3 +446,13 @@ section + section::before {
 h1 { letter-spacing: .06em; }
 .hero h1 { font-size: clamp(2.2rem, 6.4vw, 4.6rem); }
 .hero p.lead { max-width: 46ch; color: var(--text); opacity: .82; }
+
+/* De kenteken-check zonder kader, voor in de hero van de homepage. */
+.kenteken-kaal {
+  background: none;
+  border: 0;
+  padding: 0;
+  max-width: none;
+  margin-top: 2.2em;
+}
+.kenteken-kaal .kenteken-form { margin-top: 0; }
