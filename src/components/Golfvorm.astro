@@ -1,0 +1,78 @@
+---
+/**
+ * Een equalizer-achtige golfvorm als beeldmerk voor de hero.
+ *
+ * Waarom dit en geen foto: een foto van een auto zegt niets over geluid, en
+ * stockbeeld verraadt zichzelf altijd. Dit is wat wij verkopen — geluid dat
+ * beweegt — en het is van onszelf.
+ *
+ * De balken ademen langzaam op verschillende snelheden, zodat het patroon
+ * nooit precies herhaalt. Bewust traag: het moet duur ogen, niet druk.
+ * Bij `prefers-reduced-motion` staat alles stil.
+ */
+const { balken = 48 } = Astro.props;
+
+/**
+ * Hoogtes uit een vaste formule in plaats van willekeur, zodat de server en
+ * de browser exact hetzelfde tekenen. Twee sinussen over elkaar geeft een
+ * patroon dat organisch oogt zonder te herhalen.
+ */
+const staven = Array.from({ length: balken }, (_, i) => {
+  const t = i / (balken - 1);
+  const vorm = Math.sin(t * Math.PI);                      // laag aan de randen
+  const detail = 0.55 + 0.45 * Math.sin(i * 1.7) * Math.cos(i * 0.6);
+  return {
+    hoogte: Math.max(6, Math.round(vorm * detail * 100)),
+    vertraging: ((i * 137) % 1000) / 1000,                 // gespreid, niet gelijk
+    duur: 2.4 + ((i * 53) % 100) / 100 * 2.2,
+  };
+});
+---
+<div class="golfvorm" aria-hidden="true">
+  <svg viewBox="0 0 480 120" preserveAspectRatio="none">
+    {staven.map((s, i) => (
+      <rect
+        x={i * (480 / balken) + 1}
+        y={60 - s.hoogte / 2}
+        width={480 / balken - 2.5}
+        height={s.hoogte}
+        rx="1.2"
+        style={`--h:${s.hoogte}px; animation-delay:-${s.vertraging}s; animation-duration:${s.duur}s`}
+      />
+    ))}
+  </svg>
+</div>
+
+<style>
+  .golfvorm {
+    position: absolute;
+    inset: auto 0 0 0;
+    height: clamp(120px, 19vh, 200px);
+    pointer-events: none;
+    /* Vervaagt naar boven toe weg, zodat de tekst erboven leesbaar blijft. */
+    mask-image: linear-gradient(to top, #000 10%, transparent 92%);
+    -webkit-mask-image: linear-gradient(to top, #000 10%, transparent 92%);
+    opacity: .42;
+  }
+  .golfvorm svg { width: 100%; height: 100%; display: block; }
+
+  .golfvorm rect {
+    fill: var(--accent);
+    transform-box: fill-box;
+    transform-origin: center;
+    animation-name: adem;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+    animation-direction: alternate;
+  }
+
+  @keyframes adem {
+    from { transform: scaleY(.35); opacity: .35; }
+    to   { transform: scaleY(1);   opacity: .9; }
+  }
+
+  /* Wie beweging heeft uitgezet krijgt een stilstaand patroon. */
+  @media (prefers-reduced-motion: reduce) {
+    .golfvorm rect { animation: none; opacity: .6; }
+  }
+</style>

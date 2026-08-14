@@ -344,7 +344,15 @@ section, .schets-blok, [id] { scroll-margin-top: 104px; }
     font-size: .74rem;
     font-weight: 500;
     box-shadow: 0 6px 22px rgba(0, 0, 0, .45);
+    /* Begint verborgen; JavaScript zet 'aan' zodra de hero uit beeld is.
+       Zonder JavaScript blijft hij zichtbaar — zie de regel hieronder. */
+    opacity: 0;
+    transform: translateY(90px);
+    transition: opacity .3s ease, transform .3s cubic-bezier(.22,.61,.36,1);
+    pointer-events: none;
   }
+  .wa-zwevend.aan { opacity: 1; transform: none; pointer-events: auto; }
+  html:not(.js-reveal) .wa-zwevend { opacity: 1; transform: none; pointer-events: auto; }
   /* Ruimte onderaan, anders dekt de knop de laatste footerregel af. */
   footer.site { padding-bottom: 96px; }
 }
@@ -352,3 +360,74 @@ section, .schets-blok, [id] { scroll-margin-top: 104px; }
 /* Kaart zonder scorebalkjes (Akoestische Isolatie): niet meerekken met de
    hoogte van de andere kaarten, anders blijft er onderin lege ruimte staan. */
 .card-los { align-self: start; }
+
+/* ============================================================
+   DIEPTE EN AFWERKING
+   Wat een site duur laat ogen is zelden de foto: het is diepte,
+   rust en beweging die je nauwelijks bewust opmerkt. Hieronder
+   staan de drie lagen die dat doen.
+   ============================================================ */
+
+/* ---- 1. Filmische korrel ----
+   Een egaal donker vlak oogt op een groot scherm plat en een beetje
+   goedkoop. Een nauwelijks zichtbare korrel eroverheen geeft het de
+   textuur van fotopapier. Zelfde truc die Apple en Sony gebruiken. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: .04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---- 2. Gloed ----
+   Oranje licht dat van achter de inhoud lijkt te komen. Geeft de
+   donkere vlakken diepte zonder dat je een lichtbron ziet. */
+.gloed { position: relative; overflow: hidden; }
+.gloed::before {
+  content: '';
+  position: absolute;
+  inset: -30% -10% auto -10%;
+  height: 70%;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 0%,
+    color-mix(in srgb, var(--accent) 22%, transparent) 0%, transparent 68%);
+}
+.gloed > * { position: relative; }
+
+/* Haarlijn tussen secties: loopt van niets naar oranje en weer terug.
+   Rustiger dan een doorlopende rand over de volle breedte. */
+section + section::before {
+  content: '';
+  display: block;
+  height: 1px;
+  margin: 0 auto 88px;
+  max-width: var(--max);
+  background: linear-gradient(90deg,
+    transparent, color-mix(in srgb, var(--accent) 45%, transparent), transparent);
+}
+@media (max-width: 700px) { section + section::before { margin-bottom: 56px; } }
+
+/* ---- 3. Verschijnen bij scrollen ----
+   Inhoud komt rustig omhoog in beeld in plaats van er ineens te staan.
+   Zonder JavaScript blijft alles gewoon zichtbaar, en wie beweging heeft
+   uitgezet krijgt het niet te zien. */
+@media (prefers-reduced-motion: no-preference) {
+  .js-reveal [data-reveal] {
+    opacity: 0;
+    transform: translateY(22px);
+    transition: opacity .7s cubic-bezier(.22,.61,.36,1),
+                transform .7s cubic-bezier(.22,.61,.36,1);
+  }
+  .js-reveal [data-reveal].in {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---- typografie met meer lucht ---- */
+h1 { letter-spacing: .06em; }
+.hero h1 { font-size: clamp(2.2rem, 6.4vw, 4.6rem); }
+.hero p.lead { max-width: 46ch; color: var(--text); opacity: .82; }

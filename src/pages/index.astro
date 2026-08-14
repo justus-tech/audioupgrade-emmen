@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import PackageCard from '../components/PackageCard.astro';
 import KentekenCheck from '../components/KentekenCheck.astro';
+import Golfvorm from '../components/Golfvorm.astro';
 import { PACKAGES, SITE } from '../data/site.js';
 
 const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
@@ -12,12 +13,21 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
   path="/"
 >
   <div class="hero">
+    <Golfvorm />
     <div class="wrap">
       <span class="eyebrow">Emmen · Drenthe · Uitsluitend op afspraak</span>
-      <h1>Premium Audio &amp; CarPlay upgrades op maat</h1>
-      <p class="lead">Klaar met blikkerig geluid? Wij bouwen premium car audio onzichtbaar in — met 100% behoud van je fabrieksgarantie.</p>
-      <a class="btn solid" href="/upgrades">Bekijk de upgrades</a>
-      <a class="btn wa" href={SITE.whatsapp} style="margin-left:12px">Stuur foto dashboard 💬</a>
+      <h1>Groots geluid.<br /><span class="hero-accent">Onzichtbaar ingebouwd.</span></h1>
+      <p class="lead">
+        Klaar met blikkerig geluid? Wij bouwen premium car audio weg achter je
+        originele panelen — met 100% behoud van je fabrieksgarantie.
+      </p>
+      <div class="hero-knoppen">
+        <a class="btn wa" href={SITE.whatsapp}>Stuur foto dashboard 💬</a>
+        <a class="btn" href="/upgrades">Bekijk de upgrades</a>
+      </div>
+      <p class="hero-bewijs">
+        All-in prijzen · Inbouw in één dag · Fabrieksgarantie blijft
+      </p>
     </div>
   </div>
 
@@ -66,3 +76,29 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
     </div>
   </section>
 </Base>
+
+<style>
+  /* De hero is het enige wat 99% van je bezoekers zeker ziet. Daarom hier
+     meer lucht, grotere letters en de belangrijkste knop vooraan. */
+  /* De golfvorm ligt als vloer onderin. De inhoud krijgt onderruimte zodat
+     de bewijsregel er niet doorheen loopt — die moet leesbaar blijven. */
+  .hero { position: relative; min-height: 78vh; padding-bottom: clamp(150px, 21vh, 220px); }
+  .hero .wrap { position: relative; z-index: 1; }
+  .hero-accent { color: var(--accent); }
+  .hero h1 { line-height: 1.06; }
+  .hero-knoppen {
+    display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+    margin-top: .4em;
+  }
+  .hero-bewijs {
+    margin: 2.4em auto 0;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase; letter-spacing: .24em;
+    font-size: .68rem; color: var(--text-dim);
+  }
+  @media (max-width: 700px) {
+    .hero { min-height: 72vh; padding-bottom: 150px; }
+    .hero-knoppen { flex-direction: column; }
+    .hero-bewijs { letter-spacing: .16em; line-height: 2; }
+  }
+</style>

@@ -85,6 +85,60 @@ const nav = [
     <span aria-hidden="true">💬</span> Stuur foto dashboard
   </a>
 
+  <script>
+    /**
+     * Inhoud rustig laten verschijnen bij het scrollen.
+     *
+     * De klasse komt pas op <html> te staan als dit script draait. Zo blijft
+     * alles zichtbaar bij bezoekers zonder JavaScript — die zien dan gewoon
+     * een gewone pagina in plaats van een lege.
+     */
+    /**
+     * De zwevende WhatsApp-knop pas tonen zodra de hero uit beeld is.
+     * Anders staat "Stuur foto dashboard" twee keer vlak onder elkaar op het
+     * eerste scherm. Is er geen hero, dan staat hij er meteen.
+     */
+    const zwevend = document.querySelector('.wa-zwevend');
+    const hero = document.querySelector('.hero');
+    if (zwevend) {
+      if (!hero || !('IntersectionObserver' in window)) {
+        zwevend.classList.add('aan');
+      } else {
+        new IntersectionObserver(
+          ([item]) => zwevend.classList.toggle('aan', !item.isIntersecting),
+          { threshold: 0 }
+        ).observe(hero);
+      }
+    }
+
+    const stil = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const doelen = document.querySelectorAll(
+      'section > .wrap > *, .hero .wrap > *, .card, .step'
+    );
+
+    if (!stil && 'IntersectionObserver' in window && doelen.length) {
+      document.documentElement.classList.add('js-reveal');
+      doelen.forEach((el, i) => {
+        el.setAttribute('data-reveal', '');
+        // Elementen naast elkaar komen kort na elkaar in beeld, niet tegelijk.
+        el.style.transitionDelay = `${Math.min(i % 6, 5) * 70}ms`;
+      });
+
+      const kijker = new IntersectionObserver(
+        (items) => {
+          items.forEach((it) => {
+            if (!it.isIntersecting) return;
+            it.target.classList.add('in');
+            kijker.unobserve(it.target);
+          });
+        },
+        { rootMargin: '0px 0px -12% 0px', threshold: 0.05 }
+      );
+
+      doelen.forEach((el) => kijker.observe(el));
+    }
+  </script>
+
   <footer class="site">
     <div class="wrap">
       <div>
