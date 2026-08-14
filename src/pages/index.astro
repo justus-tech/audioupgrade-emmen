@@ -4,6 +4,9 @@ import PackageCard from '../components/PackageCard.astro';
 import KentekenCheck from '../components/KentekenCheck.astro';
 import Merken from '../components/Merken.astro';
 import Golfvorm from '../components/Golfvorm.astro';
+import Fotoband from '../components/Fotoband.astro';
+/* Foto: Unsplash — vrij te gebruiken. Zie src/components/Fotoband.astro. */
+import deurspeaker from '../assets/foto/deurspeaker.jpg';
 import { PACKAGES, SITE } from '../data/site.js';
 import { ONTZORGEN, DEMO } from '../data/generiek.js';
 
@@ -49,6 +52,15 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
       <div style="margin-top:4rem"><Merken /></div>
     </div>
   </section>
+
+  {/* Breekt de pagina open op de plek waar hij anders drie blokken tekst
+      achter elkaar zou zijn. */}
+  <Fotoband
+    foto={deurspeaker}
+    alt="Speakerrooster in een deurpaneel, verlicht door de sfeerverlichting van de auto"
+    kop="Onzichtbaar ingebouwd"
+    tekst="Aan de buitenkant verandert er niets. Het verschil zit achter het paneel."
+  />
 
   <section>
     <div class="wrap">

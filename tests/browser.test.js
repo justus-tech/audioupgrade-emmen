@@ -468,7 +468,21 @@ describe('op een telefoon', alsGebouwd, () => {
     const pagina = await browser.newPage(telefoon);
     const fouten = [];
     pagina.on('pageerror', (e) => fouten.push(e.message));
-    pagina.on('console', (m) => { if (m.type() === 'error') fouten.push(m.text()); });
+    // De melding van de browser is "Failed to load resource" zonder te zeggen
+    // wát er misging. Daarom hier het adres erbij: anders zoek je je scheel.
+    pagina.on('response', (r) => {
+      if (r.status() >= 400) fouten.push(`${r.status()} op ${r.url()}`);
+    });
+    pagina.on('requestfailed', (r) => {
+      fouten.push(`mislukt: ${r.url()} (${r.failure()?.errorText})`);
+    });
+    pagina.on('console', (m) => {
+      // De kale "Failed to load resource" laten we weg: het adres staat al
+      // in de regel die de response-melding hierboven toevoegt.
+      if (m.type() === 'error' && !m.text().startsWith('Failed to load resource')) {
+        fouten.push(m.text());
+      }
+    });
     for (const pad of ['', 'upgrades', 'werkwijze', 'contact', 'merk/saab']) {
       await pagina.goto(paginaUrl(pad));
       await pagina.waitForTimeout(200);
