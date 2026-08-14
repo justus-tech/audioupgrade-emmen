@@ -3992,6 +3992,593 @@ export const MODELS = [
       },
     ],
   },
+  // ----------------------------------------------------------- VOLVO V70
+  {
+    slug: 'volvo-v70',
+    brand: 'Volvo',
+    model: 'V70',
+    generaties: 'V70 tweede en derde generatie',
+    matchers: { merk: 'VOLVO', model: /V70/ },
+    title: 'Volvo V70 audio upgrade | Audio Upgrade Emmen',
+    description:
+      'Meer diepgang in je Volvo V70. Premium speakers, demping van laadruimte en deuren, en een afstemming op jouw stoel.',
+    intro:
+      'De V70 is de stationwagen waar Nederland decennia op reed en waar er nog duizenden van rijden. Bij een auto van deze leeftijd zit de winst ergens anders dan bij een nieuwe.',
+    problems: [
+      'De schuimranden rond de originele speakerconussen vergaan na jaren. Je hoort dunne, rammelende bas terwijl er niets kapot lijkt.',
+      'De grote open laadruimte slikt lage tonen weg en resoneert tegelijk mee.',
+      'De basisinstallatie had al weinig vermogen, en dat merk je nu extra.',
+    ],
+    solution: {
+      title: 'Wat wij eraan doen',
+      text: 'Bij een V70 vervangen we de vergane speakers en dempen we de deuren én de laadruimte — bij een stationwagen zit daar de helft van het probleem. Omdat de auto ouder is, controleren we eerst het plaatwerk: demping hoort niet op blik met beginnende roest. Wil je meer, dan zetten we er een compacte DSP-versterker achter die het signaal van de originele radio oppikt.',
+    },
+    carplay: {
+      possible: true,
+      text: 'Bij de latere V70 met Sensus-scherm is CarPlay soms toe te voegen. Bij oudere uitvoeringen is er geen scherm waar het in past; een foto van je dashboard geeft binnen 24 uur uitsluitsel.',
+    },
+    packages: ['akoestische-basis', 'akoestische-isolatie', 'oem-plus-executive'],
+    faq: [
+      {
+        q: 'Mijn geluid is dun geworden, maar er is niets stuk. Hoe kan dat?',
+        a: 'Dat is bijna altijd de schuimrand rond de speakerconus. Die vergaat langzaam waardoor de speaker zijn bas verliest zonder op te houden met werken. Meest voorkomende klacht bij auto\'s van deze leeftijd, en de makkelijkste om op te lossen.',
+      },
+      {
+        q: 'Is demping verstandig bij een auto van deze leeftijd?',
+        a: 'Mits je eerst kijkt. Wij controleren het plaatwerk voordat we plakken. Zit het goed, dan is een V70 juist dankbaar om te dempen omdat er af fabriek weinig in zat.',
+      },
+      {
+        q: 'Mijn V70 is oud. Is het dat nog waard?',
+        a: 'Blijf je er nog jaren in rijden, dan zeker. Gedempte deuren en een goede speakerset gaan langer mee dan de auto. Wij zeggen eerlijk wanneer wij vinden dat de investering niet in verhouding staat.',
+      },
+    ],
+  },
+
+  // --------------------------------------------------------- SUZUKI ALTO
+  {
+    slug: 'suzuki-alto',
+    brand: 'Suzuki',
+    model: 'Alto',
+    generaties: 'Alto zesde en zevende generatie',
+    matchers: { merk: 'SUZUKI', model: /ALTO/ },
+    title: 'Suzuki Alto audio upgrade | Audio Upgrade Emmen',
+    description:
+      'Beter geluid in je Suzuki Alto. Speakers, akoestische deurdemping en minder rolgeluid, met all-in prijs.',
+    intro:
+      'De Alto is zo licht en zo eenvoudig mogelijk gebouwd. Dat maakt hem zuinig, en het maakt het geluid het eerste onderdeel waar je iets aan wilt doen.',
+    problems: [
+      'Twee of vier eenvoudige speakers zonder aparte tweeter: alles komt uit je knieën.',
+      'Zeer licht plaatwerk dat op elke basnoot hoorbaar meetrilt.',
+      'Vrijwel geen isolatie, waardoor rolgeluid op de snelweg alles overstemt.',
+    ],
+    solution: {
+      title: 'Wat wij eraan doen',
+      text: 'Bij een Alto is demping veruit het belangrijkste. Het lichte blik stilleggen levert direct hoorbaar meer bas op zonder extra vermogen, en maakt de auto merkbaar rustiger op de snelweg. Daarna zetten we er een componentenset in met een losse tweeter zodat het geluid vóór je komt te zitten. Voor een bescheiden bedrag is dat een compleet andere auto.',
+    },
+    carplay: {
+      possible: false,
+      text: 'De meeste Alto\'s hebben geen scherm in het dashboard waar CarPlay in past. Wil je toch draadloos muziek streamen, dan kan dat met een discrete oplossing achter het dashboard; vraag ernaar via WhatsApp.',
+    },
+    packages: ['akoestische-isolatie', 'akoestische-basis'],
+    faq: [
+      {
+        q: 'Wat levert het meest op als ik één ding kies?',
+        a: 'De deuren dempen. Bij deze auto is het lichte blik de grootste boosdoener, en dat stilleggen kost geen extra vermogen.',
+      },
+      {
+        q: 'Is het niet zonde om in zo\'n auto te investeren?',
+        a: 'Een kleine cabine vraagt weinig vermogen en je zit dicht bij de speakers, dus je krijgt veel terug voor een bescheiden bedrag. Blijf je er nog jaren in rijden, dan is het goed besteed.',
+      },
+      {
+        q: 'Blijft mijn fabrieksgarantie geldig?',
+        a: 'Ja. Wij werken met Plug & Play-kabelbomen op de bestaande stekkers en knippen geen originele bedrading door.',
+      },
+    ],
+  },
+
+  // -------------------------------------------------------- PEUGEOT 3008
+  {
+    slug: 'peugeot-3008',
+    brand: 'Peugeot',
+    model: '3008',
+    generaties: '3008 eerste en tweede generatie',
+    matchers: { merk: 'PEUGEOT', model: /\b3008\b/ },
+    title: 'Peugeot 3008 audio upgrade | Audio Upgrade Emmen',
+    description:
+      'Meer body in je Peugeot 3008. Premium speakers, demping van deuren en achterklep, DSP-afstemming en behoud van het i-Cockpit.',
+    intro:
+      'De 3008 is de auto waarmee Peugeot bewees dat het weer meetelt: een interieur dat aanvoelt als een klasse hoger. Het geluid loopt daar in de basisuitvoering op achter.',
+    problems: [
+      'Het cabinevolume is fors en lage tonen hebben vermogen nodig om zo\'n ruimte te vullen.',
+      'De hoge zitpositie legt het geluidsbeeld laag, ver onder je oorhoogte.',
+      'De grote achterklep dreunt hoorbaar mee op elke basnoot.',
+    ],
+    solution: {
+      title: 'Wat wij eraan doen',
+      text: 'Bij een 3008 dempen we eerst de klep en de deuren, want zonder dat gaat elk extra watt zitten in rammelend plaatwerk. Daarna geeft een DSP-versterker de speakers het vermogen dat het volume vraagt, met tijdcorrectie zodat het beeld boven het kleine stuur uit komt in plaats van eronder. Alles blijft onzichtbaar, net als het interieur zelf.',
+    },
+    carplay: {
+      possible: true,
+      text: 'De meeste 3008-uitvoeringen met touchscreen hebben CarPlay al af fabriek. Zit het er niet in, dan bekijken we per auto wat er mogelijk is.',
+    },
+    packages: ['carplay-upgrade', 'oem-plus-executive', 'akoestische-basis'],
+    faq: [
+      {
+        q: 'Ik heb het Focal-systeem. Wat kunnen jullie dan nog doen?',
+        a: 'Dan heb je al goede componenten. De winst zit bij jou in demping van deuren en klep, en in een DSP-afstemming op jouw stoel in plaats van het compromis dat voor elke 3008 gelijk is.',
+      },
+      {
+        q: 'Blijft het i-Cockpit werken?',
+        a: 'Ja, volledig. Alles wat wij doen zit achter het dashboard en in de deuren.',
+      },
+      {
+        q: 'Verlies ik bagageruimte?',
+        a: 'Nee. Wij gebruiken compacte subwoofers die onder de stoel of in de reservewielbak verdwijnen.',
+      },
+    ],
+  },
+
+  // -------------------------------------------------------- NISSAN MICRA
+  {
+    slug: 'nissan-micra',
+    brand: 'Nissan',
+    model: 'Micra',
+    generaties: 'K12, K13 en K14',
+    matchers: { merk: 'NISSAN', model: /MICRA/ },
+    title: 'Nissan Micra audio upgrade | Audio Upgrade Emmen',
+    description:
+      'Beter geluid in je Nissan Micra. Speakers, akoestische deurdemping en minder rolgeluid, met all-in prijs en garantie behouden.',
+    intro:
+      'De Micra is al generaties lang de betrouwbare stadsauto. Aan geluid is er in de basisuitvoering weinig aandacht besteed, en dat maakt de sprong hier groot.',
+    problems: [
+      'Eenvoudige speakers zonder aparte tweeter op veel uitvoeringen, waardoor stemmen dof blijven.',
+      'Het lichte deurblik trilt hoorbaar mee op elke basnoot.',
+      'Weinig isolatie: op de snelweg is het rolgeluid het luidste geluid in de auto.',
+    ],
+    solution: {
+      title: 'Wat wij eraan doen',
+      text: 'Bij een Micra levert demping direct meer bas op zonder dat er één watt bij komt. Daarna zetten we er een componentenset in met een losse tweeter, zodat het geluidsbeeld vóór je komt te zitten in plaats van bij je voeten. Door de kleine cabine heb je daar weinig vermogen voor nodig.',
+    },
+    carplay: {
+      possible: true,
+      text: 'Bij de nieuwere Micra met NissanConnect-scherm is CarPlay vaak al aanwezig of toe te voegen. Bij de oudere generaties zonder scherm is dat niet mogelijk.',
+    },
+    packages: ['akoestische-basis', 'akoestische-isolatie', 'oem-plus-executive'],
+    faq: [
+      {
+        q: 'Wat levert het meest op als ik één ding kies?',
+        a: 'De Akoestische Basis: premium speakers voorin plus deurdemping, € 995 all-in. Bij een compacte auto is dat de grootste sprong per euro.',
+      },
+      {
+        q: 'Passen er grotere speakers in de deur?',
+        a: 'Wij gebruiken CNC-gefreesde adapterringen die op de originele bevestigingspunten passen, zonder boren of zagen.',
+      },
+      {
+        q: 'Hoe lang duurt de inbouw?',
+        a: 'Voor de meeste Micra-opdrachten één werkdag.',
+      },
+    ],
+  },
+
+  // --------------------------------------------------------- TOYOTA RAV4
+  {
+    slug: 'toyota-rav4',
+    brand: 'Toyota',
+    model: 'RAV4',
+    generaties: 'XA30, XA40 en XA50',
+    matchers: { merk: 'TOYOTA', model: /RAV\s?4/ },
+    title: 'Toyota RAV4 audio upgrade | Audio Upgrade Emmen',
+    description:
+      'Meer diepgang in je Toyota RAV4. Premium speakers, demping van deuren en achterklep, DSP-afstemming — extra effectief bij de hybride.',
+    intro:
+      'De RAV4 is de best verkochte SUV ter wereld en vrijwel altijd hybride. Die stille aandrijving legt precies bloot waar het audiosysteem tekortschiet.',
+    problems: [
+      'Bij de hybride valt het rolgeluid extra op, omdat er geen motorgeluid overheen komt.',
+      'Het cabinevolume is fors en vraagt meer vermogen dan de basisinstallatie geeft.',
+      'De grote achterklep en de bagageruimtepanelen resoneren hoorbaar mee.',
+    ],
+    solution: {
+      title: 'Wat wij eraan doen',
+      text: 'Een hybride SUV is een dankbare klant voor demping: er is geen motor die het rolgeluid maskeert, dus alles wat je stiller maakt hoor je meteen terug. Wij dempen de deuren en de klep, zetten er een DSP-versterker achter voor het vermogen dat het volume vraagt, en tillen met tijdcorrectie het geluidsbeeld naar ooghoogte.',
+    },
+    carplay: {
+      possible: true,
+      text: 'Op de meeste RAV4-uitvoeringen vanaf 2019 zit CarPlay al af fabriek. Bij oudere modellen bekijken we per auto wat er mogelijk is.',
+    },
+    packages: ['carplay-upgrade', 'akoestische-basis', 'oem-plus-executive'],
+    faq: [
+      {
+        q: 'Merk ik bij de hybride meer verschil?',
+        a: 'Ja. Zonder motorgeluid hoor je het rolgeluid en elke resonantie duidelijker, dus demping levert extra veel op — ook als je de muziek uit laat.',
+      },
+      {
+        q: 'Ik heb het JBL-systeem. Heeft een upgrade dan nog zin?',
+        a: 'Ja, gerichter. JBL geeft meer speakers en vermogen, maar laat de deuren en klep ongedempt. Wij voegen dan demping en DSP-controle toe.',
+      },
+      {
+        q: 'Verlies ik laadruimte?',
+        a: 'Nee. Wij gebruiken compacte subwoofers die in de reservewielbak of onder een stoel verdwijnen.',
+      },
+    ],
+  },
+
+  // --------------------------------------------------------- TOYOTA C-HR
+  {
+    slug: 'toyota-c-hr',
+    brand: 'Toyota',
+    model: 'C-HR',
+    generaties: 'C-HR eerste en tweede generatie',
+    matchers: { merk: 'TOYOTA', model: /C-?HR/ },
+    title: 'Toyota C-HR audio upgrade | Audio Upgrade Emmen',
+    description:
+      'Meer body in je Toyota C-HR. Premium speakers, deurdemping en DSP-afstemming — extra effectief bij de hybride.',
+    intro:
+      'De C-HR valt op door zijn vorm: aflopend dak, kleine ruiten en een gesloten achterkant. Dat ontwerp kost precies de ruimte waar lage tonen hun werk doen.',
+    problems: [
+      'De aflopende daklijn en kleine ruiten geven weinig cabinevolume, waardoor het geluidsbeeld snel benauwd wordt.',
+      'Bij de hybride valt het rolgeluid extra op, want er is geen motorgeluid dat het maskeert.',
+      'De achterklep resoneert hoorbaar mee zodra er echte bas bij komt.',
+    ],
+    solution: {
+      title: 'Wat wij eraan doen',
+      text: 'Bij een C-HR plaatsen we de subwoofer bij voorkeur vooraan, onder een stoel, omdat de kleine ruimte achterin niet meewerkt. De deuren en de klep dempen we — bij een hybride hoor je dat meteen terug in rust. Met tijdcorrectie leggen we het geluidsbeeld bewust wat hoger, zodat de lage daklijn niet drukkend werkt.',
+    },
+    carplay: {
+      possible: true,
+      text: 'Op de meeste C-HR-uitvoeringen vanaf 2019 zit CarPlay al af fabriek. Bij oudere modellen bekijken we per auto wat er kan.',
+    },
+    packages: ['carplay-upgrade', 'akoestische-basis', 'oem-plus-executive'],
+    faq: [
+      {
+        q: 'Waarom zetten jullie de subwoofer niet achterin?',
+        a: 'De bagageruimte is klein en de daklijn loopt af, waardoor lage tonen zich daar minder goed opbouwen. Een compacte subwoofer onder de stoel zit dichter bij je en geeft een strakker resultaat.',
+      },
+      {
+        q: 'Merk ik bij de hybride meer verschil?',
+        a: 'Ja. Zonder motorgeluid hoor je het rolgeluid duidelijker, dus demping levert extra veel op.',
+      },
+      {
+        q: 'Verlies ik bagageruimte?',
+        a: 'Nee. Wij werken met compacte subwoofers die onder de stoel verdwijnen.',
+      },
+    ],
+  },
+
+  // -------------------------------------------------------- HYUNDAI I20
+  {
+    slug: 'hyundai-i20',
+    brand: 'Hyundai',
+    model: 'i20',
+    generaties: 'i20 eerste, tweede en derde generatie',
+    matchers: { merk: 'HYUNDAI', model: /\bI ?20\b/ },
+    title: 'Hyundai i20 audio upgrade | Audio Upgrade Emmen',
+    description:
+      'Beter geluid in je Hyundai i20. Premium speakers, akoestische deurdemping en DSP-afstemming met behoud van je scherm.',
+    intro:
+      'De i20 biedt veel auto voor weinig geld, en dat is precies waar het geluid het onderspit delft. Het is niet slecht, het is zuinig gekozen.',
+    problems: [
+      'Weinig vermogen op de deurspeakers: het systeem knijpt dicht zodra je verder opendraait.',
+      'De deuren zijn niet gedempt, dus een deel van de bas verdwijnt in het paneel.',
+      'Op veel uitvoeringen ontbreekt een aparte tweeter, waardoor het beeld laag hangt.',
+    ],
+    solution: {
+      title: 'Wat wij eraan doen',
+      text: 'Bij een i20 dempen we de deuren en zetten we er een componentenset in met een losse tweeter in de spiegeldriehoek, zodat het geluidsbeeld vóór je komt te zitten. In deze compacte cabine haal je met bescheiden vermogen al een groot resultaat. Je scherm en bediening blijven ongemoeid.',
+    },
+    carplay: {
+      possible: true,
+      text: 'Op de meeste i20-uitvoeringen met scherm zit CarPlay al af fabriek. Zit het er niet in, dan bekijken we per auto wat er mogelijk is.',
+    },
+    packages: ['carplay-upgrade', 'akoestische-basis', 'oem-plus-executive'],
+    faq: [
+      {
+        q: 'Heb ik CarPlay eigenlijk al?',
+        a: 'Goede kans van wel. Hyundai levert het op veel uitvoeringen standaard mee. Stuur een foto van je dashboard, dan zeggen we het je binnen 24 uur — en als je het al hebt, zeggen we dat gewoon.',
+      },
+      {
+        q: 'Wat levert het meest op?',
+        a: 'De Akoestische Basis: premium speakers voorin plus deurdemping, € 995 all-in.',
+      },
+      {
+        q: 'Blijft mijn fabrieksgarantie geldig?',
+        a: 'Ja. Plug & Play-kabelbomen op de bestaande stekkers, niets doorgeknipt, alles terug te bouwen.',
+      },
+    ],
+  },
+
+  // ---------------------------------------------------------- OPEL AGILA
+  {
+    slug: 'opel-agila',
+    brand: 'Opel',
+    model: 'Agila',
+    generaties: 'Agila A en B',
+    matchers: { merk: 'OPEL', model: /AGILA/ },
+    title: 'Opel Agila audio upgrade | Audio Upgrade Emmen',
+    description:
+      'Beter geluid in je Opel Agila. Speakers, akoestische deurdemping en minder rolgeluid, met all-in prijs.',
+    intro:
+      'De Agila is klein, hoog en praktisch, en juist die hoge rechte vorm maakt hem akoestisch levendiger dan comfortabel is.',
+    problems: [
+      'De rechte, hoge panelen resoneren makkelijk mee en geven een holle nagalm bij lage tonen.',
+      'Twee of vier eenvoudige speakers zonder aparte tweeter, dus het geluid komt uit je knieën.',
+      'Minimale isolatie: op snelwegsnelheid overstemt het rolgeluid de muziek.',
+    ],
+    solution: {
+      title: 'Wat wij eraan doen',
+      text: 'Bij een Agila is demping het halve werk. De rechte panelen stilleggen haalt de holle nagalm weg die je aanzag voor bas en maakt de auto meteen rustiger. Daarna komt er een componentenset in met een losse tweeter, zodat het geluid vóór je komt te zitten.',
+    },
+    carplay: {
+      possible: false,
+      text: 'De meeste Agila\'s hebben geen scherm in het dashboard waar CarPlay in past. Wil je toch draadloos streamen en handsfree bellen, dan kan dat met een discrete oplossing achter het dashboard.',
+    },
+    packages: ['akoestische-isolatie', 'akoestische-basis'],
+    faq: [
+      {
+        q: 'Ik hoor een holle dreun. Wat is dat?',
+        a: 'De rechte, vlakke panelen die meetrillen. Het klinkt als bas maar het is resonantie, en het maskeert de echte lage tonen.',
+      },
+      {
+        q: 'Waarom eerst isolatie?',
+        a: 'Omdat rolgeluid en resonantie hier het grootste probleem zijn. Zolang de weg luider is dan de muziek, hoor je van betere speakers maar de helft.',
+      },
+      {
+        q: 'Wat kost dit ongeveer?',
+        a: 'De Akoestische Basis ligt op € 995 all-in. Alleen isolatie maken we op maat.',
+      },
+    ],
+  },
+
+  // ------------------------------------------------------- HYUNDAI TUCSON
+  {
+    slug: 'hyundai-tucson',
+    brand: 'Hyundai',
+    model: 'Tucson',
+    generaties: 'TL en NX4',
+    matchers: { merk: 'HYUNDAI', model: /TUCSON/ },
+    title: 'Hyundai Tucson audio upgrade | Audio Upgrade Emmen',
+    description:
+      'Meer body in je Hyundai Tucson. Premium speakers, demping van deuren en achterklep, DSP-afstemming en draadloos CarPlay.',
+    intro:
+      'De Tucson is een van de best verkochte SUV\'s van Nederland en biedt veel voor zijn geld. Het geluid is het onderdeel waar dat het duidelijkst te merken is.',
+    problems: [
+      'Het cabinevolume is fors en lage tonen hebben vermogen nodig om zo\'n ruimte te vullen.',
+      'De hoge zitpositie legt het geluidsbeeld laag, ver onder je oorhoogte.',
+      'De grote achterklep werkt als een trommelvel en dreunt hoorbaar mee.',
+    ],
+    solution: {
+      title: 'Wat wij eraan doen',
+      text: 'Bij een Tucson verrast de achterklep de meeste mensen: die dempen haalt het dreunen weg dat je aanzag voor bas. Daarna geeft een DSP-versterker de speakers het vermogen dat het volume vraagt, met tijdcorrectie zodat het beeld op ooghoogte komt. Een compacte subwoofer vult het fundament aan zonder dat je laadruimte inlevert.',
+    },
+    carplay: {
+      possible: true,
+      text: 'Op vrijwel alle Tucsons vanaf 2016 zit CarPlay al af fabriek. Zit het er niet in, dan bekijken we per auto wat er mogelijk is.',
+    },
+    packages: ['carplay-upgrade', 'akoestische-basis', 'oem-plus-executive'],
+    faq: [
+      {
+        q: 'Ik hoor een doffe dreun bij bas. Is er iets kapot?',
+        a: 'Waarschijnlijk niet. Dat is meestal de achterklep die meetrilt. Het klinkt als bas maar het is resonantie.',
+      },
+      {
+        q: 'Ik heb het Krell-systeem. Wat kunnen jullie toevoegen?',
+        a: 'Demping en een eigen afstemming. De componenten zijn dan bovengemiddeld; de winst zit in het temmen van de deuren en de klep.',
+      },
+      {
+        q: 'Verlies ik laadruimte?',
+        a: 'Nee. Wij werken met compacte subwoofers die in de reservewielbak of onder een stoel verdwijnen.',
+      },
+    ],
+  },
+
+  // ---------------------------------------------------------- OPEL ASTRA
+  {
+    slug: 'opel-astra',
+    brand: 'Opel',
+    model: 'Astra',
+    generaties: 'Astra H, J, K en L, ook Sports Tourer',
+    matchers: { merk: 'OPEL', model: /ASTRA/ },
+    title: 'Opel Astra audio upgrade | Audio Upgrade Emmen',
+    description:
+      'Beter geluid in je Opel Astra of Sports Tourer. Premium speakers, deurdemping en DSP-afstemming met behoud van je scherm.',
+    intro:
+      'De Astra is decennialang een van de gewoonste auto\'s op de Nederlandse weg geweest. Zo gewoon is het geluid ook gebleven, terwijl er onder die deurpanelen ruimte genoeg zit.',
+    problems: [
+      'Weinig vermogen op de deurspeakers: het systeem blijft altijd beheerst, ook als je dat niet wilt.',
+      'De deuren zijn holle bakken met open gaten, waardoor de achterkant van de speaker de voorkant tegenwerkt.',
+      'Bij de Sports Tourer slikt de grote laadruimte lage tonen weg en resoneert de klep mee.',
+    ],
+    solution: {
+      title: 'Wat wij eraan doen',
+      text: 'Een Astra is dankbaar omdat de deur meer ruimte biedt dan de fabrieksspeaker gebruikt. Wij dempen het buitenblik, sluiten de gaten in het binnenblik af en maken er een fatsoenlijke behuizing van. Daarna heeft een betere speakerset pas echt zin. Rijd je Sports Tourer, dan pakken we ook de laadruimte aan.',
+    },
+    carplay: {
+      possible: true,
+      text: 'Op de Astra K en L met IntelliLink zit CarPlay meestal al af fabriek. Bij de oudere generaties hangt het van het schermtype af.',
+    },
+    packages: ['carplay-upgrade', 'akoestische-basis', 'oem-plus-executive'],
+    faq: [
+      {
+        q: 'Mijn Astra is wat ouder. Is het dat nog waard?',
+        a: 'Blijf je er nog jaren in rijden, dan zeker. Wij controleren wel eerst het plaatwerk voordat we iets plakken, want op blik met beginnende roest hoort geen demping.',
+      },
+      {
+        q: 'Ik heb de Sports Tourer. Kost dat extra?',
+        a: 'Als je de laadruimte mee wilt dempen wel. Daar zit bij een stationwagen wel de meeste winst.',
+      },
+      {
+        q: 'Hoe lang duurt de inbouw?',
+        a: 'Voor de meeste Astra-opdrachten één werkdag.',
+      },
+    ],
+  },
+
+  // --------------------------------------------------------- PEUGEOT 207
+  {
+    slug: 'peugeot-207',
+    brand: 'Peugeot',
+    model: '207',
+    generaties: '206 en 207',
+    matchers: { merk: 'PEUGEOT', model: /\b20[67]\b/ },
+    title: 'Peugeot 207 audio upgrade | Audio Upgrade Emmen',
+    description:
+      'Beter geluid in je Peugeot 206 of 207. Speakers vervangen, deuren dempen en minder rolgeluid, met all-in prijs.',
+    intro:
+      'De 206 en 207 zijn met honderdduizenden verkocht en veel ervan rijden nog. Bij een auto van deze leeftijd zit de eerste winst niet in meer vermogen maar in herstel.',
+    problems: [
+      'De schuimranden rond de originele speakerconussen zijn na jaren vergaan: dunne bas terwijl er niets kapot lijkt.',
+      'De deuren zijn niet gedempt en het blik is licht, dus wat er aan bas is komt vooral als geklapper terug.',
+      'Weinig isolatie, waardoor rolgeluid op de snelweg alles overstemt.',
+    ],
+    solution: {
+      title: 'Wat wij eraan doen',
+      text: 'Bij een 206 of 207 vervangen we de vergane speakers en dempen we de deuren. Omdat deze auto\'s inmiddels op leeftijd zijn, controleren we eerst het plaatwerk — op blik met beginnende roest hoort geen demping. Daarna komt er een componentenset in met een losse tweeter, zodat het geluid vóór je komt te zitten.',
+    },
+    carplay: {
+      possible: false,
+      text: 'Een 206 of 207 heeft geen scherm waar CarPlay in past, dus dat pakket is voor deze auto niet van toepassing. Draadloos streamen en handsfree bellen kan wel met een discrete oplossing achter het dashboard.',
+    },
+    packages: ['akoestische-basis', 'akoestische-isolatie'],
+    faq: [
+      {
+        q: 'Mijn geluid is dun geworden, maar er is niets stuk. Hoe kan dat?',
+        a: 'Dat is bijna altijd de schuimrand rond de speakerconus. Die vergaat langzaam waardoor de speaker zijn bas verliest zonder op te houden met werken.',
+      },
+      {
+        q: 'Is demping verstandig bij een auto van deze leeftijd?',
+        a: 'Mits je eerst kijkt. Wij controleren het plaatwerk voordat we plakken en melden het als we iets tegenkomen.',
+      },
+      {
+        q: 'Wat kost dit ongeveer?',
+        a: 'De Akoestische Basis ligt op € 995 all-in. Voor alleen speakers vervangen maken we een prijs op maat.',
+      },
+    ],
+  },
+
+  // ----------------------------------------------------------- VOLVO V40
+  {
+    slug: 'volvo-v40',
+    brand: 'Volvo',
+    model: 'V40',
+    generaties: 'V40 tweede generatie en Cross Country',
+    matchers: { merk: 'VOLVO', model: /V40/ },
+    title: 'Volvo V40 audio upgrade | Audio Upgrade Emmen',
+    description:
+      'Meer diepgang in je Volvo V40. Premium speakers, deurdemping, DSP-afstemming en draadloos CarPlay.',
+    intro:
+      'De V40 is de compacte Volvo met het karakteristieke zwevende middenpaneel. Volvo adverteert zelf met goede audio; wie zonder die optie rijdt hoort precies waarom.',
+    problems: [
+      'Breed opgezet maar onderbemeten: veel speakers, weinig vermogen per speaker.',
+      'De deuren zijn niet gedempt, waardoor de bas grotendeels in het paneel verdwijnt.',
+      'De aflopende daklijn geeft minder ruimte achterin waar lage tonen zich kunnen opbouwen.',
+    ],
+    solution: {
+      title: 'Wat wij eraan doen',
+      text: 'Bij een V40 dempen we de deuren en plaatsen we de subwoofer bij voorkeur vooraan, omdat de ruimte achterin beperkt is. Een DSP-versterker brengt de speakers op niveau en corrigeert de afstemming, met tijdcorrectie zodat het geluidsbeeld voor je komt te staan in plaats van in je linkerdeur.',
+    },
+    carplay: {
+      possible: true,
+      text: 'Op de meeste V40-uitvoeringen met Sensus-scherm is CarPlay toe te voegen. Wat er kan verschilt per bouwjaar.',
+    },
+    packages: ['carplay-upgrade', 'akoestische-basis', 'oem-plus-executive'],
+    faq: [
+      {
+        q: 'Ik heb Harman Kardon. Heeft een upgrade dan nog zin?',
+        a: 'Ja, gerichter. Je hebt betere componenten, maar nog steeds ongedempte deuren en een afstemming die voor elke V40 gelijk is.',
+      },
+      {
+        q: 'Waar komt de subwoofer?',
+        a: 'Bij deze auto liefst onder de stoel, omdat de ruimte achterin door de aflopende daklijn minder meewerkt.',
+      },
+      {
+        q: 'Blijft mijn scherm werken?',
+        a: 'Ja. Alles wat wij doen zit achter het dashboard en in de deuren.',
+      },
+    ],
+  },
+
+  // ----------------------------------------------------------- FIAT PUNTO
+  {
+    slug: 'fiat-punto',
+    brand: 'Fiat',
+    model: 'Punto',
+    generaties: 'Punto, Grande Punto en Punto Evo',
+    matchers: { merk: 'FIAT', model: /PUNTO/ },
+    title: 'Fiat Punto audio upgrade | Audio Upgrade Emmen',
+    description:
+      'Beter geluid in je Fiat Punto. Speakers vervangen, deuren dempen en minder rolgeluid, met all-in prijs.',
+    intro:
+      'De Punto is jarenlang een van de meest verkochte kleine auto\'s van Europa geweest. De exemplaren die nu rijden zijn op leeftijd, en dat hoor je aan het geluid.',
+    problems: [
+      'De originele speakerconussen zijn na jaren verhard of vergaan: dunne, rammelende bas zonder dat er iets kapot is.',
+      'De deuren zijn niet gedempt en het blik is licht, dus bas komt vooral als geklapper terug.',
+      'Weinig isolatie, waardoor rolgeluid op de snelweg de muziek overstemt.',
+    ],
+    solution: {
+      title: 'Wat wij eraan doen',
+      text: 'Bij een Punto vervangen we de vergane speakers en dempen we de deuren, na controle van het plaatwerk. Dat laatste is bij deze leeftijd geen overbodige stap. Daarna komt er een componentenset in met een losse tweeter, zodat het geluidsbeeld vóór je komt te zitten. Voor een bescheiden bedrag klinkt de auto compleet anders.',
+    },
+    carplay: {
+      possible: false,
+      text: 'De meeste Punto\'s hebben geen scherm waar CarPlay in past. Draadloos streamen en handsfree bellen kan wel met een discrete oplossing achter het dashboard.',
+    },
+    packages: ['akoestische-basis', 'akoestische-isolatie'],
+    faq: [
+      {
+        q: 'Mijn bas is verdwenen maar de speakers werken nog. Hoe kan dat?',
+        a: 'De conus of de schuimrand is verhard of gescheurd. De speaker maakt nog geluid maar verliest zijn lage tonen. Zeer gebruikelijk bij auto\'s van deze leeftijd.',
+      },
+      {
+        q: 'Is mijn Punto het nog waard?',
+        a: 'Dat bepaal jij. Blijf je er nog jaren in rijden, dan is het goed besteed. Wij zeggen eerlijk wanneer wij vinden dat de investering niet in verhouding staat.',
+      },
+      {
+        q: 'Blijft mijn fabrieksgarantie geldig?',
+        a: 'Ja, voor zover die er nog is. Wij werken met Plug & Play-kabelbomen en knippen geen originele bedrading door.',
+      },
+    ],
+  },
+
+  // -------------------------------------------------------------- KIA RIO
+  {
+    slug: 'kia-rio',
+    brand: 'Kia',
+    model: 'Rio',
+    generaties: 'Rio derde en vierde generatie',
+    matchers: { merk: 'KIA', model: /\bRIO\b/ },
+    title: 'Kia Rio audio upgrade | Audio Upgrade Emmen',
+    description:
+      'Beter geluid in je Kia Rio. Premium speakers, akoestische deurdemping en DSP-afstemming met behoud van je scherm.',
+    intro:
+      'De Rio is de praktische keuze in de compacte klasse: veel uitrusting voor een scherpe prijs. Op audio is daarbij zichtbaar bezuinigd.',
+    problems: [
+      'Weinig vermogen op de deurspeakers: het systeem knijpt dicht zodra je verder opendraait.',
+      'De deuren zijn niet gedempt, dus een deel van de bas verdwijnt in het paneel.',
+      'Op veel uitvoeringen ontbreekt een aparte tweeter, waardoor het beeld laag hangt.',
+    ],
+    solution: {
+      title: 'Wat wij eraan doen',
+      text: 'Bij een Rio dempen we de deuren en zetten we er een componentenset in met een losse tweeter in het bovenste deel van de deur, zodat het geluidsbeeld vóór je komt te zitten. In deze compacte cabine haal je met bescheiden vermogen al een groot resultaat. Je scherm en bediening blijven ongemoeid.',
+    },
+    carplay: {
+      possible: true,
+      text: 'Op de meeste Rio-uitvoeringen vanaf 2017 zit CarPlay al af fabriek. Zit het er niet in, dan bekijken we per auto wat er mogelijk is.',
+    },
+    packages: ['carplay-upgrade', 'akoestische-basis', 'oem-plus-executive'],
+    faq: [
+      {
+        q: 'Heb ik CarPlay eigenlijk al?',
+        a: 'Goede kans van wel. Kia levert het op veel uitvoeringen standaard mee. Stuur een foto van je dashboard, dan zeggen we het je binnen 24 uur.',
+      },
+      {
+        q: 'Wat levert het meest op?',
+        a: 'De Akoestische Basis: premium speakers voorin plus deurdemping, € 995 all-in.',
+      },
+      {
+        q: 'Hoe lang duurt de inbouw?',
+        a: 'Voor de meeste Rio-opdrachten één werkdag.',
+      },
+    ],
+  },
 ];
 
 /**
