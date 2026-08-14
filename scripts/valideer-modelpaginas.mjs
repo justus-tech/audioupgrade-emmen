@@ -64,7 +64,10 @@ console.log('\n=== Overige merken ===');
 check('VOLKSWAGEN', 'GOLF', 'volkswagen-golf');
 check('VOLKSWAGEN', 'PASSAT VARIANT', 'volkswagen-passat');
 check('SAAB', 'SAAB 9-3', 'saab-9-3');
-check('PEUGEOT', '2008', null);
+// De 2008 heeft sinds kort een eigen pagina; hij mag alleen niet op de 208
+// uitkomen. Dat is de valkuil die we hier bewaken.
+check('PEUGEOT', '208', 'peugeot-208');
+check('PEUGEOT', '2008', 'peugeot-2008');
 check('FIAT', 'FIAT 500L', null);
 
 // ------------------------------------------------ live scan per merk
