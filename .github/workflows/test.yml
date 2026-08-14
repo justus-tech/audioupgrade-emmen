@@ -1,0 +1,35 @@
+# Draait de controles bij elke push naar GitHub.
+#
+# Waarom dit er is: `npm test` op je eigen computer werkt alleen als je eraan
+# denkt. Dit doet het altijd, en zet een groen vinkje of een rood kruisje bij
+# je commit. Zie je een rood kruisje, dan is er iets stuk — dan weet je dat
+# vóórdat de site live staat.
+#
+# Het kost niets: GitHub Actions is gratis voor openbare projecten en heeft een
+# ruime gratis limiet voor privéprojecten.
+
+name: Controles
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Pakketten ophalen
+        run: npm ci
+
+      - name: Browser voor de browsertests ophalen
+        run: npx playwright install --with-deps chromium
+
+      - name: Alles controleren
+        run: npm test

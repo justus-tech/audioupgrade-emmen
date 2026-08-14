@@ -3,7 +3,7 @@
  *
  * Dit bestand wordt door TWEE dingen gebruikt:
  *   1. de kenteken-check in de browser
- *   2. de test (npm run test:kenteken)
+ *   2. de tests (tests/matchers.test.js)
  * Zo kan de test nooit iets anders controleren dan wat bezoekers krijgen.
  *
  * Waarom normaliseren nodig is: de RDW schrijft handelsbenamingen slordig.

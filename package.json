@@ -6,14 +6,11 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-
     "test": "npm run build && node --test --test-concurrency=1 \"tests/*.test.js\"",
-    "test:snel": "node --test tests/match.test.js tests/voertuig.test.js tests/data.test.js tests/huisstijl.test.js",
+    "test:snel": "node --test tests/match.test.js tests/voertuig.test.js tests/matchers.test.js tests/data.test.js tests/huisstijl.test.js",
     "test:browser": "npm run build && node --test --test-concurrency=1 tests/browser.test.js",
-    "test:rdw": "node scripts/valideer-kenteken.mjs && node scripts/valideer-modelpaginas.mjs",
-
-    "test:kenteken": "node scripts/valideer-kenteken.mjs",
-    "test:modellen": "node scripts/valideer-modelpaginas.mjs"
+    "rdw": "node scripts/rdw-dekking.mjs",
+    "schermafdrukken": "node scripts/screenshot.mjs"
   },
   "dependencies": {
     "astro": "^5.0.0",

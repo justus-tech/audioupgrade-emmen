@@ -107,7 +107,7 @@ npm run build
 ```
 
 ```bash
-npm run test:kenteken
+npm test
 ```
 
 ## De kenteken-check — lees dit voor je iets wijzigt
@@ -123,7 +123,7 @@ De widget vraagt het kenteken op bij de gratis open data van de RDW en stuurt de
 | Audi A3 | `A3 SPORTBACK`, `AUDI A3` |
 | Tesla Model 3 | `MODEL 3`, `Model 3`, `MODEL3` |
 
-Daarom staan er patronen (`matchers`) in `models.js` in plaats van gewone modelnamen. **Wijzig die patronen nooit zonder daarna `npm run test:kenteken` te draaien.** Die test controleert ze tegen de echte RDW-database en let er ook op dat er niets verkeerd matcht — een Mercedes CLA mag geen C-klasse worden, een BMW iX3 geen 3-serie.
+Daarom staan er patronen (`matchers`) in `src/data/modellen/<merk>.js` in plaats van gewone modelnamen. **Wijzig die patronen nooit zonder daarna `npm test` te draaien.** De gevallen staan in `tests/gevallen.js` en letten er vooral op dat er niets vérkeerd matcht — een Mercedes CLA mag geen C-klasse worden, een BMW iX3 geen 3-serie.
 
 ## SEO-regels
 
