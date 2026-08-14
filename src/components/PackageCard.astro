@@ -1,34 +1,102 @@
 ---
 import { SITE } from '../data/site.js';
-const { pkg, showScores = true } = Astro.props;
 
 /**
- * Bij Akoestische Isolatie tonen we geen scorebalkjes. Dat pakket gaat niet
- * over geluidskwaliteit, volume of bas maar over rust — die balken zeiden daar
- * dus niets zinnigs. De kaart krijgt `los`, zodat hij niet meerekt tot de
- * hoogte van de andere kaarten en er geen lege ruimte overblijft.
+ * Eén pakketkaart. Alle tekst en prijzen komen uit site.js en staan daar
+ * letterlijk zoals op audioupgradeemmen.nl — hier wordt niets herschreven.
+ *
+ *   uitgebreid  toont de volledige omschrijving in plaats van de één-regel
+ *   showScores  balkjes uitzetten (bijv. in een smalle kolom)
  */
-const scoresTonen = showScores && pkg.slug !== 'akoestische-isolatie';
+const { pkg, showScores = true, uitgebreid = false } = Astro.props;
+
+/**
+ * Bij Akoestische Isolatie tonen we geen scorebalkjes — dat deed de oude site
+ * ook niet. Dat pakket gaat niet over volume of bas maar over rust. De kaart
+ * krijgt `los`, zodat hij niet meerekt tot de hoogte van de andere kaarten.
+ */
+const scoresTonen = showScores && pkg.scores.length > 0;
+const tekst = uitgebreid ? pkg.body : pkg.short;
 ---
-<div class:list={['card', !scoresTonen && 'card-los']}>
+<div class:list={['card', !scoresTonen && 'card-los', pkg.populair && 'card-populair']}>
+  {pkg.populair && <span class="badge">Meest gekozen</span>}
   <h3>{pkg.name}</h3>
-  <div class="price">{pkg.price} {pkg.priceNote && <small>{pkg.priceNote}</small>}</div>
-  <p>{pkg.short}</p>
+  {pkg.tagline && <p class="tagline">{pkg.tagline}</p>}
+
+  <div class="price">
+    {pkg.price}
+    {pkg.priceNote && <small>{pkg.priceNote}</small>}
+    {pkg.priceExcl && <small class="excl">{pkg.priceExcl}</small>}
+  </div>
+
+  <p>{tekst}</p>
+
+  {pkg.features.length > 0 && (
+    <ul class="kenmerken">
+      {pkg.features.map((f) => <li>{f}</li>)}
+    </ul>
+  )}
+
   {scoresTonen && (
     <div class="scores">
-      <div class="score">
-        <label>Geluidskwaliteit <span>{pkg.scores.kwaliteit}%</span></label>
-        <div class="bar"><i style={`width:${pkg.scores.kwaliteit}%`}></i></div>
-      </div>
-      <div class="score">
-        <label>Volume <span>{pkg.scores.volume}%</span></label>
-        <div class="bar"><i style={`width:${pkg.scores.volume}%`}></i></div>
-      </div>
-      <div class="score">
-        <label>Bas <span>{pkg.scores.bas}%</span></label>
-        <div class="bar"><i style={`width:${pkg.scores.bas}%`}></i></div>
-      </div>
+      {pkg.scores.map((s) => (
+        <div class="score">
+          <label>{s.label}</label>
+          {/* Vijf blokjes, net als de oude site — alleen dan zonder emoji. */}
+          <div class="blokjes" role="img" aria-label={`${s.waarde} van de 5`}>
+            {[1, 2, 3, 4, 5].map((n) => <i class:list={[n <= s.waarde && 'aan']}></i>)}
+          </div>
+        </div>
+      ))}
     </div>
   )}
+
   <a class="btn" href={SITE.whatsapp}>{pkg.cta}</a>
 </div>
+
+<style>
+  .tagline {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase; letter-spacing: .14em;
+    font-size: .74rem; color: var(--accent);
+    margin: -6px 0 0;
+  }
+
+  /* Het label "Meest Gekozen" van de oude site, nu als hoekvlag. */
+  .card-populair { border-color: var(--accent); }
+  .badge {
+    align-self: flex-start;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase; letter-spacing: .18em; font-size: .64rem;
+    background: var(--accent); color: var(--accent-ink);
+    padding: 5px 12px; margin-bottom: -4px;
+  }
+
+  .excl { opacity: .72; margin-top: 2px !important; }
+
+  .kenmerken { list-style: none; padding: 0; margin: 0; }
+  .kenmerken li {
+    position: relative; padding-left: 20px; margin: 8px 0;
+    font-size: .9rem; color: var(--text-dim); line-height: 1.5;
+  }
+  /* Streepje in de merkkleur in plaats van een bolletje: rustiger en het
+     leest als een specificatielijst. */
+  .kenmerken li::before {
+    content: ''; position: absolute; left: 0; top: .62em;
+    width: 10px; height: 1px; background: var(--accent);
+  }
+
+  .score { margin: 10px 0; }
+  .score label {
+    display: block; margin-bottom: 6px;
+    font-family: 'Oswald', sans-serif;
+    font-size: .68rem; letter-spacing: .2em; text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .blokjes { display: flex; gap: 4px; }
+  .blokjes i {
+    flex: 1; height: 5px; border-radius: 2px;
+    background: var(--line);
+  }
+  .blokjes i.aan { background: var(--accent); }
+</style>
