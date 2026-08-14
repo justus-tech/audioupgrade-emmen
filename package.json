@@ -10,7 +10,8 @@
     "test:snel": "node --test tests/match.test.js tests/voertuig.test.js tests/matchers.test.js tests/data.test.js tests/huisstijl.test.js",
     "test:browser": "npm run build && node --test --test-concurrency=1 tests/browser.test.js",
     "rdw": "node scripts/rdw-dekking.mjs",
-    "schermafdrukken": "node scripts/screenshot.mjs"
+    "schermafdrukken": "node scripts/screenshot.mjs",
+    "deel": "node scripts/deel-tunnel.mjs"
   },
   "dependencies": {
     "astro": "^5.0.0",
