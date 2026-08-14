@@ -11,6 +11,7 @@
  * per model nodig.
  */
 import Base from '../layouts/Base.astro';
+import Logo from '../components/Logo.astro';
 import PackageCard from '../components/PackageCard.astro';
 import PakketSchets from '../components/PakketSchets.astro';
 import Kentekenplaat from '../components/Kentekenplaat.astro';
@@ -35,8 +36,13 @@ import { MERKEN } from '../data/merken.js';
       </p>
 
       <form class="kenteken-form" id="upgrade-form" autocomplete="off">
-        <input class="plate" id="upgrade-kenteken" type="text" placeholder="XX-99-XX"
-               maxlength="8" aria-label="Kenteken" />
+        {/* Zelfde opzet als de check op de homepage: het logo ligt over het
+            veld heen, want een <input> kan geen kindelementen bevatten. */}
+        <span class="plaat-veld">
+          <input class="plate" id="upgrade-kenteken" type="text" placeholder="XX-99-XX"
+                 maxlength="8" aria-label="Kenteken" />
+          <Logo height={18} decoratief={true} class="plaat-veld-logo" />
+        </span>
         <button class="btn solid" type="submit">Toon mijn auto</button>
       </form>
       <div id="upgrade-melding" aria-live="polite"></div>

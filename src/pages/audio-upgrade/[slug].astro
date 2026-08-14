@@ -9,6 +9,7 @@
  * src/data/models.js.
  */
 import Base from '../../layouts/Base.astro';
+import Logo from '../../components/Logo.astro';
 import PackageCard from '../../components/PackageCard.astro';
 import { MODELS, merkSlug } from '../../data/models.js';
 import { merkenPerSlug } from '../../data/merken.js';
@@ -53,7 +54,10 @@ const faqSchema = {
           is. Verschijnt alleen als het opgeslagen kenteken bij déze pagina
           hoort; anderen zien niets. */}
       <div class="jouw-auto mt" id="jouw-auto" data-slug={model.slug} hidden>
-        <span class="jouw-plaat" id="jouw-plaat"></span>
+        <span class="jouw-plaat">
+          <span class="jouw-plaat-band"><Logo height={13} decoratief={true} /></span>
+          <span class="jouw-plaat-nr" id="jouw-plaat"></span>
+        </span>
         <span class="jouw-tekst">
           Dit is jouw <strong>{model.brand} {model.model}</strong>
         </span>
@@ -160,23 +164,36 @@ const faqSchema = {
     border: 1px solid var(--line-strong);
     background: var(--panel);
   }
-  /* Dezelfde AUE-plaat als op de upgradepagina, alleen kleiner. */
+  /* Dezelfde AUE-plaat als op de upgradepagina, alleen kleiner. Hier kan het
+     logo wél als echt element in de band, want dit is een span en geen input. */
   .jouw-plaat {
-    color: #16181a;
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.15rem; font-weight: 600; letter-spacing: .12em;
+    display: inline-flex; align-items: stretch;
     border: 2px solid rgba(0, 0, 0, .42); border-radius: 6px;
-    padding: 6px 16px 6px 46px;
+    overflow: hidden;
     white-space: nowrap;
-    text-shadow: 0 1px 0 rgba(255, 255, 255, .7);
-    background-image:
-      linear-gradient(90deg, var(--accent) 0 32px, transparent 32px),
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .5);
+    background:
       repeating-linear-gradient(180deg,
         rgba(255,255,255,.5) 0px, rgba(255,255,255,0) 1px,
         rgba(0,0,0,.035) 2px, rgba(0,0,0,0) 3px),
       linear-gradient(180deg, #fafafa 0%, #dcdcdc 16%, #ffffff 40%,
         #c6c6c6 56%, #eeeeee 78%, #b4b4b4 100%);
-    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .5);
+  }
+  .jouw-plaat-band {
+    display: flex; align-items: center; justify-content: center;
+    width: 40px; flex: none;
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--accent) 88%, white) 0%,
+      var(--accent) 46%,
+      color-mix(in srgb, var(--accent) 80%, black) 100%);
+    color: var(--accent-ink);
+  }
+  .jouw-plaat-nr {
+    color: #16181a;
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.15rem; font-weight: 600; letter-spacing: .12em;
+    padding: 7px 18px;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, .7);
   }
   .jouw-tekst {
     font-family: 'Oswald', sans-serif; text-transform: uppercase;
