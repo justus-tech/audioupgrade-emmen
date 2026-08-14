@@ -22,7 +22,7 @@ export const MODELS = [
     description:
       'Betere speakers, echte bas en draadloos CarPlay in je VW Golf. All-in prijzen, inbouw in één dag, fabrieksgarantie blijft behouden.',
     intro:
-      'De Golf is de meest verkochte auto van Nederland — en precies daarom bezuinigt Volkswagen op het geluid. Wat er af fabriek in zit is niet kapot, het is bewust goedkoop.',
+      'De Golf is de meest verkochte auto van Nederland. Precies daarom bezuinigt Volkswagen op het geluid. Wat er af fabriek in zit is niet kapot, het is bewust goedkoop.',
     problems: [
       'Er zit geen aparte versterker in: het vermogen komt uit het kleine eindtrapje in de radio zelf. Draai je verder open, dan wordt de stem scherp en verdwijnt de bas.',
       'De deuren van het MQB-platform zijn grote holle bakken met open gaten. De achterkant van de speaker straalt zo de deur in en heft de bas grotendeels op.',
@@ -63,7 +63,7 @@ export const MODELS = [
     description:
       'Van blikkerig naar vol geluid in je VW Polo. Speakers, deurdemping en draadloos CarPlay met all-in prijs en behoud van fabrieksgarantie.',
     intro:
-      'In een Polo zit je dicht op je speakers. Dat is een voordeel dat Volkswagen volledig laat liggen — en het is precies waarom een Polo met de juiste ingrepen boven zijn klasse uit kan spelen.',
+      'In een Polo zit je dicht op je speakers. Dat is een voordeel dat Volkswagen volledig laat liggen. Het is precies waarom een Polo met de juiste ingrepen boven zijn klasse uit kan spelen.',
     problems: [
       'Veel uitvoeringen hebben geen aparte tweeter. Eén breedbandspeakertje in de deur moet dan zowel de bas als de stemmen doen, en dat lukt geen enkele speaker.',
       'Het deurblik van de Polo is dun en licht. Het gaat hoorbaar meetrillen op elke basnoot, waardoor de bas eerder rammelt dan draagt.',
@@ -104,7 +104,7 @@ export const MODELS = [
     description:
       'Rust en geluid in je VW Transporter T5, T6 of T6.1. Akoestische demping tegen rolgeluid, betere speakers en draadloos CarPlay.',
     intro:
-      'In een Transporter breng je uren door. Dat maakt het verschil tussen matig en goed geluid hier groter dan in welke personenauto dan ook — en het begint niet bij de speakers, maar bij de herrie.',
+      'In een Transporter breng je uren door. Dat maakt het verschil tussen matig en goed geluid hier groter dan in welke personenauto dan ook. Het begint niet bij de speakers, maar bij de herrie.',
     problems: [
       'Rolgeluid en resonantie van de laadruimte maskeren het hele middengebied. Je verstaat podcasts en telefoongesprekken slechter, en zet daarom harder.',
       'Grote, vlakke plaatstalen panelen werken als een trommelvel en dreunen mee met elke basnoot.',
@@ -145,7 +145,7 @@ export const MODELS = [
     description:
       'Meer body en echte bas in je VW Tiguan. Premium speakers, deurdemping, DSP en draadloos CarPlay. All-in prijs, inbouw in één dag.',
     intro:
-      'Een Tiguan heeft een groter interieur dan een Golf, maar krijgt in de basis vrijwel dezelfde audiocomponenten mee. Datzelfde geluid moet dus een veel grotere ruimte vullen — en dat hoor je.',
+      'Een Tiguan heeft een groter interieur dan een Golf, maar krijgt in de basis vrijwel dezelfde audiocomponenten mee. Datzelfde geluid moet dus een veel grotere ruimte vullen. Dat hoor je.',
     problems: [
       'Groot cabinevolume met klein fabrieksvermogen: lage tonen hebben vermogen nodig om zo\'n ruimte te vullen, en dat is er niet.',
       'De hoge zitpositie zet je verder van de deurspeakers af, waardoor het geluidsbeeld nog lager komt te liggen dan in een gewone hatchback.',
@@ -208,7 +208,7 @@ export const MODELS = [
       },
       {
         q: 'Moet het MMI-scherm eruit voor een upgrade?',
-        a: 'Nee. Alles wat wij doen zit achter het dashboard en in de deuren. Het scherm, de menu\'s, de navigatie en de stuurbediening blijven volledig origineel — dat is precies waarom dit een OEM+ aanpak heet.',
+        a: 'Nee. Alles wat wij doen zit achter het dashboard en in de deuren. Het scherm, de menu\'s, de navigatie en de stuurbediening blijven volledig origineel. Dat is precies waarom dit een OEM+ aanpak heet.',
       },
       {
         q: 'Waarom is een DSP bij een Audi belangrijker dan bij sommige andere auto\'s?',
@@ -309,7 +309,7 @@ export const MODELS = [
     description:
       'Warmer, voller en dieper geluid in je Mercedes C-klasse. DSP-afstemming, premium speakers en draadloos CarPlay in het originele scherm.',
     intro:
-      'Een C-klasse is stil, comfortabel en goed geïsoleerd. Dat is een uitstekend uitgangspunt voor geluid — en juist daarom is het zonde dat het standaardsysteem er zo weinig mee doet.',
+      'Een C-klasse is stil, comfortabel en goed geïsoleerd. Dat is een uitstekend uitgangspunt voor geluid. Juist daarom is het zonde dat het standaardsysteem er zo weinig mee doet.',
     problems: [
       'Weinig vermogen op de deurspeakers: het systeem blijft altijd beheerst, ook als je dat niet wilt.',
       'Geen echte subwoofer in de basis. Het fundament onder de muziek ontbreekt volledig.',
@@ -484,7 +484,7 @@ export const MODELS = [
     ],
     solution: {
       title: 'Wat wij eraan doen',
-      text: 'Bij een Up! is demping geen bijzaak maar het halve resultaat. Het lichte deurblik stilleggen levert direct hoorbaar meer bas op, zonder dat er één watt bij komt. Daarna zetten we er een componentenset in met een losse tweeter, zodat het geluid vóór je komt te zitten in plaats van bij je voeten. Omdat de cabine zo klein is, heb je verrassend weinig vermogen nodig — dit is een van de goedkoopste auto\'s om echt goed te krijgen.',
+      text: 'Bij een Up! is demping geen bijzaak maar het halve resultaat. Het lichte deurblik stilleggen levert direct hoorbaar meer bas op, zonder dat er één watt bij komt. Daarna zetten we er een componentenset in met een losse tweeter, zodat het geluid vóór je komt te zitten in plaats van bij je voeten. Omdat de cabine zo klein is, heb je verrassend weinig vermogen nodig. Dit is een van de goedkoopste auto\'s om echt goed te krijgen.',
     },
     carplay: {
       possible: false,
@@ -518,7 +518,7 @@ export const MODELS = [
     description:
       'Beter geluid in je Kia Picanto. Premium speakers, akoestische deurdemping en minder rolgeluid. All-in prijs, fabrieksgarantie behouden.',
     intro:
-      'De Picanto is een van de meest verkochte auto\'s van Nederland en een van de meest onderschatte om aan te pakken. Klein, dus je hebt weinig nodig — en er valt veel te winnen.',
+      'De Picanto is een van de meest verkochte auto\'s van Nederland en een van de meest onderschatte om aan te pakken. Klein, dus je hebt weinig nodig. Er valt veel te winnen.',
     problems: [
       'De instapuitvoeringen komen met een handvol basisspeakers zonder aparte tweeter, waardoor stemmen dof klinken en het beeld laag blijft.',
       'Het plaatwerk is licht uitgevoerd om gewicht te sparen. Dat hoor je terug als meetrillende deuren zodra er bas bij komt.',
@@ -530,7 +530,7 @@ export const MODELS = [
     },
     carplay: {
       possible: true,
-      text: 'Veel Picanto\'s vanaf 2017 hebben CarPlay al af fabriek. Zit het er niet in en heb je wel een scherm, dan kunnen we het meestal toevoegen. Stuur een foto van je dashboard, dan zeggen we het je binnen 24 uur — en als je het al hebt, zeggen we dat gewoon eerlijk.',
+      text: 'Veel Picanto\'s vanaf 2017 hebben CarPlay al af fabriek. Zit het er niet in en heb je wel een scherm, dan kunnen we het meestal toevoegen. Stuur een foto van je dashboard, dan zeggen we het je binnen 24 uur, en als je het al hebt, zeggen we dat gewoon eerlijk.',
     },
     packages: ['akoestische-basis', 'akoestische-isolatie', 'oem-plus-executive'],
     faq: [
@@ -602,7 +602,7 @@ export const MODELS = [
     description:
       'Van dun naar vol geluid in je Toyota Aygo. Speakers, deurdemping en minder rolgeluid, met all-in prijs en behoud van fabrieksgarantie.',
     intro:
-      'De Aygo is gebouwd op de scherpst mogelijke kostprijs, samen met de Peugeot 107 en de Citroën C1. Aan audio is daarbij vrijwel niets uitgegeven — en dat maakt de sprong hier juist zo groot.',
+      'De Aygo is gebouwd op de scherpst mogelijke kostprijs, samen met de Peugeot 107 en de Citroën C1. Aan audio is daarbij vrijwel niets uitgegeven. Dat maakt de sprong hier juist zo groot.',
     problems: [
       'Er zitten vaak maar twee of vier eenvoudige speakers in, zonder aparte tweeter. Het geluid komt daardoor volledig uit je knieën.',
       'De isolatie is tot het minimum beperkt om gewicht en kosten te sparen. Op de snelweg is het rolgeluid dan ook het luidste in de auto.',
@@ -686,7 +686,7 @@ export const MODELS = [
     description:
       'Beter geluid in je Opel Corsa. Premium speakers, akoestische deurdemping en DSP-afstemming. All-in prijs, fabrieksgarantie behouden.',
     intro:
-      'De Corsa is al decennia een van de gewoonste auto\'s op de Nederlandse weg. Zo gewoon is het geluid ook gebleven — terwijl er onder die deurpanelen meer ruimte zit dan je zou denken.',
+      'De Corsa is al decennia een van de gewoonste auto\'s op de Nederlandse weg. Zo gewoon is het geluid ook gebleven, terwijl er onder die deurpanelen meer ruimte zit dan je zou denken.',
     problems: [
       'Weinig vermogen op de deurspeakers: het systeem blijft altijd beheerst, ook als je dat niet wilt.',
       'De deuren zijn holle bakken met open gaten, waardoor de achterkant van de speaker de voorkant grotendeels tegenwerkt.',
@@ -813,7 +813,7 @@ export const MODELS = [
     description:
       'Beter geluid in je Saab 9-3. Vergane speakers vervangen, deuren dempen en het originele dashboard volledig intact laten.',
     intro:
-      'Een 9-3 die nog rijdt, rijdt vaak bij iemand die er bewust voor kiest. Het geluid is meestal het enige onderdeel dat níét is bijgehouden — en daar valt bij deze auto meer te winnen dan bij welke nieuwe auto ook.',
+      'Een 9-3 die nog rijdt, rijdt vaak bij iemand die er bewust voor kiest. Het geluid is meestal het enige onderdeel dat níét is bijgehouden. Daar valt bij deze auto meer te winnen dan bij welke nieuwe auto ook.',
     problems: [
       'De schuimrand rond de originele speakerconussen vergaat na twintig jaar. Je hoort een dunne, rammelende bas terwijl er niets kapot lijkt: de speaker is het gewoon uit zichzelf.',
       'De radio werkt samen met het informatiescherm in het dashboard. Er zomaar een andere radio in zetten kost je functies die je liever houdt.',
@@ -1021,7 +1021,7 @@ export const MODELS = [
     description:
       'Meer diepgang in je BMW 5-serie of Touring. DSP-afstemming, high-end speakers, demping en draadloos CarPlay in het originele iDrive.',
     intro:
-      'De 5-serie is de auto waarin veel mensen hun werkweek doorbrengen. Op die kilometers gaat het niet om hoe hard het kan, maar om hoe lang je het volhoudt — en daar wringt de fabrieksinstallatie.',
+      'De 5-serie is de auto waarin veel mensen hun werkweek doorbrengen. Op die kilometers gaat het niet om hoe hard het kan, maar om hoe lang je het volhoudt. Daar wringt de fabrieksinstallatie.',
     problems: [
       'Op snelwegtempo moet je opendraaien om boven het rolgeluid uit te komen, en juist dan gaat de fabrieksversterking knijpen.',
       'De onderstoelwoofers zijn onderbemeten aangestuurd, waardoor het fundament traag en zacht blijft.',
@@ -1105,7 +1105,7 @@ export const MODELS = [
     description:
       'Audio upgrade voor je BMW 7-serie. Verfijning met DSP-afstemming en demping, met respect voor wat er al in zit.',
     intro:
-      'In een 7-serie is stilte het uitgangspunt. Dubbel glas, dikke afdichtingen en veel isolatie — en juist in die stilte hoor je precies waar het systeem tekortschiet.',
+      'In een 7-serie is stilte het uitgangspunt. Dubbel glas, dikke afdichtingen en veel isolatie. Juist in die stilte hoor je precies waar het systeem tekortschiet.',
     problems: [
       'De cabine is fors, en achterin zitten passagiers ver van de voorste speakers. Zonder afstemming klinkt het achterin heel anders dan voorin.',
       'De goede isolatie werkt tegen je: er is weinig rolgeluid dat tekortkomingen maskeert, dus je hoort ze des te duidelijker.',
@@ -1821,7 +1821,7 @@ export const MODELS = [
     description:
       'Meer diepgang in je Mercedes E-klasse of Estate. DSP-afstemming, high-end speakers, demping en draadloos CarPlay.',
     intro:
-      'De E-klasse is de auto waarin veel mensen hun kilometers maken. Op die afstanden gaat het niet om hoe hard het kan, maar om hoe lang je het volhoudt — en daar wringt de basisinstallatie.',
+      'De E-klasse is de auto waarin veel mensen hun kilometers maken. Op die afstanden gaat het niet om hoe hard het kan, maar om hoe lang je het volhoudt. Daar wringt de basisinstallatie.',
     problems: [
       'De cabine is goed geïsoleerd, dus er is weinig rolgeluid dat de tekortkomingen maskeert. Je hoort ze des te duidelijker.',
       'Er is geen echte subwoofer in de basis, waardoor het fundament onder de muziek ontbreekt.',
@@ -1863,7 +1863,7 @@ export const MODELS = [
     description:
       'Audio upgrade voor je Mercedes S-klasse. Verfijning met DSP-afstemming en demping, met respect voor wat er al in zit.',
     intro:
-      'In een S-klasse is stilte het uitgangspunt. Dubbel glas, dikke afdichtingen en veel isolatie — en juist in die stilte hoor je precies waar het systeem tekortschiet.',
+      'In een S-klasse is stilte het uitgangspunt. Dubbel glas, dikke afdichtingen en veel isolatie. Juist in die stilte hoor je precies waar het systeem tekortschiet.',
     problems: [
       'De cabine is fors, en achterin zitten passagiers ver van de voorste speakers. Zonder afstemming klinkt het achterin heel anders dan voorin.',
       'De uitstekende isolatie werkt tegen je: er is weinig rolgeluid dat tekortkomingen maskeert.',
@@ -2072,7 +2072,7 @@ export const MODELS = [
     description:
       'Audio upgrade voor je Audi A8. Verfijning met DSP-afstemming en gerichte demping, met respect voor wat er al in zit.',
     intro:
-      'In een A8 is stilte het uitgangspunt. Akoestisch glas, dikke afdichtingen en veel isolatie — en juist in die stilte hoor je precies waar het systeem tekortschiet.',
+      'In een A8 is stilte het uitgangspunt. Akoestisch glas, dikke afdichtingen en veel isolatie. Juist in die stilte hoor je precies waar het systeem tekortschiet.',
     problems: [
       'De cabine is fors, en achterin zitten passagiers ver van de voorste speakers. Zonder afstemming klinkt het achterin heel anders dan voorin.',
       'De goede isolatie werkt tegen je: er is weinig rolgeluid dat tekortkomingen maskeert.',
@@ -2156,7 +2156,7 @@ export const MODELS = [
     description:
       'Meer body en echte bas in je Audi Q3. Premium speakers, demping van deuren en achterklep, DSP en draadloos CarPlay.',
     intro:
-      'De Q3 is de Audi waarin veel gezinnen rondrijden. Groot genoeg om ruim te zitten, klein genoeg om mee te parkeren — en precies groot genoeg om het fabriekssysteem tekort te laten schieten.',
+      'De Q3 is de Audi waarin veel gezinnen rondrijden. Groot genoeg om ruim te zitten, klein genoeg om mee te parkeren, en precies groot genoeg om het fabriekssysteem tekort te laten schieten.',
     problems: [
       'Het cabinevolume is groter dan bij een A3, terwijl de aansturing in de basis vergelijkbaar bescheiden is.',
       'De hoge zitpositie legt het geluidsbeeld laag, ver onder je oorhoogte.',
@@ -2577,7 +2577,7 @@ export const MODELS = [
     description:
       'Audio upgrade voor je Range Rover Sport. Echt vermogen voor het grote cabinevolume, demping en DSP-afstemming.',
     intro:
-      'De Range Rover Sport combineert het formaat van een grote SUV met een sportievere inslag. Die grote, stille cabine is precies wat goede audio nodig heeft — en precies wat het basissysteem niet benut.',
+      'De Range Rover Sport combineert het formaat van een grote SUV met een sportievere inslag. Die grote, stille cabine is precies wat goede audio nodig heeft, en precies wat het basissysteem niet benut.',
     problems: [
       'Het cabinevolume is groot en vraagt vermogen dat de basisinstallatie niet levert. Lage tonen komen daardoor nooit op niveau.',
       'De hoge zitpositie zet je ver van de deurspeakers, waardoor het geluidsbeeld laag blijft hangen.',
@@ -2703,7 +2703,7 @@ export const MODELS = [
     description:
       'Audio upgrade voor je Range Rover. Afstemming voor voor- en achterbank, echt vermogen en grondige demping.',
     intro:
-      'Een Range Rover verkoopt zichzelf op rust en ruimte. Die grote, stille cabine is een uitstekend uitgangspunt voor geluid — en juist in die stilte hoor je waar het systeem tekortschiet.',
+      'Een Range Rover verkoopt zichzelf op rust en ruimte. Die grote, stille cabine is een uitstekend uitgangspunt voor geluid. Juist in die stilte hoor je waar het systeem tekortschiet.',
     problems: [
       'Het cabinevolume is groot en vraagt vermogen dat de basisinstallatie niet levert.',
       'Achterin zitten passagiers ver van de voorste speakers, en in deze auto zit daar vaak juist iemand.',
@@ -3182,7 +3182,7 @@ export const MODELS = [
     faq: [
       {
         q: 'Merk ik in een elektrische auto meer verschil?',
-        a: 'Ja. Zonder motorgeluid hoor je het rolgeluid en elke resonantie veel duidelijker. Demping levert daardoor meer op dan bij een benzineauto — en het maakt de auto ook comfortabeler zonder dat je de muziek aanzet.',
+        a: 'Ja. Zonder motorgeluid hoor je het rolgeluid en elke resonantie veel duidelijker. Demping levert daardoor meer op dan bij een benzineauto. Het maakt de auto ook comfortabeler zonder dat je de muziek aanzet.',
       },
       {
         q: 'Kost een audiosysteem rijbereik?',
@@ -4273,7 +4273,7 @@ export const MODELS = [
     faq: [
       {
         q: 'Heb ik CarPlay eigenlijk al?',
-        a: 'Goede kans van wel. Hyundai levert het op veel uitvoeringen standaard mee. Stuur een foto van je dashboard, dan zeggen we het je binnen 24 uur — en als je het al hebt, zeggen we dat gewoon.',
+        a: 'Goede kans van wel. Hyundai levert het op veel uitvoeringen standaard mee. Stuur een foto van je dashboard, dan zeggen we het je binnen 24 uur, en als je het al hebt, zeggen we dat gewoon.',
       },
       {
         q: 'Wat levert het meest op?',
@@ -5658,7 +5658,7 @@ export const MODELS = [
     faq: [
       {
         q: 'Merk ik in een elektrische auto meer verschil?',
-        a: 'Ja. Zonder motorgeluid hoor je het rolgeluid en elke resonantie veel duidelijker. Demping levert daardoor meer op dan bij een benzineauto — en het maakt de auto ook comfortabeler zonder muziek.',
+        a: 'Ja. Zonder motorgeluid hoor je het rolgeluid en elke resonantie veel duidelijker. Demping levert daardoor meer op dan bij een benzineauto. Het maakt de auto ook comfortabeler zonder muziek.',
       },
       {
         q: 'Kost een audiosysteem rijbereik?',
@@ -5933,7 +5933,7 @@ export const MODELS = [
     description:
       'Meer body in je Škoda Karoq. Premium speakers, demping van deuren en achterklep, DSP-afstemming.',
     intro:
-      'De Karoq is de compacte SUV die veel Nederlanders kozen als opvolger van hun Octavia. Meer ruimte, hetzelfde audiosysteem — en dat merk je.',
+      'De Karoq is de compacte SUV die veel Nederlanders kozen als opvolger van hun Octavia. Meer ruimte, hetzelfde audiosysteem. Dat merk je.',
     problems: [
       'Het cabinevolume is groter dan bij een Octavia terwijl de aansturing even bescheiden is.',
       'De hoge zitpositie legt het geluidsbeeld laag, ver onder je oorhoogte.',

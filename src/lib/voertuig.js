@@ -2,7 +2,7 @@
  * WAT DE RDW-GEGEVENS BETEKENEN VOOR HET GELUID.
  *
  * De RDW geeft veel meer terug dan merk en model. Uit een handvol van die
- * velden valt iets zinnigs te zeggen over de auto van de bezoeker — en dat is
+ * velden valt iets zinnigs te zeggen over de auto van de bezoeker. Dat is
  * precies wat een pagina persoonlijk maakt: niet "wij doen car audio", maar
  * "jouw auto is 26 jaar oud, dus je speakers zijn waarschijnlijk vergaan".
  *

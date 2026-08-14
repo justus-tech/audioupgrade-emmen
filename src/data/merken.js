@@ -26,7 +26,7 @@ export const MERKEN = [
       'Beter geluid in je Volkswagen. Premium speakers, deurdemping, DSP-tuning en draadloos CarPlay voor Golf, Polo, Tiguan, Passat en meer.',
     fabriekssystemen: 'Composition, Discover Media/Pro, optioneel Dynaudio',
     intro:
-      'Volkswagen bouwt degelijke auto\'s met bewust goedkope audio. De componenten zijn niet slecht, ze zijn zuinig gekozen — en dat hoor je zodra je het volume opendraait.',
+      'Volkswagen bouwt degelijke auto\'s met bewust goedkope audio. De componenten zijn niet slecht, ze zijn zuinig gekozen. Dat hoor je zodra je het volume opendraait.',
     probleem:
       'Vrijwel elke Volkswagen rijdt weg zonder aparte versterker: het vermogen komt uit het kleine eindtrapje in de radio. Daar komt bij dat de deuren van het MQB-platform grote holle bakken zijn met open gaten, waardoor de achterkant van de speaker de bas grotendeels opheft. De optionele Dynaudio-upgrade klinkt voller, maar verandert niets aan die twee grondoorzaken.',
   },
@@ -54,7 +54,7 @@ export const MERKEN = [
     intro:
       'BMW bouwt zijn auto\'s rond de bestuurder. De audio-installatie helaas niet: het basissysteem is duidelijk ontworpen om je richting de Harman Kardon-optie te duwen.',
     probleem:
-      'Het instapsysteem heeft op papier een aardige opzet, met woofers onder de voorstoelen en een middenspeaker in het dashboard. In de praktijk krijgen die onderstoelwoofers veel te weinig vermogen: wel formaat, geen slagkracht. De middenspeaker versmalt het stereobeeld eerder dan dat hij het verbreedt, en de fabrieksafstemming verandert mee met het volume — waardoor het geheel op hogere niveaus onnatuurlijk klinkt.',
+      'Het instapsysteem heeft op papier een aardige opzet, met woofers onder de voorstoelen en een middenspeaker in het dashboard. In de praktijk krijgen die onderstoelwoofers veel te weinig vermogen: wel formaat, geen slagkracht. De middenspeaker versmalt het stereobeeld eerder dan dat hij het verbreedt, en de fabrieksafstemming verandert mee met het volume, waardoor het geheel op hogere niveaus onnatuurlijk klinkt.',
   },
   {
     slug: 'mercedes-benz',
@@ -65,7 +65,7 @@ export const MERKEN = [
       'Warmer, voller en dieper geluid in je Mercedes. DSP-afstemming, premium speakers en draadloos CarPlay. Van A-klasse tot S-klasse.',
     fabriekssystemen: 'Audio 20 / MBUX basis, optioneel Burmester',
     intro:
-      'Een Mercedes is stil, comfortabel en goed geïsoleerd. Dat is een uitstekend uitgangspunt voor geluid — en juist daarom is het zonde dat het standaardsysteem er zo weinig mee doet.',
+      'Een Mercedes is stil, comfortabel en goed geïsoleerd. Dat is een uitstekend uitgangspunt voor geluid. Juist daarom is het zonde dat het standaardsysteem er zo weinig mee doet.',
     probleem:
       'De basisinstallatie is correct maar tam: weinig vermogen op de deurspeakers en geen echte subwoofer, waardoor het fundament onder de muziek ontbreekt. De goede isolatie werkt daarbij tegen je — er is weinig rolgeluid dat de tekortkomingen maskeert, dus je hoort ze des te duidelijker. Het optionele Burmester-systeem laat horen wat er wél in deze carrosserieën zit.',
   },
@@ -80,7 +80,7 @@ export const MERKEN = [
     intro:
       'In een Porsche is het geluid van de auto zelf het hoofdgerecht. Precies daarom valt het op als de installatie daar niet tegenop kan: zodra de motor zwijgt, hoor je hoe mager de basis is.',
     probleem:
-      'Het standaard Sound Package Plus is weinig meer dan een handvol speakers met minimale versterking. In een compacte, hard aangeklede sportwagencabine met veel glas en weinig demping levert dat een scherp en dun geluid op. Daar komt bij dat de ruimte voor inbouw beperkt is, wat plaatsing en keuze van componenten kritisch maakt — dit is geen auto voor standaardoplossingen.',
+      'Het standaard Sound Package Plus is weinig meer dan een handvol speakers met minimale versterking. In een compacte, hard aangeklede sportwagencabine met veel glas en weinig demping levert dat een scherp en dun geluid op. Daar komt bij dat de ruimte voor inbouw beperkt is, wat plaatsing en keuze van componenten kritisch maakt. Dit is geen auto voor standaardoplossingen.',
   },
   {
     slug: 'tesla',
@@ -93,7 +93,7 @@ export const MERKEN = [
     intro:
       'Een Tesla is een bijzonder geval. Er is geen radio om te vervangen en geen dashboard om open te maken — alles loopt via het scherm. Juist daaronder zit bij de instapversies veel onbenutte winst.',
     probleem:
-      'Tesla levert twee smaken. Uitvoeringen met premium audio hebben een uitgebreide speakerset met versterker en subwoofer en klinken van huis uit behoorlijk. De instapversies missen die versterker en subwoofer volledig, terwijl de bekabeling er vaak al wél ligt. In een cabine die verder heel stil is, valt dat dunne geluid extra op. Let op: Tesla staat geen CarPlay of Android Auto toe — dat is een keuze van Tesla waar geen inbouwspecialist omheen kan.',
+      'Tesla levert twee smaken. Uitvoeringen met premium audio hebben een uitgebreide speakerset met versterker en subwoofer en klinken van huis uit behoorlijk. De instapversies missen die versterker en subwoofer volledig, terwijl de bekabeling er vaak al wél ligt. In een cabine die verder heel stil is, valt dat dunne geluid extra op. Let op: Tesla staat geen CarPlay of Android Auto toe. Dat is een keuze van Tesla waar geen inbouwspecialist omheen kan.',
   },
   {
     slug: 'land-rover',
@@ -107,7 +107,7 @@ export const MERKEN = [
       'Audio upgrade voor je Land Rover: Range Rover, Sport, Velar, Evoque of Discovery. Meer diepgang, betere afstemming en akoestische demping.',
     fabriekssystemen: 'Basis Meridian, optioneel Meridian Surround of Signature',
     intro:
-      'Een Range Rover verkoopt zichzelf op rust en ruimte. Die grote, stille cabine is precies wat goede audio nodig heeft — en precies wat het basissysteem niet benut.',
+      'Een Range Rover verkoopt zichzelf op rust en ruimte. Die grote, stille cabine is precies wat goede audio nodig heeft, en precies wat het basissysteem niet benut.',
     probleem:
       'Het grote cabinevolume vraagt vermogen dat de basisinstallatie niet levert, waardoor lage tonen nooit op niveau komen. De hoge zitpositie zet je bovendien ver van de deurspeakers af, zodat het geluidsbeeld laag blijft hangen. De Meridian-opties helpen, maar blijven een afstemming die voor elke auto identiek is en de deuren ongedempt laat.',
   },
@@ -120,7 +120,7 @@ export const MERKEN = [
       'Audio upgrade voor je Bentley Continental GT of Bentayga. Compromisloze afstemming en high-end componenten, onzichtbaar ingebouwd.',
     fabriekssystemen: 'Bentley Signature Audio, optioneel Naim for Bentley',
     intro:
-      'Bij een Bentley is de lat per definitie hoog. Wie hier iets aan verandert, doet dat niet omdat het slecht is, maar omdat het beter kan — en omdat de afstemming op maat gemaakt hoort te zijn.',
+      'Bij een Bentley is de lat per definitie hoog. Wie hier iets aan verandert, doet dat niet omdat het slecht is, maar omdat het beter kan, en omdat de afstemming op maat gemaakt hoort te zijn.',
     probleem:
       'Bentley levert al goede componenten, ook zonder de Naim-optie. Wat ontbreekt is een afstemming op jouw stoel in plaats van een compromis dat op elke zitplaats tegelijk moet werken. Bij dit soort auto\'s werken wij dan ook zelden met vervanging van alles, maar met gerichte ingrepen: demping, DSP-controle en waar nodig een enkele component. Dat vraagt overleg vooraf, geen standaardpakket.',
   },
@@ -133,9 +133,9 @@ export const MERKEN = [
       'Audio upgrade voor je Ferrari 488, 812 Superfast, Portofino of GTC4Lusso. Zorgvuldig, terughoudend en volledig terug te bouwen.',
     fabriekssystemen: 'Basis audio, optioneel JBL Professional High Power',
     intro:
-      'In een Ferrari is de motor het instrument. Audio speelt hier een bijrol — en dat is precies waarom de fabrieksinstallatie zo mager is uitgevoerd.',
+      'In een Ferrari is de motor het instrument. Audio speelt hier een bijrol. Dat is precies waarom de fabrieksinstallatie zo mager is uitgevoerd.',
     probleem:
-      'Ferrari besteedt zijn gewichtsbudget niet aan speakers, en dat is te horen: weinig vermogen, geen fundament en veel reflectie in een cabine vol hard materiaal. Ingrijpen vraagt hier uiterste terughoudendheid. Wij werken bij dit soort auto\'s uitsluitend volledig omkeerbaar en in overleg — waarbij we ook eerlijk zeggen wanneer de winst het werk niet waard is.',
+      'Ferrari besteedt zijn gewichtsbudget niet aan speakers, en dat is te horen: weinig vermogen, geen fundament en veel reflectie in een cabine vol hard materiaal. Ingrijpen vraagt hier uiterste terughoudendheid. Wij werken bij dit soort auto\'s uitsluitend volledig omkeerbaar en in overleg, waarbij we ook eerlijk zeggen wanneer de winst het werk niet waard is.',
   },
   {
     slug: 'saab',
@@ -146,7 +146,7 @@ export const MERKEN = [
       'Beter geluid in je Saab 9-3, 9-5 of 900. Speakers vervangen, deuren dempen en het originele dashboard intact laten.',
     fabriekssystemen: 'Saab standaard audio, optioneel Saab Prestige of Harman Kardon',
     intro:
-      'Saab bouwde auto\'s voor mensen die zelf nadenken, en Saab-rijders zijn dat gebleven. Het zijn inmiddels wel auto\'s van twintig jaar en ouder — en dat is precies waar de winst zit.',
+      'Saab bouwde auto\'s voor mensen die zelf nadenken, en Saab-rijders zijn dat gebleven. Het zijn inmiddels wel auto\'s van twintig jaar en ouder. Dat is precies waar de winst zit.',
     probleem:
       'Bij een Saab is het grootste probleem meestal niet het ontwerp maar de leeftijd. De schuimrand rond de originele speakerconussen vergaat na twintig jaar; dat hoor je als een dunne, rammelende bas terwijl er niets kapot lijkt. Daar komt bij dat de radio in veel Saabs samenwerkt met het informatiescherm in het dashboard, dus zomaar een andere radio inbouwen kost je functies die je liever houdt.',
   },
@@ -261,7 +261,7 @@ export const MERKEN = [
     intro:
       'Škoda geeft je de techniek van Volkswagen voor minder geld. Bij de audio zie je waar dat verschil vandaan komt.',
     probleem:
-      'Dezelfde MQB-deuren als bij Volkswagen: grote holle bakken met open gaten, waar de achterkant van de speaker de bas van de voorkant grotendeels opheft. Het vermogen komt uit de radio zelf. Het optionele Canton-systeem voegt een versterker en een subwoofer toe en is een duidelijke stap, maar zit in dezelfde ongedempte deur — en zit in de meeste tweedehands Octavia\'s niet.',
+      'Dezelfde MQB-deuren als bij Volkswagen: grote holle bakken met open gaten, waar de achterkant van de speaker de bas van de voorkant grotendeels opheft. Het vermogen komt uit de radio zelf. Het optionele Canton-systeem voegt een versterker en een subwoofer toe en is een duidelijke stap, maar zit in dezelfde ongedempte deur. En hij zit in de meeste tweedehands Octavia\'s niet.',
   },
   {
     slug: 'seat',
@@ -415,7 +415,7 @@ export const MERKEN = [
       'Meer uit de audio van je Lynk & Co 01 halen. Speakers, akoestische deurdemping en DSP-afstemming, met behoud van fabrieksgarantie.',
     fabriekssystemen: 'Harman Kardon af fabriek, op elke uitvoering',
     intro:
-      'Lynk & Co doet iets wat bijna geen enkel merk doet: het premiumsysteem zit er standaard in, op elke auto. Dat is een prettig vertrekpunt — en meteen de reden dat de vraag hier anders ligt.',
+      'Lynk & Co doet iets wat bijna geen enkel merk doet: het premiumsysteem zit er standaard in, op elke auto. Dat is een prettig vertrekpunt, en meteen de reden dat de vraag hier anders ligt.',
     probleem:
       'Het Harman Kardon-systeem in de 01 heeft genoeg vermogen en een fatsoenlijke opzet. Wat het niet heeft, is een deur die daar tegen bestand is: bij hogere niveaus tikt en klappert het paneel mee, wat je hoort als een bas die wel hard is maar niet strak. Bij deze auto beginnen wij daarom bij demping en afstemming, niet bij vervanging. Vaak zit het verschil niet in nieuwe speakers maar in wat eromheen zit.',
   },
