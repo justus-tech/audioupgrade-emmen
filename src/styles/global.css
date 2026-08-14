@@ -199,13 +199,17 @@ nav.main a[aria-current="page"] { color: var(--text); border-bottom-color: var(-
 
 /* ---- pakketkaarten ---- */
 .grid { display: grid; gap: 28px; }
-.grid.cols-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
-.grid.cols-3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
-.grid.cols-4 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+/* De min() eromheen is geen franje: zonder dat dwingt minmax(300px, …) een
+   kolom van 300px af, óók als er maar 272px ruimte is. Op een telefoon van
+   320 pixels breed loopt de pagina dan een paar pixels over de rand en kun
+   je hem opzij schuiven. Met min(…, 100%) krimpt de kolom gewoon mee. */
+.grid.cols-2 { grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); }
+.grid.cols-3 { grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); }
+.grid.cols-4 { grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); }
 /* De uitgebreide pakketkaarten. Bredere kolommen dan cols-3, want in een
    kolom van 267px wikkelt de tekst zo vaak dat de kaart 1400px hoog wordt en
    er op een laptop niet één meer op het scherm past. */
-.grid.pakketten { grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); }
+.grid.pakketten { grid-template-columns: repeat(auto-fit, minmax(min(330px, 100%), 1fr)); }
 
 .card {
   background: var(--panel);

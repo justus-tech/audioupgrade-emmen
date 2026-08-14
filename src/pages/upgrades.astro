@@ -19,7 +19,7 @@ import Merken from '../components/Merken.astro';
 import { PACKAGES, SITE } from '../data/site.js';
 import { autoTabel } from '../data/autos.js';
 import { GARANTIE, CTA } from '../data/generiek.js';
-import { MERKEN } from '../data/merken.js';
+import { MERKEN_MET_MODELLEN as MERKEN } from '../data/merken.js';
 ---
 <Base
   title="Upgrades & prijzen — check je kenteken | Audio Upgrade Emmen"
@@ -261,7 +261,7 @@ import { MERKEN } from '../data/merken.js';
     margin: 3.2rem auto 0;
     max-width: 900px;
     display: grid; gap: 26px 40px;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
   }
   .inzichten:empty { display: none; }
   .inzichten li { padding-top: 16px; border-top: 1px solid var(--line-strong); }

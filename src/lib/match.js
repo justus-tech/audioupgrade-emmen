@@ -13,12 +13,17 @@
  *   "C 180 KOMPRESSOR"        uitvoering erachter geplakt
  */
 
-/** "12-AB-3C" -> "12AB3C" */
+/**
+ * "12-AB-3C" -> "12AB3C"
+ *
+ * Knipt NIET af op zes tekens. Dat deed het eerst wel, maar dan werd
+ * "12AB34XY" stilletjes "12AB34" en zocht de site een auto op die de
+ * bezoeker helemaal niet bedoelde. Te lang is nu gewoon ongeldig.
+ */
 export function normaliseerKenteken(invoer) {
   return String(invoer || '')
     .toUpperCase()
-    .replace(/[^A-Z0-9]/g, '')
-    .slice(0, 6);
+    .replace(/[^A-Z0-9]/g, '');
 }
 
 /** Een Nederlands kenteken is altijd precies 6 tekens. */

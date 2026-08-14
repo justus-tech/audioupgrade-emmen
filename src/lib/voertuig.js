@@ -163,7 +163,11 @@ function leeftijdTekst(jaren, jaar) {
  * Vier is bewust het maximum: dit staat naast de pakketten en moet in één
  * blik te lezen zijn, niet nog een lap tekst worden.
  */
-export function inzichten(voertuig = {}, brandstof = [], nu = new Date()) {
+export function inzichten(voertuigIn, brandstof, nu = new Date()) {
+  // Let op: een standaardwaarde springt alleen in bij `undefined`, niet bij
+  // `null`. En `null` is precies wat JSON.parse van sessionStorage teruggeeft
+  // als er ooit iets misging. Vandaar deze extra vangnetten.
+  const voertuig = voertuigIn || {};
   const uit = [];
 
   const soort = brandstofSoort(brandstof);
@@ -189,7 +193,8 @@ export function inzichten(voertuig = {}, brandstof = [], nu = new Date()) {
 }
 
 /** De feitenregel onder de kentekenplaat: kleur · carrosserie · brandstof · jaar. */
-export function kenmerken(voertuig = {}, brandstof = [], kleurNaam = '') {
+export function kenmerken(voertuigIn, brandstof, kleurNaam) {
+  const voertuig = voertuigIn || {};
   const delen = [];
   if (kleurNaam) delen.push(kleurNaam);
   if (voertuig.inrichting && voertuig.inrichting !== 'Niet geregistreerd') {

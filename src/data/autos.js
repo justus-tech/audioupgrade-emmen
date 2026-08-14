@@ -24,6 +24,8 @@
  * beschermd en horen niet op een commerciële site.
  */
 
+import { modelPerSlug } from './models.js';
+
 export const AUTOS = [
   // ============================================================
   // NEDERLANDSE VOLUMEAUTO'S — hier rijdt Drenthe in rond.
@@ -163,8 +165,18 @@ export const AUTOS = [
 ];
 
 /** Compacte tabel voor in de browser: regexes als string. */
+/**
+ * De tabel die de browser krijgt.
+ *
+ * De slug gaat alléén mee als er ook echt een modelpagina bestaat. Een aantal
+ * auto's hier (Bentley, Ferrari, Tesla Model S/X, Saab 900/9-5/9000, Arteon)
+ * herkennen we wel bij naam, maar er is nog geen pagina voor geschreven. Zou
+ * hun slug gewoon meegaan, dan onthoudt de site een verwijzing naar een
+ * pagina die niet bestaat. Zodra de pagina er is, gaat de slug vanzelf mee —
+ * hier hoeft dan niets aangepast te worden.
+ */
 export const autoTabel = AUTOS.map((a) => ({
-  slug: a.slug,
+  slug: modelPerSlug[a.slug] ? a.slug : null,
   merk: a.merk,
   model: a.model,
   foto: a.foto,

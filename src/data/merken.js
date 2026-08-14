@@ -14,6 +14,8 @@
  * zetten we de merknaam in onze eigen typografie neer.
  */
 
+import { MODELS, merkSlug } from './models.js';
+
 export const MERKEN = [
   {
     slug: 'volkswagen',
@@ -97,9 +99,12 @@ export const MERKEN = [
     slug: 'land-rover',
     naam: 'Land Rover',
     kort: 'Range Rover',
-    titel: 'Range Rover audio upgrade | Audio Upgrade Emmen',
+    // Niet "Range Rover audio upgrade": die titel heeft de modelpagina al, en
+    // twee pagina's met dezelfde titel laten Google denken dat het dezelfde
+    // pagina is. Ze concurreren dan met elkaar in plaats van samen te werken.
+    titel: 'Land Rover audio upgrade — alle modellen | Audio Upgrade Emmen',
     beschrijving:
-      'Audio upgrade voor je Range Rover, Sport, Velar, Evoque of Discovery. Meer diepgang, betere afstemming en akoestische demping.',
+      'Audio upgrade voor je Land Rover: Range Rover, Sport, Velar, Evoque of Discovery. Meer diepgang, betere afstemming en akoestische demping.',
     fabriekssystemen: 'Basis Meridian, optioneel Meridian Surround of Signature',
     intro:
       'Een Range Rover verkoopt zichzelf op rust en ruimte. Die grote, stille cabine is precies wat goede audio nodig heeft — en precies wat het basissysteem niet benut.',
@@ -161,5 +166,18 @@ export const MERKEN = [
 ];
 
 export const merkenPerSlug = Object.fromEntries(MERKEN.map((m) => [m.slug, m]));
+
+/**
+ * De merken die ook echt modelpagina's hebben.
+ *
+ * Alleen hiervoor maken we een merkpagina. Bentley en Ferrari staan hierboven
+ * wel beschreven, maar er zijn nog geen modellen voor geschreven — dan krijg
+ * je een merkpagina met een kop en een leeg lijstje eronder, en dat oogt als
+ * een half afgemaakte site. Zodra er een model bijkomt, verschijnt de
+ * merkpagina vanzelf.
+ */
+export const MERKEN_MET_MODELLEN = MERKEN.filter((m) =>
+  MODELS.some((model) => merkSlug(model.brand) === m.slug)
+);
 
 export default MERKEN;
