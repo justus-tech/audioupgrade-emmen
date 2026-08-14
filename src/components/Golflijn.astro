@@ -8,38 +8,47 @@
  * lijn die op en neer gaat met de luchtdruk. Dat is wat er op meetapparatuur
  * staat, en het is precies waar wij mee werken bij het inmeten van een auto.
  *
- * DRIE DINGEN DIE HET VAN TECHNISCH NAAR DUUR TILLEN
+ * WAAROM HET ER ZO TRAAG UITZIET: DIT IS EEN SUBWOOFER
+ * Een subwoofer doet ongeveer 20 tot 80 hertz. Dat zijn lange, trage golven
+ * met nauwelijks boventonen — het tegenovergestelde van de snelle rimpeling
+ * die je bij hoge tonen ziet. Vandaar:
  *
- *   Drie lijnen    Eén scherpe voorop en twee zachtere die er iets achteraan
- *                  lopen. Dat geeft diepte en het oogt als beweging in plaats
- *                  van een tekening. Dezelfde truc die Apple bij Siri gebruikt.
- *   Doorschuiven   Het beeld loopt continu naar links, zoals een echte scoop.
- *                  Daardoor herhaalt het nooit zichtbaar.
- *   Ritme          Bij elke tel zwelt de golf op en zakt weer terug, met een
- *                  kick op elke tel en een snare op de tweede en vierde.
- *                  Hetzelfde model als bij de balken.
+ *   Weinig golven      Ruim één golf over de hele breedte, met twee zwakke
+ *                      boventonen erbovenop. Geen fijne rimpels.
+ *   Traag              De golf schuift langzaam door. Een echte 40 hertz gaat
+ *                      veertig keer per seconde op en neer en dat kun je niet
+ *                      zien; dit is dezelfde vorm op een trage tijdbasis,
+ *                      precies zoals je een scoop zou uitzoomen.
+ *   Ademen, niet slaan Bij elke tel zwelt de golf op en zakt hij weer terug,
+ *                      maar zacht. Een sub duwt lucht, hij tikt niet.
  *
- * Net als bij de balken speelt er geen echt geluid; dit is een model van hoe
- * muziek eruitziet. En net als daar: alleen de lijn wordt hertekend, de
- * animatie stopt zodra hij uit beeld is, en bij "verminder beweging" blijft
- * hij stilstaan op de vorm die de server al meestuurt.
+ * DRIE LIJNEN OVER ELKAAR
+ * Eén scherpe voorop en twee zachtere die er iets achteraan lopen. Dat geeft
+ * diepte en het oogt als beweging in plaats van een tekening. Dezelfde truc
+ * die Apple bij Siri gebruikt.
+ *
+ * Er speelt geen echt geluid; dit is een model. En net als bij de balken:
+ * alleen de lijn wordt hertekend, de animatie stopt zodra hij uit beeld is,
+ * en bij "verminder beweging" blijft hij stilstaan op de vorm die de server
+ * al meestuurt.
  */
 const BREEDTE = 1160;
 const HOOGTE = 120;
 const MIDDEN = HOOGTE / 2;
-const PUNTEN = 132;
+const PUNTEN = 96;
 
 /**
- * De golfvorm: vier sinussen over elkaar. Verschillende snelheden die niet op
- * elkaar delen, dus de vorm herhaalt zich pas na heel lange tijd.
+ * De golfvorm van een lage toon: één grondtoon met twee zwakke boventonen.
+ *
+ * De getallen bij `u` bepalen hoeveel golven er over de breedte passen:
+ * 8.6 is ongeveer anderhalve golf, 15.5 tweeënhalf, 23 bijna vier. Alles
+ * daarboven is eruit gelaten — dát waren de rimpels die het onrustig maakten.
  */
 function golf(u, t) {
   return (
-    (0.55 * Math.sin(u * 9.0 + t * 1.7) +
-      0.3 * Math.sin(u * 17.0 - t * 2.3 + 1.1) +
-      0.18 * Math.sin(u * 31.0 + t * 3.1 + 2.4) +
-      0.1 * Math.sin(u * 53.0 - t * 4.7)) /
-    1.13
+    0.62 * Math.sin(u * 8.6 + t * 0.9) +
+    0.26 * Math.sin(u * 15.5 - t * 1.25 + 1.1) +
+    0.12 * Math.sin(u * 23.0 + t * 1.7 + 2.4)
   );
 }
 
@@ -48,24 +57,40 @@ function omhulsel(u) {
   return 0.4 + 0.6 * Math.pow(Math.sin(u * Math.PI), 0.5);
 }
 
-/** Bouwt het pad. Staat hier én in het script, zodat beide hetzelfde tekenen. */
+/**
+ * Bouwt het pad met vloeiende bochten in plaats van rechte stukjes.
+ *
+ * Elk punt wordt een bocht die door het midden van twee buren loopt. Dat is
+ * de standaardmanier om een reeks punten glad te trekken, en het is precies
+ * wat het verschil maakt tussen een strakke lijn en een hoekige.
+ */
+function padVan(punten) {
+  if (punten.length < 3) return '';
+  let d = `M${punten[0][0].toFixed(1)} ${punten[0][1].toFixed(1)}`;
+  for (let i = 1; i < punten.length - 1; i++) {
+    const mx = (punten[i][0] + punten[i + 1][0]) / 2;
+    const my = (punten[i][1] + punten[i + 1][1]) / 2;
+    d += `Q${punten[i][0].toFixed(1)} ${punten[i][1].toFixed(1)} ${mx.toFixed(1)} ${my.toFixed(1)}`;
+  }
+  const laatste = punten[punten.length - 1];
+  return d + `L${laatste[0].toFixed(1)} ${laatste[1].toFixed(1)}`;
+}
+
 function pad(t, sterkte) {
-  let d = '';
+  const punten = [];
   for (let i = 0; i < PUNTEN; i++) {
     const u = i / (PUNTEN - 1);
-    const x = u * BREEDTE;
-    const y = MIDDEN - golf(u, t) * omhulsel(u) * sterkte * MIDDEN;
-    d += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ' ' + y.toFixed(1);
+    punten.push([u * BREEDTE, MIDDEN - golf(u, t) * omhulsel(u) * sterkte * MIDDEN]);
   }
-  return d;
+  return padVan(punten);
 }
 
 /* De vorm die er staat vóórdat het script begint, en die blijft staan als
    iemand beweging heeft uitgezet. */
 const LAGEN = [
-  { klasse: 'lijn-ver', d: pad(0.24, 0.5) },
-  { klasse: 'lijn-half', d: pad(0.12, 0.62) },
-  { klasse: 'lijn-voor', d: pad(0, 0.72) },
+  { klasse: 'lijn-ver', d: pad(0.55, 0.52) },
+  { klasse: 'lijn-half', d: pad(0.28, 0.64) },
+  { klasse: 'lijn-voor', d: pad(0, 0.74) },
 ];
 ---
 <div class="golflijn" aria-hidden="true">
@@ -82,38 +107,37 @@ const LAGEN = [
     const BREEDTE = 1160;
     const HOOGTE = 120;
     const MIDDEN = HOOGTE / 2;
-    const PUNTEN = 132;
+    const PUNTEN = 96;
 
     // Vooraf uitgerekend: dit verandert nooit en scheelt werk per beeld.
     const xen = [];
     const omhulsels = [];
     for (let i = 0; i < PUNTEN; i++) {
       const u = i / (PUNTEN - 1);
-      xen.push((u * BREEDTE).toFixed(1));
+      xen.push(u * BREEDTE);
       omhulsels.push(0.4 + 0.6 * Math.pow(Math.sin(u * Math.PI), 0.5));
     }
 
+    /** Zie de uitleg boven in dit bestand: lage toon, weinig boventonen. */
     const golf = (u, t) =>
-      (0.55 * Math.sin(u * 9.0 + t * 1.7) +
-        0.3 * Math.sin(u * 17.0 - t * 2.3 + 1.1) +
-        0.18 * Math.sin(u * 31.0 + t * 3.1 + 2.4) +
-        0.1 * Math.sin(u * 53.0 - t * 4.7)) /
-      1.13;
+      0.62 * Math.sin(u * 8.6 + t * 0.9) +
+      0.26 * Math.sin(u * 15.5 - t * 1.25 + 1.1) +
+      0.12 * Math.sin(u * 23.0 + t * 1.7 + 2.4);
 
     const lagen = [
-      { el: vak.querySelector('.lijn-ver'), vertraging: 0.24, sterkte: 0.5 },
-      { el: vak.querySelector('.lijn-half'), vertraging: 0.12, sterkte: 0.62 },
-      { el: vak.querySelector('.lijn-voor'), vertraging: 0, sterkte: 0.72 },
+      { el: vak.querySelector('.lijn-ver'), vertraging: 0.55, sterkte: 0.52 },
+      { el: vak.querySelector('.lijn-half'), vertraging: 0.28, sterkte: 0.64 },
+      { el: vak.querySelector('.lijn-voor'), vertraging: 0, sterkte: 0.74 },
     ];
 
-    const BPM = 98;
+    const BPM = 92;
     const TEL = 60 / BPM;
 
     let tijd = 0;
     let vorig = 0;
     let loopt = false;
     let frame = 0;
-    let zwelling = 0;
+    let zwelling = 0.66;
 
     function stap(nu) {
       if (!loopt) return;
@@ -121,26 +145,41 @@ const LAGEN = [
       vorig = nu;
       tijd += dt;
 
-      // Zelfde ritme als bij de balken: kick op elke tel, snare op 2 en 4.
+      // De tel is er nog, maar zacht: een sub duwt lucht, hij tikt niet.
       const tel = (tijd / TEL) % 4;
       const inTel = tel % 1;
-      const kick = Math.exp(-inTel * 9) * 0.9;
-      const opSnare = Math.floor(tel) === 1 || Math.floor(tel) === 3;
-      const snare = opSnare ? Math.exp(-inTel * 14) * 0.5 : 0;
+      const kick = Math.exp(-inTel * 3.2) * 0.42;
+      const opTwee = Math.floor(tel) === 1 || Math.floor(tel) === 3;
+      const tweede = opTwee ? Math.exp(-inTel * 4.5) * 0.16 : 0;
 
-      // Snel opzwellen, langzaam terugzakken.
-      const doel = 0.62 + kick * 0.34 + snare * 0.2;
-      zwelling += (doel - zwelling) * (doel > zwelling ? 0.5 : 0.09);
+      // Rustig opzwellen én rustig terugzakken. Dit is wat het schokkerige
+      // eraf haalde: eerst sloeg de golf aan en viel hij weer weg.
+      const doel = 0.6 + kick + tweede;
+      zwelling += (doel - zwelling) * (doel > zwelling ? 0.16 : 0.055);
 
       for (const laag of lagen) {
         const t = tijd - laag.vertraging;
-        const sterkte = zwelling * (laag.sterkte / 0.72);
+        const sterkte = zwelling * (laag.sterkte / 0.74);
+
+        // Punten uitrekenen, daarna glad trekken met bochten.
         let d = '';
-        for (let i = 0; i < PUNTEN; i++) {
-          const u = i / (PUNTEN - 1);
-          const y = MIDDEN - golf(u, t) * omhulsels[i] * sterkte * MIDDEN;
-          d += (i === 0 ? 'M' : 'L') + xen[i] + ' ' + y.toFixed(1);
+        let vx = xen[0];
+        let vy = MIDDEN - golf(0, t) * omhulsels[0] * sterkte * MIDDEN;
+        d = `M${vx.toFixed(1)} ${vy.toFixed(1)}`;
+
+        let hx = xen[1];
+        let hy = MIDDEN - golf(1 / (PUNTEN - 1), t) * omhulsels[1] * sterkte * MIDDEN;
+
+        for (let i = 1; i < PUNTEN - 1; i++) {
+          const uv = (i + 1) / (PUNTEN - 1);
+          const nx = xen[i + 1];
+          const ny = MIDDEN - golf(uv, t) * omhulsels[i + 1] * sterkte * MIDDEN;
+          d += `Q${hx.toFixed(1)} ${hy.toFixed(1)} ${((hx + nx) / 2).toFixed(1)} ${((hy + ny) / 2).toFixed(1)}`;
+          hx = nx;
+          hy = ny;
         }
+        d += `L${hx.toFixed(1)} ${hy.toFixed(1)}`;
+
         laag.el.setAttribute('d', d);
       }
 
@@ -194,6 +233,6 @@ const LAGEN = [
   }
   /* Voorop scherp, daarachter twee zachtere echo's. Dat geeft diepte. */
   .lijn-voor { stroke-width: 2.2; opacity: .85; }
-  .lijn-half { stroke-width: 1.6; opacity: .38; }
-  .lijn-ver  { stroke-width: 1.2; opacity: .2; }
+  .lijn-half { stroke-width: 1.6; opacity: .34; }
+  .lijn-ver  { stroke-width: 1.2; opacity: .17; }
 </style>
