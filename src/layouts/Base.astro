@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css';
-import { SITE } from '../data/site.js';
+import { SITE, PACKAGES } from '../data/site.js';
 import { BRAND, LICHT, cssThema } from '../data/brand.js';
 import Logo from '../components/Logo.astro';
 
@@ -57,14 +57,25 @@ const nav = [
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet" />
+  {/* De bedrijfsgegevens, machineleesbaar. Hier haalt Google zijn
+      bedrijfskaartje uit, en een AI-assistent zijn antwoord op "waar kan ik
+      in Drenthe CarPlay laten inbouwen".
+
+      LET OP: hier staat bewust GEEN aggregateRating. Een beoordelingscijfer
+      opgeven zonder echte beoordelingen is in strijd met de regels van Google
+      én misleidend voor de klant. Zodra er echte Google-recensies zijn mogen
+      die hier in. */}
   <script type="application/ld+json" set:html={JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'AutoRepair',
+    '@id': `${SITE.url}/#bedrijf`,
     name: SITE.name,
-    url: 'https://audioupgradeemmen.nl',
+    url: SITE.url,
     telephone: SITE.phone,
     email: SITE.email,
-    areaServed: 'Drenthe, Nederland',
+    priceRange: '€695 - €3695',
+    currenciesAccepted: 'EUR',
+    vatID: SITE.btw,
     address: {
       '@type': 'PostalAddress',
       streetAddress: SITE.street,
@@ -73,7 +84,26 @@ const nav = [
       addressRegion: SITE.region,
       addressCountry: SITE.country,
     },
-    description: 'Premium car audio, CarPlay-inbouw, DSP-tuning en akoestische deurdemping in Emmen. Uitsluitend op afspraak.',
+    areaServed: [
+      { '@type': 'City', name: 'Emmen' },
+      { '@type': 'AdministrativeArea', name: 'Drenthe' },
+      { '@type': 'Country', name: 'Nederland' },
+    ],
+    knowsLanguage: 'nl-NL',
+    availableLanguage: 'Nederlands',
+    /* Geen vaste openingstijden: het is uitsluitend op afspraak. Dat zetten
+       we in de omschrijving en niet in openingHours, want daar zou je dan
+       tijden moeten verzinnen die niet kloppen. */
+    description:
+      'Premium car audio, draadloze CarPlay- en Android Auto-inbouw, DSP-tuning en akoestische deurdemping in Emmen (Drenthe). Uitsluitend op afspraak. Onzichtbaar weggewerkt achter de originele panelen, met behoud van fabrieksgarantie.',
+    makesOffer: PACKAGES.map((p) => ({
+      '@type': 'Offer',
+      name: p.name,
+      description: p.short,
+      priceCurrency: 'EUR',
+      ...(p.bedrag ? { price: p.bedrag } : { availability: 'https://schema.org/InStock' }),
+      itemOffered: { '@type': 'Service', name: p.name, serviceType: 'Car audio upgrade' },
+    })),
   })} />
 </head>
 <body>

@@ -1,5 +1,7 @@
 export const SITE = {
   name: 'Audio Upgrade Emmen',
+  /** Zonder schuine streep aan het eind — overal waar we adressen bouwen. */
+  url: 'https://audioupgradeemmen.nl',
   phone: '+31644379844',
   phoneDisplay: '06 44 37 98 44',
   email: 'info@audioupgradeemmen.nl',
@@ -57,6 +59,8 @@ export const PACKAGES = [
     name: 'CarPlay Upgrade',
     tagline: 'Apple CarPlay & Android Auto',
     price: 'Vanaf € 695,00',
+    // Het kale bedrag, voor de machineleesbare gegevens. Zie Base.astro.
+    bedrag: 695,
     priceNote: 'Inclusief BTW & Montage',
     priceExcl: '€ 574,- excl. btw',
     short: 'Apple CarPlay & Android Auto naadloos in je originele scherm.',
@@ -81,6 +85,7 @@ export const PACKAGES = [
     name: 'Akoestische Basis',
     tagline: 'Rust in de cabine, helder aan de telefoon.',
     price: '€ 995,00',
+    bedrag: 995,
     priceNote: 'Inclusief BTW & Montage',
     priceExcl: '€ 822,- excl. btw',
     short: 'De perfecte upgrade voor rust in de cabine en loepzuivere details.',
@@ -104,6 +109,7 @@ export const PACKAGES = [
     name: 'The OEM+ Executive',
     tagline: '0% laadruimteverlies. 100% dynamiek.',
     price: '€ 2.195,00',
+    bedrag: 2195,
     priceNote: 'Inclusief BTW & Montage',
     priceExcl: '€ 1.814,- excl. btw',
     populair: true,
@@ -129,6 +135,7 @@ export const PACKAGES = [
     name: 'The Reference Edition',
     tagline: 'Compromisloze audiofiele perfectie.',
     price: 'Vanaf € 3.695,00',
+    bedrag: 3695,
     priceNote: 'Inclusief BTW & Montage',
     priceExcl: 'Vanaf € 3.053,- excl. btw',
     short: 'Ongeëvenaarde audiofiele perfectie voor wie weigert concessies te doen.',

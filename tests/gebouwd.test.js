@@ -168,6 +168,100 @@ describe('gestructureerde gegevens voor Google', alsGebouwd, () => {
   });
 });
 
+describe('vindbaar voor zoekmachines en AI-assistenten', alsGebouwd, () => {
+  const lees = (naam) => readFileSync(join(DIST, naam), 'utf8');
+
+  test('robots.txt bestaat en laat de AI-crawlers toe', () => {
+    const robots = lees('robots.txt');
+    // Sommige crawlers trekken zich terug als er geen regel over ze staat.
+    for (const agent of ['GPTBot', 'OAI-SearchBot', 'ClaudeBot', 'PerplexityBot', 'Googlebot']) {
+      assert.ok(robots.includes(`User-agent: ${agent}`), `${agent} staat er niet in`);
+    }
+    assert.ok(robots.includes(`Sitemap: ${SITE.url}/sitemap.xml`), 'de sitemap wordt niet genoemd');
+  });
+
+  test('de interne proefpagina blijft uit de zoekresultaten', () => {
+    assert.ok(lees('robots.txt').includes('Disallow: /schetsen'));
+  });
+
+  test('de sitemap bevat elke pagina die gevonden mag worden', () => {
+    const sitemap = lees('sitemap.xml');
+    for (const m of MODELS) {
+      assert.ok(sitemap.includes(`${SITE.url}/audio-upgrade/${m.slug}<`), `mist ${m.slug}`);
+    }
+    for (const m of MERKEN_MET_MODELLEN) {
+      assert.ok(sitemap.includes(`${SITE.url}/merk/${m.slug}<`), `mist merk ${m.slug}`);
+    }
+    for (const pad of ['/', '/upgrades', '/werkwijze', '/contact', '/audio-upgrade']) {
+      assert.ok(sitemap.includes(`${SITE.url}${pad}<`), `mist ${pad}`);
+    }
+  });
+
+  test('de sitemap bevat niets wat verboden is', () => {
+    assert.ok(!lees('sitemap.xml').includes('/schetsen'));
+  });
+
+  test('elk adres in de sitemap bestaat ook echt', () => {
+    const adressen = [...lees('sitemap.xml').matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+    assert.ok(adressen.length > 150, `maar ${adressen.length} adressen`);
+    for (const adres of adressen) {
+      const pad = adres.replace(SITE.url, '') || '/';
+      assert.ok(inhoud.has(pad), `sitemap wijst naar ${pad}, die pagina bestaat niet`);
+    }
+  });
+
+  test('llms.txt vertelt hetzelfde als de site', () => {
+    const llms = lees('llms.txt');
+    assert.ok(llms.startsWith('# Audio Upgrade Emmen'));
+    // De prijzen moeten hier één op één kloppen met site.js. Lopen ze uiteen,
+    // dan noemt een AI-assistent een bedrag dat de klant niet terugvindt.
+    for (const p of PACKAGES) {
+      assert.ok(llms.includes(p.name), `${p.name} ontbreekt`);
+      assert.ok(llms.includes(p.price), `prijs van ${p.slug} klopt niet: ${p.price}`);
+    }
+    for (const veld of [SITE.street, SITE.city, SITE.phoneDisplay, SITE.email, SITE.kvk]) {
+      assert.ok(llms.includes(veld), `${veld} ontbreekt`);
+    }
+  });
+
+  test('llms.txt noemt elk merk waar we modellen van hebben', () => {
+    const llms = lees('llms.txt');
+    for (const m of MERKEN_MET_MODELLEN) {
+      assert.ok(llms.includes(m.naam), `${m.naam} ontbreekt`);
+    }
+  });
+
+  test('nergens een verzonnen beoordelingscijfer', () => {
+    // Een aggregateRating opgeven zonder échte beoordelingen is in strijd met
+    // de regels van Google en misleidt de klant. Zodra er echte recensies
+    // zijn, mag dit erin — en dan moet deze test worden aangepast.
+    for (const [pad, html] of inhoud) {
+      assert.ok(!html.includes('aggregateRating'), `${pad} claimt een beoordeling`);
+      assert.ok(!html.includes('"reviewCount"'), `${pad} claimt beoordelingen`);
+    }
+  });
+
+  test('elke modelpagina heeft een kruimelpad en een dienstbeschrijving', () => {
+    for (const m of MODELS.slice(0, 20)) {
+      const html = inhoud.get(`/audio-upgrade/${m.slug}`);
+      const blokken = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+        .map((x) => JSON.parse(x[1]));
+      assert.ok(blokken.some((b) => b['@type'] === 'BreadcrumbList'), `${m.slug}: geen kruimelpad`);
+      assert.ok(blokken.some((b) => b['@type'] === 'Service'), `${m.slug}: geen dienstbeschrijving`);
+    }
+  });
+
+  test('de bedrijfsgegevens noemen prijzen in euro', () => {
+    const html = inhoud.get('/');
+    const bedrijf = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+      .map((x) => JSON.parse(x[1]))
+      .find((b) => b['@type'] === 'AutoRepair');
+    assert.ok(bedrijf.makesOffer.length === PACKAGES.length);
+    assert.equal(bedrijf.currenciesAccepted, 'EUR');
+    assert.ok(bedrijf.priceRange);
+  });
+});
+
 describe('huisregels van Justus', alsGebouwd, () => {
   test('nergens een emoji', () => {
     // Afgesproken: geen emoji op de site. De oude site had chatwolkjes in de

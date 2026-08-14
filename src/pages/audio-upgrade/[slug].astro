@@ -36,9 +36,54 @@ const faqSchema = {
     acceptedAnswer: { '@type': 'Answer', text: f.a },
   })),
 };
+
+/**
+ * Het kruimelpad, machineleesbaar. Hiermee snapt een zoekmachine of een
+ * AI-assistent waar deze pagina in het geheel past: van de site naar het
+ * merk naar dit model. Zonder dit is elke pagina een los eiland.
+ */
+const kruimelpad = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: SITE.url },
+    { '@type': 'ListItem', position: 2, name: 'Automodellen', item: `${SITE.url}/audio-upgrade` },
+    ...(merk
+      ? [{ '@type': 'ListItem', position: 3, name: merk.naam, item: `${SITE.url}/merk/${merk.slug}` }]
+      : []),
+    {
+      '@type': 'ListItem',
+      position: merk ? 4 : 3,
+      name: `${model.brand} ${model.model}`,
+      item: `${SITE.url}/audio-upgrade/${model.slug}`,
+    },
+  ],
+};
+
+/** De dienst zelf: wat wij voor dít model doen, en vanaf welk bedrag. */
+const dienstSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Service',
+  name: `${model.brand} ${model.model} audio upgrade`,
+  serviceType: 'Car audio upgrade',
+  description: model.description,
+  provider: { '@id': `${SITE.url}/#bedrijf` },
+  areaServed: { '@type': 'AdministrativeArea', name: 'Drenthe, Nederland' },
+  offers: pakketten
+    .filter((p) => p.bedrag)
+    .map((p) => ({
+      '@type': 'Offer',
+      name: p.name,
+      price: p.bedrag,
+      priceCurrency: 'EUR',
+      description: p.short,
+    })),
+};
 ---
 <Base title={model.title} description={model.description} path={`/audio-upgrade/${model.slug}`}>
   <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+  <script type="application/ld+json" set:html={JSON.stringify(kruimelpad)} />
+  <script type="application/ld+json" set:html={JSON.stringify(dienstSchema)} />
 
   <section>
     <div class="wrap">
