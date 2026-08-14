@@ -9,8 +9,9 @@
  *               het geluid binnen zijn stukje — dat is precies hoe zo'n
  *               weergave gemaakt wordt.
  *   De lijn     De oscilloscooplijn eroverheen: de golfvorm zelf, zoals op
- *               meetapparatuur. Drie keer getekend, één scherpe voorop en
- *               twee zachtere die er iets achteraan lopen. Dat geeft diepte.
+ *               meetapparatuur. Eén scherpe lijn. Er liepen eerst twee
+ *               zachtere echo's achteraan voor de diepte, maar samen met de
+ *               balken werd dat te druk — de balken doen dat werk nu.
  *
  * Ze komen uit dezelfde berekening, dus ze bewegen samen. Dát is wat het
  * echt laat lijken: bij losse berekeningen zie je meteen dat de balken en de
@@ -92,11 +93,7 @@ function padVan(t, sterkte) {
 /* De vorm vóórdat het script begint, en de vorm die blijft staan als iemand
    beweging heeft uitgezet. */
 const startBalken = Array.from({ length: BALKEN }, (_, i) => Math.max(0.04, piek(i, 0) * 0.72));
-const LIJNEN = [
-  { klasse: 'lijn-ver', d: padVan(0.55, 0.52) },
-  { klasse: 'lijn-half', d: padVan(0.28, 0.64) },
-  { klasse: 'lijn-voor', d: padVan(0, 0.74) },
-];
+const LIJNEN = [{ klasse: 'lijn-voor', d: padVan(0, 0.74) }];
 ---
 <div class="golflijn" aria-hidden="true">
   <svg viewBox={`0 0 ${BREEDTE} ${HOOGTE}`} preserveAspectRatio="none">
@@ -144,11 +141,7 @@ const LIJNEN = [
       omhulsels.push(omhulsel(u));
     }
 
-    const lijnen = [
-      { el: vak.querySelector('.lijn-ver'), vertraging: 0.55, sterkte: 0.52 },
-      { el: vak.querySelector('.lijn-half'), vertraging: 0.28, sterkte: 0.64 },
-      { el: vak.querySelector('.lijn-voor'), vertraging: 0, sterkte: 0.74 },
-    ];
+    const lijnen = [{ el: vak.querySelector('.lijn-voor'), vertraging: 0, sterkte: 0.74 }];
 
     const BPM = 92;
     const TEL = 60 / BPM;
@@ -275,9 +268,7 @@ const LIJNEN = [
        een telefoon een dikke worst. */
     vector-effect: non-scaling-stroke;
   }
-  .lijn-voor { stroke-width: 2.2; opacity: .9; }
-  .lijn-half { stroke-width: 1.6; opacity: .3; }
-  .lijn-ver  { stroke-width: 1.2; opacity: .15; }
+  .lijn-voor { stroke-width: 2.2; opacity: .92; }
 
   @media (prefers-reduced-motion: reduce) {
     .golf-balken rect { will-change: auto; }
