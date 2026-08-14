@@ -1,0 +1,262 @@
+---
+/**
+ * Alle merken en modellen, doorzoekbaar.
+ *
+ * WAAROM GEEN UITKLAPMENU OP HOVER
+ * Dat was het eerste idee, maar op een telefoon bestaat "de muis erboven
+ * houden" niet — en 99% van het bezoek komt van een telefoon. Een menu dat
+ * opengaat bij hover is daar dus onbruikbaar of, erger nog, het opent bij de
+ * eerste tik en de link werkt pas bij de tweede.
+ *
+ * Wat hier staat werkt op allebei hetzelfde: je tikt of klikt op een merk en
+ * de modellen klappen eronder uit. Wie zijn auto al weet, typt hem gewoon in
+ * het zoekveld — dat is sneller dan welk menu ook.
+ *
+ * Zonder JavaScript werkt alles nog steeds: <details> klapt uit zichzelf uit.
+ * Het zoekveld is de enige toevoeging die JavaScript nodig heeft, en dat
+ * verschijnt daarom ook pas als JavaScript aanstaat.
+ */
+import { MODELS, merkSlug, modellenVanMerk } from '../data/models.js';
+import { MERKEN_MET_MODELLEN } from '../data/merken.js';
+
+const { open = false } = Astro.props;
+
+const merken = MERKEN_MET_MODELLEN.map((m) => ({
+  slug: m.slug,
+  naam: m.naam,
+  modellen: modellenVanMerk(m.slug).map((x) => ({ slug: x.slug, model: x.model })),
+})).sort((a, b) => a.naam.localeCompare(b.naam, 'nl'));
+
+const aantalModellen = MODELS.length;
+---
+<div class="kiezer" id="kiezer">
+  {/* hidden totdat het script het weghaalt: zonder JavaScript filtert er
+      niets, en dan is een zoekveld dat niets doet alleen maar verwarrend. */}
+  <div class="kiezer-zoek" id="kiezer-zoek" hidden>
+    <input
+      type="search"
+      id="kiezer-invoer"
+      placeholder={`Zoek in ${aantalModellen} modellen — bijv. Golf of BMW`}
+      aria-label="Zoek een merk of model"
+      autocomplete="off"
+    />
+    <p class="kiezer-telling" id="kiezer-telling" aria-live="polite"></p>
+  </div>
+
+  <div class="kiezer-kolommen" id="kiezer-lijst">
+    {merken.map((m) => (
+      <details class="merk" data-merk={m.naam} open={open}>
+        <summary>
+          <span class="merk-naam">{m.naam}</span>
+          <span class="merk-aantal">{m.modellen.length}</span>
+        </summary>
+        <ul>
+          {m.modellen.map((mod) => (
+            <li data-model={mod.model}>
+              <a href={`/audio-upgrade/${mod.slug}`}>{mod.model}</a>
+            </li>
+          ))}
+          <li class="merk-alles">
+            <a href={`/merk/${m.slug}`}>Over {m.naam} →</a>
+          </li>
+        </ul>
+      </details>
+    ))}
+  </div>
+
+  <p class="kiezer-leeg" id="kiezer-leeg" hidden>
+    Die staat er nog niet bij — maar we upgraden hem wél.
+  </p>
+</div>
+
+<script>
+  /**
+   * Zoeken door merken en modellen.
+   *
+   * Bij een treffer op een model klapt het merk vanzelf open, zodat je meteen
+   * ziet waar je moet zijn. Bij een lege zoekopdracht gaat alles weer dicht.
+   */
+  const vak = document.getElementById('kiezer-zoek');
+  const invoer = document.getElementById('kiezer-invoer');
+  const telling = document.getElementById('kiezer-telling');
+  const leeg = document.getElementById('kiezer-leeg');
+  const merken = [...document.querySelectorAll('#kiezer-lijst .merk')];
+
+  if (vak && invoer && merken.length) {
+    vak.hidden = false;
+
+    /** "Škoda" en "skoda" moeten allebei werken. */
+    const plat = (s) =>
+      String(s || '')
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .toLowerCase()
+        .trim();
+
+    // Vooraf uitrekenen, zodat er tijdens het typen niets zwaars gebeurt.
+    const index = merken.map((el) => ({
+      el,
+      merk: plat(el.dataset.merk),
+      opengeklapt: el.open,
+      modellen: [...el.querySelectorAll('li[data-model]')].map((li) => ({
+        li,
+        tekst: plat(li.dataset.model),
+      })),
+    }));
+
+    function filter() {
+      const vraag = plat(invoer.value);
+      let zichtbaar = 0;
+
+      for (const m of index) {
+        if (!vraag) {
+          m.el.hidden = false;
+          m.el.open = m.opengeklapt;
+          m.modellen.forEach((x) => (x.li.hidden = false));
+          zichtbaar += m.modellen.length;
+          continue;
+        }
+
+        const merkTreft = m.merk.includes(vraag);
+        const treffers = m.modellen.filter((x) => x.tekst.includes(vraag));
+
+        // Zoek je op het merk, dan zijn alle modellen van dat merk relevant.
+        const tonen = merkTreft ? m.modellen : treffers;
+        m.modellen.forEach((x) => (x.li.hidden = !tonen.includes(x)));
+
+        m.el.hidden = tonen.length === 0;
+        m.el.open = tonen.length > 0;
+        zichtbaar += tonen.length;
+      }
+
+      leeg.hidden = zichtbaar > 0;
+      telling.textContent = !vraag
+        ? ''
+        : zichtbaar === 1
+          ? '1 model gevonden'
+          : `${zichtbaar} modellen gevonden`;
+    }
+
+    invoer.addEventListener('input', filter);
+    // Esc leegt het veld — sneller dan alles wegvegen.
+    invoer.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        invoer.value = '';
+        filter();
+      }
+    });
+  }
+</script>
+
+<style>
+  .kiezer-zoek { max-width: 520px; margin: 0 auto 2.6rem; }
+
+  #kiezer-invoer {
+    width: 100%;
+    padding: 15px 18px;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 1rem;
+    color: var(--text);
+    background: var(--panel);
+    border: 1px solid var(--line-strong);
+    border-radius: 2px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  #kiezer-invoer::placeholder { color: var(--text-dim); }
+  #kiezer-invoer:focus { border-color: var(--accent); }
+  /* Het kruisje van Safari/Chrome in de merkkleur in plaats van blauw. */
+  #kiezer-invoer::-webkit-search-cancel-button { filter: grayscale(1); }
+
+  .kiezer-telling {
+    margin: 12px 0 0;
+    text-align: center;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase; letter-spacing: .18em;
+    font-size: .7rem; color: var(--text-dim);
+    min-height: 1em;
+  }
+
+  /* Kolommen in plaats van een raster: een merk dat uitklapt duwt dan alleen
+     zijn eigen kolom naar beneden en niet de hele rij. */
+  .kiezer-kolommen { columns: 3; column-gap: 34px; }
+  @media (max-width: 900px) { .kiezer-kolommen { columns: 2; column-gap: 24px; } }
+  @media (max-width: 560px) { .kiezer-kolommen { columns: 1; } }
+
+  .merk {
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 0;
+    margin-bottom: 2px;
+  }
+
+  .merk summary {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+    /* Ruim genoeg om met een duim te raken. */
+    padding: 14px 2px;
+    cursor: pointer;
+    list-style: none;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase; letter-spacing: .14em;
+    font-size: .88rem;
+    color: var(--text);
+    transition: color .2s;
+  }
+  .merk summary::-webkit-details-marker { display: none; }
+
+  /* Het driehoekje rechts, dat meedraait als het merk openklapt. */
+  .merk summary::after {
+    content: '';
+    flex: none;
+    width: 7px; height: 7px;
+    border-right: 1.5px solid var(--accent);
+    border-bottom: 1.5px solid var(--accent);
+    transform: rotate(45deg) translate(-2px, -2px);
+    transition: transform .2s;
+  }
+  .merk[open] summary::after { transform: rotate(-135deg) translate(-2px, -2px); }
+
+  @media (hover: hover) {
+    .merk summary:hover { color: var(--accent-text); }
+  }
+
+  .merk-aantal {
+    margin-left: auto;
+    font-size: .7rem;
+    letter-spacing: .1em;
+    color: var(--text-dim);
+  }
+
+  .merk ul {
+    list-style: none;
+    padding: 0 0 14px;
+    margin: 0;
+  }
+  .merk li a {
+    display: block;
+    padding: 8px 2px 8px 16px;
+    font-size: .92rem;
+    color: var(--text-dim);
+    text-decoration: none;
+    border-left: 1px solid var(--line);
+    transition: color .2s, border-color .2s;
+  }
+  @media (hover: hover) {
+    .merk li a:hover { color: var(--text); border-left-color: var(--accent); }
+  }
+  .merk-alles a {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase; letter-spacing: .14em;
+    font-size: .68rem;
+    color: var(--accent-text) !important;
+  }
+
+  .kiezer-leeg {
+    text-align: center;
+    margin: 2.4rem auto 0;
+    color: var(--text-dim);
+  }
+</style>

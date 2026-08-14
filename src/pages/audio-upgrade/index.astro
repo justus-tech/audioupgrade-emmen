@@ -1,8 +1,8 @@
 ---
 import Base from '../../layouts/Base.astro';
 import KentekenCheck from '../../components/KentekenCheck.astro';
+import ModelKiezer from '../../components/ModelKiezer.astro';
 import { MODELS } from '../../data/models.js';
-import { MERKEN_MET_MODELLEN as MERKEN } from '../../data/merken.js';
 ---
 <Base
   title="Audio Upgrade per Automodel — Check je Kenteken | Audio Upgrade Emmen"
@@ -15,30 +15,15 @@ import { MERKEN_MET_MODELLEN as MERKEN } from '../../data/merken.js';
     </div>
   </section>
 
+  {/* Eén blok in plaats van 28 merkknoppen plus 150 kaarten. Dat waren twee
+      schermen scrollen voordat je iets vond. */}
   <section class="alt">
-    <div class="wrap center">
-      <h2>Of kies je merk</h2>
-      <p style="margin:0 auto 2em;">Per merk leggen we uit wat er af fabriek misgaat en welke modellen we doen.</p>
-      <div class="grid cols-4">
-        {MERKEN.map((m) => (
-          <a class="btn" href={`/merk/${m.slug}`}>{m.naam}</a>
-        ))}
-      </div>
-    </div>
-  </section>
-
-  <section>
     <div class="wrap">
-      <h2 class="center">Of kies je model</h2>
-      <div class="grid cols-4 mt">
-        {MODELS.map((m) => (
-          <a class="card" href={`/audio-upgrade/${m.slug}`} style="text-decoration:none">
-            <h3>{m.brand}</h3>
-            <div class="price">{m.model}</div>
-            <p>{m.description.slice(0, 90)}…</p>
-          </a>
-        ))}
-      </div>
+      <h2 class="center">Of zoek je auto op</h2>
+      <p class="center" style="margin:0 auto 2.6em;">
+        Tik op je merk en kies je model. Weet je hem al? Typ hem dan gewoon in.
+      </p>
+      <ModelKiezer />
     </div>
   </section>
 </Base>

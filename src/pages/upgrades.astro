@@ -17,12 +17,12 @@ import PakketSchets from '../components/PakketSchets.astro';
 import Kentekenplaat from '../components/Kentekenplaat.astro';
 import Merken from '../components/Merken.astro';
 import Fotoband from '../components/Fotoband.astro';
+import ModelKiezer from '../components/ModelKiezer.astro';
 /* Foto: Unsplash — vrij te gebruiken. Zie src/components/Fotoband.astro. */
 import speakerconus from '../assets/foto/speakerconus.jpg';
 import { PACKAGES, SITE } from '../data/site.js';
 import { autoTabel } from '../data/autos.js';
 import { GARANTIE, CTA } from '../data/generiek.js';
-import { MERKEN_MET_MODELLEN as MERKEN } from '../data/merken.js';
 ---
 <Base
   title="Upgrades & prijzen — check je kenteken | Audio Upgrade Emmen"
@@ -103,12 +103,12 @@ import { MERKEN_MET_MODELLEN as MERKEN } from '../data/merken.js';
   </section>
 
   <section>
-    <div class="wrap center">
-      <h2>Of kies je merk</h2>
-      <p style="margin:0 auto 2em;">Per merk leggen we uit wat er af fabriek misgaat.</p>
-      <div class="grid cols-4">
-        {MERKEN.map((m) => <a class="btn" href={`/merk/${m.slug}`}>{m.naam}</a>)}
-      </div>
+    <div class="wrap">
+      <h2 class="center">Of zoek je auto op</h2>
+      <p class="center" style="margin:0 auto 2.6em;">
+        Per model leggen we uit wat er af fabriek misgaat en wat wij eraan doen.
+      </p>
+      <ModelKiezer />
     </div>
   </section>
 

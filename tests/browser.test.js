@@ -11,7 +11,7 @@
  */
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
 import { join, extname } from 'node:path';
@@ -49,9 +49,14 @@ function startServer() {
       let pad = decodeURIComponent(new URL(verzoek.url, 'http://x').pathname);
       if (pad.endsWith('/')) pad += 'index.html';
       let bestand = join(DIST, pad);
-      // De site wordt gebouwd als losse bestanden: /upgrades -> upgrades.html
-      if (!existsSync(bestand) && !extname(bestand)) bestand += '.html';
-      if (!existsSync(bestand)) {
+      // De site wordt gebouwd als losse bestanden: /upgrades -> upgrades.html.
+      // Let op de mapcontrole: /audio-upgrade bestaat óók als MAP (met de
+      // modelpagina's erin). Zonder die controle probeert de server die map
+      // te lezen, blijft het verzoek hangen en loopt elke test in een limiet.
+      if (!extname(bestand) && (!existsSync(bestand) || statSync(bestand).isDirectory())) {
+        bestand += '.html';
+      }
+      if (!existsSync(bestand) || statSync(bestand).isDirectory()) {
         antwoord.writeHead(404).end('niet gevonden');
         return;
       }
@@ -280,6 +285,91 @@ describe('de modelpagina', alsGebouwd, () => {
     await p.waitForTimeout(400);
     assert.deepEqual(fouten, []);
     await p.close();
+  });
+});
+
+describe('de modelzoeker', alsGebouwd, () => {
+  /** Zet een zoekopdracht en geef terug wat er overblijft. */
+  async function zoek(p, vraag) {
+    await p.fill('#kiezer-invoer', vraag);
+    await p.waitForTimeout(120);
+    return {
+      merken: await p.$$eval('#kiezer-lijst .merk:not([hidden])', (n) => n.map((x) => x.dataset.merk)),
+      modellen: await p.$$eval('#kiezer-lijst li[data-model]:not([hidden])', (n) => n.map((x) => x.dataset.model)),
+      telling: (await p.textContent('#kiezer-telling')).trim(),
+    };
+  }
+
+  test('zoeken op model laat alleen dat model zien', async () => {
+    const p = await open('audio-upgrade');
+    const uit = await zoek(p, 'golf');
+    assert.deepEqual(uit.merken, ['Volkswagen']);
+    assert.deepEqual(uit.modellen, ['Golf']);
+    assert.equal(uit.telling, '1 model gevonden');
+    await p.close();
+  });
+
+  test('zoeken op merk laat alle modellen van dat merk zien', async () => {
+    const p = await open('audio-upgrade');
+    const uit = await zoek(p, 'saab');
+    assert.deepEqual(uit.merken, ['Saab']);
+    assert.ok(uit.modellen.length >= 1);
+    await p.close();
+  });
+
+  test('accenten hoef je niet te typen', async () => {
+    // Niemand typt Š. "skoda" moet Škoda vinden.
+    const p = await open('audio-upgrade');
+    assert.deepEqual((await zoek(p, 'skoda')).merken, ['Škoda']);
+    assert.deepEqual((await zoek(p, 'citroen')).merken, ['Citroën']);
+    await p.close();
+  });
+
+  test('geen treffer geeft een nette melding', async () => {
+    const p = await open('audio-upgrade');
+    const uit = await zoek(p, 'zeppelin');
+    assert.deepEqual(uit.merken, []);
+    assert.equal(await p.isVisible('#kiezer-leeg'), true);
+    await p.close();
+  });
+
+  test('leegmaken zet alles terug en klapt alles dicht', async () => {
+    const p = await open('audio-upgrade');
+    await zoek(p, 'golf');
+    const uit = await zoek(p, '');
+    assert.ok(uit.merken.length >= 25, `maar ${uit.merken.length} merken terug`);
+    assert.equal(uit.modellen.length, 150);
+    const open_ = await p.$$eval('#kiezer-lijst .merk[open]', (n) => n.length);
+    assert.equal(open_, 0);
+    await p.close();
+  });
+
+  test('een merk aantikken klapt zijn modellen uit', async () => {
+    // Geen hover: op een telefoon bestaat dat niet. Eén tik moet genoeg zijn.
+    const p = await open('audio-upgrade');
+    await p.click('#kiezer-lijst .merk:first-of-type summary');
+    assert.equal(await p.$eval('#kiezer-lijst .merk:first-of-type', (e) => e.open), true);
+    await p.close();
+  });
+
+  test('elke modellink wijst naar een bestaande pagina', async () => {
+    const p = await open('audio-upgrade');
+    const links = await p.$$eval('#kiezer-lijst a', (n) => n.map((a) => a.getAttribute('href')));
+    assert.ok(links.length > 150);
+    for (const href of links) {
+      assert.match(href, /^\/(audio-upgrade|merk)\/[a-z0-9-]+$/, `raar adres: ${href}`);
+    }
+    await p.close();
+  });
+
+  test('werkt ook zonder JavaScript', async () => {
+    // Dan is er geen zoekveld, maar de merken klappen nog gewoon uit.
+    const context = await browser.newContext({ javaScriptEnabled: false });
+    const p = await context.newPage();
+    await p.goto(paginaUrl('audio-upgrade'));
+    assert.equal(await p.isVisible('#kiezer-zoek'), false, 'zoekveld hoort verborgen te zijn');
+    assert.ok(await p.$$eval('#kiezer-lijst .merk', (n) => n.length > 20));
+    await context.close();
   });
 });
 
