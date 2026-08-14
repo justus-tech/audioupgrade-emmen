@@ -41,6 +41,10 @@ export const ADRES = `${SITE.street}, ${SITE.postalCode} ${SITE.city}`;
  * scorebalkjes komen woord voor woord van de oude site. Verander hier niets
  * zonder dat Justus het zegt: dit is de prijslijst waar klanten op afgaan.
  *
+ * ÉÉN AFWIJKING, op verzoek van Justus: de oude site sprak de klant in drie
+ * pakketten met "u" aan en in de rest met "je". Dat is nu overal "je", zodat
+ * het niet lijkt alsof er twee mensen aan geschreven hebben.
+ *
  *   tagline    de kopregel boven de omschrijving (upgradepagina)
  *   short      de één-regelsamenvatting (homepage)
  *   body       de volledige omschrijving (upgradepagina)
@@ -114,7 +118,7 @@ export const PACKAGES = [
     priceExcl: '€ 1.814,- excl. btw',
     populair: true,
     short: 'Voor de veelrijder en echte autoliefhebber die het maximale eist met 0% laadruimteverlies.',
-    body: 'Voor de veelrijder en ondernemer. Dit is niet zomaar een speaker-upgrade; dit is een totale herziening van uw akoestiek. Het hart van dit systeem is een geavanceerde Digitale Sound Processor (DSP). Hiermee sturen we elke luidspreker actief aan en corrigeren we de looptijden van het geluid, zodat u letterlijk in het midden van de muziek zit. Aangevuld met een onzichtbare, voelbare subwoofer.',
+    body: 'Voor de veelrijder en ondernemer. Dit is niet zomaar een speaker-upgrade; dit is een totale herziening van je akoestiek. Het hart van dit systeem is een geavanceerde Digitale Sound Processor (DSP). Hiermee sturen we elke luidspreker actief aan en corrigeren we de looptijden van het geluid, zodat je letterlijk in het midden van de muziek zit. Aangevuld met een onzichtbare, voelbare subwoofer.',
     features: [
       'Geavanceerde DSP-versterker (Digitale Sound Processor).',
       'Voertuigspecifieke High-End luidsprekerset.',
@@ -139,7 +143,7 @@ export const PACKAGES = [
     priceNote: 'Inclusief BTW & Montage',
     priceExcl: 'Vanaf € 3.053,- excl. btw',
     short: 'Ongeëvenaarde audiofiele perfectie voor wie weigert concessies te doen.',
-    body: 'Voor de purist die weigert concessies te doen. Dit pakket wordt volledig rondom uw voertuig en muzieksmaak ontworpen. We combineren de absolute wereldtop in versterking en luidsprekers met urenlange, specialistische fase-tuning via de laptop. Inclusief maatwerk subwoofer-behuizingen.',
+    body: 'Voor de purist die weigert concessies te doen. Dit pakket wordt volledig rondom jouw voertuig en muzieksmaak ontworpen. We combineren de absolute wereldtop in versterking en luidsprekers met urenlange, specialistische fase-tuning via de laptop. Inclusief maatwerk subwoofer-behuizingen.',
     features: [
       'High-End 8-kanaals versterker met geïntegreerde DSP.',
       'Absolute wereldtop luidsprekercomponenten.',
@@ -163,7 +167,7 @@ export const PACKAGES = [
     price: 'Prijs op aanvraag',
     priceNote: '',
     short: 'Losse, extreme akoestische isolatie-pakketten voor deuren, vloeren en daken.',
-    body: 'Heeft u al een premium audiosysteem (zoals Harman Kardon of Dynaudio) maar stoort u zich aan windgeruis, rolgeluiden en rammelende plastic panelen? Wij bieden ook losse, extreme akoestische isolatie-pakketten aan voor deuren, vloeren en daken.',
+    body: 'Heb je al een premium audiosysteem (zoals Harman Kardon of Dynaudio) maar stoor je je aan windgeruis, rolgeluiden en rammelende plastic panelen? Wij bieden ook losse, extreme akoestische isolatie-pakketten aan voor deuren, vloeren en daken.',
     features: [],
     cta: 'Informeer naar geluidsisolatie',
     duur: 'In overleg — hangt af van wat je aangepakt wilt hebben',

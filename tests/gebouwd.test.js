@@ -289,6 +289,22 @@ describe('huisregels van Justus', alsGebouwd, () => {
     }
   });
 
+  test('de klant wordt overal met "je" aangesproken, nooit met "u"', () => {
+    // Op de oude site wisselde dat per pakket. Nu is het overal "je", en
+    // deze test houdt dat zo.
+    const uVorm = /(^|[^a-zà-ÿ])(uw|u)([^a-zà-ÿ])/;
+    const fouten = [];
+    for (const [pad, html] of inhoud) {
+      const zichtbaar = html
+        .replace(/<script[\s\S]*?<\/script>/g, ' ')
+        .replace(/<style[\s\S]*?<\/style>/g, ' ')
+        .replace(/<[^>]+>/g, ' ');
+      const treffer = zichtbaar.match(uVorm);
+      if (treffer) fouten.push(`${pad}: "...${treffer[0].trim()}..."`);
+    }
+    assert.deepEqual(fouten, []);
+  });
+
   test('de contactgegevens staan op elke pagina', () => {
     for (const [pad, html] of inhoud) {
       assert.ok(html.includes(SITE.phoneDisplay), `${pad}: telefoonnummer ontbreekt`);
