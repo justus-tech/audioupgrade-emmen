@@ -4,6 +4,7 @@ import PackageCard from '../components/PackageCard.astro';
 import KentekenCheck from '../components/KentekenCheck.astro';
 import Golfvorm from '../components/Golfvorm.astro';
 import { PACKAGES, SITE } from '../data/site.js';
+import { ONTZORGEN, DEMO } from '../data/generiek.js';
 
 const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
 ---
@@ -68,10 +69,32 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
     </div>
   </section>
 
-  <section class="alt center">
+  {/* De twee bezwaren die mensen tegenhouden: "ik kan mijn auto niet missen"
+      en "ik weet niet of ik het verschil hoor". Allebei stonden ze op de oude
+      site, en allebei zijn ze onderscheidend genoeg om op de homepage te
+      staan in plaats van weggestopt op /contact. */}
+  <section class="alt">
+    <div class="wrap">
+      <div class="grid cols-2">
+        <div class="troef">
+          <span class="eyebrow">Aan huis of op kantoor</span>
+          <h2>{ONTZORGEN.kop}</h2>
+          <p>{ONTZORGEN.tekst}</p>
+        </div>
+        <div class="troef">
+          <span class="eyebrow">Onze VW T6-demobus</span>
+          <h2>{DEMO.kop}</h2>
+          <p>{DEMO.tekst}</p>
+          <a class="btn" href="/contact">{DEMO.knop}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="center">
     <div class="wrap">
       <h2>Klaar voor de ultieme geluidservaring?</h2>
-      <p style="margin: 0 auto 2em;">Geen lange formulieren. Stuur een foto van je dashboard en ontvang binnen 24 uur een eerlijk advies met transparante all-in prijs.</p>
+      <p style="margin: 0 auto 2em;">Eén foto van je dashboard is genoeg. Binnen 24 uur weet je wat er voor jouw auto kan en wat het kost — zonder verplichtingen.</p>
       <a class="btn wa" href={SITE.whatsapp}>Stuur foto dashboard</a>
     </div>
   </section>
@@ -96,6 +119,13 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
     text-transform: uppercase; letter-spacing: .24em;
     font-size: .68rem; color: var(--text-dim);
   }
+  /* De twee troeven staan naast elkaar, elk met een eigen streep erboven zodat
+     ze als losse argumenten lezen en niet als één lap tekst. */
+  .troef { border-top: 2px solid var(--accent); padding-top: 22px; }
+  .troef h2 { font-size: clamp(1.3rem, 3.4vw, 1.75rem); margin-top: .5em; }
+  .troef p { margin-top: 1em; }
+  .troef .btn { display: inline-block; margin-top: 1.6em; }
+
   @media (max-width: 700px) {
     .hero { min-height: 72vh; padding-bottom: 150px; }
     .hero-knoppen { flex-direction: column; }

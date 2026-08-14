@@ -1,5 +1,6 @@
 ---
 import { SITE } from '../data/site.js';
+import PakketBeeld from './PakketBeeld.astro';
 
 /**
  * Eén pakketkaart. Alle tekst en prijzen komen uit site.js en staan daar
@@ -19,6 +20,7 @@ const scoresTonen = showScores && pkg.scores.length > 0;
 const tekst = uitgebreid ? pkg.body : pkg.short;
 ---
 <div class:list={['card', !scoresTonen && 'card-los', pkg.populair && 'card-populair']}>
+  <PakketBeeld slug={pkg.slug} />
   {pkg.populair && <span class="badge">Meest gekozen</span>}
   <h3>{pkg.name}</h3>
   {pkg.tagline && <p class="tagline">{pkg.tagline}</p>}
@@ -50,6 +52,8 @@ const tekst = uitgebreid ? pkg.body : pkg.short;
       ))}
     </div>
   )}
+
+  {pkg.duur && <p class="duur">{pkg.duur}</p>}
 
   <a class="btn" href={SITE.whatsapp}>{pkg.cta}</a>
 </div>
@@ -84,6 +88,23 @@ const tekst = uitgebreid ? pkg.body : pkg.short;
   .kenmerken li::before {
     content: ''; position: absolute; left: 0; top: .62em;
     width: 10px; height: 1px; background: var(--accent);
+  }
+
+  /* Hoe lang de auto bij ons staat. Dat is na de prijs de vraag die klanten
+     als eerste stellen, dus die hoort naast de knop en niet in een FAQ. */
+  .duur {
+    display: flex; align-items: center; gap: 9px;
+    margin: 4px 0 0; padding-top: 14px;
+    border-top: 1px solid var(--line);
+    font-size: .82rem; color: var(--text-dim);
+  }
+  .duur::before {
+    content: ''; flex: none;
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 1.5px solid var(--accent);
+    /* Het streepje in het midden maakt er een klokje van. */
+    background:
+      linear-gradient(to bottom, var(--accent) 0 1.5px, transparent 1.5px) 50% 2px / 1.5px 4px no-repeat;
   }
 
   .score { margin: 10px 0; }

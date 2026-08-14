@@ -57,6 +57,25 @@ export const VAKMANSCHAP = [
   },
 ];
 
+/**
+ * Twee argumenten die op de oude site stonden en die je nergens anders vindt
+ * in deze branche. Ze horen op de homepage, want ze nemen precies de twee
+ * bezwaren weg die mensen tegenhouden: "ik kan mijn auto niet missen" en
+ * "ik weet niet of ik het verschil hoor".
+ */
+export const ONTZORGEN = {
+  kop: 'Je tijd is kostbaar. Wij ontzorgen volledig.',
+  tekst:
+    'Je hebt wel iets beters te doen dan uren in een wachtruimte zitten. Wij bouwen het audiosysteem in op locatie, terwijl jij thuis of op kantoor gewoon doorwerkt. Liever halen en brengen? Ook goed. Wij halen je auto \'s ochtends op en zetten hem aan het eind van de dag volledig afgesteld en getuned weer voor de deur.',
+};
+
+export const DEMO = {
+  kop: 'Eerst horen, dan pas beslissen.',
+  tekst:
+    'In onze VW T6-demobus hoor je het verschil tussen de pakketten met je eigen muziek. Vrijblijvend, en je weet meteen waar je je geld aan uitgeeft.',
+  knop: 'Boek een luisterdemo',
+};
+
 /** De afsluitende oproep onderaan elke modelpagina. */
 export const CTA = {
   tekst:
@@ -76,4 +95,4 @@ export const STANDAARD_PAKKETTEN = [
   'reference-edition',
 ];
 
-export default { GARANTIE, WERKWIJZE, VAKMANSCHAP, CTA, STANDAARD_PAKKETTEN };
+export default { GARANTIE, WERKWIJZE, VAKMANSCHAP, ONTZORGEN, DEMO, CTA, STANDAARD_PAKKETTEN };

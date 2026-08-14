@@ -31,6 +31,11 @@ export const ADRES = `${SITE.street}, ${SITE.postalCode} ${SITE.city}`;
  *   features   het lijstje "Dit zit erin" (homepage)
  *   scores     de balkjes van de oude site, op een schaal van 5
  *   populair   het label "Meest Gekozen"
+ *   duur       hoe lang de auto bij ons staat
+ *
+ * LET OP bij `duur`: alleen de 2 uur voor CarPlay is door Justus bevestigd.
+ * De rest is een schatting en moet hij nog nalopen — dit is een belofte aan
+ * de klant, dus een verkeerde inschatting kost je een boze klant.
  */
 export const PACKAGES = [
   {
@@ -50,6 +55,7 @@ export const PACKAGES = [
       'Inclusief carkit-functie voor kraakhelder bellen.',
     ],
     cta: 'Kies CarPlay',
+    duur: 'Klaar in ± 2 uur',
     scores: [
       { label: 'Integratie', waarde: 5 },
       { label: 'Snelheid', waarde: 5 },
@@ -72,6 +78,7 @@ export const PACKAGES = [
       '100% onzichtbare OEM integratie.',
     ],
     cta: 'Kies Basis',
+    duur: 'Klaar in een halve dag',
     scores: [
       { label: 'Volume', waarde: 3 },
       { label: 'Bass', waarde: 4 },
@@ -96,6 +103,7 @@ export const PACKAGES = [
       'Volledig akoestisch op maat ingemeten.',
     ],
     cta: 'Kies Executive',
+    duur: 'Je auto staat één werkdag bij ons',
     scores: [
       { label: 'Volume', waarde: 4 },
       { label: 'Bass', waarde: 5 },
@@ -119,6 +127,7 @@ export const PACKAGES = [
       'Urenlange specialistische fase-tuning via laptop.',
     ],
     cta: 'Bespreek maatwerk',
+    duur: 'Twee tot drie dagen, inclusief tuning',
     scores: [
       { label: 'Volume', waarde: 5 },
       { label: 'Bass', waarde: 5 },
@@ -136,6 +145,7 @@ export const PACKAGES = [
     body: 'Heeft u al een premium audiosysteem (zoals Harman Kardon of Dynaudio) maar stoort u zich aan windgeruis, rolgeluiden en rammelende plastic panelen? Wij bieden ook losse, extreme akoestische isolatie-pakketten aan voor deuren, vloeren en daken.',
     features: [],
     cta: 'Informeer naar geluidsisolatie',
+    duur: 'In overleg — hangt af van wat je aangepakt wilt hebben',
     scores: [],
   },
 ];

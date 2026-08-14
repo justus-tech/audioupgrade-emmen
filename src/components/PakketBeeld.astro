@@ -1,0 +1,231 @@
+---
+/**
+ * Het beeld bovenaan een pakketkaart. Eén tekening per pakket.
+ *
+ * WAAROM GETEKEND EN GEEN FOTO
+ * De oude site gebruikte macro-stockfoto's van speakers en dashboards. Mooi,
+ * maar het zijn foto's van iemand anders zijn werk. Deze tekeningen zijn van
+ * ons, wegen samen minder dan één foto, blijven scherp op elk scherm en staan
+ * automatisch in de merkkleur. Zodra er echte foto's van eigen werk zijn,
+ * kunnen die hier gewoon overheen.
+ *
+ * Alles staat in één viewBox van 640x240, zodat elke kaart precies dezelfde
+ * beeldhoogte krijgt en de kaarten naast elkaar op één lijn blijven.
+ */
+const { slug } = Astro.props;
+
+/* Losse id's per pakket. Zonder dit pakken twee tekeningen op dezelfde pagina
+   elkaars verloop, en dan kleurt de tweede verkeerd. */
+const id = (naam) => `${slug}-${naam}`;
+---
+<div class="beeld" aria-hidden="true">
+  <svg viewBox="0 0 640 240" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <linearGradient id={id('grond')} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--panel)" />
+        <stop offset="100%" stop-color="var(--bg)" />
+      </linearGradient>
+      <radialGradient id={id('gloed')} cx="50%" cy="58%" r="62%">
+        <stop offset="0%" stop-color="var(--accent)" stop-opacity=".22" />
+        <stop offset="100%" stop-color="var(--accent)" stop-opacity="0" />
+      </radialGradient>
+    </defs>
+
+    <rect width="640" height="240" fill={`url(#${id('grond')})`} />
+    <rect width="640" height="240" fill={`url(#${id('gloed')})`} />
+
+    {slug === 'carplay-upgrade' && (
+      <g>
+        {/* Ventilatieroosters links en rechts van het scherm. */}
+        <g class="dun">
+          <path d="M60 80h74M60 102h74M60 124h74M60 146h74" />
+          <path d="M506 80h74M506 102h74M506 124h74M506 146h74" />
+        </g>
+        {/* Het originele scherm in het dashboard. */}
+        <rect x="168" y="36" width="304" height="148" rx="12" class="vlak" />
+        <rect x="180" y="48" width="280" height="124" rx="6" class="scherm" />
+        {/* De tegels van CarPlay. Eén ervan licht op in de merkkleur. */}
+        <g>
+          <rect x="196" y="62" width="54" height="44" rx="9" class="tegel" />
+          <rect x="262" y="62" width="54" height="44" rx="9" class="tegel aan" />
+          <rect x="328" y="62" width="54" height="44" rx="9" class="tegel" />
+          <rect x="394" y="62" width="50" height="44" rx="9" class="tegel" />
+          <rect x="196" y="114" width="54" height="44" rx="9" class="tegel" />
+          <rect x="262" y="114" width="54" height="44" rx="9" class="tegel" />
+          <rect x="328" y="114" width="54" height="44" rx="9" class="tegel" />
+          <rect x="394" y="114" width="50" height="44" rx="9" class="tegel" />
+        </g>
+        {/* Draadloos: het wifi-teken onder het scherm. */}
+        <g class="lijn">
+          <path d="M304 212a22 22 0 0 1 32 0" />
+          <path d="M292 200a40 40 0 0 1 56 0" />
+        </g>
+        <circle cx="320" cy="228" r="4" fill="var(--accent)" />
+      </g>
+    )}
+
+    {slug === 'akoestische-basis' && (
+      <g>
+        <defs>
+          <pattern id={id('weef')} width="9" height="9" patternUnits="userSpaceOnUse">
+            <path d="M0 4.5h9M4.5 0v9" stroke="var(--line-strong)" stroke-width="1" fill="none" />
+          </pattern>
+        </defs>
+        {/* Macro-opname van een speaker, zoals op de oude site. */}
+        <g transform="translate(392 120)">
+          <circle r="112" class="vlak" />
+          <circle r="98" class="rand" />
+          <circle r="86" class="surround" />
+          <circle r="72" fill={`url(#${id('weef')})`} opacity=".55" />
+          <circle r="72" class="conus" />
+          <circle r="26" class="stofkap" />
+          {/* Het lichtrandje dat een speaker duur laat ogen. */}
+          <path d="M-98 0a98 98 0 0 1 62-91" class="glans" />
+        </g>
+        {/* Geluid dat de cabine in gaat: drie ronde golven om de speaker heen,
+            met hetzelfde middelpunt als de conus. */}
+        <g class="lijn">
+          <path d="M260 72A140 140 0 0 0 260 168" />
+          <path d="M232 62A170 170 0 0 0 232 178" />
+          <path d="M204 52A200 200 0 0 0 204 188" />
+        </g>
+      </g>
+    )}
+
+    {slug === 'oem-plus-executive' && (
+      <g>
+        {/* Links de DSP-versterker met koelribben en een statusdisplay. */}
+        <rect x="48" y="72" width="170" height="96" rx="8" class="vlak" />
+        <g class="dun">
+          <path d="M64 86v68M76 86v68M88 86v68M100 86v68M112 86v68" />
+        </g>
+        <rect x="130" y="94" width="72" height="52" rx="5" class="scherm" />
+        <circle cx="146" cy="120" r="5" class="stip" />
+        <circle cx="162" cy="120" r="5" class="stip aan" />
+        <circle cx="178" cy="120" r="5" class="stip" />
+
+        {/* De versterker stuurt elke luidspreker apart aan. */}
+        <g class="lijn">
+          <path d="M218 120C280 120 290 66 354 66" />
+          <path d="M218 120C280 120 290 174 354 174" />
+          <path d="M218 120H482" />
+        </g>
+
+        {/* Rechts de speakerset, en de subwoofer als grootste cirkel. */}
+        <g transform="translate(400 66)">
+          <circle r="46" class="rand" />
+          <circle r="34" class="conus" />
+          <circle r="12" class="stofkap" />
+        </g>
+        <g transform="translate(400 174)">
+          <circle r="46" class="rand" />
+          <circle r="34" class="conus" />
+          <circle r="12" class="stofkap" />
+        </g>
+        <g transform="translate(540 120)">
+          <circle r="58" class="rand" />
+          <circle r="44" class="conus" />
+          <circle r="17" class="stofkap" />
+        </g>
+      </g>
+    )}
+
+    {slug === 'reference-edition' && (
+      <g>
+        {/* Meetgrafiek: het beeld dat op de laptop staat tijdens het tunen. */}
+        <g class="dun">
+          <path d="M48 60h544M48 100h544M48 140h544M48 180h544" />
+          <path d="M120 44v152M200 44v152M280 44v152M360 44v152M440 44v152M520 44v152" />
+        </g>
+        {/* De vlakke lijn is het doel; de oranje lijn is het resultaat. */}
+        <path d="M48 140h544" class="doel" />
+        <path
+          d="M48 168C96 168 104 116 152 112s72 22 120 20 88-32 136-30 72 26 120 24 56-16 64-16"
+          class="curve"
+        />
+        {/* Acht kanalen als staafjes onderin. */}
+        <g class="staaf">
+          <rect x="48" y="204" width="58" height="6" rx="3" />
+          <rect x="118" y="204" width="58" height="6" rx="3" />
+          <rect x="188" y="204" width="58" height="6" rx="3" />
+          <rect x="258" y="204" width="58" height="6" rx="3" />
+          <rect x="328" y="204" width="58" height="6" rx="3" />
+          <rect x="398" y="204" width="58" height="6" rx="3" />
+          <rect x="468" y="204" width="58" height="6" rx="3" />
+          <rect x="538" y="204" width="54" height="6" rx="3" />
+        </g>
+      </g>
+    )}
+
+    {slug === 'akoestische-isolatie' && (
+      <g>
+        <defs>
+          <pattern id={id('mat')} width="10" height="10" patternUnits="userSpaceOnUse">
+            <path d="M-2 2L2 -2M0 10L10 0M8 12L12 8" stroke="var(--accent)" stroke-opacity=".45" stroke-width="1.6" />
+          </pattern>
+        </defs>
+        {/* Doorsnede van een deur: buitenschaal, dempingsmat, binnenschaal en
+            het deurpaneel. De mat is het enige vlak in de merkkleur. */}
+        <rect x="320" y="28" width="22" height="184" rx="3" class="vlak" />
+        <rect x="350" y="28" width="38" height="184" rx="3" fill={`url(#${id('mat')})`} />
+        <rect x="350" y="28" width="38" height="184" rx="3" class="rand" />
+        <rect x="396" y="28" width="22" height="184" rx="3" class="vlak" />
+        <rect x="426" y="28" width="16" height="184" rx="3" class="paneel" />
+
+        {/* Links komt het rijgeluid binnen: drie volle golven. */}
+        <g class="lijn">
+          <path d="M96 76c26-24 52 24 78 0s52 24 78 0" />
+          <path d="M96 120c26-24 52 24 78 0s52 24 78 0" />
+          <path d="M96 164c26-24 52 24 78 0s52 24 78 0" />
+        </g>
+        {/* Rechts blijft er nog maar een rimpeling van over. */}
+        <g class="rest">
+          <path d="M474 120c22-7 44 7 66 0s44 7 66 0" />
+        </g>
+      </g>
+    )}
+  </svg>
+</div>
+
+<style>
+  /* Het beeld loopt tot aan de rand van de kaart door. De waarden zijn de
+     padding van .card met een min ervoor. */
+  .beeld {
+    margin: -34px -30px 4px;
+    aspect-ratio: 8 / 3;
+    overflow: hidden;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+  }
+  .beeld svg { display: block; width: 100%; height: 100%; }
+
+  /* ---- gedeelde stijlen voor alle tekeningen ---- */
+  .vlak { fill: var(--panel); stroke: var(--line-strong); stroke-width: 1.5; }
+  .rand { fill: none; stroke: var(--line-strong); stroke-width: 2; }
+  .scherm { fill: var(--bg); stroke: var(--line); stroke-width: 1; }
+  .dun { stroke: var(--line-strong); stroke-width: 1.5; fill: none; opacity: .8; }
+  .lijn { stroke: var(--accent); stroke-width: 2.5; fill: none; stroke-linecap: round; opacity: .85; }
+
+  .tegel { fill: var(--line); }
+  .tegel.aan { fill: var(--accent); }
+
+  .surround { fill: none; stroke: var(--line); stroke-width: 13; }
+  .conus { fill: none; stroke: var(--line-strong); stroke-width: 2; }
+  .stofkap { fill: var(--line); stroke: var(--line-strong); stroke-width: 2; }
+  .glans { fill: none; stroke: var(--accent); stroke-width: 3; opacity: .7; stroke-linecap: round; }
+
+  .stip { fill: var(--line); }
+  .stip.aan { fill: var(--accent); }
+
+  .doel { stroke: var(--line-strong); stroke-width: 1.5; stroke-dasharray: 5 6; fill: none; }
+  .curve { stroke: var(--accent); stroke-width: 3; fill: none; stroke-linecap: round; }
+  .staaf rect { fill: var(--accent); opacity: .55; }
+
+  .paneel { fill: var(--line); stroke: var(--line-strong); stroke-width: 1.5; }
+  /* Wat er na de demping nog van het geluid over is. */
+  .rest { stroke: var(--accent); stroke-width: 2; fill: none; opacity: .38; stroke-linecap: round; }
+
+  /* Op een .alt-sectie is de ondergrond net iets lichter. Zonder dit valt het
+     beeld op die secties als een donker gat uit de kaart. */
+  :global(section.alt) .beeld { background: var(--panel); }
+</style>
