@@ -125,12 +125,31 @@ const nav = [
      */
     const themaKnop = document.getElementById('thema-knop');
     const themaKleur = document.getElementById('thema-kleur');
+    const systeemLicht = window.matchMedia('(prefers-color-scheme: light)');
 
-    function zetThema(naam) {
-      document.documentElement.dataset.thema = naam;
+    /**
+     * Welke stand staat er nú op het scherm?
+     *
+     * Heeft de bezoeker zelf gekozen, dan staat dat in het data-thema van
+     * <html>. Zo niet, dan volgt de site de instelling van de telefoon of
+     * laptop — en die moeten we hier dus uitlezen, want er staat geen
+     * attribuut waaraan we het kunnen zien.
+     */
+    function huidigThema() {
+      const gekozen = document.documentElement.dataset.thema;
+      if (gekozen === 'licht' || gekozen === 'donker') return gekozen;
+      return systeemLicht.matches ? 'licht' : 'donker';
+    }
+
+    function toonThema(naam) {
       // De balk bovenaan de telefoon meekleuren, anders blijft die zwart.
       if (themaKleur) themaKleur.content = naam === 'licht' ? lichtKleur : donkerKleur;
       if (themaKnop) themaKnop.setAttribute('aria-pressed', naam === 'licht' ? 'true' : 'false');
+    }
+
+    function kiesThema(naam) {
+      document.documentElement.dataset.thema = naam;
+      toonThema(naam);
       try {
         localStorage.setItem('aue-thema', naam);
       } catch (e) {
@@ -138,13 +157,19 @@ const nav = [
       }
     }
 
+    toonThema(huidigThema());
+
     if (themaKnop) {
-      const nu = document.documentElement.dataset.thema === 'licht' ? 'licht' : 'donker';
-      themaKnop.setAttribute('aria-pressed', nu === 'licht' ? 'true' : 'false');
       themaKnop.addEventListener('click', () => {
-        zetThema(document.documentElement.dataset.thema === 'licht' ? 'donker' : 'licht');
+        kiesThema(huidigThema() === 'licht' ? 'donker' : 'licht');
       });
     }
+
+    // Zet iemand zijn telefoon halverwege op nachtstand, dan gaat de site mee
+    // — tenzij hij hier zelf een keuze heeft gemaakt.
+    systeemLicht.addEventListener('change', () => {
+      if (!document.documentElement.dataset.thema) toonThema(huidigThema());
+    });
 
     /**
      * Inhoud rustig laten verschijnen bij het scrollen.

@@ -138,10 +138,24 @@ function naarVariabelen(set) {
   ].join('; ');
 }
 
-/** De donkere stand staat op :root, de lichte hangt aan data-thema. */
+/**
+ * Drie regels, in deze volgorde — de volgorde bepaalt wie wint:
+ *
+ * 1. Donker is de basis. Wie niets kiest en geen voorkeur heeft, krijgt dit.
+ * 2. Staat de telefoon of laptop op licht, dan volgen we dat. Behalve als de
+ *    bezoeker zelf donker heeft aangeklikt: dan blijft het donker.
+ * 3. Heeft de bezoeker zelf licht aangeklikt, dan wint dat van alles.
+ *
+ * Regel 2 en 3 zijn even "zwaar" voor de browser, dus regel 3 moet als
+ * laatste staan. Draai je ze om, dan werkt de knop niet meer op een
+ * apparaat dat op donker staat.
+ */
 export const cssVariables = naarVariabelen(BRAND);
 export const cssThema =
   `:root{${naarVariabelen(BRAND)}}` +
+  `@media (prefers-color-scheme: light){` +
+  `:root:not([data-thema="donker"]){${naarVariabelen(LICHT)}}` +
+  `}` +
   `:root[data-thema="licht"]{${naarVariabelen(LICHT)}}`;
 
 export default BRAND;
