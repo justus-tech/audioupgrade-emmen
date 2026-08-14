@@ -6,8 +6,16 @@ import PakketBeeld from './PakketBeeld.astro';
  * Eén pakketkaart. Alle tekst en prijzen komen uit site.js en staan daar
  * letterlijk zoals op audioupgradeemmen.nl — hier wordt niets herschreven.
  *
- *   uitgebreid  toont de volledige omschrijving in plaats van de één-regel
+ *   uitgebreid  het volledige verhaal (alleen op /upgrades)
  *   showScores  balkjes uitzetten (bijv. in een smalle kolom)
+ *
+ * TWEE VARIANTEN, EN WAAROM
+ * De volledige kaart werd 1400 pixels hoog: dan past er op een laptop nog
+ * geen één op het scherm en zie je alleen een plaatje met een prijs. Daarom
+ * is de standaardkaart kort — beeld, naam, prijs, één regel, balkjes, tijd —
+ * en staat het volledige verhaal op de upgradepagina. Ook daar staat de lange
+ * omschrijving achter een klik, zodat de kaart op één scherm past. Er gaat
+ * geen tekst verloren; hij staat alleen niet meer allemaal tegelijk open.
  */
 const { pkg, showScores = true, uitgebreid = false } = Astro.props;
 
@@ -17,7 +25,7 @@ const { pkg, showScores = true, uitgebreid = false } = Astro.props;
  * krijgt `los`, zodat hij niet meerekt tot de hoogte van de andere kaarten.
  */
 const scoresTonen = showScores && pkg.scores.length > 0;
-const tekst = uitgebreid ? pkg.body : pkg.short;
+const kenmerkenTonen = uitgebreid && pkg.features.length > 0;
 ---
 <div class:list={['card', !scoresTonen && 'card-los', pkg.populair && 'card-populair']}>
   <PakketBeeld slug={pkg.slug} />
@@ -31,12 +39,18 @@ const tekst = uitgebreid ? pkg.body : pkg.short;
     {pkg.priceExcl && <small class="excl">{pkg.priceExcl}</small>}
   </div>
 
-  <p>{tekst}</p>
+  <p>{pkg.short}</p>
 
-  {pkg.features.length > 0 && (
-    <ul class="kenmerken">
-      {pkg.features.map((f) => <li>{f}</li>)}
-    </ul>
+  {uitgebreid && (kenmerkenTonen || pkg.body) && (
+    <details class="meer">
+      <summary>Meer over dit pakket</summary>
+      {pkg.body && <p>{pkg.body}</p>}
+      {kenmerkenTonen && (
+        <ul class="kenmerken">
+          {pkg.features.map((f) => <li>{f}</li>)}
+        </ul>
+      )}
+    </details>
   )}
 
   {scoresTonen && (
@@ -78,11 +92,37 @@ const tekst = uitgebreid ? pkg.body : pkg.short;
 
   .excl { opacity: .72; margin-top: 2px !important; }
 
-  .kenmerken { list-style: none; padding: 0; margin: 0; }
+  .kenmerken { list-style: none; padding: 0; margin: 14px 0 0; }
   .kenmerken li {
-    position: relative; padding-left: 20px; margin: 8px 0;
-    font-size: .9rem; color: var(--text-dim); line-height: 1.5;
+    position: relative; padding-left: 20px; margin: 7px 0;
+    font-size: .88rem; color: var(--text-dim); line-height: 1.45;
   }
+
+  /* De volledige omschrijving. Dichtgeklapt kost hij één regel, opengeklapt
+     staat er precies de tekst van de oude site. */
+  .meer { border: 0; padding: 0; margin-top: 2px; }
+  .meer summary {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase; letter-spacing: .14em;
+    font-size: .72rem; color: var(--text-dim);
+    cursor: pointer; list-style: none;
+    display: inline-flex; align-items: center; gap: 8px;
+    transition: color .2s;
+  }
+  .meer summary::-webkit-details-marker { display: none; }
+  .meer summary::after {
+    content: ''; flex: none;
+    width: 7px; height: 7px;
+    border-right: 1.5px solid var(--accent);
+    border-bottom: 1.5px solid var(--accent);
+    transform: rotate(45deg) translate(-2px, -2px);
+    transition: transform .2s;
+  }
+  .meer[open] summary::after { transform: rotate(-135deg) translate(-2px, -2px); }
+  @media (hover: hover) {
+    .meer summary:hover { color: var(--accent-text); }
+  }
+  .meer p { margin-top: 12px; font-size: .9rem; }
   /* Streepje in de merkkleur in plaats van een bolletje: rustiger en het
      leest als een specificatielijst. */
   .kenmerken li::before {
@@ -107,14 +147,17 @@ const tekst = uitgebreid ? pkg.body : pkg.short;
       linear-gradient(to bottom, var(--accent) 0 1.5px, transparent 1.5px) 50% 2px / 1.5px 4px no-repeat;
   }
 
-  .score { margin: 10px 0; }
+  /* Label en balkje naast elkaar in plaats van onder elkaar. Scheelt per
+     kaart veertig pixels, en drie labels onder elkaar lazen toch al als een
+     lijstje in plaats van als een score. */
+  .score { display: flex; align-items: center; gap: 12px; margin: 8px 0; }
   .score label {
-    display: block; margin-bottom: 6px;
+    flex: none; width: 82px;
     font-family: 'Oswald', sans-serif;
-    font-size: .68rem; letter-spacing: .2em; text-transform: uppercase;
+    font-size: .68rem; letter-spacing: .16em; text-transform: uppercase;
     color: var(--text-dim);
   }
-  .blokjes { display: flex; gap: 4px; }
+  .blokjes { display: flex; gap: 4px; flex: 1; }
   .blokjes i {
     flex: 1; height: 5px; border-radius: 2px;
     background: var(--line);
