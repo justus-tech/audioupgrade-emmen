@@ -48,7 +48,14 @@ const nav = [
     telephone: SITE.phone,
     email: SITE.email,
     areaServed: 'Drenthe, Nederland',
-    address: { '@type': 'PostalAddress', addressLocality: SITE.city, addressRegion: SITE.region, addressCountry: 'NL' },
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: SITE.street,
+      postalCode: SITE.postalCode,
+      addressLocality: SITE.city,
+      addressRegion: SITE.region,
+      addressCountry: SITE.country,
+    },
     description: 'Premium car audio, CarPlay-inbouw, DSP-tuning en akoestische deurdemping in Emmen. Uitsluitend op afspraak.',
   })} />
 </head>
@@ -83,6 +90,8 @@ const nav = [
       <div>
         <Logo height={34} class="footer-logo" />
         <strong>{SITE.name}</strong><br />
+        {SITE.street}<br />
+        {SITE.postalCode} {SITE.city}<br />
         Uitsluitend op afspraak<br />
         <a href={`tel:${SITE.phone}`}>{SITE.phoneDisplay}</a><br />
         <a href={`mailto:${SITE.email}`}>{SITE.email}</a>

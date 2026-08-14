@@ -6,9 +6,17 @@ export const SITE = {
   whatsapp: 'https://wa.me/message/RDCWOKTCKSPIF1',
   kvk: '96356723',
   btw: 'NL005205204B66',
+  street: 'Charles Darwinstraat 35',
+  postalCode: '7825 AB',
   city: 'Emmen',
   region: 'Drenthe',
+  country: 'NL',
+  /** Voor de kaartknop en de routelink. */
+  mapsQuery: 'Charles Darwinstraat 35, 7825 AB Emmen',
 };
+
+/** Het volledige adres op één regel, voor als dat handiger uitkomt. */
+export const ADRES = `${SITE.street}, ${SITE.postalCode} ${SITE.city}`;
 
 export const PACKAGES = [
   {

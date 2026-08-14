@@ -1,6 +1,10 @@
 ---
 import Base from '../layouts/Base.astro';
-import { SITE } from '../data/site.js';
+import { SITE, ADRES } from '../data/site.js';
+
+const q = encodeURIComponent(SITE.mapsQuery);
+const kaartUrl = `https://www.google.com/maps?q=${q}&output=embed`;
+const routeUrl = `https://www.google.com/maps/search/?api=1&query=${q}`;
 ---
 <Base
   title="Contact & Demo Boeken | Audio Upgrade Emmen"
@@ -37,4 +41,61 @@ import { SITE } from '../data/site.js';
       </div>
     </div>
   </section>
+
+  <section>
+    <div class="wrap">
+      <span class="eyebrow">Waar je ons vindt</span>
+      <h2>{SITE.street}</h2>
+      <p style="margin-top:.6em">{SITE.postalCode} {SITE.city} · uitsluitend op afspraak</p>
+
+      {/* De kaart laadt pas na een klik. Een Google Maps-embed zet meteen
+          cookies bij je bezoeker, en die keuze laten we aan hem. */}
+      <div class="kaart mt" id="kaart" data-src={kaartUrl}>
+        <button class="btn solid kaart-knop" type="button" id="kaart-knop">
+          Toon kaart
+        </button>
+        <p class="kaart-uitleg">
+          De kaart komt van Google en plaatst cookies zodra je hem opent.
+        </p>
+      </div>
+
+      <p class="mt">
+        <a class="btn" href={routeUrl} target="_blank" rel="noopener">Plan je route →</a>
+      </p>
+    </div>
+  </section>
 </Base>
+
+<script>
+  const vak = document.getElementById('kaart');
+  const knop = document.getElementById('kaart-knop');
+  if (vak && knop) {
+    knop.addEventListener('click', () => {
+      const frame = document.createElement('iframe');
+      frame.src = vak.dataset.src;
+      frame.title = 'Kaart met de locatie van Audio Upgrade Emmen';
+      frame.loading = 'lazy';
+      frame.referrerPolicy = 'no-referrer-when-downgrade';
+      frame.allowFullscreen = true;
+      vak.replaceChildren(frame);
+    });
+  }
+</script>
+
+<style>
+  .kaart {
+    position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px;
+    aspect-ratio: 16 / 9;
+    border: 1px solid var(--line-strong);
+    background:
+      radial-gradient(ellipse at 50% 120%, color-mix(in srgb, var(--accent) 14%, transparent) 0%, transparent 60%),
+      var(--panel);
+    padding: 24px;
+    text-align: center;
+  }
+  .kaart :global(iframe) { width: 100%; height: 100%; border: 0; display: block; }
+  .kaart-uitleg { font-size: .8rem; margin: 0; max-width: 42ch; }
+  @media (max-width: 700px) { .kaart { aspect-ratio: 4 / 3; } }
+</style>

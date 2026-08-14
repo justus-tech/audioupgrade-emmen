@@ -6,7 +6,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "test:kenteken": "node scripts/valideer-kenteken.mjs"
+    "test:kenteken": "node scripts/valideer-kenteken.mjs",
+    "test:modellen": "node scripts/valideer-modelpaginas.mjs"
   },
   "dependencies": {
     "astro": "^5.0.0",
