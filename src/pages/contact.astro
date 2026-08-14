@@ -23,20 +23,20 @@ const routeUrl = `https://www.google.com/maps/search/?api=1&query=${q}`;
   <section class="alt">
     <div class="wrap">
       <div class="grid cols-3">
-        <div class="card center">
+        <div class="card center contact-kaart">
           <h3>WhatsApp</h3>
           <p>De snelste route: foto van je dashboard + automerk en bouwjaar.</p>
-          <a class="btn wa" href={SITE.whatsapp} style="align-self:center">Open WhatsApp</a>
+          <a class="btn wa" href={SITE.whatsapp}>Open WhatsApp</a>
         </div>
-        <div class="card center">
+        <div class="card center contact-kaart">
           <h3>Bellen</h3>
           <p>Liever even iemand aan de lijn?</p>
-          <a class="btn" href={`tel:${SITE.phone}`} style="align-self:center">{SITE.phoneDisplay}</a>
+          <a class="btn" href={`tel:${SITE.phone}`}>{SITE.phoneDisplay}</a>
         </div>
-        <div class="card center">
+        <div class="card center contact-kaart">
           <h3>E-mail</h3>
           <p>Voor uitgebreide vragen of zakelijke aanvragen.</p>
-          <a class="btn" href={`mailto:${SITE.email}`} style="align-self:center">Mail ons</a>
+          <a class="btn" href={`mailto:${SITE.email}`}>Mail ons</a>
         </div>
       </div>
     </div>
@@ -83,6 +83,13 @@ const routeUrl = `https://www.google.com/maps/search/?api=1&query=${q}`;
 </script>
 
 <style>
+  /* De drie kaarten zijn even hoog, maar de knop volgde direct op de tekst.
+     "Liever even iemand aan de lijn?" is één regel en de andere twee zijn er
+     twee, dus stond die knop hoger dan de rest. Met margin-top:auto slokt de
+     knop de overgebleven ruimte boven zich op en staan alle drie de knoppen
+     op precies dezelfde hoogte. */
+  .contact-kaart .btn { align-self: center; margin-top: auto; }
+
   .kaart {
     position: relative;
     display: flex; flex-direction: column; align-items: center; justify-content: center;

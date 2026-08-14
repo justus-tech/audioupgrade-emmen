@@ -395,6 +395,21 @@ describe('de modelzoeker', alsGebouwd, () => {
   });
 });
 
+describe('de contactpagina', alsGebouwd, () => {
+  test('de drie knoppen staan op exact dezelfde hoogte', async () => {
+    // Ze staan naast elkaar, dus een knop die een regel hoger hangt omdat
+    // zijn tekst korter is, valt meteen op.
+    const p = await open('contact');
+    await p.setViewportSize({ width: 1280, height: 900 });
+    const hoogtes = await p.$$eval('.contact-kaart .btn', (knoppen) =>
+      knoppen.map((k) => Math.round(k.getBoundingClientRect().top))
+    );
+    assert.equal(hoogtes.length, 3);
+    assert.equal(new Set(hoogtes).size, 1, `knoppen staan op ${hoogtes.join(', ')}`);
+    await p.close();
+  });
+});
+
 describe('licht en donker', alsGebouwd, () => {
   test('volgt standaard de instelling van het apparaat', async () => {
     for (const stand of ['light', 'dark']) {
