@@ -1,0 +1,135 @@
+---
+/**
+ * De kentekenplaat van de bezoeker, als hoofdrolspeler.
+ *
+ * Geen Nederlandse geel/blauw hier: dit is een eigen AUE-plaat in geborsteld
+ * aluminium met een oranje band. Zo wordt het kenteken van de klant een object
+ * in plaats van een regel tekst — de manier waarop Apple en Sony één ding
+ * groot neerzetten en de rest klein eromheen.
+ *
+ * Alles is CSS: geen afbeelding, dus haarscherp op elk scherm en niets te
+ * downloaden. De tekst wordt door JavaScript gevuld vanuit de kenteken-check.
+ */
+import Logo from './Logo.astro';
+---
+<figure class="plaat-blok">
+  <div class="plaat" id="plaat" aria-label="Kenteken van jouw auto">
+    <div class="plaat-band">
+      <Logo height={22} decoratief={true} class="plaat-logo" />
+    </div>
+    <span class="plaat-tekst" id="plaat-tekst"></span>
+    <span class="plaat-glans" aria-hidden="true"></span>
+  </div>
+
+  <figcaption class="plaat-onder">
+    <span class="plaat-model" id="plaat-model"></span>
+    <span class="plaat-details" id="plaat-details"></span>
+  </figcaption>
+</figure>
+
+<style>
+  .plaat-blok { margin: 0; display: flex; flex-direction: column; align-items: center; }
+
+  /* ---- de plaat ---- */
+  .plaat {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: min(100%, 620px);
+    aspect-ratio: 4.7 / 1;
+    border-radius: 10px;
+    overflow: hidden;
+    /* Geborsteld aluminium: meerdere lichte en donkere banen over elkaar
+       geven de indruk van geslepen metaal zonder dat er een foto aan te pas
+       komt. */
+    background:
+      repeating-linear-gradient(180deg,
+        rgba(255,255,255,.5) 0px, rgba(255,255,255,0) 1px,
+        rgba(0,0,0,.035) 2px, rgba(0,0,0,0) 3px),
+      linear-gradient(180deg,
+        #fafafa 0%, #dcdcdc 16%, #ffffff 40%,
+        #c6c6c6 56%, #eeeeee 78%, #b4b4b4 100%);
+    box-shadow:
+      inset 0 0 0 2px rgba(0,0,0,.42),
+      inset 0 0 0 5px rgba(255,255,255,.55),
+      0 18px 40px rgba(0,0,0,.55),
+      0 2px 0 rgba(255,255,255,.25);
+  }
+
+  /* De oranje band links, waar op een EU-plaat het landenveld zit. */
+  .plaat-band {
+    flex: none;
+    height: 100%;
+    width: 17%;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--accent) 88%, white) 0%,
+      var(--accent) 46%,
+      color-mix(in srgb, var(--accent) 80%, black) 100%);
+    box-shadow: inset -2px 0 0 rgba(0,0,0,.3);
+    color: var(--accent-ink);
+  }
+  /* Het logo moet meeschalen met de band. Met een vaste hoogte liep hij op
+     een smal scherm buiten de oranje band en werd de E afgekapt. */
+  .plaat-band :global(.plaat-logo) {
+    opacity: .92;
+    width: 62%;
+    height: auto;
+    max-width: 62%;
+  }
+
+  /* Het kenteken zelf: geperst in het metaal. */
+  .plaat-tekst {
+    flex: 1;
+    text-align: center;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: clamp(1.6rem, 7.4vw, 3.4rem);
+    letter-spacing: .12em;
+    color: #16181a;
+    text-shadow:
+      0 1px 0 rgba(255,255,255,.75),
+      0 -1px 0 rgba(0,0,0,.28);
+    padding: 0 .4em 0 .2em;
+    white-space: nowrap;
+  }
+
+  /* Eén schuine lichtstreep over het metaal. Bewust subtiel: het kenteken
+     moet er altijd doorheen leesbaar blijven. */
+  .plaat-glans {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    background: linear-gradient(104deg,
+      transparent 34%,
+      rgba(255,255,255,.3) 46%,
+      rgba(255,255,255,.08) 52%,
+      transparent 60%);
+  }
+
+  /* ---- wat eronder staat ---- */
+  .plaat-onder {
+    margin-top: 26px;
+    text-align: center;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .plaat-model {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .18em;
+    font-size: clamp(1.15rem, 3.4vw, 1.75rem);
+    color: var(--text);
+  }
+  .plaat-details {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .28em;
+    font-size: .68rem;
+    color: var(--text-dim);
+  }
+
+  @media (max-width: 560px) {
+    .plaat { border-radius: 8px; }
+    .plaat-tekst { letter-spacing: .08em; }
+    .plaat-details { letter-spacing: .18em; line-height: 1.9; }
+  }
+</style>

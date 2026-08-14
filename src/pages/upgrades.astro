@@ -13,7 +13,7 @@
 import Base from '../layouts/Base.astro';
 import PackageCard from '../components/PackageCard.astro';
 import PakketSchets from '../components/PakketSchets.astro';
-import AutoSchets from '../components/AutoSchets.astro';
+import Kentekenplaat from '../components/Kentekenplaat.astro';
 import { PACKAGES, SITE } from '../data/site.js';
 import { autoTabel } from '../data/autos.js';
 import { GARANTIE, CTA } from '../data/generiek.js';
@@ -46,21 +46,10 @@ import { MERKEN } from '../data/merken.js';
   {/* Verschijnt pas als er een auto herkend is. */}
   <section class="alt" id="auto-blok" hidden>
     <div class="wrap">
-      <figure class="auto-figuur">
-        {/* Bewust geen foto's: ingekochte studiobeelden bleken te veel gedoe
-            en fabrieksfoto's mogen niet. We tekenen de auto zelf, in de
-            juiste carrosserie én de kleur die de RDW bij het kenteken kent. */}
-        <div id="auto-tekening" class="auto-tekening">
-          {['hatchback', 'stationwagen', 'sedan', 'mpv', 'coupe', 'cabriolet', 'bus'].map((t) => (
-            <div class="auto-variant" data-type={t} hidden={t !== 'hatchback'}>
-              <AutoSchets type={t} />
-            </div>
-          ))}
-          <span class="auto-naam" id="auto-naam"></span>
-        </div>
-
-        <figcaption id="auto-bijschrift"></figcaption>
-      </figure>
+      {/* Het kenteken van de bezoeker als hoofdrolspeler. Geen autotekening
+          meer: een gestileerde auto oogde goedkoop naast de rest van de site,
+          en zijn eigen kenteken zegt hem meer dan een plaatje van een auto. */}
+      <Kentekenplaat />
     </div>
   </section>
 
@@ -120,6 +109,7 @@ import { MERKEN } from '../data/merken.js';
     isGeldigKenteken,
     normaliseerKenteken,
     netteNaam,
+    formatteerKenteken,
   } from '../lib/match.js';
   import { normaliseerType } from '../lib/carrosserie.js';
   import { kleurVan } from '../lib/kleuren.js';
@@ -132,9 +122,9 @@ import { MERKEN } from '../data/merken.js';
   const titel = document.getElementById('upgrade-titel');
   const sub = document.getElementById('upgrade-sub');
   const blok = document.getElementById('auto-blok');
-  const tekening = document.getElementById('auto-tekening');
-  const autoNaam = document.getElementById('auto-naam');
-  const bijschrift = document.getElementById('auto-bijschrift');
+  const plaatTekst = document.getElementById('plaat-tekst');
+  const plaatModel = document.getElementById('plaat-model');
+  const plaatDetails = document.getElementById('plaat-details');
   const pakkettenKop = document.getElementById('pakketten-kop');
 
   function toon(voertuig) {
@@ -150,26 +140,31 @@ import { MERKEN } from '../data/merken.js';
     sub.textContent =
       'Alle prijzen zijn all-in: inclusief montage en btw, met behoud van je fabrieksgarantie.';
 
-    // De RDW registreert bij elk kenteken het carrosserietype én de kleur.
-    // Daarmee tekenen we de auto van de bezoeker: juiste vorm, juiste kleur.
     const soort = normaliseerType(voertuig.inrichting);
     const kleur = kleurVan(voertuig.eerste_kleur);
 
-    tekening.style.setProperty('--auto-kleur', kleur.hex);
-    tekening.querySelectorAll('.auto-variant').forEach((v) => {
-      v.hidden = v.dataset.type !== soort;
-    });
-    autoNaam.textContent = naam;
+    // De plaat: het kenteken groot, de rest klein eronder.
+    plaatTekst.textContent = formatteerKenteken(voertuig.kenteken);
+    plaatModel.textContent = naam;
 
-    // De doorkijk laat zien waar alles komt; ook die volgt het carrosserietype,
-    // want in een bus zit de subwoofer ergens anders dan in een hatchback.
+    // Alleen tonen wat de RDW ook echt weet, zodat er nooit een lege
+    // scheidingsstip blijft staan.
+    const details = [];
+    if (kleur.naam) details.push(kleur.naam);
+    if (voertuig.inrichting && voertuig.inrichting !== 'Niet geregistreerd') {
+      details.push(voertuig.inrichting);
+    }
+    if (voertuig.datum_eerste_toelating) {
+      details.push(String(voertuig.datum_eerste_toelating).slice(0, 4));
+    }
+    plaatDetails.textContent = details.join(' · ');
+
+    // De doorkijk volgt het carrosserietype: in een bus zit de subwoofer
+    // ergens anders dan in een hatchback.
     document.querySelectorAll('.schets-variant').forEach((v) => {
       v.hidden = v.dataset.type !== soort;
     });
 
-    bijschrift.textContent = kleur.bijvoeglijk
-      ? `Jouw ${kleur.bijvoeglijk} ${naam} · kenteken ${voertuig.kenteken}`
-      : `${naam} · kenteken ${voertuig.kenteken}`;
     blok.hidden = false;
     melding.textContent = '';
     blok.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -197,7 +192,7 @@ import { MERKEN } from '../data/merken.js';
       const res = await fetch(
         'https://opendata.rdw.nl/resource/m9d7-ebf2.json?kenteken=' +
           encodeURIComponent(kenteken) +
-          '&$select=kenteken,merk,handelsbenaming,voertuigsoort,inrichting,eerste_kleur'
+          '&$select=kenteken,merk,handelsbenaming,voertuigsoort,inrichting,eerste_kleur,datum_eerste_toelating'
       );
       if (!res.ok) throw new Error('rdw');
       const data = await res.json();
@@ -230,23 +225,6 @@ import { MERKEN } from '../data/merken.js';
 
   .auto-figuur { margin: 0; }
 
-  /* De auto van de bezoeker: juiste carrosserie, juiste kleur uit de RDW.
-     De omtreklijn blijft licht, zodat ook een zwarte auto zichtbaar blijft
-     op onze donkere achtergrond. */
-  .auto-tekening {
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    border: 1px solid var(--line-strong);
-    background:
-      radial-gradient(ellipse at 50% 118%, color-mix(in srgb, var(--accent) 16%, transparent) 0%, transparent 62%),
-      var(--bg);
-    padding: 28px 24px 22px;
-  }
-  .auto-variant { width: 100%; max-width: 560px; }
-  .auto-naam {
-    font-family: 'Oswald', sans-serif; text-transform: uppercase;
-    letter-spacing: .16em; font-size: clamp(1.1rem, 3.4vw, 1.7rem);
-    color: var(--text); margin-top: 6px; text-align: center;
-  }
   .auto-figuur figcaption {
     margin-top: 12px; font-size: .82rem; color: var(--text-dim);
     letter-spacing: .1em; text-transform: uppercase; font-family: 'Oswald', sans-serif;
