@@ -151,7 +151,6 @@ export const PRIVACYBELEID = {
       ],
       lijst: [
         '**Je kenteken** wordt door je eigen browser rechtstreeks naar de open data van de RDW gestuurd. Wij zien dat verzoek niet en ontvangen het antwoord niet. Het kenteken blijft in het geheugen van je tabblad staan zodat de volgende pagina je auto kan tonen, en verdwijnt zodra je dat tabblad sluit.',
-        '**Je keuze voor licht of donker** wordt op je eigen apparaat bewaard, zodat de site er bij een volgend bezoek hetzelfde uitziet. Die keuze verlaat je apparaat niet.',
         '**De kaart op de contactpagina** laadt pas nadat je zelf op "Toon kaart" klikt. Doe je dat, dan gaat er een verzoek naar Google en gelden vanaf dat moment de voorwaarden van Google. Klik je niet, dan gebeurt er niets.',
       ],
     },
@@ -220,14 +219,8 @@ export const COOKIEBELEID = {
     {
       kop: '2. Wat er wel op je apparaat wordt bewaard',
       alineas: [
-        'Twee dingen, allebei alleen op je eigen apparaat. Ze worden nergens naartoe gestuurd en wij kunnen ze niet inzien.',
-      ],
-      lijst: [
-        '**Je kenteken**, zolang je tabblad openstaat. Daardoor kan de pagina waar je naartoe gaat laten zien om welke auto het gaat. Sluit je het tabblad, dan is het weg.',
-        '**Je keuze voor licht of donker**, tot je die zelf weer wist. Zonder dat zou de site bij elk bezoek terugspringen naar de standaardstand.',
-      ],
-      naAlineas: [
-        'Technisch gezien zijn dit geen cookies maar lokale opslag. Het verschil is dat cookies bij elk bezoek automatisch worden meegestuurd naar een server, en dit niet: dit blijft op je telefoon of computer.',
+        'Twee dingen, en allebei blijven ze op je eigen apparaat: je kenteken zolang je tabblad openstaat, en je keuze voor licht of donker. Het eerste zorgt dat de volgende pagina weet om welke auto het gaat, het tweede dat de site er bij een volgend bezoek hetzelfde uitziet.',
+        'Technisch zijn dit geen cookies maar lokale opslag. Het verschil: cookies gaan bij elk bezoek automatisch mee naar een server, dit niet. Wij kunnen er dus ook niet bij.',
       ],
     },
     {

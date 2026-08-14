@@ -436,6 +436,10 @@ describe('op een telefoon', alsGebouwd, () => {
       const pagina = await browser.newPage({ ...telefoon, viewport: { width: breedte, height: 844 } });
       for (const pad of ['', 'upgrades', 'audio-upgrade/saab-9-3', 'contact']) {
         await pagina.goto(paginaUrl(pad));
+        // Wachten tot de letters er zijn: zolang de terugvalletter nog in
+        // gebruik is, meet je een andere breedte dan de bezoeker uiteindelijk
+        // ziet. Zonder dit slaat deze test af en toe zomaar aan.
+        await pagina.evaluate(() => document.fonts.ready);
         const overloop = await pagina.evaluate(
           () => document.documentElement.scrollWidth - document.documentElement.clientWidth
         );
