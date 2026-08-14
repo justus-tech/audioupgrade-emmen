@@ -1,0 +1,55 @@
+---
+/**
+ * De audiomerken waar we mee werken.
+ *
+ * WAAROM WEL DE MERKEN EN NIET HET MODEL
+ * Een specifiek model aan een pakket koppelen ("Executive = model X") zet je
+ * vast op één product en één inkoopprijs. Vertellen mét welke merken je werkt
+ * is geen belofte maar je vakgebied: het maakt je geloofwaardig zonder dat je
+ * jezelf klemzet. Deze zes stonden ook al op de oude site.
+ *
+ * Namen in plaats van logo's: een merklogo is eigendom van dat merk, en
+ * getypte namen passen bovendien beter bij de rest van de site.
+ */
+import { AUDIOMERKEN } from '../data/site.js';
+const { kop = 'Wij werken met' } = Astro.props;
+---
+<div class="merken">
+  <span class="merken-kop">{kop}</span>
+  <ul class="merken-rij">
+    {AUDIOMERKEN.map((m) => <li>{m}</li>)}
+  </ul>
+</div>
+
+<style>
+  .merken { text-align: center; }
+  .merken-kop {
+    display: block;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase; letter-spacing: .3em;
+    font-size: .7rem; color: var(--text-dim);
+    margin-bottom: 22px;
+  }
+  .merken-rij {
+    list-style: none; padding: 0; margin: 0;
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: 14px 34px;
+  }
+  .merken-rij li {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase; letter-spacing: .2em;
+    font-size: clamp(.9rem, 2.6vw, 1.15rem);
+    font-weight: 500;
+    color: var(--text);
+    /* Net onder vol: de merken mogen aanwezig zijn zonder de aandacht van de
+       pakketten weg te trekken. */
+    opacity: .62;
+    transition: opacity .2s, color .2s;
+  }
+  @media (hover: hover) {
+    .merken-rij li:hover { opacity: 1; color: var(--accent-text); }
+  }
+  @media (max-width: 700px) {
+    .merken-rij { gap: 12px 22px; }
+  }
+</style>

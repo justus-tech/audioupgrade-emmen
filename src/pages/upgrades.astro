@@ -15,6 +15,7 @@ import Logo from '../components/Logo.astro';
 import PackageCard from '../components/PackageCard.astro';
 import PakketSchets from '../components/PakketSchets.astro';
 import Kentekenplaat from '../components/Kentekenplaat.astro';
+import Merken from '../components/Merken.astro';
 import { PACKAGES, SITE } from '../data/site.js';
 import { autoTabel } from '../data/autos.js';
 import { GARANTIE, CTA } from '../data/generiek.js';
@@ -65,6 +66,7 @@ import { MERKEN } from '../data/merken.js';
       <div class="grid cols-3 mt">
         {PACKAGES.map((pkg) => <PackageCard pkg={pkg} uitgebreid={true} />)}
       </div>
+      <div style="margin-top:4rem"><Merken /></div>
     </div>
   </section>
 

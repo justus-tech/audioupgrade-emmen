@@ -26,7 +26,7 @@ const id = (naam) => `${slug}-${naam}`;
         <stop offset="100%" stop-color="var(--bg)" />
       </linearGradient>
       <radialGradient id={id('gloed')} cx="50%" cy="58%" r="62%">
-        <stop offset="0%" stop-color="var(--accent)" stop-opacity=".22" />
+        <stop offset="0%" stop-color="var(--accent)" stop-opacity="var(--teken-gloed)" />
         <stop offset="100%" stop-color="var(--accent)" stop-opacity="0" />
       </radialGradient>
     </defs>
@@ -68,7 +68,7 @@ const id = (naam) => `${slug}-${naam}`;
       <g>
         <defs>
           <pattern id={id('weef')} width="9" height="9" patternUnits="userSpaceOnUse">
-            <path d="M0 4.5h9M4.5 0v9" stroke="var(--line-strong)" stroke-width="1" fill="none" />
+            <path d="M0 4.5h9M4.5 0v9" stroke="var(--teken-lijn)" stroke-width="1" fill="none" />
           </pattern>
         </defs>
         {/* Macro-opname van een speaker, zoals op de oude site. */}
@@ -199,29 +199,31 @@ const id = (naam) => `${slug}-${naam}`;
   }
   .beeld svg { display: block; width: 100%; height: 100%; }
 
-  /* ---- gedeelde stijlen voor alle tekeningen ---- */
-  .vlak { fill: var(--panel); stroke: var(--line-strong); stroke-width: 1.5; }
-  .rand { fill: none; stroke: var(--line-strong); stroke-width: 2; }
-  .scherm { fill: var(--bg); stroke: var(--line); stroke-width: 1; }
-  .dun { stroke: var(--line-strong); stroke-width: 1.5; fill: none; opacity: .8; }
+  /* ---- gedeelde stijlen voor alle tekeningen ----
+     Deze gebruiken --teken-* en niet --line, omdat een tekening meer contrast
+     nodig heeft dan een randje om een kaart. Zie src/data/brand.js. */
+  .vlak { fill: var(--teken-vlak); stroke: var(--teken-lijn); stroke-width: 1.5; }
+  .rand { fill: none; stroke: var(--teken-lijn); stroke-width: 2; }
+  .scherm { fill: var(--teken-diep); stroke: var(--teken-lijn); stroke-width: 1; }
+  .dun { stroke: var(--teken-lijn); stroke-width: 1.5; fill: none; opacity: .8; }
   .lijn { stroke: var(--accent); stroke-width: 2.5; fill: none; stroke-linecap: round; opacity: .85; }
 
-  .tegel { fill: var(--line); }
+  .tegel { fill: var(--teken-vul); }
   .tegel.aan { fill: var(--accent); }
 
-  .surround { fill: none; stroke: var(--line); stroke-width: 13; }
-  .conus { fill: none; stroke: var(--line-strong); stroke-width: 2; }
-  .stofkap { fill: var(--line); stroke: var(--line-strong); stroke-width: 2; }
+  .surround { fill: none; stroke: var(--teken-vul); stroke-width: 13; }
+  .conus { fill: none; stroke: var(--teken-lijn); stroke-width: 2; }
+  .stofkap { fill: var(--teken-vul); stroke: var(--teken-lijn); stroke-width: 2; }
   .glans { fill: none; stroke: var(--accent); stroke-width: 3; opacity: .7; stroke-linecap: round; }
 
-  .stip { fill: var(--line); }
+  .stip { fill: var(--teken-vul); }
   .stip.aan { fill: var(--accent); }
 
-  .doel { stroke: var(--line-strong); stroke-width: 1.5; stroke-dasharray: 5 6; fill: none; }
+  .doel { stroke: var(--teken-lijn); stroke-width: 1.5; stroke-dasharray: 5 6; fill: none; }
   .curve { stroke: var(--accent); stroke-width: 3; fill: none; stroke-linecap: round; }
   .staaf rect { fill: var(--accent); opacity: .55; }
 
-  .paneel { fill: var(--line); stroke: var(--line-strong); stroke-width: 1.5; }
+  .paneel { fill: var(--teken-vul); stroke: var(--teken-lijn); stroke-width: 1.5; }
   /* Wat er na de demping nog van het geluid over is. */
   .rest { stroke: var(--accent); stroke-width: 2; fill: none; opacity: .38; stroke-linecap: round; }
 

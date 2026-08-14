@@ -15,6 +15,20 @@ export const SITE = {
   mapsQuery: 'Charles Darwinstraat 35, 7825 AB Emmen',
 };
 
+/**
+ * De audiomerken waar we mee werken — dezelfde zes als op de oude site.
+ * Bewust géén koppeling aan een pakket: zie de uitleg in Merken.astro.
+ */
+export const AUDIOMERKEN = [
+  'Alpine',
+  'Pioneer',
+  'JL Audio',
+  'Musway',
+  'Gladen',
+  'Mosconi',
+  'Steg',
+];
+
 /** Het volledige adres op één regel, voor als dat handiger uitkomt. */
 export const ADRES = `${SITE.street}, ${SITE.postalCode} ${SITE.city}`;
 

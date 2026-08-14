@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import PackageCard from '../components/PackageCard.astro';
 import KentekenCheck from '../components/KentekenCheck.astro';
+import Merken from '../components/Merken.astro';
 import Golfvorm from '../components/Golfvorm.astro';
 import { PACKAGES, SITE } from '../data/site.js';
 import { ONTZORGEN, DEMO } from '../data/generiek.js';
@@ -45,6 +46,7 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
       <div class="grid cols-4 mt">
         {pakketten.map((pkg) => <PackageCard pkg={pkg} />)}
       </div>
+      <div style="margin-top:4rem"><Merken /></div>
     </div>
   </section>
 
@@ -107,7 +109,7 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
      de bewijsregel er niet doorheen loopt — die moet leesbaar blijven. */
   .hero { position: relative; min-height: 78vh; padding-bottom: clamp(150px, 21vh, 220px); }
   .hero .wrap { position: relative; z-index: 1; }
-  .hero-accent { color: var(--accent); }
+  .hero-accent { color: var(--accent-text); }
   .hero h1 { line-height: 1.06; }
   .hero-knoppen {
     display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;

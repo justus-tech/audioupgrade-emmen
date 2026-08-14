@@ -1,7 +1,7 @@
 ---
 import '../styles/global.css';
 import { SITE } from '../data/site.js';
-import { BRAND, cssVariables } from '../data/brand.js';
+import { BRAND, LICHT, cssThema } from '../data/brand.js';
 import Logo from '../components/Logo.astro';
 
 const { title, description, path = '/', noindex = false } = Astro.props;
@@ -20,9 +20,26 @@ const nav = [
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  {/* Huisstijlkleuren uit src/data/brand.js — de enige plek waar ze staan. */}
-  <style is:global set:html={`:root{${cssVariables}}`}></style>
-  <meta name="theme-color" content={BRAND.bg} />
+  {/* Huisstijlkleuren uit src/data/brand.js — de enige plek waar ze staan.
+      Donker staat op :root, licht hangt aan data-thema op <html>. */}
+  <style is:global set:html={cssThema}></style>
+  <meta name="theme-color" content={BRAND.bg} id="thema-kleur" />
+
+  {/* Moet hierboven blijven staan en zónder type="module" of defer: dit
+      script moet klaar zijn vóórdat de pagina getekend wordt. Anders ziet
+      iemand die licht heeft gekozen eerst een tel de donkere site. */}
+  <script is:inline set:html={`
+    (function () {
+      try {
+        var keuze = localStorage.getItem('aue-thema');
+        if (keuze === 'licht' || keuze === 'donker') {
+          document.documentElement.dataset.thema = keuze;
+        }
+      } catch (e) {
+        /* privémodus: dan blijft het gewoon donker */
+      }
+    })();
+  `}></script>
   <title>{title}</title>
   <meta name="description" content={description} />
   <link rel="canonical" href={canonical} />
@@ -71,6 +88,19 @@ const nav = [
           <a href={item.href} aria-current={path === item.href ? 'page' : undefined}>{item.label}</a>
         ))}
       </nav>
+
+      {/* Wisselen tussen licht en donker. Twee tekeningen over elkaar: de CSS
+          laat zien welke van de twee bij de huidige stand hoort. */}
+      <button class="thema-knop" id="thema-knop" type="button"
+              aria-label="Wissel tussen licht en donker">
+        <svg viewBox="0 0 24 24" class="ik-zon" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.6" />
+          <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1" />
+        </svg>
+        <svg viewBox="0 0 24 24" class="ik-maan" aria-hidden="true">
+          <path d="M20 14.2A8.4 8.4 0 0 1 9.8 4a8.4 8.4 0 1 0 10.2 10.2z" />
+        </svg>
+      </button>
     </div>
   </header>
 
@@ -85,7 +115,37 @@ const nav = [
     Stuur foto dashboard
   </a>
 
-  <script>
+  <script define:vars={{ donkerKleur: BRAND.bg, lichtKleur: LICHT.bg }}>
+    /**
+     * De knop voor licht en donker.
+     *
+     * De keuze staat in localStorage, zodat hij bij een volgend bezoek nog
+     * klopt. Het inleesgedeelte staat bewust in de <head> — hier zetten we
+     * alleen de knop aan.
+     */
+    const themaKnop = document.getElementById('thema-knop');
+    const themaKleur = document.getElementById('thema-kleur');
+
+    function zetThema(naam) {
+      document.documentElement.dataset.thema = naam;
+      // De balk bovenaan de telefoon meekleuren, anders blijft die zwart.
+      if (themaKleur) themaKleur.content = naam === 'licht' ? lichtKleur : donkerKleur;
+      if (themaKnop) themaKnop.setAttribute('aria-pressed', naam === 'licht' ? 'true' : 'false');
+      try {
+        localStorage.setItem('aue-thema', naam);
+      } catch (e) {
+        /* privémodus: dan geldt de keuze alleen voor dit bezoek */
+      }
+    }
+
+    if (themaKnop) {
+      const nu = document.documentElement.dataset.thema === 'licht' ? 'licht' : 'donker';
+      themaKnop.setAttribute('aria-pressed', nu === 'licht' ? 'true' : 'false');
+      themaKnop.addEventListener('click', () => {
+        zetThema(document.documentElement.dataset.thema === 'licht' ? 'donker' : 'licht');
+      });
+    }
+
     /**
      * Inhoud rustig laten verschijnen bij het scrollen.
      *
