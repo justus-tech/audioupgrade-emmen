@@ -93,6 +93,41 @@ export function matchAuto(voertuig, lijst) {
   return null;
 }
 
+/**
+ * Zet "92DJHG" om naar "92-DJ-HG".
+ *
+ * Nederlandse kentekens hebben hun streepjes op vaste plekken, afhankelijk van
+ * het patroon van cijfers en letters (de zogeheten sidecode). Er zijn er maar
+ * veertien, dus die staan hier gewoon uitgeschreven. Herkennen we het patroon
+ * niet, dan tonen we het kenteken ongewijzigd — beter geen streepje dan een
+ * streepje op de verkeerde plek.
+ */
+const GROEPEN = {
+  DDLLDD: [2, 2, 2], LLDDLL: [2, 2, 2], LLDDDD: [2, 2, 2],
+  DDDDLL: [2, 2, 2], LLLLDD: [2, 2, 2], DDLLLL: [2, 2, 2],
+  DDLLLD: [2, 3, 1], LLDDDL: [2, 3, 1],
+  DLLLDD: [1, 3, 2], LDDDLL: [1, 3, 2],
+  LLLDDL: [3, 2, 1], DDDLLD: [3, 2, 1],
+  LDDLLL: [1, 2, 3], DLLDDD: [1, 2, 3],
+};
+
+export function formatteerKenteken(invoer) {
+  const k = normaliseerKenteken(invoer);
+  if (k.length !== 6) return k;
+
+  const patroon = [...k].map((c) => (/\d/.test(c) ? 'D' : 'L')).join('');
+  const groepen = GROEPEN[patroon];
+  if (!groepen) return k;
+
+  const delen = [];
+  let i = 0;
+  for (const lengte of groepen) {
+    delen.push(k.slice(i, i + lengte));
+    i += lengte;
+  }
+  return delen.join('-');
+}
+
 /** Afkortingen die hoofdletters houden, ook al zijn ze langer dan twee tekens. */
 const AFKORTINGEN = new Set([
   'TDI', 'TSI', 'TFSI', 'GTI', 'GTE', 'GTD', 'AMG', 'BMW', 'SUV', 'CDI',

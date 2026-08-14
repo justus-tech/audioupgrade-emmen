@@ -175,7 +175,9 @@ import { MERKEN } from '../data/merken.js';
     blok.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
     try {
-      sessionStorage.setItem('aue-auto', JSON.stringify(voertuig));
+      // `slug` erbij, zodat een modelpagina kan zien of dit kenteken bij
+      // die pagina hoort en het dan als bevestiging kan tonen.
+      sessionStorage.setItem('aue-auto', JSON.stringify({ ...voertuig, slug: auto ? auto.slug : null }));
     } catch (e) {
       /* privémodus: dan onthouden we het gewoon niet */
     }

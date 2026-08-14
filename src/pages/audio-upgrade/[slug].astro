@@ -48,11 +48,16 @@ const faqSchema = {
       {model.generaties && <p class="generaties">Voor {model.generaties}</p>}
       <p style="margin-top:1.4em">{model.intro}</p>
 
-      {/* Fotoplek: zodra Justus eigen werkfoto's aanlevert, komen die hier.
-          Zet daarvoor `foto` en `fotoAlt` op het model in models.js. */}
-      {model.foto
-        ? <img class="model-foto mt" src={model.foto} alt={model.fotoAlt ?? `${model.brand} ${model.model}`} loading="lazy" width="1200" height="675" />
-        : <div class="placeholder-img mt">Foto {model.brand} {model.model} volgt</div>}
+      {/* Bevestiging voor wie via de kenteken-check binnenkomt: zijn eigen
+          kenteken naast merk en model, zodat hij zeker weet dat dit zijn auto
+          is. Verschijnt alleen als het opgeslagen kenteken bij déze pagina
+          hoort; anderen zien niets. */}
+      <div class="jouw-auto mt" id="jouw-auto" data-slug={model.slug} hidden>
+        <span class="jouw-plaat" id="jouw-plaat"></span>
+        <span class="jouw-tekst">
+          Dit is jouw <strong>{model.brand} {model.model}</strong>
+        </span>
+      </div>
     </div>
   </section>
 
@@ -123,9 +128,52 @@ const faqSchema = {
   </section>
 </Base>
 
+<script>
+  import { formatteerKenteken, matchAuto } from '../../lib/match.js';
+
+  const vak = document.getElementById('jouw-auto');
+  if (vak) {
+    try {
+      const bewaard = sessionStorage.getItem('aue-auto');
+      if (bewaard) {
+        const v = JSON.parse(bewaard);
+        // Alleen tonen als het opgeslagen kenteken écht bij deze pagina hoort.
+        if (v && v.slug === vak.dataset.slug && v.kenteken) {
+          document.getElementById('jouw-plaat').textContent = formatteerKenteken(v.kenteken);
+          vak.hidden = false;
+        }
+      }
+    } catch (e) {
+      /* privémodus of oude opslag: dan tonen we het blok gewoon niet */
+    }
+  }
+</script>
+
 <style>
   .eyebrow-link { text-decoration: none; }
   .eyebrow-link:hover { text-decoration: underline; }
   .generaties { color: var(--text-dim); font-size: .95rem; margin-top: .6em; }
-  .model-foto { width: 100%; height: auto; border: 1px solid var(--line); }
+
+  .jouw-auto {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    padding: 18px 20px;
+    border: 1px solid var(--line-strong);
+    background: var(--panel);
+  }
+  /* Echte NL-plaat: geel met blauwe band. Herkenning gaat hier voor huisstijl. */
+  .jouw-plaat {
+    background: var(--plate-yellow);
+    color: var(--plate-ink);
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.25rem; font-weight: 600; letter-spacing: .12em;
+    border: 2px solid var(--plate-ink); border-radius: 5px;
+    padding: 6px 14px 6px 34px;
+    background-image: linear-gradient(90deg, var(--plate-blue) 24px, transparent 24px);
+    white-space: nowrap;
+  }
+  .jouw-tekst {
+    font-family: 'Oswald', sans-serif; text-transform: uppercase;
+    letter-spacing: .12em; font-size: .9rem; color: var(--text-dim);
+  }
+  .jouw-tekst strong { color: var(--text); }
 </style>

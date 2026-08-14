@@ -49,6 +49,21 @@ const table = MODELS.map((m) => [m.slug, m.matchers.merk, m.matchers.model.sourc
 
       const hit = table.find(([slug, m, re]) => merk.includes(m) && new RegExp(re).test(model));
       if (hit) {
+        // Onthouden welke auto het is, zodat de modelpagina het kenteken kan
+        // tonen. Zo ziet de bezoeker meteen dat het écht om zíjn auto gaat.
+        try {
+          sessionStorage.setItem('aue-auto', JSON.stringify({
+            kenteken: plate,
+            merk: car.merk,
+            handelsbenaming: car.handelsbenaming,
+            voertuigsoort: car.voertuigsoort,
+            inrichting: car.inrichting,
+            eerste_kleur: car.eerste_kleur,
+            slug: hit[0],
+          }));
+        } catch (e) {
+          /* privémodus: dan onthouden we het gewoon niet */
+        }
         result.innerHTML = `<span class="found">Gevonden: <strong>${niceName}</strong> — we sturen je door…</span>`;
         setTimeout(() => { window.location.href = `/audio-upgrade/${hit[0]}`; }, 900);
       } else {
