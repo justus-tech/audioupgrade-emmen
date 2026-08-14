@@ -348,3 +348,7 @@ section, .schets-blok, [id] { scroll-margin-top: 104px; }
   /* Ruimte onderaan, anders dekt de knop de laatste footerregel af. */
   footer.site { padding-bottom: 96px; }
 }
+
+/* Kaart zonder scorebalkjes (Akoestische Isolatie): niet meerekken met de
+   hoogte van de andere kaarten, anders blijft er onderin lege ruimte staan. */
+.card-los { align-self: start; }

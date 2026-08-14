@@ -23,7 +23,15 @@ const {
   class: className = '',
 } = Astro.props;
 
-const VIEWBOX = '167 419 1194 504';
+/**
+ * Gemeten op pixelniveau, niet met getBBox().
+ *
+ * De A bestaat uit twee gétekende lijnen met een transformatie erop, en
+ * getBBox() en getBoundingClientRect() rekenen de lijndikte daar verkeerd bij.
+ * Beide gaven 167 als linkerrand, terwijl de inkt op 110 begint — precies de
+ * ronde kop van de A eraf. Vandaar deze waarden uit een pixelmeting.
+ */
+const VIEWBOX = '110 419 1251 505';
 
 const a11y = decoratief
   ? 'aria-hidden="true" focusable="false"'

@@ -1,12 +1,20 @@
 ---
 import { SITE } from '../data/site.js';
 const { pkg, showScores = true } = Astro.props;
+
+/**
+ * Bij Akoestische Isolatie tonen we geen scorebalkjes. Dat pakket gaat niet
+ * over geluidskwaliteit, volume of bas maar over rust — die balken zeiden daar
+ * dus niets zinnigs. De kaart krijgt `los`, zodat hij niet meerekt tot de
+ * hoogte van de andere kaarten en er geen lege ruimte overblijft.
+ */
+const scoresTonen = showScores && pkg.slug !== 'akoestische-isolatie';
 ---
-<div class="card">
+<div class:list={['card', !scoresTonen && 'card-los']}>
   <h3>{pkg.name}</h3>
   <div class="price">{pkg.price} {pkg.priceNote && <small>{pkg.priceNote}</small>}</div>
   <p>{pkg.short}</p>
-  {showScores && (
+  {scoresTonen && (
     <div class="scores">
       <div class="score">
         <label>Geluidskwaliteit <span>{pkg.scores.kwaliteit}%</span></label>
