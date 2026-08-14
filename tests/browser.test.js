@@ -212,6 +212,28 @@ describe('de upgradepagina', alsGebouwd, () => {
     await p.close();
   });
 
+  test('de kop van een inzicht staat op een eigen regel', async () => {
+    // Deze elementen maakt het script aan, dus Astro's scoped CSS pakt er
+    // niet op zonder :global(). Ging al twee keer mis: dan lees je
+    // "20 jaar oudDe schuimrand rond een speakerconus...".
+    const p = await open('upgrades');
+    await p.fill('#upgrade-kenteken', '92DJHG');
+    await p.click('#upgrade-form button[type=submit]');
+    await p.waitForSelector('#auto-blok:not([hidden])', { timeout: 5000 });
+
+    const kop = await p.$('#auto-inzichten li strong');
+    assert.equal(await kop.evaluate((e) => getComputedStyle(e).display), 'block');
+
+    // Extra zekerheid: de kop en de tekst mogen elkaar niet raken.
+    const raakt = await p.$eval('#auto-inzichten li', (li) => {
+      const k = li.querySelector('strong').getBoundingClientRect();
+      const t = li.querySelector('span').getBoundingClientRect();
+      return t.top < k.bottom;
+    });
+    assert.equal(raakt, false, 'kop en tekst staan op dezelfde regel');
+    await p.close();
+  });
+
   test('een elektrische auto krijgt een ander verhaal', async () => {
     const p = await open('upgrades', {
       voertuig: [{ ...SAAB[0], merk: 'TESLA', handelsbenaming: 'MODEL 3', datum_eerste_toelating: '20220101' }],

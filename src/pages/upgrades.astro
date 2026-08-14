@@ -275,15 +275,20 @@ import { GARANTIE, CTA } from '../data/generiek.js';
     grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
   }
   .inzichten:empty { display: none; }
-  .inzichten li { padding-top: 16px; border-top: 1px solid var(--line-strong); }
-  .inzichten strong {
+
+  /* :global() is hier geen franje maar noodzaak. De li's, de kop en de tekst
+     worden door het script aangemaakt, en Astro plakt zijn scope-kenmerk
+     alleen op elementen die hij zélf rendert. Zonder :global() pakt geen van
+     deze regels, en dan plakt "20 jaar oudDe schuimrand..." aan elkaar. */
+  .inzichten :global(li) { padding-top: 16px; border-top: 1px solid var(--line-strong); }
+  .inzichten :global(strong) {
     display: block; margin-bottom: 8px;
     font-family: 'Oswald', sans-serif;
     text-transform: uppercase; letter-spacing: .16em;
     font-size: .76rem; color: var(--accent-text);
     font-weight: 500;
   }
-  .inzichten span { font-size: .92rem; color: var(--text-dim); line-height: 1.6; }
+  .inzichten :global(span) { font-size: .92rem; color: var(--text-dim); line-height: 1.6; }
 
   .auto-figuur { margin: 0; }
 
