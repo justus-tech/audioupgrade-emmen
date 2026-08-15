@@ -27,16 +27,31 @@ import { MODELS } from '../../data/models.js';
       <ModelKiezer />
 
       {/* Precies de plek waar iemand met een oude auto afhaakt: hij zoekt zijn
-          model, vindt het niet, en denkt dat het niet kan. */}
-      <p class="center klassieker-wijzer">
-        Rijd je iets ouders? Voor klassiekers en youngtimers werken we anders —
-        <a href={pad('/oldtimer-audio')}>lees hoe we dat doen</a>.
-      </p>
+          model, vindt het niet, en denkt dat het niet kan. Stond eerst in het
+          menu, maar met zes items paste dat niet meer op een telefoon. */}
+      <div class="klassieker-wijzer center">
+        <span class="eyebrow">Staat je auto er niet bij?</span>
+        <h3>Rijd je iets ouders?</h3>
+        <p>
+          Voor klassiekers en youngtimers werken we anders: geen vaste
+          pakketten, en je dashboard blijft zoals het was.
+        </p>
+        <a class="btn" href={pad('/oldtimer-audio')}>Klassiekers en youngtimers</a>
+      </div>
     </div>
   </section>
 </Base>
 
 <style>
-  .klassieker-wijzer { margin: 3rem auto 0; font-size: .94rem; }
-  .klassieker-wijzer a { color: var(--accent-text); }
+  /* Een eigen blok met een streep erboven, zodat het als losse ingang leest
+     en niet als voetnoot onder de lijst. */
+  .klassieker-wijzer {
+    max-width: 46ch;
+    margin: 4rem auto 0;
+    padding-top: 2.4rem;
+    border-top: 1px solid var(--line-strong);
+  }
+  .klassieker-wijzer h3 { margin-bottom: .8em; }
+  .klassieker-wijzer p { margin: 0 auto 1.8em; font-size: .94rem; }
+  .klassieker-wijzer .btn { display: inline-block; }
 </style>
