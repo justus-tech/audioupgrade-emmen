@@ -2,6 +2,7 @@
 import { MODELS } from '../data/models.js';
 import { SITE } from '../data/site.js';
 import Logo from './Logo.astro';
+import { pad } from '../lib/pad.js';
 
 // Compacte matchtabel voor de client: [slug, merk, modelregex-als-string]
 const table = MODELS.map((m) => [m.slug, m.matchers.merk, m.matchers.model.source]);
@@ -12,6 +13,16 @@ const table = MODELS.map((m) => [m.slug, m.matchers.merk, m.matchers.model.sourc
  * verschillende versies van deze logica hoeven te bestaan.
  */
 const { compact = false } = Astro.props;
+
+/**
+ * De mapnaam waar de site in staat, als losse tekst.
+ *
+ * Waarom niet gewoon pad() in het script hieronder: dat script krijgt met
+ * define:vars waarden mee en wordt daarom NIET door Astro verwerkt. Een
+ * import werkt daar dus niet — die geeft een foutmelding en dan doet de hele
+ * check niets meer. Vandaar dat de mapnaam als waarde meegaat.
+ */
+const basisPad = pad('/') === '/' ? '' : pad('/');
 ---
 <div class:list={['kenteken-box', compact && 'kenteken-kaal']}>
   {!compact && (
@@ -33,7 +44,7 @@ const { compact = false } = Astro.props;
   <div id="kenteken-result" aria-live="polite"></div>
 </div>
 
-<script define:vars={{ table, whatsapp: SITE.whatsapp }}>
+<script define:vars={{ table, whatsapp: SITE.whatsapp, basisPad }}>
   const form = document.getElementById('kenteken-form');
   const input = document.getElementById('kenteken-input');
   const result = document.getElementById('kenteken-result');
@@ -107,7 +118,10 @@ const { compact = false } = Astro.props;
        * mededeling dat we geen pagina hadden, en dat is een doodlopende weg
        * voor bijna een kwart van de bezoekers.
        */
-      const bestemming = hit ? `/audio-upgrade/${hit[0]}` : '/upgrades';
+      // basisPad is de mapnaam waar de site in staat. Zonder dat kwam je op
+      // de voorbeeldsite op een pagina van GitHub terecht in plaats van op
+      // je eigen auto.
+      const bestemming = basisPad + (hit ? `/audio-upgrade/${hit[0]}` : '/upgrades');
       result.innerHTML = `<span class="found">Gevonden: <strong>${niceName}</strong> — we sturen je door…</span>`;
       setTimeout(() => { window.location.href = bestemming; }, 900);
     } catch (err) {

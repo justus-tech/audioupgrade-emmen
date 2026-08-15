@@ -342,6 +342,31 @@ describe('huisregels van Justus', alsGebouwd, () => {
     }
   });
 
+  test('ook doorverwijzingen in het script lopen via pad()', () => {
+    // De kenteken-check stuurt de bezoeker met JavaScript door. Zonder pad()
+    // kwam hij op de voorbeeldsite op een pagina van GitHub terecht in plaats
+    // van op zijn eigen auto — de links in de HTML waren wél goed, maar deze
+    // niet, en dat zie je aan de bron niet.
+    const bronMap = fileURLToPath(new URL('../src/', import.meta.url));
+    const overtreders = [];
+
+    const loop = (map) => {
+      for (const naam of readdirSync(map)) {
+        const p = join(map, naam);
+        if (statSync(p).isDirectory()) { loop(p); continue; }
+        if (!/\.(astro|js)$/.test(naam) || p.includes(`lib${sep}pad.js`)) continue;
+        // Goed is pad("/...") of basisPad + "/..."; fout is een kaal "/...".
+        for (const m of readFileSync(p, 'utf8').matchAll(
+          /location(?:\.href)?\s*=\s*(?!pad\(|basisPad)['"`]?\/[a-z]/gi
+        )) {
+          overtreders.push(`${relative(bronMap, p)}: ${m[0].trim()}`);
+        }
+      }
+    };
+    loop(bronMap);
+    assert.deepEqual(overtreders, [], 'gebruik location.href = pad("/...")');
+  });
+
   test('interne links lopen via pad(), niet als kaal adres', () => {
     // Op de voorbeeldsite staat de site in een map. Een link die "/upgrades"
     // zegt komt daar op de wortel van github.io terecht en geeft een
