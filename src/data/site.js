@@ -46,9 +46,18 @@ export const ADRES = `${SITE.street}, ${SITE.postalCode} ${SITE.city}`;
  * scorebalkjes komen woord voor woord van de oude site. Verander hier niets
  * zonder dat Justus het zegt: dit is de prijslijst waar klanten op afgaan.
  *
- * ÉÉN AFWIJKING, op verzoek van Justus: de oude site sprak de klant in drie
- * pakketten met "u" aan en in de rest met "je". Dat is nu overal "je", zodat
- * het niet lijkt alsof er twee mensen aan geschreven hebben.
+ * TWEE AFWIJKINGEN, allebei op verzoek van Justus:
+ *
+ *   1. De oude site sprak de klant in drie pakketten met "u" aan en in de
+ *      rest met "je". Dat is nu overal "je", zodat het niet lijkt alsof er
+ *      twee mensen aan geschreven hebben.
+ *   2. Het CarPlay-pakket heet nu "Draadloze CarPlay Upgrade" en de regel
+ *      onder de prijs begint met "Draadloze". Draadloos is precies waar
+ *      mensen op zoeken en waar de goedkope kastjes het laten afweten, dus
+ *      dat hoort in de naam te staan en niet pas in het lijstje eronder.
+ *
+ * De slug blijft `carplay-upgrade`: die zit in de webadressen en in de
+ * sitemap, dus daar blijven we vanaf.
  *
  *   tagline    de kopregel boven de omschrijving (upgradepagina)
  *   short      de één-regelsamenvatting (homepage)
@@ -65,14 +74,14 @@ export const ADRES = `${SITE.street}, ${SITE.postalCode} ${SITE.city}`;
 export const PACKAGES = [
   {
     slug: 'carplay-upgrade',
-    name: 'CarPlay Upgrade',
+    name: 'Draadloze CarPlay Upgrade',
     tagline: 'Apple CarPlay & Android Auto',
     price: 'Vanaf € 695,00',
     // Het kale bedrag, voor de machineleesbare gegevens. Zie Base.astro.
     bedrag: 695,
     priceNote: 'Inclusief BTW & Montage',
     priceExcl: '€ 574,- excl. btw',
-    short: 'Apple CarPlay & Android Auto naadloos in je originele scherm.',
+    short: 'Draadloze Apple CarPlay en Android Auto, naadloos in je originele scherm.',
     body: 'Het perfecte pakket om af te rekenen met verouderde autonavigatie en lelijke losse telefoonhouders. Wij integreren Apple CarPlay en Android Auto 100% naadloos in je huidige systeem. Je bedient Flitsmeister, Spotify en Google Maps gewoon via het originele beeldscherm en stuurwiel.',
     features: [
       'Draadloze Apple CarPlay & Android Auto integratie.',
