@@ -20,6 +20,29 @@ const canonical = new URL(pad(path), Astro.site).href;
  */
 const voorbeeld = String(Astro.site || '').includes('github.io');
 
+/**
+ * Meet dit bezoek mee? Alleen op de echte, gepubliceerde site.
+ *
+ * De teller staat aan als METEN=1 in de omgeving staat, en dat gebeurt
+ * alleen in .github/workflows/deploy.yml. Bouw je hier op de laptop, dan
+ * zit het teltekstje er dus niet in. Dat is met opzet:
+ *
+ *   - je eigen gerommel telt niet mee in je cijfers;
+ *   - de tests hoeven het internet niet op om een scriptje van Cloudflare
+ *     te halen, en blijven dus ook werken zonder verbinding.
+ */
+const meten = !voorbeeld && process.env.METEN === '1';
+
+/**
+ * Cloudflare Web Analytics. Deze token is met opzet openbaar: hij staat in
+ * de broncode van elke pagina en hoort daar ook. Je kunt er niets mee dan
+ * bezoek melden aan deze ene site. Verwar hem niet met een API-sleutel.
+ *
+ * Er worden geen cookies gezet en geen IP-adressen bewaard. Daarom hoeft er
+ * geen toestemmingsbalk voor — zie ook het cookiebeleid.
+ */
+const METEN_TOKEN = '5d1c66fd18124f3ebb875587dd008168';
+
 const nav = [
   { href: '/', label: 'Home' },
   { href: '/upgrades', label: 'Upgrades' },
@@ -295,5 +318,14 @@ const nav = [
       </div>
     </div>
   </footer>
+
+  {/* Helemaal onderaan, zodat het nooit in de weg zit bij het laden. */}
+  {meten && (
+    <script
+      type="module"
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon={`{"token": "${METEN_TOKEN}"}`}
+    ></script>
+  )}
 </body>
 </html>

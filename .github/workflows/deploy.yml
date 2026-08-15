@@ -37,6 +37,9 @@ jobs:
       - uses: withastro/action@v3
         env:
           ASTRO_TELEMETRY_DISABLED: '1'
+          # Zet de bezoekersteller aan. Staat alleen hier, dus alleen de
+          # echte site telt mee — niet wat er op de laptop gebouwd wordt.
+          METEN: '1'
 
   publiceren:
     name: Publiceren

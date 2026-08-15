@@ -12,8 +12,12 @@
  * van wat de AVG vraagt.
  *
  * De nieuwe site heeft een aanzienlijk eenvoudiger verhaal: hij zet géén
- * cookies, heeft geen bezoekersstatistieken en stuurt niets naar een server.
- * Dat mag je zeggen, dus dat zeggen we.
+ * cookies en stuurt geen persoonsgegevens naar een server. Sinds augustus
+ * 2026 telt hij wel het bezoek, met Cloudflare Web Analytics — zonder
+ * cookies, zonder IP-adres, zonder herkenning bij een volgend bezoek. Zet je
+ * die teller ooit uit of om, pas dan artikel 1 van het cookiebeleid en
+ * artikel 2 van het privacybeleid aan. Een privacyverklaring die niet klopt
+ * is erger dan geen.
  *
  * LET OP, twee dingen voor Justus:
  *   1. In het oude privacybeleid staat Vinkenveld 9 als vestigingsadres, op
@@ -133,10 +137,10 @@ export const PRIVACYBELEID = {
   slug: 'privacybeleid',
   titel: 'Privacybeleid | Audio Upgrade Emmen',
   beschrijving:
-    'Wat Audio Upgrade Emmen met je gegevens doet. Deze website zet geen cookies, houdt geen statistieken bij en slaat je kenteken nergens op.',
+    'Wat Audio Upgrade Emmen met je gegevens doet. Deze website zet geen cookies, meet alleen anoniem hoeveel bezoek er is en slaat je kenteken nergens op.',
   kop: 'Privacybeleid',
   intro:
-    'Wij nemen je privacy net zo serieus als de afwerking van onze inbouw. Hieronder staat precies wat we met je gegevens doen, waarom, en welke rechten je hebt. De korte versie: deze website verzamelt niets over je, en wat je ons stuurt gebruiken we alleen om je auto te kunnen helpen.',
+    'Wij nemen je privacy net zo serieus als de afwerking van onze inbouw. Hieronder staat precies wat we met je gegevens doen, waarom, en welke rechten je hebt. De korte versie: deze website herkent je niet en volgt je niet, en wat je ons stuurt gebruiken we alleen om je auto te kunnen helpen.',
   artikelen: [
     {
       kop: '1. Wie zijn wij',
@@ -145,9 +149,10 @@ export const PRIVACYBELEID = {
       ],
     },
     {
-      kop: '2. Deze website verzamelt niets over je',
+      kop: '2. Deze website herkent je niet',
       alineas: [
-        'Wij hebben geen bezoekersstatistieken, geen advertentiepixels en geen trackers. Wij weten niet hoeveel mensen de site bezoeken, waar ze vandaan komen of waar ze op klikken. De site is een verzameling vaste pagina\'s zonder server die iets over jou bijhoudt.',
+        'Wij tellen wel hoeveel mensen de site bezoeken en welke pagina\'s ze bekijken, maar we kunnen niet zien wie je bent. Dat doen we met Cloudflare Web Analytics: geen cookies, geen opgeslagen IP-adres, en geen kenmerk waaraan je bij een volgend bezoek herkend wordt. Wat we precies zien staat in het cookiebeleid.',
+        'Verder staan er geen advertentiepixels of trackers op de site. Het zijn vaste pagina\'s zonder server die iets over jou bijhoudt.',
       ],
       lijst: [
         '**Je kenteken** wordt door je eigen browser rechtstreeks naar de open data van de RDW gestuurd. Wij zien dat verzoek niet en ontvangen het antwoord niet. Het kenteken blijft in het geheugen van je tabblad staan zodat de volgende pagina je auto kan tonen, en verdwijnt zodra je dat tabblad sluit.',
@@ -205,15 +210,17 @@ export const COOKIEBELEID = {
   slug: 'cookiebeleid',
   titel: 'Cookiebeleid | Audio Upgrade Emmen',
   beschrijving:
-    'Deze website zet geen cookies. Wat er wel op je apparaat wordt bewaard en waarom, staat hier uitgelegd.',
+    'Deze website zet geen cookies. Wat we wel meten en wat er op je apparaat wordt bewaard, staat hier uitgelegd.',
   kop: 'Cookiebeleid',
   intro:
-    'Deze website zet geen cookies. Daarom zie je hier ook geen banner die om toestemming vraagt: er valt niets toe te staan of te weigeren. Toch leggen we hieronder uit wat er wél op je apparaat wordt bewaard, want dat is niet helemaal niets.',
+    'Deze website zet geen cookies. Daarom zie je hier ook geen banner die om toestemming vraagt: er valt niets toe te staan of te weigeren. Toch leggen we hieronder uit wat we wél meten en wat er op je apparaat wordt bewaard, want dat is niet helemaal niets.',
   artikelen: [
     {
-      kop: '1. Geen cookies, geen statistieken',
+      kop: '1. Bezoekersaantallen, zonder cookies',
       alineas: [
-        'Wij houden niet bij hoeveel bezoekers de site trekt, welke pagina\'s populair zijn of waar je vandaan komt. Er staan geen advertentiepixels op de site en er is geen koppeling met Google, Meta of welke andere partij dan ook.',
+        'We tellen hoeveel mensen de site bezoeken en welke pagina\'s ze bekijken. Dat doen we met Cloudflare Web Analytics. Daarbij worden geen cookies gezet, wordt je IP-adres niet bewaard en krijg je geen kenmerk mee waaraan je bij een volgend bezoek herkend wordt. Je bent voor ons dus geen persoon maar een streepje.',
+        'Wat we zien: hoeveel bezoeken er waren, welke pagina\'s zijn bekeken, uit welk land of welke regio ze kwamen, of het een telefoon of een computer was, en via welke site of zoekmachine iemand binnenkwam. Meer niet — en die gegevens zijn niet naar jou terug te leiden.',
+        'Er staan geen advertentiepixels op de site en er is geen koppeling met Google Analytics, Meta of welke advertentiepartij dan ook.',
       ],
     },
     {
