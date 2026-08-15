@@ -1,21 +1,15 @@
-# Zet de site na elke wijziging op de voorbeeldplek van GitHub.
+# Zet de site na elke wijziging live op audioupgradeemmen.nl.
 #
-# Adres: https://justus-tech.github.io/audioupgrade-emmen
+# De site draait op GitHub Pages met het eigen domein. De DNS blijft bij
+# TransIP: daar wijzen vier A-records naar GitHub. De nameservers zijn NIET
+# verhuisd, want TransIP beheert DNSSEC automatisch en laat je die niet
+# uitzetten — en met een verkeerde DNSSEC-handtekening ligt niet alleen de
+# site plat maar ook de e-mail.
 #
-# WAAROM DIT ER IS
-# Een tunnel vanaf de laptop is weg zodra die laptop uit gaat. Dit blijft
-# staan, ook 's nachts, ook als iedereen slaapt. Handig om iets te laten zien
-# aan iemand die niet naast je zit.
-#
-# DIT IS NIET DE ECHTE SITE
-# De echte site staat nog op audioupgradeemmen.nl (de oude Squarespace-site).
-# Deze versie is met opzet onvindbaar gemaakt: elke pagina zegt "noindex" en
-# robots.txt zet alles op slot. Anders zou Google twee versies van dezelfde
-# teksten zien en zelf kiezen welke hij toont — en dat wil je niet.
-#
-# De schakelaar PUBLICEER_NAAR regelt dat. Zie astro.config.mjs.
+# Het bestand public/CNAME vertelt GitHub welk domein erbij hoort. Zonder dat
+# bestand vergeet Pages het domein bij de eerstvolgende publicatie.
 
-name: Voorbeeldsite publiceren
+name: Site publiceren
 
 on:
   push:
@@ -42,9 +36,6 @@ jobs:
 
       - uses: withastro/action@v3
         env:
-          # Hiermee bouwt Astro voor het github.io-adres in plaats van voor
-          # het eigen domein: andere links, en onvindbaar voor Google.
-          PUBLICEER_NAAR: github
           ASTRO_TELEMETRY_DISABLED: '1'
 
   publiceren:
