@@ -2,20 +2,18 @@
 /**
  * De geluidsgolf onderin de hero van de homepage.
  *
- * TWEE LAGEN OVER ELKAAR
+ * HOE HET IS OPGEBOUWD
  *
- *   De balken   Gespiegeld om de middenlijn, zoals een muziekgolfvorm in
- *               Spotify of SoundCloud. Elke balk is de hoogste uitslag van
- *               het geluid binnen zijn stukje — dat is precies hoe zo'n
- *               weergave gemaakt wordt.
- *   De lijn     De oscilloscooplijn eroverheen: de golfvorm zelf, zoals op
- *               meetapparatuur. Eén scherpe lijn. Er liepen eerst twee
- *               zachtere echo's achteraan voor de diepte, maar samen met de
- *               balken werd dat te druk — de balken doen dat werk nu.
+ *   De omtrek   Twee lijnen: eentje boven de middenlijn en zijn spiegelbeeld
+ *               eronder. Samen vormen ze de vorm van de golf.
+ *   De balken   Staan er ín, en worden door die vorm afgeknipt. Zo lopen ze
+ *               precies tot aan de lijn en niet erdoorheen. Dat gebeurt met
+ *               een uitknipvorm (clipPath): de balken zijn gewoon volle
+ *               staven, en de golf bepaalt wat je ervan ziet.
  *
- * Ze komen uit dezelfde berekening, dus ze bewegen samen. Dát is wat het
- * echt laat lijken: bij losse berekeningen zie je meteen dat de balken en de
- * lijn niets met elkaar te maken hebben.
+ * Eerder hadden de balken hun eigen hoogte en liep de lijn er dwars
+ * doorheen. Dat zag eruit alsof er twee dingen over elkaar lagen in plaats
+ * van één geluidsgolf.
  *
  * WAAROM HET ER TRAAG UITZIET: DIT IS EEN SUBWOOFER
  * Een sub doet ongeveer 20 tot 80 hertz. Lange, trage golven met nauwelijks
@@ -24,15 +22,9 @@
  * een uitgezoomde oscilloscoop. Bij elke tel zwelt hij op en zakt weer terug,
  * maar zacht: een sub duwt lucht, hij tikt niet.
  *
- * NIET OVER DE VOLLE BREEDTE OP DESKTOP
- * De golf loopt mee met de tekstbreedte en niet van rand tot rand. Op een
- * breed scherm werden de golven anders zo ver uitgerekt dat er van de vorm
- * niets overbleef, en dan is het geen geluid meer maar een deining.
- *
- * Er speelt geen echt geluid; dit is een model. Alleen `transform` en de
- * lijnen worden aangepast, de animatie stopt zodra hij uit beeld is of het
- * tabblad naar de achtergrond gaat, en bij "verminder beweging" blijft alles
- * stilstaan op de vorm die de server al meestuurt.
+ * Er speelt geen echt geluid; dit is een model. De animatie stopt zodra hij
+ * uit beeld is of het tabblad naar de achtergrond gaat, en bij "verminder
+ * beweging" blijft alles stilstaan op de vorm die de server al meestuurt.
  */
 const BREEDTE = 1160;
 const HOOGTE = 120;
@@ -41,7 +33,7 @@ const PUNTEN = 96;
 const BALKEN = 74;
 
 const vakBreedte = BREEDTE / BALKEN;
-const balkDikte = Math.max(2, vakBreedte * 0.3);
+const balkDikte = Math.max(2, vakBreedte * 0.34);
 
 /** Lage toon: één grondtoon met twee zwakke boventonen. */
 function golf(u, t) {
@@ -58,58 +50,71 @@ function omhulsel(u) {
 }
 
 /**
- * De hoogste uitslag binnen één balkje. Zo maak je een muziekgolfvorm: je
- * hakt het geluid in stukjes en tekent per stukje de grootste piek.
+ * De uitslag op plek u: altijd positief, want boven en onder zijn elkaars
+ * spiegelbeeld. Dit is de halve hoogte van de golf op dat punt.
  */
-function piek(i, t) {
-  let max = 0;
-  for (let k = 0; k < 4; k++) {
-    const u = (i + k / 4) / BALKEN;
-    max = Math.max(max, Math.abs(golf(u, t)) * omhulsel(u));
-  }
-  return max;
+function uitslag(u, t, sterkte) {
+  return Math.abs(golf(u, t)) * omhulsel(u) * sterkte * MIDDEN;
 }
 
-function padVan(t, sterkte) {
-  let d = '';
-  let hx = 0;
-  let hy = MIDDEN - golf(0, t) * omhulsel(0) * sterkte * MIDDEN;
-  d = `M0.0 ${hy.toFixed(1)}`;
-  for (let i = 1; i < PUNTEN; i++) {
-    const u = i / (PUNTEN - 1);
-    const nx = u * BREEDTE;
-    const ny = MIDDEN - golf(u, t) * omhulsel(u) * sterkte * MIDDEN;
-    if (i < PUNTEN - 1) {
-      d += `Q${nx.toFixed(1)} ${ny.toFixed(1)} ${((nx + hx) / 2 + vakBreedte / 2).toFixed(1)} ${((ny + hy) / 2).toFixed(1)}`;
-    } else {
-      d += `L${nx.toFixed(1)} ${ny.toFixed(1)}`;
-    }
-    hx = nx;
-    hy = ny;
+/** De y-waarden van de bovenrand, van links naar rechts. */
+function bovenrand(t, sterkte) {
+  const y = [];
+  for (let i = 0; i < PUNTEN; i++) {
+    y.push(MIDDEN - uitslag(i / (PUNTEN - 1), t, sterkte));
   }
-  return d;
+  return y;
 }
 
-/* De vorm vóórdat het script begint, en de vorm die blijft staan als iemand
-   beweging heeft uitgezet. */
-const startBalken = Array.from({ length: BALKEN }, (_, i) => Math.max(0.04, piek(i, 0) * 0.72));
-const LIJNEN = [{ klasse: 'lijn-voor', d: padVan(0, 0.74) }];
+/** Vloeiend pad door een reeks y-waarden, met bochten in plaats van knikken. */
+function pad(ys, x) {
+  let d = `M${x(0)} ${ys[0].toFixed(1)}`;
+  for (let i = 1; i < ys.length - 1; i++) {
+    const mx = (Number(x(i)) + Number(x(i + 1))) / 2;
+    const my = (ys[i] + ys[i + 1]) / 2;
+    d += `Q${x(i)} ${ys[i].toFixed(1)} ${mx.toFixed(1)} ${my.toFixed(1)}`;
+  }
+  return d + `L${x(ys.length - 1)} ${ys[ys.length - 1].toFixed(1)}`;
+}
+
+/**
+ * De uitknipvorm: langs de bovenrand naar rechts, en langs de onderrand
+ * weer terug. Alles wat de balken buiten deze vorm doen, valt weg.
+ */
+function maskerPad(boven) {
+  const x = (i) => ((i / (PUNTEN - 1)) * BREEDTE).toFixed(1);
+  const onder = boven.map((y) => MIDDEN + (MIDDEN - y));
+  const heen = pad(boven, x);
+  const terug = pad([...onder].reverse(), (i) => x(PUNTEN - 1 - i));
+  return `${heen} ${terug.replace(/^M/, 'L')} Z`;
+}
+
+const startBoven = bovenrand(0, 0.74);
+const startOnder = startBoven.map((y) => MIDDEN + (MIDDEN - y));
+const xVan = (i) => ((i / (PUNTEN - 1)) * BREEDTE).toFixed(1);
 ---
 <div class="golflijn" aria-hidden="true">
   <svg viewBox={`0 0 ${BREEDTE} ${HOOGTE}`} preserveAspectRatio="none">
-    <g class="golf-balken">
-      {startBalken.map((h, i) => (
+    <defs>
+      <clipPath id="golf-masker" clipPathUnits="userSpaceOnUse">
+        <path id="golf-masker-pad" d={maskerPad(startBoven)} />
+      </clipPath>
+    </defs>
+
+    {/* Volle staven; de uitknipvorm hierboven bepaalt wat je ervan ziet. */}
+    <g class="golf-balken" clip-path="url(#golf-masker)">
+      {Array.from({ length: BALKEN }, (_, i) => (
         <rect
           x={(i * vakBreedte + (vakBreedte - balkDikte) / 2).toFixed(2)}
           y="0"
           width={balkDikte.toFixed(2)}
           height={HOOGTE}
-          rx={(balkDikte / 2).toFixed(2)}
-          style={`transform: scaleY(${h.toFixed(3)})`}
         />
       ))}
     </g>
-    {LIJNEN.map((laag) => <path class={laag.klasse} d={laag.d} />)}
+
+    <path class="lijn-boven" d={pad(startBoven, xVan)} />
+    <path class="lijn-onder" d={pad(startOnder, xVan)} />
   </svg>
 </div>
 
@@ -122,8 +127,9 @@ const LIJNEN = [{ klasse: 'lijn-voor', d: padVan(0, 0.74) }];
     const MIDDEN = 60;
     const PUNTEN = 96;
 
-    const balken = [...vak.querySelectorAll('.golf-balken rect')];
-    const BALKEN = balken.length;
+    const maskerPadEl = vak.querySelector('#golf-masker-pad');
+    const lijnBoven = vak.querySelector('.lijn-boven');
+    const lijnOnder = vak.querySelector('.lijn-onder');
 
     const golf = (u, t) =>
       0.62 * Math.sin(u * 8.6 + t * 0.9) +
@@ -137,11 +143,20 @@ const LIJNEN = [{ klasse: 'lijn-voor', d: padVan(0, 0.74) }];
     const omhulsels = [];
     for (let i = 0; i < PUNTEN; i++) {
       const u = i / (PUNTEN - 1);
-      xen.push(u * BREEDTE);
+      xen.push(((u * BREEDTE)).toFixed(1));
       omhulsels.push(omhulsel(u));
     }
 
-    const lijnen = [{ el: vak.querySelector('.lijn-voor'), vertraging: 0, sterkte: 0.74 }];
+    /** Vloeiend pad door y-waarden; xi geeft de x bij index i. */
+    function pad(ys, xi) {
+      let d = `M${xi(0)} ${ys[0].toFixed(1)}`;
+      for (let i = 1; i < ys.length - 1; i++) {
+        const mx = (Number(xi(i)) + Number(xi(i + 1))) / 2;
+        const my = (ys[i] + ys[i + 1]) / 2;
+        d += `Q${xi(i)} ${ys[i].toFixed(1)} ${mx.toFixed(1)} ${my.toFixed(1)}`;
+      }
+      return d + `L${xi(ys.length - 1)} ${ys[ys.length - 1].toFixed(1)}`;
+    }
 
     const BPM = 92;
     const TEL = 60 / BPM;
@@ -151,7 +166,6 @@ const LIJNEN = [{ klasse: 'lijn-voor', d: padVan(0, 0.74) }];
     let loopt = false;
     let frame = 0;
     let zwelling = 0.66;
-    const balkWaarde = balken.map(() => 0.3);
 
     function stap(nu) {
       if (!loopt) return;
@@ -159,6 +173,7 @@ const LIJNEN = [{ klasse: 'lijn-voor', d: padVan(0, 0.74) }];
       vorig = nu;
       tijd += dt;
 
+      // De tel is er, maar zacht: een sub duwt lucht, hij tikt niet.
       const tel = (tijd / TEL) % 4;
       const inTel = tel % 1;
       const kick = Math.exp(-inTel * 3.2) * 0.42;
@@ -168,42 +183,26 @@ const LIJNEN = [{ klasse: 'lijn-voor', d: padVan(0, 0.74) }];
       const doel = 0.6 + kick + tweede;
       zwelling += (doel - zwelling) * (doel > zwelling ? 0.16 : 0.055);
 
-      // ---- de lijnen ----
-      for (const laag of lijnen) {
-        const t = tijd - laag.vertraging;
-        const sterkte = zwelling * (laag.sterkte / 0.74);
-        let hx = 0;
-        let hy = MIDDEN - golf(0, t) * omhulsels[0] * sterkte * MIDDEN;
-        let d = `M0.0 ${hy.toFixed(1)}`;
-        for (let i = 1; i < PUNTEN; i++) {
-          const nx = xen[i];
-          const ny = MIDDEN - golf(i / (PUNTEN - 1), t) * omhulsels[i] * sterkte * MIDDEN;
-          if (i < PUNTEN - 1) {
-            d += `Q${nx.toFixed(1)} ${ny.toFixed(1)} ${((nx + hx) / 2 + 7.8).toFixed(1)} ${((ny + hy) / 2).toFixed(1)}`;
-          } else {
-            d += `L${nx.toFixed(1)} ${ny.toFixed(1)}`;
-          }
-          hx = nx;
-          hy = ny;
-        }
-        laag.el.setAttribute('d', d);
+      // Eén berekening voor alles: de omtrek én de uitknipvorm komen hieruit,
+      // dus de balken kunnen nooit uit de pas lopen met de lijn.
+      const boven = [];
+      const onder = [];
+      for (let i = 0; i < PUNTEN; i++) {
+        const u = i / (PUNTEN - 1);
+        const a = Math.abs(golf(u, tijd)) * omhulsels[i] * zwelling * MIDDEN;
+        boven.push(MIDDEN - a);
+        onder.push(MIDDEN + a);
       }
 
-      // ---- de balken ----
-      // Per balkje de hoogste uitslag: precies hoe een muziekgolfvorm
-      // gemaakt wordt. Ze komen uit dezelfde golf als de lijn, dus ze
-      // bewegen samen.
-      for (let i = 0; i < BALKEN; i++) {
-        let max = 0;
-        for (let k = 0; k < 4; k++) {
-          const u = (i + k / 4) / BALKEN;
-          max = Math.max(max, Math.abs(golf(u, tijd)) * omhulsel(u));
-        }
-        const doelBalk = max * zwelling;
-        // Iets natrillen, zodat de balken niet exact de lijn volgen.
-        balkWaarde[i] += (doelBalk - balkWaarde[i]) * (doelBalk > balkWaarde[i] ? 0.45 : 0.14);
-        balken[i].style.transform = `scaleY(${Math.max(0.03, balkWaarde[i]).toFixed(3)})`;
-      }
+      const xi = (i) => xen[i];
+      const xiOmgekeerd = (i) => xen[PUNTEN - 1 - i];
+
+      lijnBoven.setAttribute('d', pad(boven, xi));
+      lijnOnder.setAttribute('d', pad(onder, xi));
+      maskerPadEl.setAttribute(
+        'd',
+        `${pad(boven, xi)} ${pad([...onder].reverse(), xiOmgekeerd).replace(/^M/, 'L')} Z`
+      );
 
       frame = requestAnimationFrame(stap);
     }
@@ -247,17 +246,11 @@ const LIJNEN = [{ klasse: 'lijn-voor', d: padVan(0, 0.74) }];
     height: clamp(130px, 21vh, 210px);
     pointer-events: none;
   }
-  .golflijn svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .golflijn svg { width: 100%; height: 100%; display: block; }
 
-  /* De balken groeien vanuit het midden naar boven én beneden: dat is de
-     gespiegelde vorm die je van muziek kent. */
-  .golf-balken rect {
-    fill: var(--accent);
-    transform-box: fill-box;
-    transform-origin: 50% 50%;
-    opacity: .3;
-    will-change: transform;
-  }
+  /* Volle staven. De uitknipvorm bepaalt hoeveel je ervan ziet, dus ze
+     eindigen altijd precies op de lijn. */
+  .golf-balken rect { fill: var(--accent); opacity: .42; }
 
   .golflijn path {
     fill: none;
@@ -268,9 +261,7 @@ const LIJNEN = [{ klasse: 'lijn-voor', d: padVan(0, 0.74) }];
        een telefoon een dikke worst. */
     vector-effect: non-scaling-stroke;
   }
-  .lijn-voor { stroke-width: 2.2; opacity: .92; }
-
-  @media (prefers-reduced-motion: reduce) {
-    .golf-balken rect { will-change: auto; }
-  }
+  .lijn-boven { stroke-width: 2.2; opacity: .92; }
+  /* De onderrand iets zachter: dan blijft de bovenkant de hoofdlijn. */
+  .lijn-onder { stroke-width: 1.6; opacity: .5; }
 </style>
