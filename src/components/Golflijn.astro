@@ -249,8 +249,14 @@ const xVan = (i) => ((i / (PUNTEN - 1)) * BREEDTE).toFixed(1);
   .golflijn svg { width: 100%; height: 100%; display: block; }
 
   /* Volle staven. De uitknipvorm bepaalt hoeveel je ervan ziet, dus ze
-     eindigen altijd precies op de lijn. */
-  .golf-balken rect { fill: var(--accent); opacity: .42; }
+     eindigen altijd precies op de lijn.
+
+     Grijs, niet oranje. Toen de balken ook oranje waren, streden ze met de
+     lijn om je aandacht en werd het één oranje vlek. Nu is de lijn de vorm
+     die je ziet en zijn de balken de vulling erachter. --text-dim werkt in
+     beide standen: licht grijs op de donkere achtergrond, donker grijs op
+     de witte. */
+  .golf-balken rect { fill: var(--text-dim); opacity: .34; }
 
   .golflijn path {
     fill: none;
