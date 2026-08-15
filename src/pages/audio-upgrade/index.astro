@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import KentekenCheck from '../../components/KentekenCheck.astro';
 import ModelKiezer from '../../components/ModelKiezer.astro';
+import { pad } from '../../lib/pad.js';
 import { MODELS } from '../../data/models.js';
 ---
 <Base
@@ -24,6 +25,18 @@ import { MODELS } from '../../data/models.js';
         Tik op je merk en kies je model. Weet je hem al? Typ hem dan gewoon in.
       </p>
       <ModelKiezer />
+
+      {/* Precies de plek waar iemand met een oude auto afhaakt: hij zoekt zijn
+          model, vindt het niet, en denkt dat het niet kan. */}
+      <p class="center klassieker-wijzer">
+        Rijd je iets ouders? Voor klassiekers en youngtimers werken we anders —
+        <a href={pad('/oldtimer-audio')}>lees hoe we dat doen</a>.
+      </p>
     </div>
   </section>
 </Base>
+
+<style>
+  .klassieker-wijzer { margin: 3rem auto 0; font-size: .94rem; }
+  .klassieker-wijzer a { color: var(--accent-text); }
+</style>
