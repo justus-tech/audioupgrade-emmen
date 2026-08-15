@@ -1,0 +1,136 @@
+---
+/**
+ * De pagina voor klassiekers en youngtimers.
+ *
+ * Geen pakketten met prijzen: bij deze auto's is elke auto anders. Zie de
+ * uitleg boven in src/data/oldtimer.js.
+ */
+import Base from '../layouts/Base.astro';
+import Fotoband from '../components/Fotoband.astro';
+import { OLDTIMER } from '../data/oldtimer.js';
+import { SITE } from '../data/site.js';
+import { CTA } from '../data/generiek.js';
+import { pad } from '../lib/pad.js';
+/* Foto: Unsplash — vrij te gebruiken. Zie src/components/Fotoband.astro. */
+import speakerconus from '../assets/foto/speakerconus.jpg';
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: OLDTIMER.faq.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+};
+---
+<Base title={OLDTIMER.titel} description={OLDTIMER.beschrijving} path={`/${OLDTIMER.slug}`}>
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <section>
+    <div class="wrap">
+      <span class="eyebrow">{OLDTIMER.eyebrow}</span>
+      <h1>{OLDTIMER.kop}</h1>
+      <p style="margin-top:1.4em">{OLDTIMER.intro}</p>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap">
+      <h2>{OLDTIMER.waarom.kop}</h2>
+      <div class="grid cols-3 mt">
+        {OLDTIMER.waarom.punten.map((p, i) => (
+          <div class="step">
+            <span class="num">0{i + 1}</span>
+            <h3 style="margin-top:12px">{p.kop}</h3>
+            <p>{p.tekst}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <Fotoband
+    foto={speakerconus}
+    hoogte="laag"
+    alt="Close-up van een speakerconus met de tweeter in het midden"
+    kop="Na dertig jaar is de schuimrand weg"
+    tekst="Geen risico maar een zekerheid. Het is ook meteen het goedkoopste dat je aan een klassieker kunt verbeteren."
+  />
+
+  <section>
+    <div class="wrap">
+      <h2>{OLDTIMER.aanpak.kop}</h2>
+      <div class="grid cols-2 mt">
+        {OLDTIMER.aanpak.punten.map((p) => (
+          <div class="belofte">
+            <h3>{p.kop}</h3>
+            <p>{p.tekst}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap">
+      <div class="twee-op-een-rij">
+        <div class="troef">
+          <span class="eyebrow">Waar de grens ligt</span>
+          <h2>{OLDTIMER.grens.kop}</h2>
+          <p>{OLDTIMER.grens.tekst}</p>
+        </div>
+        <div class="troef">
+          <span class="eyebrow">Altijd op maat</span>
+          <h2>{OLDTIMER.prijs.kop}</h2>
+          <p>{OLDTIMER.prijs.tekst}</p>
+          <a class="btn wa" href={SITE.whatsapp}>{CTA.knop}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>Veelgestelde vragen</h2>
+      <div class="mt">
+        {OLDTIMER.faq.map((f) => (
+          <details>
+            <summary>{f.q}</summary>
+            <p>{f.a}</p>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="alt center">
+    <div class="wrap">
+      <h2>Rijd je iets nieuwers?</h2>
+      <p style="margin:0 auto 2em;">
+        Voor auto's vanaf ongeveer 2010 hebben we vaste pakketten met vaste
+        prijzen, en voor veel modellen een eigen pagina.
+      </p>
+      <a class="btn" href={pad('/upgrades')}>Bekijk de pakketten</a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* Zelfde opzet als de troeven op de homepage: twee losse argumenten naast
+     elkaar, elk met een streep erboven. */
+  .twee-op-een-rij {
+    display: grid; gap: 34px;
+    grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+  }
+  .troef { border-top: 2px solid var(--accent); padding-top: 22px; }
+  .troef h2 { font-size: clamp(1.2rem, 3vw, 1.6rem); margin-top: .5em; }
+  .troef p { margin-top: 1em; }
+  .troef .btn { display: inline-block; margin-top: 1.6em; }
+
+  .belofte { border-top: 1px solid var(--line-strong); padding-top: 18px; }
+  .belofte h3 { margin-bottom: 12px; }
+  .belofte p { font-size: .94rem; }
+
+  .step h3 { margin-bottom: 10px; }
+</style>

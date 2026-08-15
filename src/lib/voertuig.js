@@ -126,6 +126,19 @@ function carrosserieSleutel(inrichting) {
 
 function leeftijdTekst(jaren, jaar) {
   if (jaren === null) return null;
+  /**
+   * Dertig jaar of ouder: dan is het een klassieker en geldt een ander
+   * verhaal. Geen vaste pakketten, wel een dashboard dat moet blijven zoals
+   * het is. Zie src/data/oldtimer.js.
+   */
+  if (jaren >= 30) {
+    return {
+      kop: `Klassieker uit ${jaar}`,
+      tekst:
+        'Bij een auto van deze leeftijd is de schuimrand rond de speakers gegarandeerd vergaan, en zat er af fabriek vrijwel geen demping in. Wij pakken dat aan zonder je dashboard aan te tasten: de originele radio blijft, en alles is terug te bouwen.',
+      link: { tekst: 'Lees wat we met klassiekers doen', naar: '/oldtimer-audio' },
+    };
+  }
   if (jaren >= 18) {
     return {
       kop: `${jaren} jaar oud`,

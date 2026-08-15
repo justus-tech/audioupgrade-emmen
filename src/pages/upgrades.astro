@@ -131,6 +131,7 @@ import { GARANTIE, CTA } from '../data/generiek.js';
   } from '../lib/match.js';
   import { kleurVan } from '../lib/kleuren.js';
   import { inzichten, kenmerken } from '../lib/voertuig.js';
+  import { pad } from '../lib/pad.js';
 
   const tabel = JSON.parse(document.getElementById('auto-tabel').textContent);
 
@@ -179,6 +180,16 @@ import { GARANTIE, CTA } from '../data/generiek.js';
       const tekst = document.createElement('span');
       tekst.textContent = punt.tekst;
       li.append(kop, tekst);
+
+      // Sommige inzichten wijzen door, bijvoorbeeld een klassieker naar de
+      // pagina over oude auto's. pad() zet de mapnaam ervoor als dat moet.
+      if (punt.link) {
+        const a = document.createElement('a');
+        a.href = pad(punt.link.naar);
+        a.textContent = punt.link.tekst + ' →';
+        a.className = 'inzicht-link';
+        li.append(a);
+      }
       lijst.append(li);
     }
 
@@ -289,6 +300,15 @@ import { GARANTIE, CTA } from '../data/generiek.js';
     font-weight: 500;
   }
   .inzichten :global(span) { font-size: .92rem; color: var(--text-dim); line-height: 1.6; }
+  .inzichten :global(.inzicht-link) {
+    display: inline-block; margin-top: 12px;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase; letter-spacing: .14em;
+    font-size: .7rem; color: var(--accent-text); text-decoration: none;
+  }
+  @media (hover: hover) {
+    .inzichten :global(.inzicht-link:hover) { text-decoration: underline; }
+  }
 
   .auto-figuur { margin: 0; }
 

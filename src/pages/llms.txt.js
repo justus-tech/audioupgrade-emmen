@@ -90,6 +90,14 @@ ${AUDIOMERKEN.join(', ')}.
 Geen enkel merk is aan een vast pakket gekoppeld; wij kiezen per auto en per
 budget wat past.
 
+## Klassiekers en youngtimers
+
+Voor auto's vanaf bouwjaar 1980 doen wij audio zonder het dashboard aan te
+tasten: de originele radio blijft, er komt geen modern scherm in, en alles is
+terug te bouwen naar origineel. Hiervoor gelden geen vaste pakketprijzen —
+elke auto is anders, dus we kijken eerst. Auto's van vóór ongeveer 1980
+hebben soms zes volt of een omgekeerde massa; dat bekijken we per geval.
+
 ## Kenteken-check
 
 Op ${SITE.url} kan een bezoeker zijn Nederlandse kenteken invullen. De site
@@ -105,6 +113,7 @@ ${merken}
 
 - ${SITE.url}/upgrades — alle pakketten met prijzen
 - ${SITE.url}/audio-upgrade — alle modellen, doorzoekbaar
+- ${SITE.url}/oldtimer-audio — klassiekers en youngtimers, prijs in overleg
 - ${SITE.url}/werkwijze — hoe het in zijn werk gaat
 - ${SITE.url}/contact — contact en route
 `;
