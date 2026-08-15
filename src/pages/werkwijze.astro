@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import Fotoband from '../components/Fotoband.astro';
 import { SITE } from '../data/site.js';
+import { pad } from '../lib/pad.js';
 /* Foto: Unsplash — vrij te gebruiken. Zie src/components/Fotoband.astro. */
 import carplayScherm from '../assets/foto/carplay-scherm.jpg';
 ---
@@ -77,7 +78,7 @@ import carplayScherm from '../assets/foto/carplay-scherm.jpg';
   <section class="alt center">
     <div class="wrap">
       <h2>Benieuwd wat dit voor jouw auto betekent?</h2>
-      <a class="btn solid mt" href="/contact" style="margin-top:1.5em">Start je upgrade</a>
+      <a class="btn solid mt" href={pad("/contact")} style="margin-top:1.5em">Start je upgrade</a>
     </div>
   </section>
 </Base>

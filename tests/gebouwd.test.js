@@ -342,6 +342,29 @@ describe('huisregels van Justus', alsGebouwd, () => {
     }
   });
 
+  test('interne links lopen via pad(), niet als kaal adres', () => {
+    // Op de voorbeeldsite staat de site in een map. Een link die "/upgrades"
+    // zegt komt daar op de wortel van github.io terecht en geeft een
+    // foutmelding. pad() zet de mapnaam ervoor. Deze test vangt het als er
+    // ooit weer een kaal adres in de bron sluipt.
+    const bronMap = fileURLToPath(new URL('../src/', import.meta.url));
+    const overtreders = [];
+
+    const loop = (map) => {
+      for (const naam of readdirSync(map)) {
+        const p = join(map, naam);
+        if (statSync(p).isDirectory()) { loop(p); continue; }
+        if (!naam.endsWith('.astro')) continue;
+        const tekst = readFileSync(p, 'utf8');
+        for (const m of tekst.matchAll(/href=(?:"|\{`)(\/[^"`{}]*)/g)) {
+          overtreders.push(`${relative(bronMap, p)}: href="${m[1]}"`);
+        }
+      }
+    };
+    loop(bronMap);
+    assert.deepEqual(overtreders, [], 'gebruik href={pad("/...")}');
+  });
+
   test('de kleuren komen uit brand.js en niet uit losse hexcodes', () => {
     // Uitzondering: de kentekenplaat en het logo. Dat zijn nagebootste
     // voorwerpen (geborsteld aluminium), geen vlakken van de site.

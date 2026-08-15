@@ -13,6 +13,7 @@ import { MERKEN_MET_MODELLEN as MERKEN } from '../../data/merken.js';
 import { modellenVanMerk } from '../../data/models.js';
 import { PACKAGES, SITE } from '../../data/site.js';
 import { GARANTIE, CTA } from '../../data/generiek.js';
+import { pad } from '../../lib/pad.js';
 
 export function getStaticPaths() {
   return MERKEN.map((merk) => ({ params: { slug: merk.slug }, props: { merk } }));
@@ -46,7 +47,7 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
         <p style="margin-bottom:2em">Elke pagina beschrijft wat er specifiek voor dat model mogelijk is.</p>
         <div class="grid cols-4">
           {modellen.map((m) => (
-            <a class="btn" href={`/audio-upgrade/${m.slug}`}>{m.model}</a>
+            <a class="btn" href={pad(`/audio-upgrade/${m.slug}`)}>{m.model}</a>
           ))}
         </div>
       </div>

@@ -1,8 +1,25 @@
-name: Deploy to GitHub Pages
+# Zet de site na elke wijziging op de voorbeeldplek van GitHub.
+#
+# Adres: https://justus-tech.github.io/audioupgrade-emmen
+#
+# WAAROM DIT ER IS
+# Een tunnel vanaf de laptop is weg zodra die laptop uit gaat. Dit blijft
+# staan, ook 's nachts, ook als iedereen slaapt. Handig om iets te laten zien
+# aan iemand die niet naast je zit.
+#
+# DIT IS NIET DE ECHTE SITE
+# De echte site staat nog op audioupgradeemmen.nl (de oude Squarespace-site).
+# Deze versie is met opzet onvindbaar gemaakt: elke pagina zegt "noindex" en
+# robots.txt zet alles op slot. Anders zou Google twee versies van dezelfde
+# teksten zien en zelf kiezen welke hij toont — en dat wil je niet.
+#
+# De schakelaar PUBLICEER_NAAR regelt dat. Zie astro.config.mjs.
+
+name: Voorbeeldsite publiceren
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -10,30 +27,33 @@ permissions:
   pages: write
   id-token: write
 
+# Eén tegelijk. Duw je twee wijzigingen snel achter elkaar, dan telt de
+# laatste en wordt de eerste afgebroken.
 concurrency:
-  group: 'pages'
+  group: pages
   cancel-in-progress: true
 
-env:
-  ASTRO_TELEMETRY_DISABLED: true
-
 jobs:
-  build:
-    name: Build Astro
+  bouwen:
+    name: Bouwen
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout your repository
-        uses: actions/checkout@v4
-      - name: Install, build, and upload Astro site
-        uses: withastro/action@v3
+      - uses: actions/checkout@v4
 
-  deploy:
-    needs: build
+      - uses: withastro/action@v3
+        env:
+          # Hiermee bouwt Astro voor het github.io-adres in plaats van voor
+          # het eigen domein: andere links, en onvindbaar voor Google.
+          PUBLICEER_NAAR: github
+          ASTRO_TELEMETRY_DISABLED: '1'
+
+  publiceren:
+    name: Publiceren
+    needs: bouwen
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.publiceren.outputs.page_url }}
     steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
+      - id: publiceren
         uses: actions/deploy-pages@v4

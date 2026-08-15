@@ -18,6 +18,7 @@
  */
 import { MODELS, merkSlug, modellenVanMerk } from '../data/models.js';
 import { MERKEN_MET_MODELLEN } from '../data/merken.js';
+import { pad } from '../lib/pad.js';
 
 const { open = false } = Astro.props;
 
@@ -53,11 +54,11 @@ const aantalModellen = MODELS.length;
         <ul>
           {m.modellen.map((mod) => (
             <li data-model={mod.model}>
-              <a href={`/audio-upgrade/${mod.slug}`}>{mod.model}</a>
+              <a href={pad(`/audio-upgrade/${mod.slug}`)}>{mod.model}</a>
             </li>
           ))}
           <li class="merk-alles">
-            <a href={`/merk/${m.slug}`}>Over {m.naam} →</a>
+            <a href={pad(`/merk/${m.slug}`)}>Over {m.naam} →</a>
           </li>
         </ul>
       </details>

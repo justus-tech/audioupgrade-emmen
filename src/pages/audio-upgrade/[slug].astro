@@ -15,6 +15,7 @@ import { MODELS, merkSlug } from '../../data/models.js';
 import { merkenPerSlug } from '../../data/merken.js';
 import { PACKAGES, SITE } from '../../data/site.js';
 import { GARANTIE, CTA, STANDAARD_PAKKETTEN } from '../../data/generiek.js';
+import { pad } from '../../lib/pad.js';
 
 export function getStaticPaths() {
   return MODELS.map((m) => ({ params: { slug: m.slug }, props: { model: m } }));
@@ -88,7 +89,7 @@ const dienstSchema = {
   <section>
     <div class="wrap">
       {merk
-        ? <a class="eyebrow eyebrow-link" href={`/merk/${merk.slug}`}>{model.brand} — alle modellen</a>
+        ? <a class="eyebrow eyebrow-link" href={pad(`/merk/${merk.slug}`)}>{model.brand} — alle modellen</a>
         : <span class="eyebrow">{model.brand}</span>}
       <h1>{model.model} audio upgrade</h1>
       {model.generaties && <p class="generaties">Voor {model.generaties}</p>}

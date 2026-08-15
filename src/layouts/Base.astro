@@ -3,9 +3,22 @@ import '../styles/global.css';
 import { SITE, PACKAGES } from '../data/site.js';
 import { BRAND, LICHT, cssThema } from '../data/brand.js';
 import Logo from '../components/Logo.astro';
+import { pad } from '../lib/pad.js';
 
 const { title, description, path = '/', noindex = false } = Astro.props;
-const canonical = new URL(path, Astro.site).href;
+/**
+ * Het volledige adres van deze pagina. pad() zet de mapnaam ervoor als de
+ * site op de voorbeeldplek staat; Astro.site levert het domein.
+ */
+const canonical = new URL(pad(path), Astro.site).href;
+
+/**
+ * Draait dit de voorbeeldsite op GitHub? Die mag NIET in Google komen: de
+ * echte site staat nog op het oude domein, en twee versies van dezelfde
+ * teksten laten Google kiezen welke hij toont. Dat wil je niet aan het
+ * toeval overlaten.
+ */
+const voorbeeld = String(Astro.site || '').includes('github.io');
 
 const nav = [
   { href: '/', label: 'Home' },
@@ -43,17 +56,17 @@ const nav = [
   <title>{title}</title>
   <meta name="description" content={description} />
   <link rel="canonical" href={canonical} />
-  {noindex && <meta name="robots" content="noindex, nofollow" />}
+  {(noindex || voorbeeld) && <meta name="robots" content="noindex, nofollow" />}
   <meta property="og:title" content={title} />
   <meta property="og:description" content={description} />
   <meta property="og:type" content="website" />
   <meta property="og:url" content={canonical} />
   <meta property="og:locale" content="nl_NL" />
-  <meta property="og:image" content={new URL('/og-image.png', Astro.site).href} />
+  <meta property="og:image" content={new URL(pad('/og-image.png'), Astro.site).href} />
   <meta property="og:image:alt" content="Audio Upgrade Emmen" />
   <meta name="twitter:card" content="summary_large_image" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="apple-touch-icon" href="/og-image.png" />
+  <link rel="icon" type="image/svg+xml" href={pad("/favicon.svg")} />
+  <link rel="apple-touch-icon" href={pad("/og-image.png")} />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -109,13 +122,13 @@ const nav = [
 <body>
   <header class="site">
     <div class="wrap">
-      <a class="logo" href="/" aria-label={`${SITE.name} — naar de homepage`}>
+      <a class="logo" href={pad("/")} aria-label={`${SITE.name} — naar de homepage`}>
         <Logo height={26} decoratief={true} />
         <span class="logo-text">Audio Upgrade <span>Emmen</span></span>
       </a>
       <nav class="main">
         {nav.map((item) => (
-          <a href={item.href} aria-current={path === item.href ? 'page' : undefined}>{item.label}</a>
+          <a href={pad(item.href)} aria-current={path === item.href ? 'page' : undefined}>{item.label}</a>
         ))}
       </nav>
 
@@ -267,13 +280,13 @@ const nav = [
       </div>
       <div>
         <a href={SITE.whatsapp}>Stuur foto dashboard</a><br />
-        <a href="/upgrades">Upgrades</a><br />
-        <a href="/audio-upgrade">Upgrade per automodel</a>
+        <a href={pad("/upgrades")}>Upgrades</a><br />
+        <a href={pad("/audio-upgrade")}>Upgrade per automodel</a>
       </div>
       <div class="legal">
-        <a href="/algemene-voorwaarden">Algemene voorwaarden</a><br />
-        <a href="/privacybeleid">Privacybeleid</a><br />
-        <a href="/cookiebeleid">Cookiebeleid</a><br />
+        <a href={pad("/algemene-voorwaarden")}>Algemene voorwaarden</a><br />
+        <a href={pad("/privacybeleid")}>Privacybeleid</a><br />
+        <a href={pad("/cookiebeleid")}>Cookiebeleid</a><br />
         <span class="legal-klein">
           KVK: {SITE.kvk} · Btw: {SITE.btw}<br />
           © {new Date().getFullYear()} {SITE.name}

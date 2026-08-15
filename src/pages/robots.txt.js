@@ -44,6 +44,21 @@ const AGENTS = [
 ];
 
 export async function GET() {
+  /**
+   * De voorbeeldsite op GitHub mag door niemand geïndexeerd worden. De echte
+   * site staat nog op het oude domein, en twee versies van dezelfde teksten
+   * laten Google kiezen welke hij toont. Dat wil je niet aan het toeval
+   * overlaten — dus voor de voorbeeldsite: alles op slot.
+   */
+  if (String(import.meta.env.SITE || '').includes('github.io')) {
+    return new Response(
+      '# Voorbeeldversie van audioupgradeemmen.nl — nog niet voor bezoekers.\n' +
+        '# De echte site staat op https://audioupgradeemmen.nl\n\n' +
+        'User-agent: *\nDisallow: /\n',
+      { headers: { 'Content-Type': 'text/plain; charset=utf-8' } }
+    );
+  }
+
   const regels = [
     '# Audio Upgrade Emmen — car audio, CarPlay en akoestische demping in Emmen (Drenthe)',
     '# Alles op deze site mag gelezen worden. Vragen? info@audioupgradeemmen.nl',
