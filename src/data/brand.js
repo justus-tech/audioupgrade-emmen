@@ -61,6 +61,13 @@ export const BRAND = {
   tekenDiep: 'rgba(18, 18, 18, .8)',
   tekenGloed: '.22',
   tekstOpFoto: PALETTE.white,
+  /**
+   * De balkjes in de geluidsgolf van de homepage. De doorzichtigheid zit
+   * hier ín de kleur en niet in de CSS, want de twee standen hebben er een
+   * andere waarde voor nodig: wit op zwart komt veel harder aan dan oranje
+   * op wit, dus mag het daar zachter.
+   */
+  golfBalk: 'rgba(245, 245, 245, .5)',
 };
 
 /**
@@ -106,6 +113,9 @@ export const LICHT = {
   // Een foto blijft donker, ook in de lichte stand. De tekst erop dus ook
   // altijd licht — anders staat er zwart op zwart.
   tekstOpFoto: PALETTE.white,
+  // Zie de donkere stand: daar is dit wit, hier het merkoranje. Dit is een
+  // vlakje en geen tekst, dus hier mag gewoon #ff5e1f staan.
+  golfBalk: 'rgba(255, 94, 31, .62)',
 };
 
 /** Voor terugwaartse compatibiliteit met code die LINES importeert. */
@@ -136,6 +146,7 @@ function naarVariabelen(set) {
     `--korrel: ${set.korrel}`,
     `--teken-lijn: ${set.tekenLijn}`,
     `--teken-vlak: ${set.tekenVlak}`,
+    `--golf-balk: ${set.golfBalk}`,
     `--teken-vul: ${set.tekenVul}`,
     `--teken-diep: ${set.tekenDiep}`,
     `--teken-gloed: ${set.tekenGloed}`,

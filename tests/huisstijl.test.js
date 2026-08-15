@@ -47,7 +47,7 @@ describe('de twee standen', () => {
     'bg', 'bgAlt', 'panel', 'text', 'textDim', 'accent', 'accentInk',
     'accentText', 'line', 'lineStrong', 'schaduw', 'korrel',
     'tekenLijn', 'tekenVlak', 'tekenVul', 'tekenDiep', 'tekenGloed',
-    'tekstOpFoto',
+    'tekstOpFoto', 'golfBalk',
   ];
 
   test('beide standen vullen exact dezelfde rollen in', () => {

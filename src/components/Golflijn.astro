@@ -30,10 +30,19 @@ const BREEDTE = 1160;
 const HOOGTE = 120;
 const MIDDEN = HOOGTE / 2;
 const PUNTEN = 96;
-const BALKEN = 74;
+const BALKEN = 132;
 
+/**
+ * Veel dunne streepjes in plaats van weinig dikke. Dat leest als een
+ * spectrum op een versterker; brede balken lezen als een grafiek.
+ *
+ * De ondergrens van 1 is er voor de telefoon: het tekenvlak is 1160 breed
+ * en wordt op een klein scherm naar ongeveer 390 geperst, dus alles wordt
+ * daar bijna drie keer zo dun. Zonder ondergrens verdwijnen de balkjes
+ * daar in het niets, en dat is nét het scherm waar bijna iedereen kijkt.
+ */
 const vakBreedte = BREEDTE / BALKEN;
-const balkDikte = Math.max(2, vakBreedte * 0.34);
+const balkDikte = Math.max(1, vakBreedte * 0.3);
 
 /** Lage toon: één grondtoon met twee zwakke boventonen. */
 function golf(u, t) {
@@ -251,12 +260,11 @@ const xVan = (i) => ((i / (PUNTEN - 1)) * BREEDTE).toFixed(1);
   /* Volle staven. De uitknipvorm bepaalt hoeveel je ervan ziet, dus ze
      eindigen altijd precies op de lijn.
 
-     Grijs, niet oranje. Toen de balken ook oranje waren, streden ze met de
-     lijn om je aandacht en werd het één oranje vlek. Nu is de lijn de vorm
-     die je ziet en zijn de balken de vulling erachter. --text-dim werkt in
-     beide standen: licht grijs op de donkere achtergrond, donker grijs op
-     de witte. */
-  .golf-balken rect { fill: var(--text-dim); opacity: .34; }
+     De kleur wisselt met de stand: wit op de donkere achtergrond, oranje op
+     de witte. Zie --golf-balk in brand.js. Geen opacity hier, want die zit
+     in de kleur zelf — de twee standen hebben er een andere waarde voor
+     nodig. */
+  .golf-balken rect { fill: var(--golf-balk); }
 
   .golflijn path {
     fill: none;
