@@ -8,7 +8,7 @@ import Fotoband from '../components/Fotoband.astro';
 /* Foto: Unsplash — vrij te gebruiken. Zie src/components/Fotoband.astro. */
 import deurspeaker from '../assets/foto/deurspeaker.jpg';
 import { PACKAGES, SITE } from '../data/site.js';
-import { ONTZORGEN, DEMO } from '../data/generiek.js';
+import { ONTZORGEN } from '../data/generiek.js';
 import { pad } from '../lib/pad.js';
 
 const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
@@ -84,24 +84,16 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
     </div>
   </section>
 
-  {/* De twee bezwaren die mensen tegenhouden: "ik kan mijn auto niet missen"
-      en "ik weet niet of ik het verschil hoor". Allebei stonden ze op de oude
-      site, en allebei zijn ze onderscheidend genoeg om op de homepage te
-      staan in plaats van weggestopt op /contact. */}
+  {/* Het bezwaar dat mensen het vaakst tegenhoudt: "ik kan mijn auto een dag
+      niet missen". Stond eerst naast een blok over een demobus, maar die is
+      er niet — zie de opmerking in src/data/generiek.js. */}
   <section class="alt">
     <div class="wrap">
-      <div class="grid cols-2">
-        <div class="troef">
-          <span class="eyebrow">Aan huis of op kantoor</span>
-          <h2>{ONTZORGEN.kop}</h2>
-          <p>{ONTZORGEN.tekst}</p>
-        </div>
-        <div class="troef">
-          <span class="eyebrow">Onze VW T6-demobus</span>
-          <h2>{DEMO.kop}</h2>
-          <p>{DEMO.tekst}</p>
-          <a class="btn" href={pad("/contact")}>{DEMO.knop}</a>
-        </div>
+      <div class="troef troef-breed">
+        <span class="eyebrow">Binnen 15 km rond Emmen</span>
+        <h2>{ONTZORGEN.kop}</h2>
+        <p>{ONTZORGEN.tekst}</p>
+        <a class="btn" href={pad("/contact")}>Plan je afspraak</a>
       </div>
     </div>
   </section>
@@ -140,6 +132,9 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
   .troef h2 { font-size: clamp(1.3rem, 3.4vw, 1.75rem); margin-top: .5em; }
   .troef p { margin-top: 1em; }
   .troef .btn { display: inline-block; margin-top: 1.6em; }
+  /* Eén troef in plaats van twee: dan mag hij de volle breedte hebben, maar
+     de tekst blijft leesbaar smal. */
+  .troef-breed { max-width: 70ch; }
 
   @media (max-width: 700px) {
     .hero { min-height: 72vh; padding-bottom: 150px; }

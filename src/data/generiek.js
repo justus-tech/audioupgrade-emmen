@@ -58,22 +58,17 @@ export const VAKMANSCHAP = [
 ];
 
 /**
- * Twee argumenten die op de oude site stonden en die je nergens anders vindt
- * in deze branche. Ze horen op de homepage, want ze nemen precies de twee
- * bezwaren weg die mensen tegenhouden: "ik kan mijn auto niet missen" en
- * "ik weet niet of ik het verschil hoor".
+ * Het bezwaar dat mensen het vaakst tegenhoudt: "ik kan mijn auto een dag
+ * niet missen". Daar hebben we een antwoord op, en dat hoort op de homepage.
+ *
+ * LET OP wat hier NIET staat: wij halen geen auto's op. De klant brengt hem
+ * zelf. Op de oude site stond wél dat we haalden en brachten; dat klopte niet
+ * meer en is eruit. Alles hieronder is met Justus doorgenomen.
  */
 export const ONTZORGEN = {
-  kop: 'Je tijd is kostbaar. Wij ontzorgen volledig.',
+  kop: 'Je hoeft niet te wachten.',
   tekst:
-    'Je hebt wel iets beters te doen dan uren in een wachtruimte zitten. Wij bouwen het audiosysteem in op locatie, terwijl jij thuis of op kantoor gewoon doorwerkt. Liever halen en brengen? Ook goed. Wij halen je auto \'s ochtends op en zetten hem aan het eind van de dag volledig afgesteld en getuned weer voor de deur.',
-};
-
-export const DEMO = {
-  kop: 'Eerst horen, dan pas beslissen.',
-  tekst:
-    'In onze VW T6-demobus hoor je het verschil tussen de pakketten met je eigen muziek. Vrijblijvend, en je weet meteen waar je je geld aan uitgeeft.',
-  knop: 'Boek een luisterdemo',
+    'Je brengt je auto naar de Charles Darwinstraat en wij gaan aan de slag. Blijft hij een dag staan, dan brengen we je gewoon thuis — tot vijftien kilometer rond Emmen. Aan het eind van de dag halen we je weer op, of kom je zelf langs. Kleinere klussen kunnen in overleg ook bij jou op de oprit.',
 };
 
 /** De afsluitende oproep onderaan elke modelpagina. */
@@ -95,4 +90,4 @@ export const STANDAARD_PAKKETTEN = [
   'reference-edition',
 ];
 
-export default { GARANTIE, WERKWIJZE, VAKMANSCHAP, ONTZORGEN, DEMO, CTA, STANDAARD_PAKKETTEN };
+export default { GARANTIE, WERKWIJZE, VAKMANSCHAP, ONTZORGEN, CTA, STANDAARD_PAKKETTEN };

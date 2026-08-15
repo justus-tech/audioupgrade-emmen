@@ -17,7 +17,7 @@
 import { MODELS } from '../data/models.js';
 import { MERKEN_MET_MODELLEN } from '../data/merken.js';
 import { PACKAGES, SITE, ADRES, AUDIOMERKEN } from '../data/site.js';
-import { GARANTIE, WERKWIJZE, ONTZORGEN, DEMO } from '../data/generiek.js';
+import { GARANTIE, WERKWIJZE, ONTZORGEN } from '../data/generiek.js';
 
 export async function GET() {
   const pakketten = PACKAGES.map(
@@ -82,7 +82,6 @@ ${GARANTIE.tekst}
 
 ${ONTZORGEN.tekst}
 
-${DEMO.tekst}
 
 ## Merken waar wij mee werken
 
@@ -107,7 +106,7 @@ ${merken}
 - ${SITE.url}/upgrades — alle pakketten met prijzen
 - ${SITE.url}/audio-upgrade — alle modellen, doorzoekbaar
 - ${SITE.url}/werkwijze — hoe het in zijn werk gaat
-- ${SITE.url}/contact — contact, route en luisterdemo
+- ${SITE.url}/contact — contact en route
 `;
 
   return new Response(tekst, {
