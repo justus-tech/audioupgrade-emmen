@@ -67,7 +67,7 @@ export const BRAND = {
    * andere waarde voor nodig: wit op zwart komt veel harder aan dan oranje
    * op wit, dus mag het daar zachter.
    */
-  golfBalk: 'rgba(245, 245, 245, .5)',
+  golfBalk: 'rgba(245, 245, 245, .92)',
 };
 
 /**
