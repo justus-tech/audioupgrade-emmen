@@ -149,7 +149,9 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
   .troef-breed { max-width: 70ch; }
 
   @media (max-width: 700px) {
-    .hero { min-height: 72vh; padding-bottom: 150px; }
+    /* Ruimte voor de frequentiecurve eronder. Met minder liep de bewijsregel
+       ("all-in prijzen · inbouw in één dag") dwars over de curve heen. */
+    .hero { min-height: 72vh; padding-bottom: 178px; }
     .hero-knoppen { flex-direction: column; }
     .hero-bewijs { letter-spacing: .16em; line-height: 2; }
   }

@@ -1,87 +1,100 @@
 ---
 /**
- * De geluidsgolf onderin de hero van de homepage.
+ * De frequentiecurve onderin de hero van de homepage.
  *
- * HOE HET IS OPGEBOUWD
+ * WAAROM DIT, EN NIET EEN GOLF
+ * Hier stond eerst een geluidsgolf. Die zag er goed uit, maar hij paste niet
+ * bij de rest: deze site is hoekig en technisch — rechte lijnen, hoofdletters,
+ * gesoldeerd, CNC-gefreesd, ingemeten. Een zachte slingerende golf is het
+ * tegenovergestelde daarvan, en het is bovendien wat iedere audiosite doet.
  *
- *   De omtrek   Twee lijnen: eentje boven de middenlijn en zijn spiegelbeeld
- *               eronder. Samen vormen ze de vorm van de golf.
- *   De balken   Staan er ín, en worden door die vorm afgeknipt. Zo lopen ze
- *               precies tot aan de lijn en niet erdoorheen. Dat gebeurt met
- *               een uitknipvorm (clipPath): de balken zijn gewoon volle
- *               staven, en de golf bepaalt wat je ervan ziet.
+ * Dit is het beeld waar Justus dagelijks naar kijkt als hij een auto inmeet:
+ * een frequentiecurve op een logaritmische schaal. Het vertelt meteen het hele
+ * verhaal van de site, zonder één woord:
  *
- * WAAROM HIJ ZO TRAAG IS
- * Dit moet duur ogen, en duur is traag. Alles wat schokt of tikt haalt de
- * rust eruit, dus er zit geen enkele klap of aanzet meer in: de golf schuift,
- * hij beweegt niet op de maat. Eerder liep hier een hartslag van 92 slagen
- * per minuut doorheen met een aanzwellende kick. Dat was herkenbaar als
- * muziek, maar het maakte het beeld onrustig — je oog bleef eraan haken.
+ *   De grijze lijn   het fabriekssysteem. Geen bas, een bult in de midbas, een
+ *                    gat in het midden en een schelle piek rond 3,5 kHz. Precies
+ *                    waarom het "blikkerig" klinkt.
+ *   De oranje lijn   na de DSP-tuning. Vlak waar het vlak hoort, met een lift
+ *                    onderin en een zachte afbouw bovenin.
  *
- * DRIE DINGEN DIE HET VLOEIEND HOUDEN
+ * De grijze lijn trilt licht, zoals een echte meting doet. De oranje ligt bijna
+ * stil — dat verschil ís de boodschap. Alles beweegt traag; er zit geen tik of
+ * aanzet in.
  *
- *   1. Lange golven. Drie sinussen met verhoudingen die niet op elkaar
- *      uitkomen (1 : 1,73 : 2,59). Daardoor herhaalt het patroon zich pas na
- *      minuten en zie je nooit dat het rondjes draait.
- *   2. Traag verloop. De tijdfactoren zijn ruim vier keer zo klein als eerst.
- *      Eén ervan loopt achteruit, zodat de golven dóór elkaar heen schuiven
- *      in plaats van als een blok op te schuiven.
- *   3. Ademen in plaats van slaan. De hoogte zwelt op een cyclus van rond de
- *      dertig seconden. Geen aanzet, geen terugval — alleen een lange haal.
+ * DIT IS EEN SCHETS, GEEN METING
+ * De curves komen uit een formule, niet uit een meetmicrofoon in een
+ * bestaande auto. Het is een illustratie van het principe, zoals de tekeningen
+ * bij de pakketten dat ook zijn.
  *
- * Er speelt geen echt geluid; dit is een model. De animatie stopt zodra hij
- * uit beeld is of het tabblad naar de achtergrond gaat, en bij "verminder
- * beweging" blijft alles stilstaan op de vorm die de server al meestuurt.
+ * De animatie stopt zodra hij uit beeld is of het tabblad naar de achtergrond
+ * gaat, en bij "verminder beweging" blijft alles stilstaan op de vorm die de
+ * server al meestuurt.
  */
 const BREEDTE = 1160;
 const HOOGTE = 120;
-const MIDDEN = HOOGTE / 2;
+const PUNTEN = 190;
+
+/** Het venster in decibel dat we in beeld brengen. */
+const DB_MAX = 7;
+const DB_MIN = -11;
+
+/** Van decibel naar een y op het tekenvlak. */
+const naarY = (db) => ((DB_MAX - db) / (DB_MAX - DB_MIN)) * HOOGTE;
 
 /**
- * Meer punten dan je nodig zou denken. De bochten worden berekend tussen
- * opeenvolgende punten, dus hoe meer punten, hoe ronder de lijn. Bij 96 was
- * op een breed scherm nog te zien dat een golftop uit rechte stukjes bestond.
+ * De horizontale as loopt van 20 Hz tot 20 kHz, logaritmisch — zoals elke
+ * frequentiegrafiek. Elke octaaf krijgt daardoor evenveel ruimte, en dat is
+ * ook hoe je oor het hoort: van 100 naar 200 Hz is net zo'n grote stap als
+ * van 1000 naar 2000.
  */
-const PUNTEN = 170;
-const BALKEN = 132;
+const u10 = Math.log10(20);
+const naarU = (hz) => (Math.log10(hz) - u10) / 3;
 
-const vakBreedte = BREEDTE / BALKEN;
-const balkDikte = Math.max(1, vakBreedte * 0.3);
+/** De rasterlijnen: één per octaaf. */
+const OCTAVEN = [31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
 
-/** Drie lange golven die langzaam door elkaar heen schuiven. */
-function golf(u, t) {
+/** Een klokvorm rond `mid`. Zo werkt een filter ook: één bult, één dip. */
+const bel = (u, mid, breedte) => Math.exp(-(((u - mid) / breedte) ** 2));
+
+/** Het fabriekssysteem: overal iets, nergens goed. */
+function fabriek(u, t) {
   return (
-    0.64 * Math.sin(u * 6.6 + t * 0.22) +
-    0.24 * Math.sin(u * 11.4 - t * 0.15 + 1.3) +
-    0.12 * Math.sin(u * 17.1 + t * 0.09 + 2.6)
+    -0.8 +
+    -7.2 * bel(u, 0.155, 0.115) + // geen bas onderin
+    2.6 * bel(u, 0.333, 0.062) + // bult in de midbas: boemerig
+    -3.0 * bel(u, 0.47, 0.075) + // gat in het midden: stemmen ver weg
+    5.0 * bel(u, 0.752, 0.085) * (1 + 0.06 * Math.sin(t * 0.23)) + // schel
+    -2.2 * bel(u, 0.88, 0.065) +
+    -6.0 * bel(u, 1.02, 0.105) + // de top valt weg
+    // Meetruis. Traag driftend, want een echte meting staat nooit helemaal
+    // stil — en juist dat maakt het verschil met de lijn eronder zichtbaar.
+    0.4 * Math.sin(u * 29 + t * 0.6) +
+    0.25 * Math.sin(u * 47 - t * 0.45 + 1.2)
   );
 }
 
-/** Dooft uit naar beide randen, zodat de golf niet afgekapt lijkt. */
-function omhulsel(u) {
-  return Math.pow(Math.sin(u * Math.PI), 0.55);
+/** Na de tuning: vlak waar het vlak hoort. */
+function ingemeten(u, t) {
+  return (
+    0.2 +
+    4.2 * bel(u, 0.118, 0.15) + // lift onderin, waar een auto om vraagt
+    0.9 * bel(u, 0.69, 0.15) + // klein beetje aanwezigheid
+    -2.4 * bel(u, 1.02, 0.13) + // zachte afbouw bovenin
+    0.1 * Math.sin(u * 19 + t * 0.28) // vrijwel stil: hij is afgestemd
+  );
 }
 
-/**
- * Hoe hoog de golf op dit moment staat. Twee trage cycli over elkaar heen,
- * zodat opzwellen en wegzakken nooit precies hetzelfde aanvoelen.
- */
-function ademhaling(t) {
-  return 0.62 + 0.14 * Math.sin(t * 0.19) + 0.06 * Math.sin(t * 0.115 + 2.1);
-}
-
-/** De y-waarden van de bovenrand, van links naar rechts. */
-function bovenrand(t, sterkte) {
+/** De y-waarden van een curve, van links naar rechts. */
+function curve(fn, t) {
   const y = [];
-  for (let i = 0; i < PUNTEN; i++) {
-    const u = i / (PUNTEN - 1);
-    y.push(MIDDEN - Math.abs(golf(u, t)) * omhulsel(u) * sterkte * MIDDEN);
-  }
+  for (let i = 0; i < PUNTEN; i++) y.push(naarY(fn(i / (PUNTEN - 1), t)));
   return y;
 }
 
 /** Vloeiend pad door een reeks y-waarden, met bochten in plaats van knikken. */
-function pad(ys, x) {
+function pad(ys) {
+  const x = (i) => ((i / (PUNTEN - 1)) * BREEDTE).toFixed(1);
   let d = `M${x(0)} ${ys[0].toFixed(1)}`;
   for (let i = 1; i < ys.length - 1; i++) {
     const mx = (Number(x(i)) + Number(x(i + 1))) / 2;
@@ -91,47 +104,46 @@ function pad(ys, x) {
   return d + `L${x(ys.length - 1)} ${ys[ys.length - 1].toFixed(1)}`;
 }
 
-/**
- * De uitknipvorm: langs de bovenrand naar rechts, en langs de onderrand
- * weer terug. Alles wat de balken buiten deze vorm doen, valt weg.
- */
-function maskerPad(boven) {
-  const x = (i) => ((i / (PUNTEN - 1)) * BREEDTE).toFixed(1);
-  const onder = boven.map((y) => MIDDEN + (MIDDEN - y));
-  const heen = pad(boven, x);
-  const terug = pad([...onder].reverse(), (i) => x(PUNTEN - 1 - i));
-  return `${heen} ${terug.replace(/^M/, 'L')} Z`;
-}
+/** Hetzelfde pad, maar dichtgemaakt tot onder aan het vlak. */
+const vlak = (ys) => `${pad(ys)} L${BREEDTE} ${HOOGTE} L0 ${HOOGTE} Z`;
 
-/* Dezelfde stand als waar het script op t=0 mee begint, anders verspringt de
-   golf op het moment dat de animatie het overneemt. */
-const startBoven = bovenrand(0, ademhaling(0));
-const startOnder = startBoven.map((y) => MIDDEN + (MIDDEN - y));
-const xVan = (i) => ((i / (PUNTEN - 1)) * BREEDTE).toFixed(1);
+const startFabriek = curve(fabriek, 0);
+const startNa = curve(ingemeten, 0);
 ---
-<div class="golflijn" aria-hidden="true">
-  <svg viewBox={`0 0 ${BREEDTE} ${HOOGTE}`} preserveAspectRatio="none">
+<div class="golflijn">
+  <svg viewBox={`0 0 ${BREEDTE} ${HOOGTE}`} preserveAspectRatio="none" aria-hidden="true">
     <defs>
-      <clipPath id="golf-masker" clipPathUnits="userSpaceOnUse">
-        <path id="golf-masker-pad" d={maskerPad(startBoven)} />
-      </clipPath>
+      {/* Geeft de oranje lijn gewicht zonder hem zwaar te maken. */}
+      <linearGradient id="curve-vulling" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" style="stop-color: var(--accent); stop-opacity: .20" />
+        <stop offset="100%" style="stop-color: var(--accent); stop-opacity: 0" />
+      </linearGradient>
     </defs>
 
-    {/* Volle staven; de uitknipvorm hierboven bepaalt wat je ervan ziet. */}
-    <g class="golf-balken" clip-path="url(#golf-masker)">
-      {Array.from({ length: BALKEN }, (_, i) => (
-        <rect
-          x={(i * vakBreedte + (vakBreedte - balkDikte) / 2).toFixed(2)}
-          y="0"
-          width={balkDikte.toFixed(2)}
-          height={HOOGTE}
+    <g class="raster">
+      {OCTAVEN.map((hz) => (
+        <line
+          x1={(naarU(hz) * BREEDTE).toFixed(1)}
+          y1="0"
+          x2={(naarU(hz) * BREEDTE).toFixed(1)}
+          y2={HOOGTE}
         />
       ))}
+      {/* De nullijn: precies vlak. Daar streven we naar. */}
+      <line class="nullijn" x1="0" y1={naarY(0)} x2={BREEDTE} y2={naarY(0)} />
     </g>
 
-    <path class="lijn-boven" d={pad(startBoven, xVan)} />
-    <path class="lijn-onder" d={pad(startOnder, xVan)} />
+    <path class="curve-vlak" d={vlak(startNa)} />
+    <path class="curve-fabriek" d={pad(startFabriek)} />
+    <path class="curve-na" d={pad(startNa)} />
   </svg>
+
+  {/* Echte tekst, geen plaatje: dit is het enige stukje van de tekening dat
+      iets beweert, dus het moet ook voorleesbaar zijn. */}
+  <p class="curve-legenda">
+    <span class="was">Fabriekssysteem</span>
+    <span class="wordt">Na DSP-tuning</span>
+  </p>
 </div>
 
 <script>
@@ -140,44 +152,59 @@ const xVan = (i) => ((i / (PUNTEN - 1)) * BREEDTE).toFixed(1);
 
   if (vak && !stil) {
     const BREEDTE = 1160;
-    const MIDDEN = 60;
-    const PUNTEN = 170;
+    const HOOGTE = 120;
+    const PUNTEN = 190;
+    const DB_MAX = 7;
+    const DB_MIN = -11;
 
-    const maskerPadEl = vak.querySelector('#golf-masker-pad');
-    const lijnBoven = vak.querySelector('.lijn-boven');
-    const lijnOnder = vak.querySelector('.lijn-onder');
+    /* Deze formules moeten gelijk blijven aan die in de frontmatter hierboven.
+       Lopen ze uiteen, dan springt de tekening zichtbaar op het moment dat het
+       script de door de server getekende curve overneemt. */
+    const naarY = (db) => ((DB_MAX - db) / (DB_MAX - DB_MIN)) * HOOGTE;
+    const bel = (u, mid, breedte) => Math.exp(-(((u - mid) / breedte) ** 2));
 
-    /* Deze drie moeten gelijk blijven aan de versie in de frontmatter
-       hierboven. Lopen ze uiteen, dan springt de golf zichtbaar op het moment
-       dat het script de door de server getekende vorm overneemt. */
-    const golf = (u, t) =>
-      0.64 * Math.sin(u * 6.6 + t * 0.22) +
-      0.24 * Math.sin(u * 11.4 - t * 0.15 + 1.3) +
-      0.12 * Math.sin(u * 17.1 + t * 0.09 + 2.6);
+    const fabriek = (u, t) =>
+      -0.8 +
+      -7.2 * bel(u, 0.155, 0.115) +
+      2.6 * bel(u, 0.333, 0.062) +
+      -3.0 * bel(u, 0.47, 0.075) +
+      5.0 * bel(u, 0.752, 0.085) * (1 + 0.06 * Math.sin(t * 0.23)) +
+      -2.2 * bel(u, 0.88, 0.065) +
+      -6.0 * bel(u, 1.02, 0.105) +
+      0.4 * Math.sin(u * 29 + t * 0.6) +
+      0.25 * Math.sin(u * 47 - t * 0.45 + 1.2);
 
-    const omhulsel = (u) => Math.pow(Math.sin(u * Math.PI), 0.55);
+    const ingemeten = (u, t) =>
+      0.2 +
+      4.2 * bel(u, 0.118, 0.15) +
+      0.9 * bel(u, 0.69, 0.15) +
+      -2.4 * bel(u, 1.02, 0.13) +
+      0.1 * Math.sin(u * 19 + t * 0.28);
 
-    const ademhaling = (t) =>
-      0.62 + 0.14 * Math.sin(t * 0.19) + 0.06 * Math.sin(t * 0.115 + 2.1);
+    const vlakFabriek = vak.querySelector('.curve-fabriek');
+    const vlakNa = vak.querySelector('.curve-na');
+    const vulling = vak.querySelector('.curve-vlak');
 
-    // Vooraf uitgerekend: dit verandert nooit.
+    // De x-waarden veranderen nooit, dus die rekenen we één keer uit.
     const xen = [];
-    const omhulsels = [];
     for (let i = 0; i < PUNTEN; i++) {
-      const u = i / (PUNTEN - 1);
-      xen.push((u * BREEDTE).toFixed(1));
-      omhulsels.push(omhulsel(u));
+      xen.push(((i / (PUNTEN - 1)) * BREEDTE).toFixed(1));
     }
 
-    /** Vloeiend pad door y-waarden; xi geeft de x bij index i. */
-    function pad(ys, xi) {
-      let d = `M${xi(0)} ${ys[0].toFixed(1)}`;
+    function pad(ys) {
+      let d = `M${xen[0]} ${ys[0].toFixed(1)}`;
       for (let i = 1; i < ys.length - 1; i++) {
-        const mx = (Number(xi(i)) + Number(xi(i + 1))) / 2;
+        const mx = (Number(xen[i]) + Number(xen[i + 1])) / 2;
         const my = (ys[i] + ys[i + 1]) / 2;
-        d += `Q${xi(i)} ${ys[i].toFixed(1)} ${mx.toFixed(1)} ${my.toFixed(1)}`;
+        d += `Q${xen[i]} ${ys[i].toFixed(1)} ${mx.toFixed(1)} ${my.toFixed(1)}`;
       }
-      return d + `L${xi(ys.length - 1)} ${ys[ys.length - 1].toFixed(1)}`;
+      return d + `L${xen[ys.length - 1]} ${ys[ys.length - 1].toFixed(1)}`;
+    }
+
+    function curve(fn, t) {
+      const y = [];
+      for (let i = 0; i < PUNTEN; i++) y.push(naarY(fn(i / (PUNTEN - 1), t)));
+      return y;
     }
 
     let tijd = 0;
@@ -185,37 +212,20 @@ const xVan = (i) => ((i / (PUNTEN - 1)) * BREEDTE).toFixed(1);
     let loopt = false;
     let frame = 0;
 
-    const xi = (i) => xen[i];
-    const xiOmgekeerd = (i) => xen[PUNTEN - 1 - i];
-
     function stap(nu) {
       if (!loopt) return;
       /* Bovengrens op de stap: komt het tabblad terug na een minuut, dan mag
-         de golf niet in één klap die hele minuut inhalen. */
+         de meting niet in één klap die hele minuut inhalen. */
       const dt = Math.min(0.05, (nu - vorig) / 1000 || 0.016);
       vorig = nu;
       tijd += dt;
 
-      const hoogte = ademhaling(tijd);
+      const na = curve(ingemeten, tijd);
+      const padNa = pad(na);
 
-      /* Eén berekening voor alles: de omtrek én de uitknipvorm komen hieruit,
-         dus de balken kunnen nooit uit de pas lopen met de lijn. */
-      const boven = [];
-      const onder = [];
-      for (let i = 0; i < PUNTEN; i++) {
-        const u = i / (PUNTEN - 1);
-        const a = Math.abs(golf(u, tijd)) * omhulsels[i] * hoogte * MIDDEN;
-        boven.push(MIDDEN - a);
-        onder.push(MIDDEN + a);
-      }
-
-      const padBoven = pad(boven, xi);
-      lijnBoven.setAttribute('d', padBoven);
-      lijnOnder.setAttribute('d', pad(onder, xi));
-      maskerPadEl.setAttribute(
-        'd',
-        `${padBoven} ${pad([...onder].reverse(), xiOmgekeerd).replace(/^M/, 'L')} Z`
-      );
+      vlakFabriek.setAttribute('d', pad(curve(fabriek, tijd)));
+      vlakNa.setAttribute('d', padNa);
+      vulling.setAttribute('d', `${padNa} L${BREEDTE} ${HOOGTE} L0 ${HOOGTE} Z`);
 
       frame = requestAnimationFrame(stap);
     }
@@ -251,9 +261,9 @@ const xVan = (i) => ((i / (PUNTEN - 1)) * BREEDTE).toFixed(1);
   .golflijn {
     position: absolute;
     inset: auto 0 0 0;
-    /* Meelopen met de tekstbreedte in plaats van rand tot rand. Op een breed
-       scherm werden de golven anders zo ver uitgerekt dat er van de vorm
-       niets overbleef. */
+    /* Meelopen met de tekstbreedte in plaats van rand tot rand. Over de volle
+       breedte van een groot scherm wordt de curve zo ver uitgerekt dat de
+       vorm verdwijnt. */
     max-width: var(--max);
     margin-inline: auto;
     height: clamp(130px, 21vh, 210px);
@@ -261,34 +271,68 @@ const xVan = (i) => ((i / (PUNTEN - 1)) * BREEDTE).toFixed(1);
   }
   .golflijn svg { width: 100%; height: 100%; display: block; }
 
-  /* Volle staven. De uitknipvorm bepaalt hoeveel je ervan ziet, dus ze
-     eindigen altijd precies op de lijn.
-
-     De kleur wisselt met de stand: wit op de donkere achtergrond, oranje op
-     de witte. Zie --golf-balk in brand.js. Geen opacity hier, want die zit
-     in de kleur zelf — de twee standen hebben er een andere waarde voor
-     nodig. */
-  .golf-balken rect { fill: var(--golf-balk); }
-
-  /* Op een telefoon wordt het tekenvlak van 1160 naar zo'n 390 geperst. De
-     132 balken staan dan nog geen drie pixels uit elkaar en lopen visueel
-     dicht tot één grijs vlak. Elke tweede weglaten geeft ze weer lucht,
-     zonder dat er iets herberekend hoeft te worden: dezelfde tekening, half
-     zo veel streepjes. */
-  @media (max-width: 700px) {
-    .golf-balken rect:nth-child(even) { display: none; }
+  /* Het raster: één streep per octaaf, net zichtbaar. Het moet aanvoelen als
+     millimeterpapier onder de meting, niet als een tabel. */
+  .raster line {
+    stroke: var(--line);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
   }
+  .raster .nullijn { stroke: var(--line-strong); stroke-dasharray: 3 5; }
 
   .golflijn path {
     fill: none;
-    stroke: var(--accent);
     stroke-linecap: round;
     stroke-linejoin: round;
-    /* Zonder dit wordt de lijn op een breed scherm een haardun draadje en op
+    /* Zonder dit wordt een lijn op een breed scherm een haardun draadje en op
        een telefoon een dikke worst. */
     vector-effect: non-scaling-stroke;
   }
-  .lijn-boven { stroke-width: 2.2; opacity: .92; }
-  /* De onderrand iets zachter: dan blijft de bovenkant de hoofdlijn. */
-  .lijn-onder { stroke-width: 1.6; opacity: .5; }
+
+  /* Moet .golflijn erbij hebben. Zonder dat wint de regel hierboven — die is
+     een klasse plus een element en dus specifieker — en blijft het vlak leeg. */
+  .golflijn .curve-vlak { fill: url(#curve-vulling); stroke: none; }
+
+  /* De fabriek: dun en grijs. Aanwezig, maar duidelijk niet de hoofdrol. */
+  .curve-fabriek { stroke: var(--text-dim); stroke-width: 1.3; opacity: .6; }
+
+  /* De curve waar het om gaat. */
+  .curve-na { stroke: var(--accent); stroke-width: 2.4; }
+
+  .curve-legenda {
+    position: absolute;
+    left: 24px;
+    bottom: 10px;
+    margin: 0;
+    display: flex;
+    gap: 1.5rem;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .16em;
+    font-size: .6rem;
+    color: var(--text-dim);
+  }
+  /* Een streepje in de kleur van de bijbehorende lijn, zoals in de rest van
+     de site (zie de feiten onder het portret van Justus). */
+  .curve-legenda span::before {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 2px;
+    margin-right: .6em;
+    vertical-align: middle;
+  }
+  .curve-legenda .was::before { background: var(--text-dim); opacity: .6; }
+  .curve-legenda .wordt::before { background: var(--accent); }
+
+  @media (max-width: 700px) {
+    .curve-legenda {
+      left: 20px;
+      right: 20px;
+      gap: .35rem 1.1rem;
+      flex-wrap: wrap;
+      font-size: .55rem;
+      letter-spacing: .12em;
+    }
+  }
 </style>
