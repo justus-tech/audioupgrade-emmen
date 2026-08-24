@@ -280,9 +280,22 @@ describe('de modelpagina', alsGebouwd, () => {
     await p.close();
   });
 
+  /**
+   * "Het blok blijft verborgen" kun je niet afwachten — er gebeurt juist
+   * niets. Daarom wacht dit op het vlaggetje dat het script achterlaat als
+   * het klaar is met beslissen. Stond hier eerst een vaste wachttijd van 400
+   * milliseconden, en die viel om zodra de laptop het druk had.
+   */
+  const wachtTotBeslist = (p) =>
+    p.waitForFunction(
+      () => document.getElementById('jouw-auto')?.dataset.klaar === 'ja',
+      null,
+      { timeout: 5000 }
+    );
+
   test('toont niets bij iemand die daar rechtstreeks binnenkomt', async () => {
     const p = await open('audio-upgrade/saab-9-3');
-    await p.waitForTimeout(400);
+    await wachtTotBeslist(p);
     assert.equal(await p.getAttribute('#jouw-auto', 'hidden'), '');
     await p.close();
   });
@@ -293,7 +306,7 @@ describe('de modelpagina', alsGebouwd, () => {
     await p.click('#kenteken-form button[type=submit]');
     await p.waitForFunction(() => sessionStorage.getItem('aue-auto'), null, { timeout: 5000 });
     await p.goto(paginaUrl('audio-upgrade/volkswagen-golf'));
-    await p.waitForTimeout(400);
+    await wachtTotBeslist(p);
     assert.equal(await p.getAttribute('#jouw-auto', 'hidden'), '');
     await p.close();
   });
@@ -304,7 +317,7 @@ describe('de modelpagina', alsGebouwd, () => {
     p.on('pageerror', (e) => fouten.push(e.message));
     await p.evaluate(() => sessionStorage.setItem('aue-auto', 'dit is geen json'));
     await p.reload();
-    await p.waitForTimeout(400);
+    await wachtTotBeslist(p);
     assert.deepEqual(fouten, []);
     await p.close();
   });
@@ -401,6 +414,11 @@ describe('de contactpagina', alsGebouwd, () => {
     // zijn tekst korter is, valt meteen op.
     const p = await open('contact');
     await p.setViewportSize({ width: 1280, height: 900 });
+    // Wachten tot het lettertype er is. Oswald is smaller dan de reservefont,
+    // dus vóór het laden past "+31 6 44 37 98 44" net niet op één regel. Die
+    // knop is dan een regel hoger dan de andere twee en de test valt om — niet
+    // omdat de pagina stuk is, maar omdat we te vroeg keken.
+    await p.evaluate(() => document.fonts.ready);
     const hoogtes = await p.$$eval('.contact-kaart .btn', (knoppen) =>
       knoppen.map((k) => Math.round(k.getBoundingClientRect().top))
     );

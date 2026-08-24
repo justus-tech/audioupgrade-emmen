@@ -1,0 +1,109 @@
+---
+/**
+ * Het blok met de foto en het verhaal van Justus.
+ *
+ * De tekst staat in src/data/generiek.js (OVER); hier staat alleen hoe het
+ * eruitziet. De foto is een pasfoto op vierkant formaat, dus we tonen hem
+ * ook vierkant — bijsnijden naar een liggende band zou zijn kin afkappen.
+ *
+ * De foto laadt niet vooraf: dit blok staat halverwege de pagina en niemand
+ * ziet het bij het openen.
+ */
+import { Image } from 'astro:assets';
+import portret from '../assets/justus.jpg';
+import { OVER } from '../data/generiek.js';
+---
+<div class="over">
+  <div class="over-foto">
+    <Image
+      src={portret}
+      alt={`${OVER.naam}, ${OVER.rol.toLowerCase()} bij Audio Upgrade Emmen`}
+      widths={[280, 420, 640]}
+      sizes="(max-width: 760px) 60vw, 320px"
+      loading="lazy"
+      decoding="async"
+    />
+  </div>
+
+  <div class="over-tekst">
+    <span class="eyebrow">{OVER.rol}</span>
+    <h2>{OVER.kop}</h2>
+    {OVER.alineas.map((regel) => <p>{regel}</p>)}
+    <ul class="over-feiten">
+      {OVER.feiten.map((feit) => <li>{feit}</li>)}
+    </ul>
+  </div>
+</div>
+
+<style>
+  .over {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: clamp(2rem, 5vw, 3.6rem);
+    align-items: start;
+  }
+
+  /* De oranje rand maakt er een portret van in plaats van een losse pasfoto,
+     en trekt de foto de huisstijl in. */
+  .over-foto {
+    border-top: 3px solid var(--accent);
+    background: var(--panel);
+    overflow: hidden;
+  }
+  .over-foto :global(img) {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    /* De pasfoto is met flits geschoten en staat er kouder op dan de rest van
+       de site. Een tikje warmte en contrast laat hem meelopen. */
+    filter: saturate(.92) contrast(1.04);
+  }
+
+  .over-tekst h2 {
+    margin-top: .4em;
+    font-size: clamp(1.4rem, 3.6vw, 2rem);
+  }
+  .over-tekst p { margin-top: 1.1em; }
+
+  /* De drie feiten als losse streepjes: wie alleen scant, heeft daarmee in
+     één oogopslag de kern te pakken. */
+  .over-feiten {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .6rem 1.6rem;
+    margin: 2em 0 0;
+    padding: 1.4em 0 0;
+    list-style: none;
+    border-top: 1px solid var(--line);
+  }
+  .over-feiten li {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    font-size: .68rem;
+    color: var(--text-dim);
+  }
+  .over-feiten li::before {
+    content: '';
+    display: inline-block;
+    width: 14px;
+    height: 2px;
+    margin-right: .7em;
+    vertical-align: middle;
+    background: var(--accent);
+  }
+
+  /* Op een telefoon boven elkaar, en dan hoeft de foto niet de volle breedte:
+     een portret van rand tot rand duwt de tekst een heel scherm naar beneden. */
+  @media (max-width: 760px) {
+    .over {
+      grid-template-columns: 1fr;
+      gap: 1.8rem;
+      justify-items: center;
+      text-align: center;
+    }
+    .over-foto { width: min(230px, 60vw); }
+    .over-feiten { justify-content: center; }
+  }
+</style>

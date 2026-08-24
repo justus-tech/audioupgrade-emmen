@@ -5,6 +5,7 @@ import KentekenCheck from '../components/KentekenCheck.astro';
 import Merken from '../components/Merken.astro';
 import Golflijn from '../components/Golflijn.astro';
 import Fotoband from '../components/Fotoband.astro';
+import OverJustus from '../components/OverJustus.astro';
 /* Foto: Unsplash — vrij te gebruiken. Zie src/components/Fotoband.astro. */
 import deurspeaker from '../assets/foto/deurspeaker.jpg';
 import { PACKAGES, SITE } from '../data/site.js';
@@ -84,10 +85,21 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
     </div>
   </section>
 
+  {/* Direct onder de beloften over vakwerk: daar staat wát er gebeurt, hier
+      wie het doet. Zonder reviews is dit het enige bewijs dat er iemand met
+      verstand van zaken achter staat. */}
+  <section class="alt">
+    <div class="wrap">
+      <OverJustus />
+    </div>
+  </section>
+
   {/* Het bezwaar dat mensen het vaakst tegenhoudt: "ik kan mijn auto een dag
       niet missen". Stond eerst naast een blok over een demobus, maar die is
       er niet — zie de opmerking in src/data/generiek.js. */}
-  <section class="alt">
+  {/* Bewust géén "alt": het blok hierboven heeft die achtergrond al, en twee
+      keer dezelfde tint achter elkaar leest als één lange lap. */}
+  <section>
     <div class="wrap">
       <div class="troef troef-breed">
         <span class="eyebrow">Binnen 15 km rond Emmen</span>

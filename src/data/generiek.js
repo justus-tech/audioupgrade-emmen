@@ -71,6 +71,39 @@ export const ONTZORGEN = {
     'Je brengt je auto naar de Charles Darwinstraat en wij gaan aan de slag. Blijft hij een dag staan, dan brengen we je gewoon thuis — tot vijftien kilometer rond Emmen. Aan het eind van de dag halen we je weer op, of kom je zelf langs. Kleinere klussen kunnen in overleg ook bij jou op de oprit.',
 };
 
+/**
+ * Wie de klant tegenover zich krijgt.
+ *
+ * WAAROM DIT ER STAAT
+ * Je vraagt iemand om zijn auto — vaak zijn duurste bezit na zijn huis — een
+ * dag lang bij een vreemde achter te laten. Er zijn nog geen reviews die dat
+ * makkelijker maken. Een gezicht en een verhaal doen dan het werk.
+ *
+ * WAT ER NIET STAAT, EN WAAROM NIET
+ * Nergens "jarenlange ervaring in car audio". Het bedrijf bestaat drie jaar
+ * en dat is kort; daar overheen praten valt op zodra iemand doorvraagt. Het
+ * eerlijke verhaal is sterker: acht jaar geluid, een opleiding als audio
+ * engineer, en auto's die er al waren voordat er een rijbewijs was. Dat is
+ * precies de combinatie die de winkel om de hoek niet heeft.
+ *
+ * Alles hieronder komt uit Justus' eigen woorden (24 augustus 2026).
+ */
+export const OVER = {
+  naam: 'Justus',
+  rol: 'Eigenaar en audio engineer',
+  kop: 'Wie je auto onder handen neemt',
+  alineas: [
+    'Ik sleutelde al aan auto-interieurs voordat ik mijn rijbewijs had. De auto stond op de oprit en ik was er dagelijks mee bezig: strippen, uit elkaar, weer in elkaar — net zolang tot ik er het maximale geluid uit had.',
+    'Daarnaast heb ik het vak geleerd aan het conservatorium, als audio engineer. Microfoons, luidsprekers, sound design, mixen: sinds 2018 werk ik professioneel met geluid. Mijn speakers bouw ik zelf van hout, van kleine kastjes tot Jamaicaanse superscoopers van 24 inch.',
+    'Die twee dingen komen in jouw auto samen. Ik stel niet af omdat het zo in een handleiding staat, maar omdat ik hoor wat er nog niet klopt. En dat is precies waarom ik dit doe: rijden hoort een feestje te zijn. Je moet ergens heen willen puur omdat de muziek onderweg zo goed staat.',
+  ],
+  feiten: [
+    'Opgeleid audio engineer',
+    'Sinds 2018 in het geluid',
+    'Bouwt zijn eigen speakers',
+  ],
+};
+
 /** De afsluitende oproep onderaan elke modelpagina. */
 export const CTA = {
   tekst:
@@ -90,4 +123,4 @@ export const STANDAARD_PAKKETTEN = [
   'reference-edition',
 ];
 
-export default { GARANTIE, WERKWIJZE, VAKMANSCHAP, ONTZORGEN, CTA, STANDAARD_PAKKETTEN };
+export default { GARANTIE, WERKWIJZE, VAKMANSCHAP, ONTZORGEN, OVER, CTA, STANDAARD_PAKKETTEN };

@@ -196,6 +196,12 @@ const dienstSchema = {
     } catch (e) {
       /* privémodus of oude opslag: dan tonen we het blok gewoon niet */
     }
+    // Zet een vlaggetje zodra we klaar zijn met beslissen. De tests kunnen
+    // daarop wachten in plaats van op de klok: "blok blijft verborgen" is
+    // niet af te wachten, dus zonder dit vlaggetje moet een test gokken hoe
+    // lang dit script erover doet — en dat gaat mis zodra de laptop het druk
+    // heeft. Het attribuut doet verder niets.
+    vak.dataset.klaar = 'ja';
   }
 </script>
 

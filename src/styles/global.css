@@ -59,7 +59,13 @@ p { color: var(--text-dim); max-width: 65ch; }
 
 a { color: inherit; }
 
-img { max-width: 100%; display: block; }
+/* `height: auto` hoort onlosmakelijk bij `max-width: 100%`. Astro zet de echte
+   pixelmaten als width- en height-attribuut op elke afbeelding — goed, want
+   dat voorkomt dat de pagina verspringt tijdens het laden. Maar zonder deze
+   regel telt dat height-attribuut als opgegeven hoogte: een foto van 2048px
+   wordt dan 320 breed en gewoon 2048 hoog. Ook `aspect-ratio` doet dan niets,
+   want die werkt alleen als de hoogte op auto staat. */
+img { max-width: 100%; height: auto; display: block; }
 
 /* Moet ná de img-regel hierboven staan. Een `hidden`-attribuut wordt anders
    overruled door `display: block`, waardoor een verborgen afbeelding tóch
