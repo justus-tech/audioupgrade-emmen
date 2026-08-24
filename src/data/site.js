@@ -13,8 +13,23 @@ export const SITE = {
   whatsapp: 'https://wa.me/message/RDCWOKTCKSPIF1',
   kvk: '96356723',
   btw: 'NL005205204B66',
+  /**
+   * TWEE ADRESSEN, en het verschil is belangrijk.
+   *
+   *   street / postalCode   De werkplaats. Hier komt de klant naartoe en hier
+   *                         staat de auto. Dit adres hoort op de site, op de
+   *                         kaart en in de gegevens voor Google.
+   *   postStreet / postPost De brievenbus. Alleen voor post. Dit adres hoort
+   *                         NIET op de contactpagina — dan komt er iemand met
+   *                         een auto voor de deur staan op de verkeerde plek.
+   *
+   * In het privacybeleid staat het postadres, want dat is waar een brief over
+   * je gegevens heen moet.
+   */
   street: 'Charles Darwinstraat 35',
   postalCode: '7825 AB',
+  postStreet: 'Vinkenveld 9',
+  postPostalCode: '7827 DP',
   city: 'Emmen',
   region: 'Drenthe',
   country: 'NL',
@@ -36,8 +51,11 @@ export const AUDIOMERKEN = [
   'Steg',
 ];
 
-/** Het volledige adres op één regel, voor als dat handiger uitkomt. */
+/** Het bezoekadres op één regel: de werkplaats. */
 export const ADRES = `${SITE.street}, ${SITE.postalCode} ${SITE.city}`;
+
+/** Het postadres op één regel. Alleen voor post — zie de uitleg bij SITE. */
+export const POSTADRES = `${SITE.postStreet}, ${SITE.postPostalCode} ${SITE.city}`;
 
 /**
  * De vijf pakketten, LETTERLIJK overgenomen van audioupgradeemmen.nl.
@@ -67,9 +85,9 @@ export const ADRES = `${SITE.street}, ${SITE.postalCode} ${SITE.city}`;
  *   populair   het label "Meest Gekozen"
  *   duur       hoe lang de auto bij ons staat
  *
- * LET OP bij `duur`: alleen de 2 uur voor CarPlay is door Justus bevestigd.
- * De rest is een schatting en moet hij nog nalopen — dit is een belofte aan
- * de klant, dus een verkeerde inschatting kost je een boze klant.
+ * De tijden bij `duur` zijn door Justus nagelopen en bevestigd op 24 augustus
+ * 2026. Het blijft een belofte aan de klant: verandert er iets aan de manier
+ * van werken, pas ze dan hier aan.
  */
 export const PACKAGES = [
   {

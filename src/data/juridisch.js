@@ -19,15 +19,15 @@
  * artikel 2 van het privacybeleid aan. Een privacyverklaring die niet klopt
  * is erger dan geen.
  *
- * LET OP, twee dingen voor Justus:
- *   1. In het oude privacybeleid staat Vinkenveld 9 als vestigingsadres, op
- *      de nieuwe site Charles Darwinstraat 35. Hier staat het nieuwe adres.
- *      Klopt dat, of moet het oude blijven staan?
- *   2. Dit is een concept, geen juridisch advies. Laat de voorwaarden een
- *      keer nalezen door iemand met verstand van zaken voordat de site live
- *      gaat — het is het enige stuk op de site waar je aan vastzit.
+ * DE TWEE ADRESSEN (door Justus bevestigd op 24 augustus 2026): post gaat
+ * naar Vinkenveld 9, bezoek en werkplaats zijn Charles Darwinstraat 35. In
+ * artikel 1 staan ze allebei, met erbij waarvoor ze zijn. Er is geen postbus.
+ *
+ * LET OP: dit is een concept, geen juridisch advies. Laat de voorwaarden een
+ * keer nalezen door iemand met verstand van zaken — het is het enige stuk op
+ * de site waar je aan vastzit.
  */
-import { SITE, ADRES } from './site.js';
+import { SITE, ADRES, POSTADRES } from './site.js';
 
 /** Wanneer deze teksten voor het laatst zijn nagelopen. */
 export const BIJGEWERKT = 'augustus 2026';
@@ -145,7 +145,7 @@ export const PRIVACYBELEID = {
     {
       kop: '1. Wie zijn wij',
       alineas: [
-        `Audio Upgrade Emmen, ${ADRES}. KvK-nummer ${SITE.kvk}, btw-nummer ${SITE.btw}. Voor alle vragen over privacy: ${SITE.email}.`,
+        `Audio Upgrade Emmen. Post: ${POSTADRES}. Werkplaats en bezoekadres: ${ADRES}, uitsluitend op afspraak. KvK-nummer ${SITE.kvk}, btw-nummer ${SITE.btw}. Voor alle vragen over privacy: ${SITE.email}.`,
       ],
     },
     {
