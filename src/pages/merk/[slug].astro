@@ -59,7 +59,7 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
     <div class="wrap">
       <h2>Onze pakketten</h2>
       <div class="grid cols-4 mt">
-        {pakketten.map((pkg) => <PackageCard pkg={pkg} />)}
+        {pakketten.map((pkg) => <PackageCard pkg={pkg} auto={merk.naam} />)}
       </div>
     </div>
   </section>
