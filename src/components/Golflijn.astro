@@ -11,16 +11,23 @@
  *               een uitknipvorm (clipPath): de balken zijn gewoon volle
  *               staven, en de golf bepaalt wat je ervan ziet.
  *
- * Eerder hadden de balken hun eigen hoogte en liep de lijn er dwars
- * doorheen. Dat zag eruit alsof er twee dingen over elkaar lagen in plaats
- * van één geluidsgolf.
+ * WAAROM HIJ ZO TRAAG IS
+ * Dit moet duur ogen, en duur is traag. Alles wat schokt of tikt haalt de
+ * rust eruit, dus er zit geen enkele klap of aanzet meer in: de golf schuift,
+ * hij beweegt niet op de maat. Eerder liep hier een hartslag van 92 slagen
+ * per minuut doorheen met een aanzwellende kick. Dat was herkenbaar als
+ * muziek, maar het maakte het beeld onrustig — je oog bleef eraan haken.
  *
- * WAAROM HET ER TRAAG UITZIET: DIT IS EEN SUBWOOFER
- * Een sub doet ongeveer 20 tot 80 hertz. Lange, trage golven met nauwelijks
- * boventonen. Een echte 40 hertz gaat veertig keer per seconde op en neer en
- * dat kun je niet zien; dit is dezelfde vorm op een trage tijdbasis, zoals
- * een uitgezoomde oscilloscoop. Bij elke tel zwelt hij op en zakt weer terug,
- * maar zacht: een sub duwt lucht, hij tikt niet.
+ * DRIE DINGEN DIE HET VLOEIEND HOUDEN
+ *
+ *   1. Lange golven. Drie sinussen met verhoudingen die niet op elkaar
+ *      uitkomen (1 : 1,73 : 2,59). Daardoor herhaalt het patroon zich pas na
+ *      minuten en zie je nooit dat het rondjes draait.
+ *   2. Traag verloop. De tijdfactoren zijn ruim vier keer zo klein als eerst.
+ *      Eén ervan loopt achteruit, zodat de golven dóór elkaar heen schuiven
+ *      in plaats van als een blok op te schuiven.
+ *   3. Ademen in plaats van slaan. De hoogte zwelt op een cyclus van rond de
+ *      dertig seconden. Geen aanzet, geen terugval — alleen een lange haal.
  *
  * Er speelt geen echt geluid; dit is een model. De animatie stopt zodra hij
  * uit beeld is of het tabblad naar de achtergrond gaat, en bij "verminder
@@ -29,48 +36,46 @@
 const BREEDTE = 1160;
 const HOOGTE = 120;
 const MIDDEN = HOOGTE / 2;
-const PUNTEN = 96;
-const BALKEN = 132;
 
 /**
- * Veel dunne streepjes in plaats van weinig dikke. Dat leest als een
- * spectrum op een versterker; brede balken lezen als een grafiek.
- *
- * De ondergrens van 1 is er voor de telefoon: het tekenvlak is 1160 breed
- * en wordt op een klein scherm naar ongeveer 390 geperst, dus alles wordt
- * daar bijna drie keer zo dun. Zonder ondergrens verdwijnen de balkjes
- * daar in het niets, en dat is nét het scherm waar bijna iedereen kijkt.
+ * Meer punten dan je nodig zou denken. De bochten worden berekend tussen
+ * opeenvolgende punten, dus hoe meer punten, hoe ronder de lijn. Bij 96 was
+ * op een breed scherm nog te zien dat een golftop uit rechte stukjes bestond.
  */
+const PUNTEN = 170;
+const BALKEN = 132;
+
 const vakBreedte = BREEDTE / BALKEN;
 const balkDikte = Math.max(1, vakBreedte * 0.3);
 
-/** Lage toon: één grondtoon met twee zwakke boventonen. */
+/** Drie lange golven die langzaam door elkaar heen schuiven. */
 function golf(u, t) {
   return (
-    0.62 * Math.sin(u * 8.6 + t * 0.9) +
-    0.26 * Math.sin(u * 15.5 - t * 1.25 + 1.1) +
-    0.12 * Math.sin(u * 23.0 + t * 1.7 + 2.4)
+    0.64 * Math.sin(u * 6.6 + t * 0.22) +
+    0.24 * Math.sin(u * 11.4 - t * 0.15 + 1.3) +
+    0.12 * Math.sin(u * 17.1 + t * 0.09 + 2.6)
   );
 }
 
 /** Dooft uit naar beide randen, zodat de golf niet afgekapt lijkt. */
 function omhulsel(u) {
-  return Math.pow(Math.sin(u * Math.PI), 0.45);
+  return Math.pow(Math.sin(u * Math.PI), 0.55);
 }
 
 /**
- * De uitslag op plek u: altijd positief, want boven en onder zijn elkaars
- * spiegelbeeld. Dit is de halve hoogte van de golf op dat punt.
+ * Hoe hoog de golf op dit moment staat. Twee trage cycli over elkaar heen,
+ * zodat opzwellen en wegzakken nooit precies hetzelfde aanvoelen.
  */
-function uitslag(u, t, sterkte) {
-  return Math.abs(golf(u, t)) * omhulsel(u) * sterkte * MIDDEN;
+function ademhaling(t) {
+  return 0.62 + 0.14 * Math.sin(t * 0.19) + 0.06 * Math.sin(t * 0.115 + 2.1);
 }
 
 /** De y-waarden van de bovenrand, van links naar rechts. */
 function bovenrand(t, sterkte) {
   const y = [];
   for (let i = 0; i < PUNTEN; i++) {
-    y.push(MIDDEN - uitslag(i / (PUNTEN - 1), t, sterkte));
+    const u = i / (PUNTEN - 1);
+    y.push(MIDDEN - Math.abs(golf(u, t)) * omhulsel(u) * sterkte * MIDDEN);
   }
   return y;
 }
@@ -98,7 +103,9 @@ function maskerPad(boven) {
   return `${heen} ${terug.replace(/^M/, 'L')} Z`;
 }
 
-const startBoven = bovenrand(0, 0.74);
+/* Dezelfde stand als waar het script op t=0 mee begint, anders verspringt de
+   golf op het moment dat de animatie het overneemt. */
+const startBoven = bovenrand(0, ademhaling(0));
 const startOnder = startBoven.map((y) => MIDDEN + (MIDDEN - y));
 const xVan = (i) => ((i / (PUNTEN - 1)) * BREEDTE).toFixed(1);
 ---
@@ -134,25 +141,31 @@ const xVan = (i) => ((i / (PUNTEN - 1)) * BREEDTE).toFixed(1);
   if (vak && !stil) {
     const BREEDTE = 1160;
     const MIDDEN = 60;
-    const PUNTEN = 96;
+    const PUNTEN = 170;
 
     const maskerPadEl = vak.querySelector('#golf-masker-pad');
     const lijnBoven = vak.querySelector('.lijn-boven');
     const lijnOnder = vak.querySelector('.lijn-onder');
 
+    /* Deze drie moeten gelijk blijven aan de versie in de frontmatter
+       hierboven. Lopen ze uiteen, dan springt de golf zichtbaar op het moment
+       dat het script de door de server getekende vorm overneemt. */
     const golf = (u, t) =>
-      0.62 * Math.sin(u * 8.6 + t * 0.9) +
-      0.26 * Math.sin(u * 15.5 - t * 1.25 + 1.1) +
-      0.12 * Math.sin(u * 23.0 + t * 1.7 + 2.4);
+      0.64 * Math.sin(u * 6.6 + t * 0.22) +
+      0.24 * Math.sin(u * 11.4 - t * 0.15 + 1.3) +
+      0.12 * Math.sin(u * 17.1 + t * 0.09 + 2.6);
 
-    const omhulsel = (u) => Math.pow(Math.sin(u * Math.PI), 0.45);
+    const omhulsel = (u) => Math.pow(Math.sin(u * Math.PI), 0.55);
+
+    const ademhaling = (t) =>
+      0.62 + 0.14 * Math.sin(t * 0.19) + 0.06 * Math.sin(t * 0.115 + 2.1);
 
     // Vooraf uitgerekend: dit verandert nooit.
     const xen = [];
     const omhulsels = [];
     for (let i = 0; i < PUNTEN; i++) {
       const u = i / (PUNTEN - 1);
-      xen.push(((u * BREEDTE)).toFixed(1));
+      xen.push((u * BREEDTE).toFixed(1));
       omhulsels.push(omhulsel(u));
     }
 
@@ -167,50 +180,41 @@ const xVan = (i) => ((i / (PUNTEN - 1)) * BREEDTE).toFixed(1);
       return d + `L${xi(ys.length - 1)} ${ys[ys.length - 1].toFixed(1)}`;
     }
 
-    const BPM = 92;
-    const TEL = 60 / BPM;
-
     let tijd = 0;
     let vorig = 0;
     let loopt = false;
     let frame = 0;
-    let zwelling = 0.66;
+
+    const xi = (i) => xen[i];
+    const xiOmgekeerd = (i) => xen[PUNTEN - 1 - i];
 
     function stap(nu) {
       if (!loopt) return;
+      /* Bovengrens op de stap: komt het tabblad terug na een minuut, dan mag
+         de golf niet in één klap die hele minuut inhalen. */
       const dt = Math.min(0.05, (nu - vorig) / 1000 || 0.016);
       vorig = nu;
       tijd += dt;
 
-      // De tel is er, maar zacht: een sub duwt lucht, hij tikt niet.
-      const tel = (tijd / TEL) % 4;
-      const inTel = tel % 1;
-      const kick = Math.exp(-inTel * 3.2) * 0.42;
-      const opTwee = Math.floor(tel) === 1 || Math.floor(tel) === 3;
-      const tweede = opTwee ? Math.exp(-inTel * 4.5) * 0.16 : 0;
+      const hoogte = ademhaling(tijd);
 
-      const doel = 0.6 + kick + tweede;
-      zwelling += (doel - zwelling) * (doel > zwelling ? 0.16 : 0.055);
-
-      // Eén berekening voor alles: de omtrek én de uitknipvorm komen hieruit,
-      // dus de balken kunnen nooit uit de pas lopen met de lijn.
+      /* Eén berekening voor alles: de omtrek én de uitknipvorm komen hieruit,
+         dus de balken kunnen nooit uit de pas lopen met de lijn. */
       const boven = [];
       const onder = [];
       for (let i = 0; i < PUNTEN; i++) {
         const u = i / (PUNTEN - 1);
-        const a = Math.abs(golf(u, tijd)) * omhulsels[i] * zwelling * MIDDEN;
+        const a = Math.abs(golf(u, tijd)) * omhulsels[i] * hoogte * MIDDEN;
         boven.push(MIDDEN - a);
         onder.push(MIDDEN + a);
       }
 
-      const xi = (i) => xen[i];
-      const xiOmgekeerd = (i) => xen[PUNTEN - 1 - i];
-
-      lijnBoven.setAttribute('d', pad(boven, xi));
+      const padBoven = pad(boven, xi);
+      lijnBoven.setAttribute('d', padBoven);
       lijnOnder.setAttribute('d', pad(onder, xi));
       maskerPadEl.setAttribute(
         'd',
-        `${pad(boven, xi)} ${pad([...onder].reverse(), xiOmgekeerd).replace(/^M/, 'L')} Z`
+        `${padBoven} ${pad([...onder].reverse(), xiOmgekeerd).replace(/^M/, 'L')} Z`
       );
 
       frame = requestAnimationFrame(stap);
@@ -265,6 +269,15 @@ const xVan = (i) => ((i / (PUNTEN - 1)) * BREEDTE).toFixed(1);
      in de kleur zelf — de twee standen hebben er een andere waarde voor
      nodig. */
   .golf-balken rect { fill: var(--golf-balk); }
+
+  /* Op een telefoon wordt het tekenvlak van 1160 naar zo'n 390 geperst. De
+     132 balken staan dan nog geen drie pixels uit elkaar en lopen visueel
+     dicht tot één grijs vlak. Elke tweede weglaten geeft ze weer lucht,
+     zonder dat er iets herberekend hoeft te worden: dezelfde tekening, half
+     zo veel streepjes. */
+  @media (max-width: 700px) {
+    .golf-balken rect:nth-child(even) { display: none; }
+  }
 
   .golflijn path {
     fill: none;
