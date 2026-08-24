@@ -13,6 +13,7 @@ import { CTA } from '../data/generiek.js';
 import { pad } from '../lib/pad.js';
 /* Foto: Unsplash — vrij te gebruiken. Zie src/components/Fotoband.astro. */
 import speakerconus from '../assets/foto/speakerconus.jpg';
+import { whatsappLink, berichtOverAuto } from '../lib/whatsapp.js';
 
 const faqSchema = {
   '@context': 'https://schema.org',
@@ -84,7 +85,7 @@ const faqSchema = {
           <span class="eyebrow">Altijd op maat</span>
           <h2>{OLDTIMER.prijs.kop}</h2>
           <p>{OLDTIMER.prijs.tekst}</p>
-          <a class="btn wa" href={SITE.whatsapp}>{CTA.knop}</a>
+          <a class="btn wa" href={whatsappLink(berichtOverAuto())}>{CTA.knop}</a>
         </div>
       </div>
     </div>

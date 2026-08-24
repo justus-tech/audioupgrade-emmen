@@ -3,6 +3,7 @@ import { MODELS } from '../data/models.js';
 import { SITE } from '../data/site.js';
 import Logo from './Logo.astro';
 import { pad } from '../lib/pad.js';
+import { whatsappLink } from '../lib/whatsapp.js';
 
 // Compacte matchtabel voor de client: [slug, merk, modelregex-als-string]
 const table = MODELS.map((m) => [m.slug, m.matchers.merk, m.matchers.model.source]);
@@ -23,6 +24,13 @@ const { compact = false } = Astro.props;
  * check niets meer. Vandaar dat de mapnaam als waarde meegaat.
  */
 const basisPad = pad('/') === '/' ? '' : pad('/');
+
+/* Om dezelfde reden als hierboven kan whatsapp.js hier niet geïmporteerd
+   worden in het script zelf: de link wordt hier gemaakt en als gegeven
+   meegegeven. */
+const whatsappHulp = whatsappLink(
+  'ik wilde mijn kenteken invullen op de site, maar mijn auto werd niet gevonden. Ik stuur je een foto van mijn dashboard.'
+);
 ---
 <div class:list={['kenteken-box', compact && 'kenteken-kaal']}>
   {!compact && (
@@ -44,7 +52,10 @@ const basisPad = pad('/') === '/' ? '' : pad('/');
   <div id="kenteken-result" aria-live="polite"></div>
 </div>
 
-<script define:vars={{ table, whatsapp: SITE.whatsapp, basisPad }}>
+{/* whatsapp is hier de link voor het geval het kenteken niet gevonden wordt.
+    Het bericht staat er al in, zodat iemand die vastloopt alleen nog op
+    verzenden hoeft te drukken. */}
+<script define:vars={{ table, whatsapp: whatsappHulp, basisPad }}>
   const form = document.getElementById('kenteken-form');
   const input = document.getElementById('kenteken-input');
   const result = document.getElementById('kenteken-result');

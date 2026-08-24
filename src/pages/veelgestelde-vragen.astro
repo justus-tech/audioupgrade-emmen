@@ -17,6 +17,7 @@ import Base from '../layouts/Base.astro';
 import { VRAGEN } from '../data/vragen.js';
 import { SITE } from '../data/site.js';
 import { pad } from '../lib/pad.js';
+import { whatsappLink, berichtOverAuto } from '../lib/whatsapp.js';
 
 const faqSchema = {
   '@context': 'https://schema.org',
@@ -64,7 +65,7 @@ const faqSchema = {
         Stuur een foto van je dashboard en je vraag erbij. Je krijgt een eerlijk
         antwoord, ook als dat "dat kan bij jouw auto niet" is.
       </p>
-      <a class="btn wa" href={SITE.whatsapp}>Stuur foto dashboard</a>
+      <a class="btn wa" href={whatsappLink(berichtOverAuto())}>Stuur foto dashboard</a>
       <p style="margin-top:2em">
         <a href={pad('/upgrades')}>Bekijk de upgrades en prijzen →</a>
       </p>

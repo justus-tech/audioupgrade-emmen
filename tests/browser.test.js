@@ -293,6 +293,32 @@ describe('de modelpagina', alsGebouwd, () => {
       { timeout: 5000 }
     );
 
+  test('zet het kenteken van de bezoeker in de WhatsApp-knoppen', async () => {
+    /**
+     * Dit is het hele punt van de kenteken-check voor Justus: hij krijgt geen
+     * "ik heb een Saab" maar "ik heb een Saab 9-3 uit 1999 (92-DJ-HG)", en
+     * weet meteen om welke auto het gaat. De server kan dat niet meesturen —
+     * die weet het kenteken niet — dus dit gebeurt in de browser, en alleen
+     * hier valt te zien of het echt werkt.
+     */
+    const p = await open('');
+    await p.fill('#kenteken-input', '92DJHG');
+    await p.click('#kenteken-form button[type=submit]');
+    await p.waitForFunction(() => sessionStorage.getItem('aue-auto'), null, { timeout: 5000 });
+    await p.goto(paginaUrl('audio-upgrade/saab-9-3'));
+    await p.waitForSelector('#jouw-auto:not([hidden])', { timeout: 3000 });
+
+    const teksten = await p.$$eval('a.wa-link', (links) =>
+      links.map((a) => new URL(a.href).searchParams.get('text'))
+    );
+    assert.ok(teksten.length > 0, 'geen enkele WhatsApp-knop op de modelpagina');
+    for (const t of teksten) {
+      assert.match(t, /92-DJ-HG/, `kenteken ontbreekt in: ${t}`);
+      assert.match(t, /Saab 9-3/, `auto ontbreekt in: ${t}`);
+    }
+    await p.close();
+  });
+
   test('toont niets bij iemand die daar rechtstreeks binnenkomt', async () => {
     const p = await open('audio-upgrade/saab-9-3');
     await wachtTotBeslist(p);

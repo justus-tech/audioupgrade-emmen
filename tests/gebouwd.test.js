@@ -19,6 +19,7 @@ import { MERKEN_MET_MODELLEN } from '../src/data/merken.js';
 import { JURIDISCHE_PAGINAS } from '../src/data/juridisch.js';
 import { PACKAGES, SITE, SCHEMA_SOORT } from '../src/data/site.js';
 import { VRAGEN } from '../src/data/vragen.js';
+import { berichtOverAuto } from '../src/lib/whatsapp.js';
 
 const DIST = fileURLToPath(new URL('../dist/', import.meta.url));
 const erIsGebouwd = existsSync(DIST);
@@ -239,6 +240,62 @@ describe('gestructureerde gegevens voor Google', alsGebouwd, () => {
     }
     const uniek = new Set(VRAGEN.map((v) => v.vraag.toLowerCase()));
     assert.equal(uniek.size, VRAGEN.length, 'er staat een dubbele vraag in');
+  });
+});
+
+/**
+ * De WhatsApp-knoppen.
+ *
+ * Elke knop hoort het bericht al ingevuld te hebben. Valt er ergens eentje
+ * terug op de korte wa.me/message-link, dan komt die bezoeker in een leeg
+ * gesprek terecht en weet Justus niet waar het over gaat — precies het
+ * probleem dat we hiermee oplosten. Zo'n terugval zie je niet met het blote
+ * oog, want de knop werkt gewoon.
+ */
+describe('WhatsApp-knoppen', alsGebouwd, () => {
+  const links = (html) =>
+    [...html.matchAll(/href="(https:\/\/wa\.me\/[^"]*)"/g)].map((m) =>
+      m[1].replace(/&#38;/g, '&')
+    );
+
+  test('geen enkele knop gebruikt nog de korte link zonder bericht', () => {
+    for (const [pad, html] of inhoud) {
+      assert.ok(
+        !html.includes('wa.me/message'),
+        `${pad}: hier staat nog een WhatsApp-link zonder bericht`
+      );
+    }
+  });
+
+  test('elke knop heeft een bericht dat met de aanhef begint', () => {
+    for (const [pad, html] of inhoud) {
+      for (const link of links(html)) {
+        const tekst = new URL(link).searchParams.get('text');
+        assert.ok(tekst, `${pad}: WhatsApp-link zonder bericht — ${link}`);
+        assert.match(tekst, /^Hoi Justus, /, `${pad}: bericht begint verkeerd`);
+      }
+    }
+  });
+
+  test('op een modelpagina staat de auto al in het bericht', () => {
+    /* De zwevende knop en de link in de voettekst komen uit de layout. Die
+       staan op élke pagina en kunnen het model dus niet weten; hun bericht is
+       bewust algemeen. Alles wat de pagina zélf neerzet — de pakketkaarten en
+       de knop onderaan — hoort de auto wel te noemen. */
+    const algemeen = `Hoi Justus, ${berichtOverAuto()}`;
+
+    for (const m of MODELS.slice(0, 25)) {
+      const html = inhoud.get(`/audio-upgrade/${m.slug}`);
+      const eigen = links(html)
+        .map((l) => new URL(l).searchParams.get('text'))
+        .filter((t) => t !== algemeen);
+
+      assert.ok(eigen.length >= 2, `${m.slug}: te weinig eigen WhatsApp-knoppen`);
+      assert.ok(
+        eigen.every((t) => t.includes(m.model)),
+        `${m.slug}: het model staat niet in elk eigen bericht`
+      );
+    }
   });
 });
 

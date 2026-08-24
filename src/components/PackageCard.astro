@@ -1,6 +1,6 @@
 ---
-import { SITE } from '../data/site.js';
 import PakketBeeld from './PakketBeeld.astro';
+import { whatsappLink, berichtOverPakket } from '../lib/whatsapp.js';
 
 /**
  * Eén pakketkaart. Alle tekst en prijzen komen uit site.js en staan daar
@@ -17,7 +17,13 @@ import PakketBeeld from './PakketBeeld.astro';
  * omschrijving achter een klik, zodat de kaart op één scherm past. Er gaat
  * geen tekst verloren; hij staat alleen niet meer allemaal tegelijk open.
  */
-const { pkg, showScores = true, uitgebreid = false } = Astro.props;
+/**
+ * `auto` is de auto waar deze kaart bij staat, bijvoorbeeld "Volkswagen Golf"
+ * op een modelpagina. Die zetten we in het WhatsApp-bericht, zodat Justus
+ * meteen ziet waar het over gaat. Op de homepage weten we dat niet en blijft
+ * het bericht algemeen.
+ */
+const { pkg, showScores = true, uitgebreid = false, auto = null } = Astro.props;
 
 /**
  * Bij Akoestische Isolatie tonen we geen scorebalkjes — dat deed de oude site
@@ -69,7 +75,8 @@ const kenmerkenTonen = uitgebreid && pkg.features.length > 0;
 
   {pkg.duur && <p class="duur">{pkg.duur}</p>}
 
-  <a class="btn" href={SITE.whatsapp}>{pkg.cta}</a>
+  <a class="btn wa-link" href={whatsappLink(berichtOverPakket(pkg.name, auto))}
+     data-wa-pakket={pkg.name}>{pkg.cta}</a>
 </div>
 
 <style>

@@ -23,6 +23,7 @@ import speakerconus from '../assets/foto/speakerconus.jpg';
 import { PACKAGES, SITE } from '../data/site.js';
 import { autoTabel } from '../data/autos.js';
 import { GARANTIE, LEVENSLANG, CTA } from '../data/generiek.js';
+import { whatsappLink, berichtOverAuto } from '../lib/whatsapp.js';
 ---
 <Base
   title="Upgrades & prijzen — check je kenteken | Audio Upgrade Emmen"
@@ -127,7 +128,7 @@ import { GARANTIE, LEVENSLANG, CTA } from '../data/generiek.js';
     <div class="wrap">
       <h2>Weet je het nog niet zeker?</h2>
       <p style="margin:0 auto 2em;">{CTA.tekst}</p>
-      <a class="btn wa" href={SITE.whatsapp}>{CTA.knop}</a>
+      <a class="btn wa" href={whatsappLink(berichtOverAuto())}>{CTA.knop}</a>
     </div>
   </section>
 </Base>

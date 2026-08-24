@@ -16,6 +16,11 @@ import { merkenPerSlug } from '../../data/merken.js';
 import { PACKAGES, SITE } from '../../data/site.js';
 import { GARANTIE, CTA, STANDAARD_PAKKETTEN } from '../../data/generiek.js';
 import { pad } from '../../lib/pad.js';
+import { whatsappLink, berichtOverAuto, WA_NUMMER } from '../../lib/whatsapp.js';
+
+/* Het script hieronder heeft het nummer nodig om de links aan te vullen met
+   het kenteken van de bezoeker. Het gaat mee als data-attribuut. */
+const waNummer = WA_NUMMER;
 
 export function getStaticPaths() {
   return MODELS.map((m) => ({ params: { slug: m.slug }, props: { model: m } }));
@@ -99,7 +104,8 @@ const dienstSchema = {
           kenteken naast merk en model, zodat hij zeker weet dat dit zijn auto
           is. Verschijnt alleen als het opgeslagen kenteken bij déze pagina
           hoort; anderen zien niets. */}
-      <div class="jouw-auto mt" id="jouw-auto" data-slug={model.slug} hidden>
+      <div class="jouw-auto mt" id="jouw-auto" data-slug={model.slug}
+           data-auto={`${model.brand} ${model.model}`} data-nummer={waNummer} hidden>
         <span class="jouw-plaat">
           <span class="jouw-plaat-band"><Logo height={13} decoratief={true} /></span>
           <span class="jouw-plaat-nr" id="jouw-plaat"></span>
@@ -143,7 +149,7 @@ const dienstSchema = {
     <div class="wrap">
       <h2>Onze upgrades voor de {model.model}</h2>
       <div class="grid cols-2 mt">
-        {pakketten.map((pkg) => <PackageCard pkg={pkg} />)}
+        {pakketten.map((pkg) => <PackageCard pkg={pkg} auto={`${model.brand} ${model.model}`} />)}
       </div>
     </div>
   </section>
@@ -173,7 +179,9 @@ const dienstSchema = {
     <div class="wrap">
       <h2>Klaar om je {model.model} te horen zoals hij bedoeld is?</h2>
       <p style="margin:0 auto 2em;">{CTA.tekst}</p>
-      <a class="btn wa" href={SITE.whatsapp}>{CTA.knop}</a>
+      <a class="btn wa wa-link" href={whatsappLink(berichtOverAuto(`${model.brand} ${model.model}`))}>
+        {CTA.knop}
+      </a>
     </div>
   </section>
 </Base>
@@ -182,6 +190,38 @@ const dienstSchema = {
   import { formatteerKenteken, matchAuto } from '../../lib/match.js';
 
   const vak = document.getElementById('jouw-auto');
+
+  /**
+   * Vult het kenteken en het bouwjaar in de WhatsApp-knoppen op deze pagina.
+   *
+   * De knoppen hebben al een bericht met merk en model erin — dat schrijft de
+   * server. Weet de browser óók welk kenteken de bezoeker net heeft ingevuld,
+   * dan zetten we dat erbij. Justus krijgt dan geen "ik heb een Golf" maar
+   * "ik heb een Volkswagen Golf uit 2018 (92-DJ-HG)", en weet meteen om welke
+   * auto het gaat.
+   *
+   * Er wordt niets opgeslagen en niets verstuurd: het bericht staat pas in
+   * WhatsApp als de bezoeker zelf op verzenden drukt. Het kenteken stond al in
+   * zijn eigen tabblad omdat hij het net zelf heeft ingetypt.
+   */
+  function zetKentekenInWhatsapp(v) {
+    const nummer = vak.dataset.nummer;
+    const auto = vak.dataset.auto;
+    if (!nummer || !auto) return;
+
+    const jaar = (v.datum_eerste_toelating || '').slice(0, 4);
+    const omschrijving = jaar ? `${auto} uit ${jaar}` : auto;
+    const plaat = formatteerKenteken(v.kenteken);
+
+    for (const link of document.querySelectorAll('a.wa-link')) {
+      const pakket = link.dataset.waPakket;
+      const zin = pakket
+        ? `ik ben geïnteresseerd in ${pakket} voor mijn ${omschrijving} (${plaat}). Kun je me daar meer over vertellen?`
+        : `ik heb een ${omschrijving} (${plaat}). Ik ben benieuwd wat er voor mijn auto mogelijk is.`;
+      link.href = `https://wa.me/${nummer}?text=${encodeURIComponent(`Hoi Justus, ${zin}`)}`;
+    }
+  }
+
   if (vak) {
     try {
       const bewaard = sessionStorage.getItem('aue-auto');
@@ -191,6 +231,7 @@ const dienstSchema = {
         if (v && v.slug === vak.dataset.slug && v.kenteken) {
           document.getElementById('jouw-plaat').textContent = formatteerKenteken(v.kenteken);
           vak.hidden = false;
+          zetKentekenInWhatsapp(v);
         }
       }
     } catch (e) {

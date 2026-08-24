@@ -14,6 +14,7 @@ import { modellenVanMerk } from '../../data/models.js';
 import { PACKAGES, SITE } from '../../data/site.js';
 import { GARANTIE, CTA } from '../../data/generiek.js';
 import { pad } from '../../lib/pad.js';
+import { whatsappLink, berichtOverAuto } from '../../lib/whatsapp.js';
 
 export function getStaticPaths() {
   return MERKEN.map((merk) => ({ params: { slug: merk.slug }, props: { merk } }));
@@ -74,7 +75,7 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
     <div class="wrap">
       <h2>Rijd je een {merk.naam}?</h2>
       <p style="margin:0 auto 2em;">{CTA.tekst}</p>
-      <a class="btn wa" href={SITE.whatsapp}>{CTA.knop}</a>
+      <a class="btn wa" href={whatsappLink(berichtOverAuto(merk.naam))}>{CTA.knop}</a>
     </div>
   </section>
 </Base>

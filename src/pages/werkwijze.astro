@@ -5,6 +5,7 @@ import { SITE } from '../data/site.js';
 import { pad } from '../lib/pad.js';
 /* Foto: Unsplash — vrij te gebruiken. Zie src/components/Fotoband.astro. */
 import carplayScherm from '../assets/foto/carplay-scherm.jpg';
+import { whatsappLink, berichtOverAuto } from '../lib/whatsapp.js';
 ---
 <Base
   title="Werkwijze — zo upgraden wij je autogeluid | Audio Upgrade Emmen"
@@ -39,7 +40,7 @@ import carplayScherm from '../assets/foto/carplay-scherm.jpg';
         </div>
       </div>
       <div class="center mt">
-        <a class="btn wa" href={SITE.whatsapp}>Stuur foto dashboard</a>
+        <a class="btn wa" href={whatsappLink(berichtOverAuto())}>Stuur foto dashboard</a>
       </div>
     </div>
   </section>

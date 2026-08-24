@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import { SITE, ADRES } from '../data/site.js';
+import { whatsappLink, berichtOverAuto } from '../lib/whatsapp.js';
 
 const q = encodeURIComponent(SITE.mapsQuery);
 const kaartUrl = `https://www.google.com/maps?q=${q}&output=embed`;
@@ -16,7 +17,7 @@ const routeUrl = `https://www.google.com/maps/search/?api=1&query=${q}`;
       <span class="eyebrow">Uitsluitend op afspraak</span>
       <h1>Klaar voor de ultieme geluidservaring?</h1>
       <p style="margin:1.4em auto 2.2em;">Stuur een foto van je dashboard, dan hoor je binnen 24 uur wat er voor jouw auto mogelijk is en wat het kost.</p>
-      <a class="btn wa" href={SITE.whatsapp}>Stuur foto dashboard</a>
+      <a class="btn wa" href={whatsappLink(berichtOverAuto())}>Stuur foto dashboard</a>
     </div>
   </section>
 
@@ -26,7 +27,7 @@ const routeUrl = `https://www.google.com/maps/search/?api=1&query=${q}`;
         <div class="card center contact-kaart">
           <h3>WhatsApp</h3>
           <p>De snelste route: foto van je dashboard + automerk en bouwjaar.</p>
-          <a class="btn wa" href={SITE.whatsapp}>Open WhatsApp</a>
+          <a class="btn wa" href={whatsappLink(berichtOverAuto())}>Open WhatsApp</a>
         </div>
         <div class="card center contact-kaart">
           <h3>Bellen</h3>

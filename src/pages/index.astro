@@ -11,6 +11,7 @@ import deurspeaker from '../assets/foto/deurspeaker.jpg';
 import { PACKAGES, SITE } from '../data/site.js';
 import { ONTZORGEN, LEVENSLANG } from '../data/generiek.js';
 import { pad } from '../lib/pad.js';
+import { whatsappLink, berichtOverAuto } from '../lib/whatsapp.js';
 
 const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
 ---
@@ -35,7 +36,7 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
       <KentekenCheck compact={true} />
 
       <div class="hero-knoppen">
-        <a class="btn wa" href={SITE.whatsapp}>Stuur foto dashboard</a>
+        <a class="btn wa" href={whatsappLink(berichtOverAuto())}>Stuur foto dashboard</a>
         <a class="btn" href={pad("/upgrades")}>Bekijk de upgrades</a>
       </div>
       {/* "Inbouw in één dag" is hier weg. Dat stond er wel, maar het staat al
@@ -126,7 +127,7 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
     <div class="wrap">
       <h2>Klaar voor de ultieme geluidservaring?</h2>
       <p style="margin: 0 auto 2em;">Eén foto van je dashboard is genoeg. Binnen 24 uur weet je wat er voor jouw auto kan en wat het kost — zonder verplichtingen.</p>
-      <a class="btn wa" href={SITE.whatsapp}>Stuur foto dashboard</a>
+      <a class="btn wa" href={whatsappLink(berichtOverAuto())}>Stuur foto dashboard</a>
     </div>
   </section>
 </Base>
