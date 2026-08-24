@@ -17,7 +17,8 @@ import { fileURLToPath } from 'node:url';
 import { MODELS } from '../src/data/models.js';
 import { MERKEN_MET_MODELLEN } from '../src/data/merken.js';
 import { JURIDISCHE_PAGINAS } from '../src/data/juridisch.js';
-import { PACKAGES, SITE } from '../src/data/site.js';
+import { PACKAGES, SITE, SCHEMA_SOORT } from '../src/data/site.js';
+import { VRAGEN } from '../src/data/vragen.js';
 
 const DIST = fileURLToPath(new URL('../dist/', import.meta.url));
 const erIsGebouwd = existsSync(DIST);
@@ -173,7 +174,10 @@ describe('gestructureerde gegevens voor Google', alsGebouwd, () => {
 
   test('elke pagina beschrijft het bedrijf met het juiste adres', () => {
     for (const [pad, html] of inhoud) {
-      assert.ok(html.includes('"@type":"AutoRepair"'), `${pad}: bedrijfsgegevens ontbreken`);
+      assert.ok(
+        html.includes(`"@type":"${SCHEMA_SOORT}"`),
+        `${pad}: bedrijfsgegevens ontbreken`
+      );
       assert.ok(html.includes(SITE.street), `${pad}: adres ontbreekt`);
     }
   });
@@ -187,6 +191,54 @@ describe('gestructureerde gegevens voor Google', alsGebouwd, () => {
       assert.ok(blok, `${m.slug}: geen FAQPage`);
       assert.equal(blok.mainEntity.length, 3, `${m.slug}: verkeerd aantal vragen`);
     }
+  });
+
+  /**
+   * De vragenpagina is de enige plek waar hetzelfde antwoord twee keer in de
+   * opgeleverde bestanden terechtkomt: één keer als leesbare tekst en één
+   * keer in het FAQPage-blok voor Google. Lopen die uiteen, dan toont Google
+   * iets anders dan er op je scherm staat — en dat is precies waar hij op
+   * afrekent. Deze tests houden ze aan elkaar vast.
+   */
+  test('de vragenpagina toont elke vraag met zijn eigen antwoord', () => {
+    const html = inhoud.get('/veelgestelde-vragen');
+    assert.ok(html, 'de vragenpagina is niet gebouwd');
+
+    /* Astro schrijft tekens als & en ' weg als &#38; en &#39;. Terugvertalen
+       is betrouwbaarder dan raden hoe een zin er ontsnapt uitziet. */
+    const leesbaar = html
+      .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>');
+
+    for (const v of VRAGEN) {
+      assert.ok(leesbaar.includes(v.vraag), `vraag ontbreekt: ${v.vraag}`);
+      assert.ok(leesbaar.includes(v.antwoord), `antwoord ontbreekt bij: ${v.vraag}`);
+    }
+  });
+
+  test('het FAQPage-blok zegt exact hetzelfde als de pagina', () => {
+    const html = inhoud.get('/veelgestelde-vragen');
+    const blok = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+      .map((x) => JSON.parse(x[1]))
+      .find((x) => x['@type'] === 'FAQPage');
+    assert.ok(blok, 'geen FAQPage op de vragenpagina');
+    assert.equal(blok.mainEntity.length, VRAGEN.length);
+    blok.mainEntity.forEach((item, i) => {
+      assert.equal(item.name, VRAGEN[i].vraag);
+      assert.equal(item.acceptedAnswer.text, VRAGEN[i].antwoord);
+    });
+  });
+
+  test('elke vraag is een vraag, en staat er maar één keer', () => {
+    for (const v of VRAGEN) {
+      assert.match(v.vraag, /\?$/, `mist een vraagteken: ${v.vraag}`);
+      assert.ok(v.antwoord.trim().length > 40, `antwoord te kort bij: ${v.vraag}`);
+    }
+    const uniek = new Set(VRAGEN.map((v) => v.vraag.toLowerCase()));
+    assert.equal(uniek.size, VRAGEN.length, 'er staat een dubbele vraag in');
   });
 });
 
@@ -277,7 +329,7 @@ describe('vindbaar voor zoekmachines en AI-assistenten', alsGebouwd, () => {
     const html = inhoud.get('/');
     const bedrijf = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
       .map((x) => JSON.parse(x[1]))
-      .find((b) => b['@type'] === 'AutoRepair');
+      .find((b) => b['@type'] === SCHEMA_SOORT);
     assert.ok(bedrijf.makesOffer.length === PACKAGES.length);
     assert.equal(bedrijf.currenciesAccepted, 'EUR');
     assert.ok(bedrijf.priceRange);

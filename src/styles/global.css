@@ -543,3 +543,18 @@ h1 { letter-spacing: .06em; }
   width: 24px;
   height: auto;
 }
+
+/* Een troef: één argument met een streep erboven in de accentkleur, zodat het
+   als losse mededeling leest en niet als de zoveelste alinea.
+
+   Stond eerst in de scoped stijl van de homepage. Toen de garanties op de
+   upgradepagina dezelfde vorm kregen, werkte dat niet meer: een scoped stijl
+   in Astro geldt alleen binnen dat ene bestand. Vandaar hier — één definitie,
+   overal hetzelfde. */
+.troef { border-top: 2px solid var(--accent); padding-top: 22px; }
+.troef h2 { font-size: clamp(1.3rem, 3.4vw, 1.75rem); margin-top: .5em; }
+.troef p { margin-top: 1em; }
+.troef .btn { display: inline-block; margin-top: 1.6em; }
+/* Eén troef in plaats van twee: dan mag hij de volle breedte hebben, maar de
+   tekst blijft leesbaar smal. */
+.troef-breed { max-width: 70ch; }

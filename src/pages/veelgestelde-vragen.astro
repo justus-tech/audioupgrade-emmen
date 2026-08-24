@@ -1,0 +1,106 @@
+---
+/**
+ * De vragenpagina.
+ *
+ * TWEE DINGEN DIE HIER BEWUST ZO ZIJN
+ *
+ * 1. Alle antwoorden staan open, niet ingeklapt. Dichtgeklapte antwoorden
+ *    staan wel netjes, maar dan moet je vijftien keer klikken om te vinden
+ *    wat je zoekt — en ctrl+F werkt er niet op. Zoeken op de pagina is precies
+ *    wat mensen hier doen.
+ * 2. Het FAQPage-blok onderaan. Daarmee snapt Google dat dit vragen en
+ *    antwoorden zijn en kan hij ze direct in de zoekresultaten tonen. Het
+ *    moet woord voor woord gelijk zijn aan wat er op de pagina staat; verzin
+ *    hier dus nooit iets extra's.
+ */
+import Base from '../layouts/Base.astro';
+import { VRAGEN } from '../data/vragen.js';
+import { SITE } from '../data/site.js';
+import { pad } from '../lib/pad.js';
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: VRAGEN.map((v) => ({
+    '@type': 'Question',
+    name: v.vraag,
+    acceptedAnswer: { '@type': 'Answer', text: v.antwoord },
+  })),
+};
+---
+<Base
+  title="Veelgestelde vragen over car audio en CarPlay | Audio Upgrade Emmen"
+  description="Gaat je fabrieksgarantie eraan? Hoe lang duurt de inbouw? Wat kost het? De vragen die we het vaakst krijgen, eerlijk beantwoord."
+  path="/veelgestelde-vragen"
+>
+  <section>
+    <div class="wrap">
+      <span class="eyebrow">Alles wat je wilt weten</span>
+      <h1>Veelgestelde vragen</h1>
+      <p class="lead" style="max-width:60ch">
+        Dit zijn de vragen die we het vaakst krijgen. Staat die van jou er niet
+        bij? Stuur hem via WhatsApp — je krijgt binnen 24 uur antwoord.
+      </p>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap">
+      <div class="vragen">
+        {VRAGEN.map((v) => (
+          <div class="vraag">
+            <h2>{v.vraag}</h2>
+            <p>{v.antwoord}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="center">
+    <div class="wrap">
+      <h2>Je vraag staat er niet bij</h2>
+      <p style="margin:0 auto 2em;">
+        Stuur een foto van je dashboard en je vraag erbij. Je krijgt een eerlijk
+        antwoord, ook als dat "dat kan bij jouw auto niet" is.
+      </p>
+      <a class="btn wa" href={SITE.whatsapp}>Stuur foto dashboard</a>
+      <p style="margin-top:2em">
+        <a href={pad('/upgrades')}>Bekijk de upgrades en prijzen →</a>
+      </p>
+    </div>
+  </section>
+
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+</Base>
+
+<style>
+  /* Eén kolom en smal. Vraag-en-antwoord leest van boven naar beneden; in twee
+     kolommen weet je niet meer welk antwoord bij welke vraag hoort. */
+  .vragen {
+    max-width: 68ch;
+    margin: 0 auto;
+    display: grid;
+    gap: 2.4rem;
+  }
+
+  /* Een streepje in de accentkleur voor elke vraag, zoals de troeven en de
+     feiten onder het portret. Zo blijft het één taal. */
+  .vraag { border-top: 1px solid var(--line-strong); padding-top: 1.6rem; }
+  .vraag:first-child { border-top: none; padding-top: 0; }
+
+  .vraag h2 {
+    font-size: clamp(1.05rem, 2.8vw, 1.25rem);
+    line-height: 1.3;
+  }
+  .vraag h2::before {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 2px;
+    margin-right: .7em;
+    vertical-align: middle;
+    background: var(--accent);
+  }
+  .vraag p { margin-top: .9em; }
+</style>

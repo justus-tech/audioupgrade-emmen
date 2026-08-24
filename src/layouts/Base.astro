@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css';
-import { SITE, PACKAGES } from '../data/site.js';
+import { SITE, PACKAGES, SCHEMA_SOORT } from '../data/site.js';
 import { BRAND, LICHT, cssThema } from '../data/brand.js';
 import Logo from '../components/Logo.astro';
 import { pad } from '../lib/pad.js';
@@ -103,7 +103,12 @@ const nav = [
       die hier in. */}
   <script type="application/ld+json" set:html={JSON.stringify({
     '@context': 'https://schema.org',
-    '@type': 'AutoRepair',
+    /* Zie de uitleg bij SCHEMA_SOORT in site.js: hier stond 'AutoRepair' en
+       dat trok de verkeerde bezoeker. De additionalType wijst naar de
+       Wikipedia-pagina over car audio, zodat er geen misverstand kan bestaan
+       over wat voor winkel dit precies is. */
+    '@type': SCHEMA_SOORT,
+    additionalType: 'https://en.wikipedia.org/wiki/Vehicle_audio',
     '@id': `${SITE.url}/#bedrijf`,
     name: SITE.name,
     url: SITE.url,
@@ -304,6 +309,7 @@ const nav = [
       <div>
         <a href={SITE.whatsapp}>Stuur foto dashboard</a><br />
         <a href={pad("/upgrades")}>Upgrades</a><br />
+        <a href={pad("/veelgestelde-vragen")}>Veelgestelde vragen</a><br />
         <a href={pad("/audio-upgrade")}>Upgrade per automodel</a><br />
         <a href={pad("/oldtimer-audio")}>Klassiekers en youngtimers</a>
       </div>

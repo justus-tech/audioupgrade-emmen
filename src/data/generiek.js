@@ -16,6 +16,30 @@ export const GARANTIE = {
     'Wij werken uitsluitend met Plug & Play-kabelbomen die op de bestaande stekkers worden aangesloten. Er wordt niets doorgeknipt en niets aan de originele bedrading veranderd. Alles is volledig terug te bouwen naar origineel — precies wat je nodig hebt om je garantie ongemoeid te laten.',
 };
 
+/**
+ * De levenslange garantie op het inbouwwerk.
+ *
+ * WAAROM DIT ER STAAT
+ * Dit stond alleen in artikel 8 van de algemene voorwaarden en twee keer in
+ * het privacybeleid. Nergens op een pagina waar iemand een prijs staat te
+ * bekijken. Het is het sterkste argument dat Justus heeft en niemand anders
+ * in deze branche doet het.
+ *
+ * LET OP DAT DIT PRECIES BLIJFT KLOPPEN
+ * De garantie geldt op het inbouwwerk en de bekabeling die hij aanlegt — niet
+ * op de apparatuur, daar geldt de fabrieksgarantie van Alpine of Mosconi. En
+ * hij is persoonsgebonden: verkoop je de auto, dan vervalt hij. Dat staat zo
+ * in de algemene voorwaarden en het moet hier hetzelfde zeggen. Een garantie
+ * die op de verkooppagina ruimer klinkt dan in de voorwaarden is precies het
+ * soort belofte waar je later ruzie over krijgt.
+ */
+export const LEVENSLANG = {
+  kop: 'Levenslange garantie op ons inbouwwerk',
+  kort: 'Levenslange garantie op ons inbouwwerk en onze bekabeling.',
+  tekst:
+    'Op alles wat wij monteren en aansluiten — het inbouwwerk zelf en de bekabeling die wij aanleggen — krijg je levenslange garantie, zolang de auto van jou blijft. Dat durven we te beloven omdat we solderen in plaats van knijpstekkers gebruiken: er zit niets in dat na drie jaar los gaat trillen. Voor de apparatuur zelf geldt gewoon de garantie van de fabrikant.',
+};
+
 /** De drie stappen. Zelfde volgorde als op /werkwijze. */
 export const WERKWIJZE = [
   {
@@ -123,4 +147,6 @@ export const STANDAARD_PAKKETTEN = [
   'reference-edition',
 ];
 
-export default { GARANTIE, WERKWIJZE, VAKMANSCHAP, ONTZORGEN, OVER, CTA, STANDAARD_PAKKETTEN };
+export default {
+  GARANTIE, LEVENSLANG, WERKWIJZE, VAKMANSCHAP, ONTZORGEN, OVER, CTA, STANDAARD_PAKKETTEN,
+};

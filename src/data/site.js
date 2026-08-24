@@ -54,6 +54,24 @@ export const AUDIOMERKEN = [
 /** Het bezoekadres op één regel: de werkplaats. */
 export const ADRES = `${SITE.street}, ${SITE.postalCode} ${SITE.city}`;
 
+/**
+ * Wat voor soort bedrijf dit is, voor de machineleesbare gegevens die in elke
+ * pagina staan (zie Base.astro).
+ *
+ * HIER STOND 'AutoRepair', EN DAT WAS FOUT.
+ * Daarmee vertelde elke pagina aan Google dat dit een autoreparatiebedrijf is.
+ * Gevolg: je komt naar boven bij iemand met een kapotte koppeling en niet bij
+ * iemand die CarPlay wil. Diezelfde fout stond in het Google-bedrijfsprofiel.
+ *
+ * 'AutoPartsStore' is de dichtstbijzijnde soort die schema.org kent — een
+ * winkel in auto-onderdelen. Een apart type voor car audio bestaat niet.
+ *
+ * Staat hier en niet in Base.astro, omdat de tests hem ook nodig hebben. Toen
+ * hij op twee plekken stond, liepen die twee bij de eerste wijziging meteen
+ * uit elkaar.
+ */
+export const SCHEMA_SOORT = 'AutoPartsStore';
+
 /** Het postadres op één regel. Alleen voor post — zie de uitleg bij SITE. */
 export const POSTADRES = `${SITE.postStreet}, ${SITE.postPostalCode} ${SITE.city}`;
 

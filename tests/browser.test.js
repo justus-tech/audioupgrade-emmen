@@ -414,16 +414,33 @@ describe('de contactpagina', alsGebouwd, () => {
     // zijn tekst korter is, valt meteen op.
     const p = await open('contact');
     await p.setViewportSize({ width: 1280, height: 900 });
-    // Wachten tot het lettertype er is. Oswald is smaller dan de reservefont,
-    // dus vóór het laden past "+31 6 44 37 98 44" net niet op één regel. Die
-    // knop is dan een regel hoger dan de andere twee en de test valt om — niet
-    // omdat de pagina stuk is, maar omdat we te vroeg keken.
     await p.evaluate(() => document.fonts.ready);
-    const hoogtes = await p.$$eval('.contact-kaart .btn', (knoppen) =>
-      knoppen.map((k) => Math.round(k.getBoundingClientRect().top))
+
+    /**
+     * Meten binnen de kaart, niet op het scherm.
+     *
+     * De kaarten komen bij het scrollen omhoog geschoven in beeld, met 70
+     * milliseconden verschil per kaart (zie [data-reveal] in global.css).
+     * Meet je de knoppen ten opzichte van het scherm, dan sta je middenin die
+     * beweging drie verschillende waarden te vergelijken en valt de test
+     * willekeurig om. Het gaat er niet om waar de knop op het scherm staat,
+     * maar of hij in elke kaart even ver van de bovenkant zit — en dat is
+     * hetzelfde antwoord, of de kaart nu al op zijn plek staat of niet.
+     */
+    const afstanden = await p.$$eval('.contact-kaart', (kaarten) =>
+      kaarten.map((kaart) => {
+        const knop = kaart.querySelector('.btn');
+        return Math.round(
+          knop.getBoundingClientRect().top - kaart.getBoundingClientRect().top
+        );
+      })
     );
-    assert.equal(hoogtes.length, 3);
-    assert.equal(new Set(hoogtes).size, 1, `knoppen staan op ${hoogtes.join(', ')}`);
+    assert.equal(afstanden.length, 3);
+    assert.equal(
+      new Set(afstanden).size,
+      1,
+      `knoppen staan op ${afstanden.join(', ')} vanaf de bovenkant van hun kaart`
+    );
     await p.close();
   });
 });

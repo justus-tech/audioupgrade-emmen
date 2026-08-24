@@ -17,7 +17,8 @@
 import { MODELS } from '../data/models.js';
 import { MERKEN_MET_MODELLEN } from '../data/merken.js';
 import { PACKAGES, SITE, ADRES, AUDIOMERKEN } from '../data/site.js';
-import { GARANTIE, WERKWIJZE, ONTZORGEN } from '../data/generiek.js';
+import { GARANTIE, LEVENSLANG, WERKWIJZE, ONTZORGEN } from '../data/generiek.js';
+import { VRAGEN } from '../data/vragen.js';
 
 export async function GET() {
   const pakketten = PACKAGES.map(
@@ -78,6 +79,8 @@ ${WERKWIJZE.map((s) => `${s.nummer}. **${s.kop}** — ${s.tekst}`).join('\n')}
 
 ${GARANTIE.tekst}
 
+${LEVENSLANG.tekst}
+
 ## Service
 
 ${ONTZORGEN.tekst}
@@ -109,8 +112,13 @@ niets opgeslagen.
 
 ${merken}
 
+## Veelgestelde vragen
+
+${VRAGEN.map((v) => `**${v.vraag}**\n${v.antwoord}`).join('\n\n')}
+
 ## Losse pagina's
 
+- ${SITE.url}/veelgestelde-vragen — de vragen hierboven, met antwoord
 - ${SITE.url}/upgrades — alle pakketten met prijzen
 - ${SITE.url}/audio-upgrade — alle modellen, doorzoekbaar
 - ${SITE.url}/oldtimer-audio — klassiekers en youngtimers, prijs in overleg

@@ -22,7 +22,7 @@ import ModelKiezer from '../components/ModelKiezer.astro';
 import speakerconus from '../assets/foto/speakerconus.jpg';
 import { PACKAGES, SITE } from '../data/site.js';
 import { autoTabel } from '../data/autos.js';
-import { GARANTIE, CTA } from '../data/generiek.js';
+import { GARANTIE, LEVENSLANG, CTA } from '../data/generiek.js';
 ---
 <Base
   title="Upgrades & prijzen — check je kenteken | Audio Upgrade Emmen"
@@ -95,10 +95,21 @@ import { GARANTIE, CTA } from '../data/generiek.js';
     </div>
   </section>
 
+  {/* Twee garanties naast elkaar, want ze beantwoorden twee verschillende
+      angsten. De ene: "gaat mijn fabrieksgarantie eraan?" De andere: "en wat
+      als het over vijf jaar los gaat zitten?" */}
   <section class="alt">
     <div class="wrap">
-      <h2>{GARANTIE.kop}</h2>
-      <p style="margin-top:1.4em">{GARANTIE.tekst}</p>
+      <div class="grid cols-2">
+        <div class="troef">
+          <h2>{GARANTIE.kop}</h2>
+          <p>{GARANTIE.tekst}</p>
+        </div>
+        <div class="troef">
+          <h2>{LEVENSLANG.kop}</h2>
+          <p>{LEVENSLANG.tekst}</p>
+        </div>
+      </div>
     </div>
   </section>
 

@@ -22,6 +22,8 @@ const VAST = [
   ['/werkwijze', 0.7],
   ['/contact', 0.7],
   ['/oldtimer-audio', 0.8],
+  // Hoog, want dit is de pagina die op losse vragen moet ranken.
+  ['/veelgestelde-vragen', 0.8],
   // De juridische pagina's horen wel in de sitemap — mensen zoeken er soms
   // gericht op — maar hoeven niet hoog te scoren.
   ...JURIDISCHE_PAGINAS.map((d) => [`/${d.slug}`, 0.3]),

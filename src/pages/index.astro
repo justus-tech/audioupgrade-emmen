@@ -9,7 +9,7 @@ import OverJustus from '../components/OverJustus.astro';
 /* Foto: Unsplash — vrij te gebruiken. Zie src/components/Fotoband.astro. */
 import deurspeaker from '../assets/foto/deurspeaker.jpg';
 import { PACKAGES, SITE } from '../data/site.js';
-import { ONTZORGEN } from '../data/generiek.js';
+import { ONTZORGEN, LEVENSLANG } from '../data/generiek.js';
 import { pad } from '../lib/pad.js';
 
 const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
@@ -38,8 +38,12 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
         <a class="btn wa" href={SITE.whatsapp}>Stuur foto dashboard</a>
         <a class="btn" href={pad("/upgrades")}>Bekijk de upgrades</a>
       </div>
+      {/* "Inbouw in één dag" is hier weg. Dat stond er wel, maar het staat al
+          op elke pakketkaart ("klaar in ± 2 uur", "één werkdag") en de
+          levenslange garantie is een sterker argument: dat doet niemand
+          anders in deze branche. */}
       <p class="hero-bewijs">
-        All-in prijzen · Inbouw in één dag · Fabrieksgarantie blijft
+        All-in prijzen · Levenslange garantie op ons werk · Fabrieksgarantie blijft
       </p>
     </div>
   </div>
@@ -51,6 +55,14 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
       <div class="grid cols-4 mt">
         {pakketten.map((pkg) => <PackageCard pkg={pkg} />)}
       </div>
+
+      {/* Direct onder de prijzen, want daar wordt de afweging gemaakt. Stond
+          eerder alleen in artikel 8 van de algemene voorwaarden. */}
+      <p class="garantiestrip">
+        <strong>{LEVENSLANG.kort}</strong>
+        <span>Zolang de auto van jou blijft. Voor de apparatuur geldt de fabrieksgarantie.</span>
+      </p>
+
       <div style="margin-top:4rem"><Merken /></div>
     </div>
   </section>
@@ -138,15 +150,32 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
     text-transform: uppercase; letter-spacing: .24em;
     font-size: .68rem; color: var(--text-dim);
   }
-  /* De twee troeven staan naast elkaar, elk met een eigen streep erboven zodat
-     ze als losse argumenten lezen en niet als één lap tekst. */
-  .troef { border-top: 2px solid var(--accent); padding-top: 22px; }
-  .troef h2 { font-size: clamp(1.3rem, 3.4vw, 1.75rem); margin-top: .5em; }
-  .troef p { margin-top: 1em; }
-  .troef .btn { display: inline-block; margin-top: 1.6em; }
-  /* Eén troef in plaats van twee: dan mag hij de volle breedte hebben, maar
-     de tekst blijft leesbaar smal. */
-  .troef-breed { max-width: 70ch; }
+  /* De garantieregel onder de prijzen. Een streep erboven in de accentkleur,
+     zoals de troeven verderop en het portret van Justus — zo leest het als
+     een eigen mededeling en niet als een voetnoot bij de laatste kaart. */
+  .garantiestrip {
+    max-width: 62ch;
+    margin: 3.2rem auto 0;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--accent);
+    text-align: center;
+  }
+  .garantiestrip strong {
+    display: block;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    font-size: clamp(.82rem, 2.4vw, .98rem);
+  }
+  .garantiestrip span {
+    display: block;
+    margin-top: .7em;
+    font-size: .88rem;
+    color: var(--text-dim);
+  }
+
+  /* .troef en .troef-breed staan in global.css: de upgradepagina gebruikt ze
+     inmiddels ook, en een scoped stijl geldt maar binnen één bestand. */
 
   @media (max-width: 700px) {
     /* Ruimte voor de frequentiecurve eronder. Met minder liep de bewijsregel
