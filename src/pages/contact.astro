@@ -23,7 +23,11 @@ const routeUrl = `https://www.google.com/maps/search/?api=1&query=${q}`;
 
   <section class="alt">
     <div class="wrap">
-      <div class="grid cols-3">
+      {/* Deze kop moet er staan. Zonder h2 sprong de pagina van h1 recht naar
+          de h3'jes op de kaarten, en dan slaat een schermlezer een niveau
+          over — die leest de koppen als inhoudsopgave. */}
+      <h2 class="center">Zo bereik je ons</h2>
+      <div class="grid cols-3 mt">
         <div class="card center contact-kaart">
           <h3>WhatsApp</h3>
           <p>De snelste route: foto van je dashboard + automerk en bouwjaar.</p>

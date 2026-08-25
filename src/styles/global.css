@@ -1,3 +1,63 @@
+/* ============================================================================
+   DE LETTERTYPEN — vanaf de eigen server, niet vanaf die van Google.
+
+   WAAROM ZELF HOSTEN
+   1. Privacy. Bij de Google-variant haalt de browser van elke bezoeker de
+      bestanden op bij fonts.gstatic.com, en daarmee gaat zijn IP-adres naar
+      Google. Dat staat haaks op wat er in het cookiebeleid staat, en het is
+      precies waarop een Duitse rechter in 2022 een website veroordeeld heeft.
+      Nu verlaat er niets meer de site.
+   2. Snelheid. Eerst moest de browser drie keer achter elkaar wachten: eerst
+      de pagina, dan de stylesheet bij googleapis.com, en pas daarna het
+      lettertype bij gstatic.com. Twee extra verbindingen opzetten kost op een
+      telefoon makkelijk een halve seconde voordat er één letter staat.
+
+   Alleen latin en latin-ext. De Griekse, Cyrillische en Vietnamese varianten
+   waren goed voor vijf van de zeven bestanden per gewicht, en die heeft een
+   Nederlandse site niet nodig.
+
+   Inter en Oswald staan onder de SIL Open Font License; zelf hosten is
+   uitdrukkelijk toegestaan.
+
+   Bijwerken of een gewicht toevoegen? Zie scripts/lettertypen.mjs.
+   ========================================================================= */
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url('/fonts/inter-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url('/fonts/inter-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Oswald';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url('/fonts/oswald-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Oswald';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url('/fonts/oswald-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 /* ============================================
    Audio Upgrade Emmen — design tokens & basis
 
@@ -26,6 +86,27 @@
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* De overslaan-link. Staat buiten beeld tot iemand met de tab-toets bij hem
+   komt; dan springt hij naar binnen. Bewust niet display:none of
+   visibility:hidden — dan slaat het toetsenbord hem óók over en heeft hij
+   geen enkele functie meer. */
+.overslaan {
+  position: absolute;
+  left: 12px;
+  top: -60px;
+  z-index: 100;
+  padding: 10px 18px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  font-size: .78rem;
+  text-decoration: none;
+  transition: top .15s ease;
+}
+.overslaan:focus { top: 12px; }
 
 html { scroll-behavior: smooth; }
 

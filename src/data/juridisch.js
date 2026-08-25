@@ -224,21 +224,28 @@ export const COOKIEBELEID = {
       ],
     },
     {
-      kop: '2. Wat er wel op je apparaat wordt bewaard',
+      kop: '2. Alles wat je ziet komt van deze site',
+      alineas: [
+        'Lettertypen, afbeeldingen en scripts staan allemaal op onze eigen server. Je browser hoeft dus nergens anders aan te kloppen om deze pagina te tonen, en er gaat geen enkel gegeven van jou naar een andere partij.',
+        'Dat is bewust. Veel websites laden hun lettertypen rechtstreeks bij Google, waarmee het IP-adres van elke bezoeker naar Google gaat zonder dat iemand daar iets van merkt. Wij deden dat eerst ook; sinds augustus 2026 niet meer.',
+      ],
+    },
+    {
+      kop: '3. Wat er wel op je apparaat wordt bewaard',
       alineas: [
         'Twee dingen, en allebei blijven ze op je eigen apparaat: je kenteken zolang je tabblad openstaat, en je keuze voor licht of donker. Het eerste zorgt dat de volgende pagina weet om welke auto het gaat, het tweede dat de site er bij een volgend bezoek hetzelfde uitziet.',
         'Technisch zijn dit geen cookies maar lokale opslag. Het verschil: cookies gaan bij elk bezoek automatisch mee naar een server, dit niet. Wij kunnen er dus ook niet bij.',
       ],
     },
     {
-      kop: '3. De kaart op de contactpagina',
+      kop: '4. De kaart op de contactpagina',
       alineas: [
         'Op de contactpagina staat een kaart van Google. Die laadt bewust niet vanzelf: je ziet eerst een knop. Klik je erop, dan wordt de kaart bij Google opgehaald en kan Google op dat moment cookies plaatsen. Dat is jouw keuze, en daarom staat die knop er.',
         'Wil je dat niet, dan kun je in plaats daarvan de routelink gebruiken. Die opent Google Maps pas in een nieuw venster, buiten deze site om.',
       ],
     },
     {
-      kop: '4. Zelf beheren',
+      kop: '5. Zelf beheren',
       alineas: [
         'Je kunt alles wat websites op je apparaat bewaren op elk moment verwijderen via de instellingen van je browser. Bij deze site verlies je daarmee hooguit je voorkeur voor licht of donker.',
       ],

@@ -252,6 +252,62 @@ describe('gestructureerde gegevens voor Google', alsGebouwd, () => {
  * probleem dat we hiermee oplosten. Zo'n terugval zie je niet met het blote
  * oog, want de knop werkt gewoon.
  */
+/**
+ * Alles wat de bezoeker binnenhaalt, komt van deze site.
+ *
+ * De lettertypen stonden eerst bij Google. Daarmee ging het IP-adres van elke
+ * bezoeker naar Google — terwijl in het cookiebeleid staat dat er geen
+ * koppeling met Google is. Het is ook precies het soort regel dat er per
+ * ongeluk weer in sluipt, want zo staat het in elk voorbeeld op internet.
+ */
+describe('niets van buiten de site', alsGebouwd, () => {
+  /* Deze mogen wél: de bezoeker klikt er zelf op, of ze staan er bewust. */
+  const TOEGESTAAN = [
+    'wa.me',                        // de WhatsApp-knoppen
+    'google.com/maps',              // de kaart, en pas ná een klik
+    'opendata.rdw.nl',              // de kenteken-check, vanuit de browser
+    'cloudflareinsights.com',       // de bezoekersteller
+    'schema.org',                   // alleen een naam in de gegevens, geen verzoek
+    'wikipedia.org',                // idem
+    'w3.org',                       // de xmlns van elke SVG; er gaat niets heen
+    'audioupgradeemmen.nl',         // wijzelf
+  ];
+
+  test('geen enkele pagina haalt lettertypen bij Google', () => {
+    for (const [pad, html] of inhoud) {
+      assert.ok(!html.includes('fonts.googleapis.com'), `${pad}: stylesheet bij Google`);
+      assert.ok(!html.includes('fonts.gstatic.com'), `${pad}: lettertype bij Google`);
+    }
+  });
+
+  test('elk adres van buiten staat op de lijst van toegestane', () => {
+    /* Op het hele adres vergelijken en niet alleen op de domeinnaam: de kaart
+       mag naar google.com/maps, maar google.com zonder meer niet. */
+    for (const [pad, html] of inhoud) {
+      for (const m of html.matchAll(/https?:\/\/[^"'\s)<>\\]+/gi)) {
+        const adres = m[0].toLowerCase();
+        assert.ok(
+          TOEGESTAAN.some((t) => adres.includes(t)),
+          `${pad}: onverwacht adres van buiten — ${adres.slice(0, 70)}`
+        );
+      }
+    }
+  });
+
+  test('de lettertypen staan er ook echt', () => {
+    for (const naam of ['inter-latin.woff2', 'oswald-latin.woff2']) {
+      assert.ok(existsSync(join(DIST, 'fonts', naam)), `${naam} ontbreekt`);
+    }
+  });
+
+  test('elke pagina begint met een overslaan-link naar de inhoud', () => {
+    for (const [pad, html] of inhoud) {
+      assert.ok(html.includes('class="overslaan"'), `${pad}: geen overslaan-link`);
+      assert.ok(html.includes('id="inhoud"'), `${pad}: geen doel om heen te springen`);
+    }
+  });
+});
+
 describe('WhatsApp-knoppen', alsGebouwd, () => {
   const links = (html) =>
     [...html.matchAll(/href="(https:\/\/wa\.me\/[^"]*)"/g)].map((m) =>
