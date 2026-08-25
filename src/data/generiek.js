@@ -9,12 +9,46 @@
  * maar één bron is.
  */
 
-/** De belofte die op elke modelpagina onder de pakketten staat. */
+/** De belofte, voor pagina's die geen specifieke auto in beeld hebben. */
 export const GARANTIE = {
   kop: 'Je fabrieksgarantie blijft 100% intact',
   tekst:
     'Wij werken uitsluitend met Plug & Play-kabelbomen die op de bestaande stekkers worden aangesloten. Er wordt niets doorgeknipt en niets aan de originele bedrading veranderd. Alles is volledig terug te bouwen naar origineel — precies wat je nodig hebt om je garantie ongemoeid te laten.',
 };
+
+/**
+ * Dezelfde belofte, maar dan over één bepaalde auto.
+ *
+ * WAAROM DIT BESTAAT
+ * Op alle 150 modelpagina's stond exact dezelfde garantiealinea. Gemeten:
+ * van dat hele blok was 1% eigen tekst. Dat is precies wat een zoekmachine
+ * "dubbele inhoud" noemt, en het leest ook slapper — je bent op de pagina
+ * over jóuw auto en krijgt een algemene mededeling.
+ *
+ * Nu staat er de naam van de auto in, en waar zijn kabelboom op wordt
+ * aangesloten. Geen verzonnen techniek: dat wij op de bestaande stekkers
+ * aansluiten geldt voor elk model, alleen de naam wisselt.
+ *
+ * `dealer` is de merknaam, zodat er "geen BMW-dealer" staat en niet
+ * "geen dealer".
+ */
+export function garantieVoor(merk, model) {
+  return {
+    kop: `Je fabrieksgarantie op je ${model} blijft 100% intact`,
+    /* Let op de naam in béíde zinnen. Niet om Google te plezieren, maar omdat
+       elke zin die er zonder naam in staat, op alle 150 modelpagina's woord
+       voor woord hetzelfde is. Meer dan twee keer moet je hem er niet in
+       proppen: dan gaat het lezen als een zoekmachine-truc, en dat is het
+       tegenovergestelde van wat we willen. */
+    tekst:
+      `In je ${merk} ${model} gaat geen enkele draad door de schaar. Wij sluiten aan op de stekkers ` +
+      `die er al zitten, met een kabelboom die speciaal voor de ${model} gemaakt is, zodat de ` +
+      `originele bedrading blijft zoals hij de fabriek verliet.`,
+    naTekst:
+      `Daardoor is alles terug te bouwen naar origineel — handig als je de ${model} ooit inruilt, ` +
+      `en de reden dat geen enkele ${merk}-dealer je hierop kan aanspreken.`,
+  };
+}
 
 /**
  * De levenslange garantie op het inbouwwerk.
@@ -128,12 +162,21 @@ export const OVER = {
   ],
 };
 
-/** De afsluitende oproep onderaan elke modelpagina. */
+/** De afsluitende oproep, voor pagina's zonder specifieke auto in beeld. */
 export const CTA = {
   tekst:
     'Geen lange formulieren. Stuur een foto van je dashboard via WhatsApp en ontvang binnen 24 uur een eerlijk advies met transparante all-in prijs.',
   knop: 'Stuur foto dashboard',
 };
+
+/**
+ * Dezelfde oproep, maar over één bepaalde auto. Zelfde reden als bij
+ * garantieVoor: dit stond 150 keer woord voor woord hetzelfde op de site.
+ */
+export const ctaVoor = (model) =>
+  `Geen lange formulieren. Stuur een foto van het dashboard van je ${model} via WhatsApp, ` +
+  `dan weet je binnen 24 uur wat er voor deze auto kan en wat het kost — met een all-in prijs, ` +
+  `zonder verplichtingen.`;
 
 /**
  * Welke pakketten standaard onder een modelpagina komen. Een model kan hiervan
@@ -148,5 +191,6 @@ export const STANDAARD_PAKKETTEN = [
 ];
 
 export default {
-  GARANTIE, LEVENSLANG, WERKWIJZE, VAKMANSCHAP, ONTZORGEN, OVER, CTA, STANDAARD_PAKKETTEN,
+  GARANTIE, garantieVoor, LEVENSLANG, WERKWIJZE, VAKMANSCHAP, ONTZORGEN, OVER,
+  CTA, ctaVoor, STANDAARD_PAKKETTEN,
 };

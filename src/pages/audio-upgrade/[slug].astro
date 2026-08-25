@@ -11,10 +11,10 @@
 import Base from '../../layouts/Base.astro';
 import Logo from '../../components/Logo.astro';
 import PackageCard from '../../components/PackageCard.astro';
-import { MODELS, merkSlug } from '../../data/models.js';
+import { MODELS, merkSlug, modellenVanMerk } from '../../data/models.js';
 import { merkenPerSlug } from '../../data/merken.js';
 import { PACKAGES, SITE } from '../../data/site.js';
-import { GARANTIE, CTA, STANDAARD_PAKKETTEN } from '../../data/generiek.js';
+import { garantieVoor, ctaVoor, CTA, STANDAARD_PAKKETTEN } from '../../data/generiek.js';
 import { pad } from '../../lib/pad.js';
 import { whatsappLink, berichtOverAuto, WA_NUMMER } from '../../lib/whatsapp.js';
 
@@ -29,6 +29,24 @@ export function getStaticPaths() {
 const { model } = Astro.props;
 
 const merk = merkenPerSlug[merkSlug(model.brand)];
+
+/** De garantietekst met deze auto erin — zie de uitleg in generiek.js. */
+const garantie = garantieVoor(model.brand, model.model);
+
+/**
+ * De andere modellen van hetzelfde merk. Twee redenen:
+ *
+ *   Voor de bezoeker  Wie op de Golf uitkomt maar een Polo rijdt, klikt door
+ *                     in plaats van terug naar Google te gaan.
+ *   Voor de vindbaarheid  Elke modelpagina krijgt hierdoor eigen links naar
+ *                     verwante pagina's. Nu hing elke modelpagina er los bij,
+ *                     alleen bereikbaar via de merkpagina of de zoeklijst.
+ *
+ * Maximaal zes, anders wordt het een tweede menu onderaan de pagina.
+ */
+const anderen = modellenVanMerk(merkSlug(model.brand))
+  .filter((m) => m.slug !== model.slug)
+  .slice(0, 6);
 const pakketten = (model.packages ?? STANDAARD_PAKKETTEN)
   .map((slug) => PACKAGES.find((p) => p.slug === slug))
   .filter(Boolean);
@@ -156,8 +174,9 @@ const dienstSchema = {
 
   <section class="alt">
     <div class="wrap">
-      <h2>{GARANTIE.kop}</h2>
-      <p style="margin-top:1.4em">{GARANTIE.tekst}</p>
+      <h2>{garantie.kop}</h2>
+      <p style="margin-top:1.4em">{garantie.tekst}</p>
+      <p style="margin-top:1em">{garantie.naTekst}</p>
     </div>
   </section>
 
@@ -175,10 +194,34 @@ const dienstSchema = {
     </div>
   </section>
 
+  {anderen.length > 0 && (
+    <section>
+      <div class="wrap">
+        <h2>Andere {model.brand}-modellen</h2>
+        <p style="margin-top:1.2em">
+          Rijd je iets anders van {model.brand}? Voor deze {model.brand}-modellen
+          hebben we ook uitgezocht wat er af fabriek misgaat en wat eraan te doen is.
+        </p>
+        <ul class="verwant mt">
+          {anderen.map((m) => (
+            <li>
+              <a href={pad(`/audio-upgrade/${m.slug}`)}>{m.brand} {m.model}</a>
+            </li>
+          ))}
+        </ul>
+        {merk && (
+          <p style="margin-top:1.6em">
+            <a href={pad(`/merk/${merk.slug}`)}>Alle {model.brand}-modellen →</a>
+          </p>
+        )}
+      </div>
+    </section>
+  )}
+
   <section class="alt center">
     <div class="wrap">
       <h2>Klaar om je {model.model} te horen zoals hij bedoeld is?</h2>
-      <p style="margin:0 auto 2em;">{CTA.tekst}</p>
+      <p style="margin:0 auto 2em;">{ctaVoor(model.model)}</p>
       <a class="btn wa wa-link" href={whatsappLink(berichtOverAuto(`${model.brand} ${model.model}`))}>
         {CTA.knop}
       </a>
@@ -247,6 +290,29 @@ const dienstSchema = {
 </script>
 
 <style>
+  /* De verwante modellen als losse blokjes, niet als opsomming met bolletjes.
+     Het is een rij ingangen, geen lijst met eigenschappen. */
+  .verwant {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 0;
+  }
+  .verwant a {
+    display: inline-block;
+    padding: 9px 16px;
+    border: 1px solid var(--line-strong);
+    text-decoration: none;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    font-size: .74rem;
+    transition: border-color .15s ease, color .15s ease;
+  }
+  .verwant a:hover,
+  .verwant a:focus-visible { border-color: var(--accent); color: var(--accent-text); }
+
   .eyebrow-link { text-decoration: none; }
   .eyebrow-link:hover { text-decoration: underline; }
   .generaties { color: var(--text-dim); font-size: .95rem; margin-top: .6em; }

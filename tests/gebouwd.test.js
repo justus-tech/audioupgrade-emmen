@@ -233,6 +233,41 @@ describe('gestructureerde gegevens voor Google', alsGebouwd, () => {
     });
   });
 
+  /**
+   * De modelpagina's moeten van elkaar verschillen.
+   *
+   * Er stond op alle 150 pagina's dezelfde garantiealinea en dezelfde
+   * slotoproep. Gemeten was daardoor maar 44% van de tekst eigen aan die ene
+   * pagina; nu 65%. De rest is de prijslijst, en die ligt vast — die is woord
+   * voor woord overgenomen van de oude site en mag niet veranderen.
+   *
+   * Zonder deze test glijdt dat zo terug: het is verleidelijk om een mooie
+   * alinea één keer te schrijven en overal neer te zetten.
+   */
+  test('de garantietekst verschilt per model', () => {
+    const teksten = MODELS.slice(0, 20).map((m) => {
+      const html = inhoud.get(`/audio-upgrade/${m.slug}`);
+      /* De h2 heeft attributen van Astro erop staan, dus [^>]* ertussen. */
+      return /<h2[^>]*>Je fabrieksgarantie[^<]*<\/h2>\s*<p[^>]*>([^<]+)</.exec(html)?.[1];
+    });
+    assert.ok(teksten.every(Boolean), 'op een modelpagina ontbreekt de garantietekst');
+    assert.equal(
+      new Set(teksten).size,
+      teksten.length,
+      'twee modelpagina\'s delen woord voor woord dezelfde garantietekst'
+    );
+  });
+
+  test('elke modelpagina wijst naar andere modellen van hetzelfde merk', () => {
+    for (const m of MODELS) {
+      const familie = MODELS.filter((x) => x.brand === m.brand && x.slug !== m.slug);
+      if (familie.length === 0) continue; // een merk met één model: niets om heen te wijzen
+      const html = inhoud.get(`/audio-upgrade/${m.slug}`);
+      const wijst = familie.some((x) => html.includes(`/audio-upgrade/${x.slug}"`));
+      assert.ok(wijst, `${m.slug}: geen link naar een ander ${m.brand}-model`);
+    }
+  });
+
   test('elke vraag is een vraag, en staat er maar één keer', () => {
     for (const v of VRAGEN) {
       assert.match(v.vraag, /\?$/, `mist een vraagteken: ${v.vraag}`);
