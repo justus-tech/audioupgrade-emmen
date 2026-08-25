@@ -66,7 +66,6 @@ export async function GET() {
     ...AGENTS.flatMap((agent) => [`User-agent: ${agent}`, 'Allow: /', '']),
     'User-agent: *',
     'Allow: /',
-    'Disallow: /schetsen',
     '',
     `Sitemap: ${SITE.url}/sitemap.xml`,
     '',

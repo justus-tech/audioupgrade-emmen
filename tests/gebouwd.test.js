@@ -402,8 +402,15 @@ describe('vindbaar voor zoekmachines en AI-assistenten', alsGebouwd, () => {
     assert.ok(robots.includes(`Sitemap: ${SITE.url}/sitemap.xml`), 'de sitemap wordt niet genoemd');
   });
 
-  test('de interne proefpagina blijft uit de zoekresultaten', () => {
-    assert.ok(lees('robots.txt').includes('Disallow: /schetsen'));
+  test('de foutpagina staat er, en blijft uit de zoekresultaten', () => {
+    /* GitHub Pages toont /404.html bij elk onbekend adres. Die pagina moet er
+       zijn — anders krijgt iemand die via Google op een oud Squarespace-adres
+       landt een kale Engelse foutmelding van GitHub te zien. Zelf mag hij
+       nooit in de zoekresultaten komen. */
+    const html = lees('404.html');
+    assert.match(html, /noindex/, 'de foutpagina mag niet indexeerbaar zijn');
+    assert.ok(html.includes('kenteken'), 'op de foutpagina hoort de kenteken-check');
+    assert.ok(!lees('sitemap.xml').includes('/404'), '404 hoort niet in de sitemap');
   });
 
   test('de sitemap bevat elke pagina die gevonden mag worden', () => {

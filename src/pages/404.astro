@@ -1,0 +1,127 @@
+---
+/**
+ * De pagina die verschijnt als een adres niet bestaat.
+ *
+ * WAAROM DIT ER MOET ZIJN
+ * De site is in augustus 2026 van Squarespace naar hier verhuisd, en de
+ * adressen zijn daarbij veranderd. Google heeft de oude nog maanden in zijn
+ * index staan, en er staan links naar de oude site in WhatsApp-gesprekken en
+ * op Marktplaats. Al die mensen komen hier terecht.
+ *
+ * Zonder dit bestand krijgen ze de kale foutmelding van GitHub: witte pagina,
+ * Engelse tekst, geen logo. Die persoon is weg en denkt dat je bent gestopt.
+ *
+ * DAAROM STAAT HIER DE KENTEKEN-CHECK
+ * Een doodlopende pagina is de slechtste plek om iemand alleen "sorry" te
+ * vertellen. Hij zocht iets over zijn auto; dan kan hij dat hier alsnog
+ * vinden, in één handeling.
+ *
+ * GitHub Pages pakt /404.html vanzelf op bij elk onbekend adres — er hoeft
+ * niets te worden ingesteld.
+ */
+import Base from '../layouts/Base.astro';
+import KentekenCheck from '../components/KentekenCheck.astro';
+import { pad } from '../lib/pad.js';
+import { SITE } from '../data/site.js';
+import { whatsappLink, berichtOverAuto } from '../lib/whatsapp.js';
+
+const ingangen = [
+  ['/', 'Home', 'Terug naar het begin'],
+  ['/upgrades', 'Upgrades en prijzen', 'Alle pakketten, met all-in prijzen'],
+  ['/audio-upgrade', 'Zoek je auto op', 'Per merk en model'],
+  ['/veelgestelde-vragen', 'Veelgestelde vragen', 'Garantie, inbouwtijd en kosten'],
+  ['/werkwijze', 'Werkwijze', 'Hoe het in zijn werk gaat'],
+  ['/contact', 'Contact en route', 'Waar je ons vindt'],
+];
+---
+<Base
+  title="Pagina niet gevonden | Audio Upgrade Emmen"
+  description="Deze pagina bestaat niet meer. Vul je kenteken in of kies hieronder waar je heen wilt."
+  path="/404"
+  noindex={true}
+>
+  <section>
+    <div class="wrap center">
+      <span class="eyebrow">Foutcode 404</span>
+      <h1>Deze pagina bestaat niet meer</h1>
+      <p class="lead" style="max-width:52ch;margin:1.3em auto 0;">
+        Onze website is opnieuw gebouwd en de adressen zijn daarbij veranderd.
+        Kwam je hier via Google of via een oude link, dan is dat de reden.
+      </p>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap">
+      <h2 class="center">Waar was je naar op zoek?</h2>
+      <p class="center" style="margin:0 auto 2.4em;">
+        Vul je kenteken in en je ziet meteen wat er voor jouw auto kan.
+      </p>
+      <KentekenCheck />
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2 class="center">Of ga rechtstreeks naar</h2>
+      <ul class="ingangen mt">
+        {ingangen.map(([href, kop, uitleg]) => (
+          <li>
+            <a href={pad(href)}>
+              <strong>{kop}</strong>
+              <span>{uitleg}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="alt center">
+    <div class="wrap">
+      <h2>Kom je er niet uit?</h2>
+      <p style="margin:0 auto 2em;">
+        Stuur een foto van je dashboard, dan zoeken wij het voor je uit.
+      </p>
+      <a class="btn wa" href={whatsappLink(berichtOverAuto())}>Stuur foto dashboard</a>
+      <p style="margin-top:1.6em">
+        <a href={`tel:${SITE.phone}`}>{SITE.phoneDisplay}</a>
+      </p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .ingangen {
+    list-style: none;
+    padding: 0;
+    max-width: 900px;
+    margin-inline: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+    gap: 12px;
+  }
+  .ingangen a {
+    display: block;
+    height: 100%;
+    padding: 18px 20px;
+    border: 1px solid var(--line-strong);
+    text-decoration: none;
+    transition: border-color .15s ease;
+  }
+  .ingangen a:hover,
+  .ingangen a:focus-visible { border-color: var(--accent); }
+  .ingangen strong {
+    display: block;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    font-size: .82rem;
+  }
+  .ingangen span {
+    display: block;
+    margin-top: .5em;
+    font-size: .88rem;
+    color: var(--text-dim);
+  }
+</style>

@@ -86,8 +86,16 @@ const nav = [
   <meta property="og:type" content="website" />
   <meta property="og:url" content={canonical} />
   <meta property="og:locale" content="nl_NL" />
+  {/* De afbeelding die WhatsApp toont als iemand de link deelt. Afmetingen
+      erbij: dan reserveert WhatsApp meteen de goede ruimte en verspringt de
+      voorbeeldweergave niet als het beeld binnenkomt.
+      Opnieuw maken? node scripts/deelplaatje.mjs */}
   <meta property="og:image" content={new URL(pad('/og-image.png'), Astro.site).href} />
-  <meta property="og:image:alt" content="Audio Upgrade Emmen" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:alt" content="Audio Upgrade Emmen — groots geluid, onzichtbaar ingebouwd" />
+  <meta property="og:site_name" content={SITE.name} />
   <meta name="twitter:card" content="summary_large_image" />
   <link rel="icon" type="image/svg+xml" href={pad("/favicon.svg")} />
   <link rel="apple-touch-icon" href={pad("/og-image.png")} />
