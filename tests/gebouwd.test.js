@@ -128,6 +128,34 @@ describe('titels en omschrijvingen', alsGebouwd, () => {
     }
   });
 
+  /**
+   * Precies één h1 per pagina.
+   *
+   * De pagina /audio-upgrade had er nul: die begon met de kenteken-check en
+   * daarna meteen een h2. Voor Google is de h1 de zin die vertelt waar de
+   * pagina over gaat, en een schermlezer leest de koppen als inhoudsopgave —
+   * die begon daar dus halverwege. Met het blote oog zie je het niet, want
+   * een h2 ziet er ook uit als een kop.
+   */
+  test('elke pagina heeft precies één h1', () => {
+    for (const [pad, html] of inhoud) {
+      const aantal = (html.match(/<h1[\s>]/g) || []).length;
+      assert.equal(aantal, 1, `${pad}: ${aantal} h1-koppen`);
+    }
+  });
+
+  test('de koppen slaan geen niveau over', () => {
+    for (const [pad, html] of inhoud) {
+      const niveaus = [...html.matchAll(/<h([1-4])[\s>]/g)].map((m) => Number(m[1]));
+      for (let i = 1; i < niveaus.length; i++) {
+        assert.ok(
+          niveaus[i] - niveaus[i - 1] <= 1,
+          `${pad}: van h${niveaus[i - 1]} naar h${niveaus[i]}`
+        );
+      }
+    }
+  });
+
   test('elke pagina wijst naar zichzelf als canonical', () => {
     for (const [pad, html] of inhoud) {
       const canonical = (html.match(/<link rel="canonical" href="([^"]*)"/) || [])[1];

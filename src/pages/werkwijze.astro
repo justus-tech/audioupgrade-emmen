@@ -22,7 +22,11 @@ import { whatsappLink, berichtOverAuto } from '../lib/whatsapp.js';
 
   <section class="alt">
     <div class="wrap">
-      <div class="grid cols-3">
+      {/* Deze kop moet er staan: zonder h2 sprong de pagina van de h1 recht
+          naar de h3'jes van de drie stappen, en dan slaat een schermlezer een
+          niveau over. */}
+      <h2 class="center">In drie stappen</h2>
+      <div class="grid cols-3 mt">
         <div class="step">
           <span class="num">01</span>
           <h3>Stuur een foto van je dashboard</h3>
