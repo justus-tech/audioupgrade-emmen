@@ -150,6 +150,27 @@ export const OVER = {
   naam: 'Justus',
   rol: 'Eigenaar en audio engineer',
   kop: 'Wie je auto onder handen neemt',
+  /**
+   * De korte versie, voor de homepage.
+   *
+   * Het blok staat op twee plekken: halverwege de homepage en op /over-ons.
+   * Daar drie keer dezelfde alinea's neerzetten is zonde van de ruimte op de
+   * pagina waar bijna iedereen landt — en het geeft niemand een reden om door
+   * te klikken.
+   *
+   * Waarom het op de homepage tóch blijft staan: er zijn nog geen reviews en
+   * geen eigen werkfoto's. Dit gezicht is voorlopig het enige bewijs dat er
+   * een vakman achter staat, en de homepage is de pagina die het meest wordt
+   * gezien. Weghalen kost meer dan het oplevert.
+   *
+   * Deze twee zinnen moeten dus twee dingen doen: vertrouwen wekken én
+   * nieuwsgierig maken naar de rest.
+   */
+  kort: [
+    'Ik sleutelde al aan auto-interieurs voordat ik mijn rijbewijs had, en leerde het vak daarna aan het conservatorium — als audio engineer. Die twee dingen komen in jouw auto samen.',
+    'Wat er in jouw auto komt, kies ik met mijn oren.',
+  ],
+
   alineas: [
     'Ik sleutelde al aan auto-interieurs voordat ik mijn rijbewijs had. De auto stond op de oprit en ik was er dagelijks mee bezig: strippen, uit elkaar, weer in elkaar — net zolang tot ik er het maximale geluid uit had.',
     'Daarnaast heb ik het vak geleerd aan het conservatorium, als audio engineer. Microfoons, luidsprekers, sound design, mixen: sinds 2018 werk ik professioneel met geluid. Mijn speakers bouw ik zelf van hout, van kleine kastjes tot Jamaicaanse superscoopers van 24 inch.',

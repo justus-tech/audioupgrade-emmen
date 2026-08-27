@@ -15,11 +15,19 @@ import { pad } from '../lib/pad.js';
 import { OVER } from '../data/generiek.js';
 
 /**
- * `meer` zet er een link onder naar de pagina Over ons. Op de homepage wil je
- * die wel — daar is dit een kennismaking en staat het volledige verhaal
- * elders. Op de pagina Over ons zelf niet: daar zou hij naar zichzelf wijzen.
+ * TWEE VARIANTEN
+ *
+ *   kort  Twee zinnen in plaats van het hele verhaal. Voor de homepage: daar
+ *         is dit een kennismaking, geen hoofdstuk. Zie OVER.kort in
+ *         generiek.js waarom het daar tóch blijft staan.
+ *   meer  Zet er een link onder naar /over-ons. Op de pagina Over ons zelf
+ *         niet, want dan wijst hij naar zichzelf.
+ *
+ * De teksten verschillen echt van elkaar; er staat nergens dezelfde alinea
+ * twee keer op de site.
  */
-const { meer = false } = Astro.props;
+const { kort = false, meer = false } = Astro.props;
+const alineas = kort ? OVER.kort : OVER.alineas;
 ---
 <div class="over">
   <div class="over-foto">
@@ -36,7 +44,7 @@ const { meer = false } = Astro.props;
   <div class="over-tekst">
     <span class="eyebrow">{OVER.rol}</span>
     <h2>{OVER.kop}</h2>
-    {OVER.alineas.map((regel) => <p>{regel}</p>)}
+    {alineas.map((regel) => <p>{regel}</p>)}
     <ul class="over-feiten">
       {OVER.feiten.map((feit) => <li>{feit}</li>)}
     </ul>

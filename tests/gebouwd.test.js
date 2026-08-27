@@ -19,6 +19,7 @@ import { MERKEN_MET_MODELLEN } from '../src/data/merken.js';
 import { JURIDISCHE_PAGINAS } from '../src/data/juridisch.js';
 import { PACKAGES, SITE, SCHEMA_SOORT } from '../src/data/site.js';
 import { VRAGEN } from '../src/data/vragen.js';
+import { OVER } from '../src/data/generiek.js';
 import { berichtOverAuto } from '../src/lib/whatsapp.js';
 
 const DIST = fileURLToPath(new URL('../dist/', import.meta.url));
@@ -284,6 +285,27 @@ describe('gestructureerde gegevens voor Google', alsGebouwd, () => {
       teksten.length,
       'twee modelpagina\'s delen woord voor woord dezelfde garantietekst'
     );
+  });
+
+  /**
+   * Het blok over Justus staat op twee pagina's: kort op de homepage, volledig
+   * op /over-ons. Dat mag, maar de teksten moeten dan wél van elkaar
+   * verschillen — anders staat dezelfde alinea twee keer op de site en heeft
+   * niemand een reden om door te klikken.
+   */
+  test('het korte en het volledige verhaal over Justus overlappen niet', () => {
+    const home = inhoud.get('/');
+    const overOns = inhoud.get('/over-ons');
+    assert.ok(home && overOns, 'een van de twee pagina\'s ontbreekt');
+
+    for (const regel of OVER.alineas) {
+      assert.ok(!home.includes(regel), `deze alinea staat ook op de homepage: ${regel.slice(0, 50)}`);
+    }
+    for (const regel of OVER.kort) {
+      assert.ok(home.includes(regel), `de korte tekst ontbreekt op de homepage: ${regel.slice(0, 50)}`);
+      assert.ok(!overOns.includes(regel), `de korte tekst staat ook op /over-ons: ${regel.slice(0, 50)}`);
+    }
+    assert.ok(home.includes('Lees het hele verhaal'), 'de homepage linkt niet door');
   });
 
   test('elke modelpagina wijst naar andere modellen van hetzelfde merk', () => {
