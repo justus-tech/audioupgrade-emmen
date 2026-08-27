@@ -49,6 +49,10 @@ const nav = [
   { href: '/upgrades', label: 'Upgrades' },
   { href: '/audio-upgrade', label: 'Jouw auto' },
   { href: '/werkwijze', label: 'Werkwijze' },
+  /* Op verzoek van Justus' broer erbij gezet, naast Contact. Zes items passen:
+     op een telefoon schuift het menu horizontaal (zie nav.main in global.css),
+     dus er valt niets af. */
+  { href: '/over-ons', label: 'Over ons' },
   { href: '/contact', label: 'Contact' },
 ];
 ---
@@ -336,6 +340,7 @@ const nav = [
         <a href={whatsappLink(berichtOverAuto())}>Stuur foto dashboard</a><br />
         <a href={pad("/upgrades")}>Upgrades</a><br />
         <a href={pad("/veelgestelde-vragen")}>Veelgestelde vragen</a><br />
+        <a href={pad("/over-ons")}>Wie zijn wij</a><br />
         <a href={pad("/audio-upgrade")}>Upgrade per automodel</a><br />
         <a href={pad("/oldtimer-audio")}>Klassiekers en youngtimers</a>
       </div>

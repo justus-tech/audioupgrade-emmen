@@ -160,6 +160,30 @@ export const OVER = {
     'Sinds 2018 in het geluid',
     'Bouwt zijn eigen speakers',
   ],
+
+  /**
+   * Het aanbod om gewoon mee te denken, ook zonder opdracht.
+   *
+   * Idee van Justus' broer (26 augustus 2026), en een goed idee. Twee redenen:
+   *
+   *   1. Het klopt met wie hij is. Iemand met een conservatoriumopleiding die
+   *      zelf speakerkasten bouwt, weet meer van geluid dan alleen van auto's.
+   *      Dat mag je laten zien.
+   *   2. Het verlaagt de drempel enorm. Een appje sturen over "wat vind je van
+   *      deze speakers" is oneindig veel makkelijker dan om een offerte van
+   *      2.195 euro vragen. En wie eenmaal in gesprek is, komt terug.
+   *
+   * Let op de toon: dit is een uitnodiging, geen dienst met een prijskaartje.
+   * Zodra het klinkt als "gratis advies!" wordt het een lokkertje, en dat is
+   * precies het tegenovergestelde van wat het moet doen.
+   */
+  advies: {
+    kop: 'Vraag gerust iets, ook zonder auto',
+    alineas: [
+      'Twijfel je over een setje speakers dat je op Marktplaats ziet staan? Wil je weten waarom je installatie thuis of in de garage niet klinkt zoals je hoopte? Ben je iets aan het bouwen en loop je vast?',
+      'Stuur gewoon een appje. Ik denk graag mee over geluid, in de auto en daarbuiten. Daar hoeft geen opdracht achter te zitten en er komt geen rekening voor.',
+    ],
+  },
 };
 
 /** De afsluitende oproep, voor pagina's zonder specifieke auto in beeld. */

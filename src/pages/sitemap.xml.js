@@ -20,6 +20,7 @@ const VAST = [
   ['/upgrades', 0.9],
   ['/audio-upgrade', 0.8],
   ['/werkwijze', 0.7],
+  ['/over-ons', 0.7],
   ['/contact', 0.7],
   ['/oldtimer-audio', 0.8],
   // Hoog, want dit is de pagina die op losse vragen moet ranken.

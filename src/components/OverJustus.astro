@@ -11,7 +11,15 @@
  */
 import { Image } from 'astro:assets';
 import portret from '../assets/justus.jpg';
+import { pad } from '../lib/pad.js';
 import { OVER } from '../data/generiek.js';
+
+/**
+ * `meer` zet er een link onder naar de pagina Over ons. Op de homepage wil je
+ * die wel — daar is dit een kennismaking en staat het volledige verhaal
+ * elders. Op de pagina Over ons zelf niet: daar zou hij naar zichzelf wijzen.
+ */
+const { meer = false } = Astro.props;
 ---
 <div class="over">
   <div class="over-foto">
@@ -32,6 +40,11 @@ import { OVER } from '../data/generiek.js';
     <ul class="over-feiten">
       {OVER.feiten.map((feit) => <li>{feit}</li>)}
     </ul>
+    {meer && (
+      <p class="over-meer">
+        <a href={pad('/over-ons')}>Lees het hele verhaal →</a>
+      </p>
+    )}
   </div>
 </div>
 
@@ -84,6 +97,8 @@ import { OVER } from '../data/generiek.js';
     font-size: .68rem;
     color: var(--text-dim);
   }
+  .over-meer { margin-top: 1.6em; font-size: .92rem; }
+
   .over-feiten li::before {
     content: '';
     display: inline-block;

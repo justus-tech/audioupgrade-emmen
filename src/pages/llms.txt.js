@@ -17,7 +17,7 @@
 import { MODELS } from '../data/models.js';
 import { MERKEN_MET_MODELLEN } from '../data/merken.js';
 import { PACKAGES, SITE, ADRES, AUDIOMERKEN } from '../data/site.js';
-import { GARANTIE, LEVENSLANG, WERKWIJZE, ONTZORGEN } from '../data/generiek.js';
+import { GARANTIE, LEVENSLANG, WERKWIJZE, ONTZORGEN, OVER } from '../data/generiek.js';
 import { VRAGEN } from '../data/vragen.js';
 
 export async function GET() {
@@ -85,6 +85,12 @@ ${LEVENSLANG.tekst}
 
 ${ONTZORGEN.tekst}
 
+## Wie het werk doet
+
+${OVER.alineas.join(' ')}
+
+${OVER.advies.kop}: ${OVER.advies.alineas.join(' ')}
+
 
 ## Merken waar wij mee werken
 
@@ -118,6 +124,7 @@ ${VRAGEN.map((v) => `**${v.vraag}**\n${v.antwoord}`).join('\n\n')}
 
 ## Losse pagina's
 
+- ${SITE.url}/over-ons — wie het werk doet, en de uitnodiging om ook zonder opdracht iets te vragen
 - ${SITE.url}/veelgestelde-vragen — de vragen hierboven, met antwoord
 - ${SITE.url}/upgrades — alle pakketten met prijzen
 - ${SITE.url}/audio-upgrade — alle modellen, doorzoekbaar
