@@ -3,6 +3,7 @@ import '../styles/global.css';
 import { SITE, PACKAGES, SCHEMA_SOORT } from '../data/site.js';
 import { BRAND, LICHT, cssThema } from '../data/brand.js';
 import Logo from '../components/Logo.astro';
+import Herkomst from '../components/Herkomst.astro';
 import { pad } from '../lib/pad.js';
 import { whatsappLink, berichtOverAuto } from '../lib/whatsapp.js';
 
@@ -177,6 +178,11 @@ const nav = [
       pagina eerst door het hele menu tabben voordat je bij de inhoud bent.
       De link is onzichtbaar tot hij focus krijgt. */}
   <a class="overslaan" href="#inhoud">Naar de inhoud</a>
+
+  {/* Zet "(via google)" achter het voorgetypte WhatsApp-bericht als iemand
+      via ?bron=google binnenkomt. Zo ziet Justus in zijn eigen WhatsApp welke
+      gesprekken uit een advertentie komen, zonder cookie of tag. */}
+  <Herkomst />
 
   <header class="site">
     <div class="wrap">

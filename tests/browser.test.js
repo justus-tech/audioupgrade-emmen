@@ -471,6 +471,50 @@ describe('de contactpagina', alsGebouwd, () => {
   });
 });
 
+/**
+ * De herkomstmarkering: ?bron=google zet "(via google)" achter het
+ * voorgetypte WhatsApp-bericht, zodat Justus in zijn eigen WhatsApp ziet welk
+ * gesprek uit een advertentie komt. Geen cookie, geen tag, geen toestemming.
+ *
+ * De laatste twee gevallen zijn het belangrijkst: wat er uit de adresbalk komt
+ * mag nooit zomaar in het bericht van een bezoeker belanden. Anders stuurt
+ * iemand een link rond waarmee er onzin in andermans WhatsApp verschijnt.
+ */
+describe('herkomst uit de adresbalk', alsGebouwd, () => {
+  const eersteBericht = (p) =>
+    p.$$eval('a[href*="wa.me"]', (as) => new URL(as[0].href).searchParams.get('text'));
+
+  test('zonder bron blijft het bericht ongewijzigd', async () => {
+    const p = await open('upgrades');
+    assert.doesNotMatch(await eersteBericht(p), /\(via /);
+    await p.close();
+  });
+
+  test('met een bron komt die achter het bericht te staan', async () => {
+    const p = await browser.newPage();
+    await p.goto(`${paginaUrl('upgrades')}?bron=google`);
+    await p.waitForFunction(() =>
+      document.querySelector('a[href*="wa.me"]')?.href.includes('via')
+    , null, { timeout: 5000 });
+    assert.match(await eersteBericht(p), /\(via google\)$/);
+    await p.close();
+  });
+
+  for (const [wat, waarde] of [
+    ['een script', '<script>alert(1)</script>'],
+    ['een lange lap tekst', 'a'.repeat(40)],
+    ['een spatie met tekst', 'bel nu 0900'],
+  ]) {
+    test(`${wat} in de adresbalk wordt genegeerd`, async () => {
+      const p = await browser.newPage();
+      await p.goto(`${paginaUrl('upgrades')}?bron=${encodeURIComponent(waarde)}`);
+      await p.waitForTimeout(400);
+      assert.doesNotMatch(await eersteBericht(p), /\(via /);
+      await p.close();
+    });
+  }
+});
+
 describe('licht en donker', alsGebouwd, () => {
   test('volgt standaard de instelling van het apparaat', async () => {
     for (const stand of ['light', 'dark']) {

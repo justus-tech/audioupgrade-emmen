@@ -1,0 +1,50 @@
+---
+/**
+ * WAAR KOMT DEZE BEZOEKER VANDAAN?
+ *
+ * HET PROBLEEM
+ * Justus wil weten welke klant uit een Google-advertentie komt. De gewone
+ * manier is de Google-tag op de site zetten, maar die zet cookies. Dan heb je
+ * een toestemmingsbalk nodig, moet het privacybeleid weer om, en gaat het
+ * IP-adres van elke bezoeker naar Google — precies wat we eruit hebben gehaald
+ * toen de lettertypen naar de eigen server gingen.
+ *
+ * DE OPLOSSING
+ * De advertentie stuurt mensen naar ?bron=google. Dit script zet dat woord in
+ * het WhatsApp-bericht dat al voor de bezoeker is voorgetypt. Klikt hij op de
+ * knop, dan staat er onderaan zijn bericht "(via Google)".
+ *
+ * Justus ziet dus in zijn eigen WhatsApp welke gesprekken uit de advertentie
+ * komen. Geen cookie, geen tag, geen toestemmingsbalk, en niets gaat naar een
+ * derde partij. En het meet het enige dat telt: gesprekken, geen kliks.
+ *
+ * Het werkt alleen op de pagina waar de bezoeker binnenkomt. Dat is bewust:
+ * het onthouden over meerdere pagina's zou opslag vragen, en verreweg de
+ * meeste mensen klikken op de knop die ze meteen voor zich zien.
+ */
+---
+<script>
+  /**
+   * Zet de herkomst achter het voorgetypte WhatsApp-bericht.
+   *
+   * Alleen letters, cijfers en streepjes uit de adresbalk, hoogstens twintig
+   * tekens. Zonder die grens kan iemand een willekeurige tekst in het bericht
+   * van een ander laten verschijnen door een link rond te sturen.
+   */
+  const bron = new URLSearchParams(location.search).get('bron');
+
+  if (bron && /^[a-z0-9-]{1,20}$/i.test(bron)) {
+    const naam = bron.toLowerCase();
+    for (const link of document.querySelectorAll('a[href*="wa.me"]')) {
+      try {
+        const adres = new URL(link.href);
+        const tekst = adres.searchParams.get('text');
+        if (!tekst || tekst.includes('(via ')) continue;
+        adres.searchParams.set('text', `${tekst} (via ${naam})`);
+        link.href = adres.toString();
+      } catch (e) {
+        /* een link die geen geldig adres blijkt: die laten we met rust */
+      }
+    }
+  }
+</script>
