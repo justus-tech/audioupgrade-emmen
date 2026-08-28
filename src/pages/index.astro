@@ -6,6 +6,8 @@ import Merken from '../components/Merken.astro';
 import Golflijn from '../components/Golflijn.astro';
 import Fotoband from '../components/Fotoband.astro';
 import OverJustus from '../components/OverJustus.astro';
+import Reviews from '../components/Reviews.astro';
+import { REVIEWS } from '../data/reviews.js';
 /* Foto: Unsplash — vrij te gebruiken. Zie src/components/Fotoband.astro. */
 import deurspeaker from '../assets/foto/deurspeaker.jpg';
 import { PACKAGES, SITE } from '../data/site.js';
@@ -106,6 +108,18 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
       <OverJustus kort={true} meer={true} />
     </div>
   </section>
+
+  {/* Staat hier al klaar maar verschijnt pas zodra er echte reviews in
+      src/data/reviews.js staan. Let op de voorwaarde om de hele <section>
+      heen en niet alleen om het component: een lege sectie geeft nog steeds
+      een gat van honderd pixels op de pagina. */}
+  {REVIEWS.length > 0 && (
+    <section>
+      <div class="wrap">
+        <Reviews />
+      </div>
+    </section>
+  )}
 
   {/* Het bezwaar dat mensen het vaakst tegenhoudt: "ik kan mijn auto een dag
       niet missen". Stond eerst naast een blok over een demobus, maar die is

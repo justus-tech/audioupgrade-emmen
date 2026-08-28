@@ -20,6 +20,7 @@ import { JURIDISCHE_PAGINAS } from '../src/data/juridisch.js';
 import { PACKAGES, SITE, SCHEMA_SOORT } from '../src/data/site.js';
 import { VRAGEN } from '../src/data/vragen.js';
 import { OVER } from '../src/data/generiek.js';
+import { REVIEWS } from '../src/data/reviews.js';
 import { berichtOverAuto } from '../src/lib/whatsapp.js';
 
 const DIST = fileURLToPath(new URL('../dist/', import.meta.url));
@@ -306,6 +307,20 @@ describe('gestructureerde gegevens voor Google', alsGebouwd, () => {
       assert.ok(!overOns.includes(regel), `de korte tekst staat ook op /over-ons: ${regel.slice(0, 50)}`);
     }
     assert.ok(home.includes('Lees het hele verhaal'), 'de homepage linkt niet door');
+  });
+
+  /**
+   * Zolang er geen reviews zijn, mag er nergens een leeg blok staan. Dit is
+   * precies het soort ding dat je zelf niet ziet omdat je weet dat het er hoort
+   * te staan: een kop "Wat klanten zeggen" met niets eronder, of een sectie
+   * zonder inhoud die een gat van honderd pixels in de pagina slaat.
+   */
+  test('een leeg reviewblok komt nergens op de site', () => {
+    if (REVIEWS.length > 0) return; // gevuld: dan hoort het er juist wél te staan
+    for (const [pad, html] of inhoud) {
+      assert.ok(!html.includes('Wat klanten zeggen'), `${pad}: lege reviewkop`);
+      assert.ok(!html.includes('class="reviews"'), `${pad}: leeg reviewblok`);
+    }
   });
 
   test('elke modelpagina wijst naar andere modellen van hetzelfde merk', () => {

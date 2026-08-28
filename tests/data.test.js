@@ -14,6 +14,13 @@ import { MERKEN, merkenPerSlug, MERKEN_MET_MODELLEN } from '../src/data/merken.j
 import { PACKAGES, SITE, AUDIOMERKEN } from '../src/data/site.js';
 import { STANDAARD_PAKKETTEN } from '../src/data/generiek.js';
 import { AUTOS, autoTabel } from '../src/data/autos.js';
+import { REVIEWS, reviewsOpDatum } from '../src/data/reviews.js';
+import { WERK } from '../src/data/werk.js';
+import { existsSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const HIER = dirname(fileURLToPath(import.meta.url));
 
 describe('modelpagina\'s', () => {
   test('er zijn er genoeg om de moeite waard te zijn', () => {
@@ -326,6 +333,75 @@ describe('de twee herkenningslijsten spreken elkaar niet tegen', () => {
       for (const teken of a.matchers.model.source) {
         assert.ok(teken.codePointAt(0) >= 0x20, `${a.slug}: stuurteken in patroon`);
       }
+    }
+  });
+});
+
+/**
+ * Reviews en eigen werkfoto's.
+ *
+ * Deze twee lijsten zijn nu leeg en worden binnenkort gevuld — door iemand die
+ * geen programmeur is, tussen twee klussen door. Precies dan sluipen er fouten
+ * in: een ontbrekende naam, een datum in het verkeerde formaat, een foto die
+ * niet in de lijst staat. Deze tests vangen dat vóórdat het op de site komt.
+ *
+ * Wat een test NIET kan controleren is of een review echt van een klant komt.
+ * Daar is alleen de regel bovenaan reviews.js voor, en het geweten van degene
+ * die hem invult.
+ */
+describe('reviews', () => {
+  test('elke review heeft een tekst, een naam en een datum', () => {
+    for (const [i, r] of REVIEWS.entries()) {
+      assert.ok(r.tekst?.trim(), `review ${i}: geen tekst`);
+      assert.ok(r.naam?.trim(), `review ${i}: geen naam`);
+      assert.match(String(r.datum), /^\d{4}-\d{2}$/, `review ${i}: datum moet jjjj-mm zijn`);
+    }
+  });
+
+  test('een review is een citaat, geen verhandeling', () => {
+    for (const r of REVIEWS) {
+      assert.ok(r.tekst.length >= 25, `te kort om iets te zeggen: "${r.tekst}"`);
+      assert.ok(r.tekst.length <= 400, `te lang voor een kaartje: "${r.tekst.slice(0, 40)}…"`);
+    }
+  });
+
+  test('geen twee keer dezelfde review', () => {
+    const uniek = new Set(REVIEWS.map((r) => r.tekst.trim().toLowerCase()));
+    assert.equal(uniek.size, REVIEWS.length, 'er staat een dubbele review in');
+  });
+
+  test('de nieuwste staat vooraan', () => {
+    const datums = reviewsOpDatum().map((r) => String(r.datum));
+    assert.deepEqual(datums, [...datums].sort().reverse());
+  });
+});
+
+describe('foto\'s van eigen werk', () => {
+  test('elke foto heeft een bestandsnaam en een alt-tekst', () => {
+    for (const [i, w] of WERK.entries()) {
+      assert.ok(w.bestand?.trim(), `foto ${i}: geen bestandsnaam`);
+      assert.match(w.bestand, /\.(jpg|jpeg|png|webp)$/i, `foto ${i}: ${w.bestand} is geen afbeelding`);
+      assert.ok(
+        w.alt?.trim().length > 10,
+        `foto ${i}: de alt-tekst moet beschrijven wat er te zien is`
+      );
+    }
+  });
+
+  test('het bestand staat er ook echt', () => {
+    for (const w of WERK) {
+      const pad = join(HIER, '..', 'src', 'assets', 'werk', w.bestand);
+      assert.ok(existsSync(pad), `${w.bestand} staat niet in src/assets/werk/`);
+    }
+  });
+
+  test('een fase is er een uit het verhaal', () => {
+    for (const w of WERK) {
+      if (!w.fase) continue;
+      assert.ok(
+        ['voor', 'open', 'detail', 'na'].includes(w.fase),
+        `onbekende fase: ${w.fase}`
+      );
     }
   });
 });

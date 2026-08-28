@@ -1,0 +1,87 @@
+---
+/**
+ * Wat klanten zeggen.
+ *
+ * Verschijnt alleen als er reviews zijn. Staat de lijst in
+ * src/data/reviews.js leeg, dan geeft dit component niets terug — geen leeg
+ * kopje, geen streep, geen lege ruimte. Zo kan het alvast overal staan waar
+ * het straks hoort, zonder dat iemand er nu iets van ziet.
+ *
+ * Bewust géén sterren en géén beoordelingsopmaak: zie de uitleg in
+ * reviews.js. Wat hier staat is een citaat, meer niet — en dat overtuigt op
+ * een eigen site sowieso beter dan een cijfer dat je zelf hebt bepaald.
+ *
+ *   aantal   hoeveel er hoogstens getoond worden (standaard drie)
+ *   kop      de kop erboven; geef null mee als de pagina er al één heeft
+ */
+import { reviewsOpDatum } from '../data/reviews.js';
+
+const { aantal = 3, kop = 'Wat klanten zeggen' } = Astro.props;
+const lijst = reviewsOpDatum().slice(0, aantal);
+---
+{lijst.length > 0 && (
+  <div class="reviews">
+    {kop && <h2 class="center">{kop}</h2>}
+    <div class="reviews-rij">
+      {lijst.map((r) => (
+        <figure class="review">
+          <blockquote>{r.tekst}</blockquote>
+          <figcaption>
+            <strong>{r.naam}</strong>
+            {(r.auto || r.plaats) && (
+              <span>{[r.auto, r.plaats].filter(Boolean).join(' · ')}</span>
+            )}
+          </figcaption>
+        </figure>
+      ))}
+    </div>
+  </div>
+)}
+
+<style>
+  .reviews-rij {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+    gap: 16px;
+    margin-top: 2.4rem;
+  }
+
+  /* Een streep in de accentkleur boven elk citaat, zoals de troeven en de
+     feiten onder het portret. Zo blijft het één taal. */
+  .review {
+    margin: 0;
+    padding: 1.6rem 1.5rem;
+    border-top: 2px solid var(--accent);
+    background: var(--panel);
+  }
+
+  blockquote {
+    margin: 0;
+    color: var(--text);
+    font-size: 1.02rem;
+    line-height: 1.6;
+  }
+  /* Echte aanhalingstekens eromheen: dan zie je meteen dat dit iemand anders
+     is die praat, en niet wij over onszelf. */
+  blockquote::before { content: '\201C'; }
+  blockquote::after { content: '\201D'; }
+
+  figcaption {
+    margin-top: 1.2rem;
+    padding-top: .9rem;
+    border-top: 1px solid var(--line);
+  }
+  figcaption strong {
+    display: block;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    font-size: .76rem;
+  }
+  figcaption span {
+    display: block;
+    margin-top: .35em;
+    font-size: .82rem;
+    color: var(--text-dim);
+  }
+</style>
