@@ -690,11 +690,19 @@ describe('huisregels van Justus', alsGebouwd, () => {
   });
 
   test('de klant wordt overal met "je" aangesproken, nooit met "u"', () => {
-    // Op de oude site wisselde dat per pakket. Nu is het overal "je", en
-    // deze test houdt dat zo.
+    /**
+     * Op de oude site wisselde dat per pakket. Nu is het overal "je", en deze
+     * test houdt dat zo.
+     *
+     * ALLEEN OP DE NEDERLANDSE PAGINA'S. In het Duits is "Sie" juist de norm
+     * tussen vreemden; daar zou tutoyeren vertrouwen kósten. En de regex
+     * struikelde over Duits: in "Außenhaut" valt de ß buiten het letterbereik
+     * à-ÿ, dus las hij de "u" ervoor als los woord.
+     */
     const uVorm = /(^|[^a-zà-ÿ])(uw|u)([^a-zà-ÿ])/;
     const fouten = [];
     for (const [pad, html] of inhoud) {
+      if (/^\/(de|en)(\/|$)/.test(pad)) continue;
       const zichtbaar = html
         .replace(/<script[\s\S]*?<\/script>/g, ' ')
         .replace(/<style[\s\S]*?<\/style>/g, ' ')

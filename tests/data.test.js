@@ -15,6 +15,9 @@ import { PACKAGES, SITE, AUDIOMERKEN } from '../src/data/site.js';
 import { STANDAARD_PAKKETTEN } from '../src/data/generiek.js';
 import { AUTOS, autoTabel } from '../src/data/autos.js';
 import { REVIEWS, reviewsOpDatum } from '../src/data/reviews.js';
+import { PAGINAS } from '../src/i18n/paginas.js';
+import { TEKSTEN } from '../src/i18n/teksten.js';
+import { VRAGEN } from '../src/data/vragen.js';
 import { WERK } from '../src/data/werk.js';
 import { existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -349,6 +352,112 @@ describe('de twee herkenningslijsten spreken elkaar niet tegen', () => {
  * Daar is alleen de regel bovenaan reviews.js voor, en het geweten van degene
  * die hem invult.
  */
+/**
+ * De vertalingen.
+ *
+ * Wat hier getest wordt zijn precies de fouten die ik zelf gemaakt heb en pas
+ * vond door alle veertien pagina's woord voor woord na te lezen:
+ *
+ *   - een knop die "Ask about Basis" zei terwijl het pakket in het Engels
+ *     "Acoustic Foundation" heet;
+ *   - een pakket waar vijf concrete kenmerken tot vier vage waren samengevat;
+ *   - "conservatory" (een serre) waar "conservatoire" moest staan;
+ *   - "Autointerieurs" en "hinterstehen": Nederlands met een Duits jasje aan.
+ *
+ * Een test kan geen goede zinnen schrijven. Wel kan hij dit soort dingen
+ * vangen: ontbrekende velden, aantallen die niet kloppen, en een handjevol
+ * woorden waarvan we weten dat ze fout zijn.
+ */
+describe('vertalingen', () => {
+  const TALEN = ['de', 'en'];
+
+  test('elk pakket is in beide talen volledig ingevuld', () => {
+    const velden = ['naam', 'prijs', 'tagline', 'short', 'body', 'cta', 'duur'];
+    for (const taal of TALEN) {
+      for (const pkg of PACKAGES) {
+        const v = PAGINAS[taal].pakketten[pkg.slug];
+        assert.ok(v, `${taal}: pakket ${pkg.slug} ontbreekt`);
+        for (const veld of velden) {
+          assert.ok(v[veld]?.trim(), `${taal}/${pkg.slug}: ${veld} is leeg`);
+        }
+      }
+    }
+  });
+
+  test('geen pakket verliest kenmerken in de vertaling', () => {
+    for (const taal of TALEN) {
+      for (const pkg of PACKAGES) {
+        const v = PAGINAS[taal].pakketten[pkg.slug];
+        assert.ok(
+          v.features.length >= pkg.features.length,
+          `${taal}/${pkg.slug}: ${v.features.length} kenmerken tegenover ${pkg.features.length} in het Nederlands`
+        );
+      }
+    }
+  });
+
+  test('een knop noemt geen naam die alleen in het Nederlands bestaat', () => {
+    /**
+     * De fout die dit vangt: de Engelse knop zei "Ask about Basis" terwijl het
+     * pakket daar "Acoustic Foundation" heet. "Basis" komt uit de Nederlandse
+     * naam en stond nergens anders op de Engelse pagina.
+     *
+     * Bewust smal: alleen woorden die wél in de Nederlandse pakketnaam staan
+     * en niét in de vertaalde. Een knop mag verder zeggen wat hij wil —
+     * "Maßarbeit besprechen" is gewoon Duits en hoort niet af te gaan.
+     *
+     * \p{L} en niet a-z à-ÿ, anders valt de ß buiten het bereik en wordt
+     * "Maßarbeit" gesplitst in "Ma" en "arbeit".
+     */
+    const woorden = (s) =>
+      s.toLowerCase().split(/[^\p{L}\p{N}+]+/u).filter((w) => w.length > 3);
+
+    for (const taal of TALEN) {
+      for (const pkg of PACKAGES) {
+        const v = PAGINAS[taal].pakketten[pkg.slug];
+        const alleenNederlands = woorden(pkg.name).filter(
+          (w) => !woorden(v.naam).includes(w)
+        );
+        for (const w of woorden(v.cta)) {
+          assert.ok(
+            !alleenNederlands.includes(w),
+            `${taal}/${pkg.slug}: de knop zegt "${w}", maar het pakket heet daar "${v.naam}"`
+          );
+        }
+      }
+    }
+  });
+
+  test('elke taal heeft evenveel vragen als het Nederlands', () => {
+    for (const taal of TALEN) {
+      assert.equal(
+        PAGINAS[taal].vragen.lijst.length,
+        VRAGEN.length,
+        `${taal}: ander aantal vragen`
+      );
+      for (const [i, v] of PAGINAS[taal].vragen.lijst.entries()) {
+        assert.match(v.vraag, /\?$/, `${taal} vraag ${i + 1}: mist een vraagteken`);
+        assert.ok(v.antwoord.length > 60, `${taal} vraag ${i + 1}: antwoord te kort`);
+      }
+    }
+  });
+
+  test('geen bekende vertaalvallen', () => {
+    /* Woorden die er in eerdere versies écht in stonden. Kort houden: deze
+       lijst is een vangnet voor bekende missers, geen taalcontrole. */
+    const VERBODEN = {
+      en: ['conservatory', 'think along', 'in sound since'],
+      de: ['Autointerieur', 'hinterstehen', 'im Ton,'],
+    };
+    for (const taal of TALEN) {
+      const alles = JSON.stringify(PAGINAS[taal]) + JSON.stringify(TEKSTEN[taal]);
+      for (const woord of VERBODEN[taal]) {
+        assert.ok(!alles.includes(woord), `${taal}: "${woord}" staat er weer in`);
+      }
+    }
+  });
+});
+
 describe('reviews', () => {
   test('elke review heeft een tekst, een naam en een datum', () => {
     for (const [i, r] of REVIEWS.entries()) {

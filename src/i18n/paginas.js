@@ -39,7 +39,7 @@ const PAKKETTEN_DE = {
     tagline: 'Apple CarPlay & Android Auto',
     short: 'Kabelloses Apple CarPlay und Android Auto, nahtlos in Ihrem Originaldisplay.',
     body:
-      'Das Paket, mit dem Sie veraltete Navigation und Handyhalterungen los sind. Wir integrieren Apple CarPlay und Android Auto vollständig in Ihr vorhandenes System. Karten, Musik und Telefonie bedienen Sie über das Originaldisplay und die Lenkradtasten.',
+      'Das Paket, mit dem Sie veraltete Navigation und klobige Handyhalterungen endgültig los sind. Wir integrieren Apple CarPlay und Android Auto zu hundert Prozent nahtlos in Ihr vorhandenes System. Spotify, Google Maps und Ihre Telefonate laufen einfach über das Originaldisplay und die Tasten an Ihrem Lenkrad.',
     features: [
       'Kabelloses Apple CarPlay und Android Auto.',
       'In Ihrem Werksdisplay — oder einem neuen High-End-Display.',
@@ -95,12 +95,16 @@ const PAKKETTEN_DE = {
     tagline: 'Kompromisslose audiophile Perfektion.',
     short: 'Audiophile Perfektion für alle, die sich weigern, Kompromisse zu machen.',
     body:
-      'Die höchste Stufe. Vollaktive Ansteuerung, ein mehrkanaliger DSP-Verstärker, Lautsprecher der Referenzklasse und eine Abstimmung, für die wir uns die Zeit nehmen, die sie braucht. Was hier eingebaut wird, entscheiden wir gemeinsam mit Ihnen und Ihrer Musik.',
+      'Die höchste Stufe. Ein achtkanaliger Verstärker mit integriertem DSP, Lautsprecherkomponenten aus der absoluten Weltspitze und ein Subwoofergehäuse, das für Ihr Fahrzeug gebaut und bezogen wird. Danach nehmen wir uns Stunden Zeit für die Phasenabstimmung am Laptop — genau da entsteht der Unterschied, den man nicht mehr vergisst.',
+    /* Deze vijf staan één op één in de Nederlandse prijslijst. Ze waren eerst
+       samengevat tot vier vage regels, en juist de concrete details verkopen
+       dit pakket: acht kanalen, op maat gebouwd, urenlange fase-afstemming. */
     features: [
-      'Vollaktives System, jeder Lautsprecher einzeln angesteuert.',
-      'Lautsprecher der Referenzklasse, nach Ihrer Musik ausgewählt.',
-      'Mehrlagige Dämmung von Türen, Boden und Radkästen.',
-      'Messtechnische Abstimmung über mehrere Sitzungen.',
+      'High-End-Achtkanalverstärker mit integriertem DSP.',
+      'Lautsprecherkomponenten der absoluten Weltspitze.',
+      'Maßgefertigtes und bezogenes Subwoofergehäuse.',
+      'Komplette Dämmung: Außenhaut, Innenhaut und Verkleidung.',
+      'Stundenlange Phasenabstimmung am Laptop durch den Spezialisten.',
     ],
     cta: 'Maßarbeit besprechen',
     duur: 'Zwei bis drei Tage, inklusive Abstimmung',
@@ -133,7 +137,7 @@ const PAKKETTEN_EN = {
     tagline: 'Apple CarPlay & Android Auto',
     short: 'Wireless Apple CarPlay and Android Auto, seamlessly in your original screen.',
     body:
-      'The package that gets rid of dated navigation and phone holders for good. We integrate Apple CarPlay and Android Auto fully into your existing system. Maps, music and calls run through your original screen and steering wheel buttons.',
+      'The package that gets rid of dated built-in navigation and ugly stick-on phone holders for good. We integrate Apple CarPlay and Android Auto seamlessly into the system you already have. Spotify, Google Maps and your calls all run through the original screen and the buttons on your steering wheel.',
     features: [
       'Wireless Apple CarPlay and Android Auto.',
       'In your factory screen — or a new high-end display.',
@@ -159,7 +163,10 @@ const PAKKETTEN_EN = {
       'Solid, long-lasting mounting rings.',
       '100% invisible integration with the factory system.',
     ],
-    cta: 'Ask about Basis',
+    /* Heette eerst "Ask about Basis", terwijl het pakket in het Engels
+       "Acoustic Foundation" is. De knop wees dus naar een naam die nergens
+       op de pagina stond. */
+    cta: 'Ask about the Foundation',
     duur: 'Ready in half a day',
   },
   'oem-plus-executive': {
@@ -170,7 +177,7 @@ const PAKKETTEN_EN = {
     tagline: '0% boot space lost. 100% dynamics.',
     short: 'For high-mileage drivers who want the maximum without giving up boot space.',
     body:
-      'For people who live in their car. This is not a speaker upgrade but a full rework of your vehicle acoustics. At its heart sits a digital sound processor: it drives every speaker separately and corrects the arrival times, so you end up sitting in the middle of the music. Completed by an invisible but very present subwoofer.',
+      'For people who live in their car, and for anyone who actually listens. This is not a speaker upgrade but a complete rework of your vehicle acoustics. At its heart sits a digital sound processor: it drives every speaker separately and corrects the arrival times, so you end up sitting in the middle of the music rather than in front of it. Finished off with a subwoofer you cannot see but can certainly feel.',
     features: [
       'Advanced DSP amplifier (digital sound processor).',
       'Vehicle-specific high-end speaker set.',
@@ -189,12 +196,16 @@ const PAKKETTEN_EN = {
     tagline: 'Audiophile perfection, no compromises.',
     short: 'Audiophile perfection for those who refuse to compromise.',
     body:
-      'The top of the range. Fully active drive, a multi-channel DSP amplifier, reference-class speakers and a tuning session that takes as long as it needs to. What goes in is decided together with you and your music.',
+      'The top of the range. An eight-channel amplifier with integrated DSP, speaker components from the very top of the market, and a subwoofer enclosure built and trimmed for your car. Then we spend hours on phase alignment with a laptop — that is where the difference comes from, and it is not one you forget.',
+    /* Deze vijf komen één op één uit de Nederlandse prijslijst. Ze waren eerst
+       samengevat tot vier vage regels, terwijl juist de concrete details dit
+       pakket verkopen. */
     features: [
-      'Fully active system, every speaker driven separately.',
-      'Reference-class speakers, chosen around your music.',
-      'Multi-layer damping of doors, floor and wheel arches.',
-      'Measured tuning across several sessions.',
+      'High-end eight-channel amplifier with integrated DSP.',
+      'Speaker components from the very top of the market.',
+      'Custom-built and trimmed subwoofer enclosure.',
+      'Complete damping: outer skin, inner skin and panel.',
+      'Hours of specialist phase tuning by laptop.',
     ],
     cta: 'Discuss a bespoke build',
     duur: 'Two to three days, tuning included',
@@ -326,7 +337,7 @@ const DE = {
       {
         vraag: 'Ich verstehe nichts von Audio. Kann ich trotzdem kommen?',
         antwoord:
-          'Gerade dann. Sie müssen keine Marken oder Wattzahlen kennen. Schicken Sie ein Foto und schreiben Sie, was Ihnen fehlt — zu wenig Bass, Stimmen die untergehen, oder einfach dass es blechern klingt. Den Rest übersetzen wir.',
+          'Gerade dann. Sie müssen keine Marken oder Wattzahlen kennen. Schicken Sie ein Foto und schreiben Sie, was Ihnen fehlt — zu wenig Bass, Stimmen, die untergehen, oder einfach der Eindruck, dass es blechern klingt. Den Rest übersetzen wir.',
       },
       {
         vraag: 'Machen Sie auch Oldtimer und Youngtimer?',
@@ -349,9 +360,9 @@ const DE = {
           'Kostenlos bis sieben Tage vor dem Einbautermin. Danach berechnen wir einen Teil des Angebotsbetrags, weil die Zeit reserviert und die Teile bereits bestellt sind. Melden Sie sich also ruhig, wenn etwas dazwischenkommt — es lässt sich immer reden.',
       },
       {
-        vraag: 'Wo sind Sie?',
+        vraag: 'Wo sind Sie zu finden?',
         antwoord:
-          'In Emmen in den Niederlanden, Charles Darwinstraat 35. Nur nach Vereinbarung, damit Sie nicht vor verschlossener Tür stehen und wir uns die Zeit für Ihr Auto freihalten können.',
+          'In Emmen im Nordosten der Niederlande, Charles Darwinstraat 35. Nur nach Vereinbarung, damit Sie nicht vor verschlossener Tür stehen und wir uns den Tag für Ihr Auto freihalten können.',
       },
     ],
   },
@@ -359,7 +370,7 @@ const DE = {
   over: {
     titel: 'Über uns — Justus, Audio Engineer in Emmen | Audio Upgrade Emmen',
     omschrijving:
-      'Am Konservatorium zum Audio Engineer ausgebildet, seit 2018 im Ton, und an Autointerieurs geschraubt, bevor es einen Führerschein gab. Lernen Sie den Mann hinter Audio Upgrade Emmen kennen.',
+      'Am Konservatorium zum Audio Engineer ausgebildet, seit 2018 im Audiobereich, und Fahrzeuginnenräume zerlegt, bevor es einen Führerschein gab. Lernen Sie den Mann hinter Audio Upgrade Emmen kennen.',
     eyebrow: 'Hinter Audio Upgrade Emmen',
     kop: 'Wer sind wir?',
     lead:
@@ -368,10 +379,11 @@ const DE = {
     adviesKop: 'Fragen Sie ruhig, auch ohne Auftrag',
     adviesAlineas: [
       'Unsicher bei einem Lautsprecherset, das Sie irgendwo gebraucht sehen? Wollen Sie wissen, warum Ihre Anlage zu Hause oder in der Werkstatt nicht so klingt, wie Sie gehofft hatten? Bauen Sie selbst etwas und kommen nicht weiter?',
-      'Schreiben Sie einfach. Ich denke gern über Klang mit, im Auto und außerhalb. Da muss kein Auftrag hinterstehen und es kommt keine Rechnung.',
+      'Schreiben Sie einfach. Ich denke gern über Klang mit, im Auto und außerhalb davon. Da muss kein Auftrag dahinterstecken, und eine Rechnung kommt dafür auch nicht.',
     ],
     adviesKnop: 'Kurz schreiben',
     merkenEyebrow: 'Womit wir arbeiten',
+    garantieEyebrow: 'Worauf Sie sich verlassen können',
     merkenKop: 'Marken wählen wir pro Auto',
     merkenTekst:
       'Keine Marke hängt an einem Paket: was eingebaut wird, hängt von Ihrem Auto, Ihrer Musik und Ihrem Budget ab. Wir verkaufen keine Marke, wir lösen ein Problem.',
@@ -528,7 +540,7 @@ const EN = {
       {
         vraag: 'What does it cost?',
         antwoord:
-          'Packages start at €695, and that is an all-in price including VAT and fitting. There are no separate labour or call-out charges. What your car costs specifically is in the quote, up front.',
+          'Packages start at €695, and that is an all-in price including VAT and fitting. There are no separate labour or call-out charges. What your own car will cost is in the quote, before any work starts.',
       },
       {
         vraag: 'Is there a guarantee on the work itself?',
@@ -561,9 +573,9 @@ const EN = {
           'Free of charge up to seven days before the fitting date. Inside that we charge part of the quoted amount, because the time is reserved and the parts are already ordered. So do let us know if something comes up — there is always room to talk.',
       },
       {
-        vraag: 'Where are you?',
+        vraag: 'Where are you based?',
         antwoord:
-          'In Emmen, the Netherlands, at Charles Darwinstraat 35. By appointment only, so you never arrive at a closed door and we can keep the time free for your car.',
+          'In Emmen, in the north-east of the Netherlands, at Charles Darwinstraat 35. By appointment only, so you never arrive at a closed door and we can keep the day free for your car.',
       },
     ],
   },
@@ -571,7 +583,7 @@ const EN = {
   over: {
     titel: 'About — Justus, audio engineer in Emmen | Audio Upgrade Emmen',
     omschrijving:
-      'Trained as an audio engineer at the conservatory, in sound since 2018, and stripping car interiors before there was a driving licence. Meet the man behind Audio Upgrade Emmen.',
+      'Trained as an audio engineer at a music conservatoire, working in audio since 2018, and taking car interiors apart before he had a driving licence. Meet the man behind Audio Upgrade Emmen.',
     eyebrow: 'Behind Audio Upgrade Emmen',
     kop: 'Who are we?',
     lead:
@@ -579,11 +591,12 @@ const EN = {
     adviesEyebrow: 'Outside the car too',
     adviesKop: 'Ask us anything, even without a job',
     adviesAlineas: [
-      'Unsure about a set of speakers you have found second-hand? Want to know why your system at home or in the workshop does not sound the way you hoped? Building something and stuck?',
-      'Just send a message. I am happy to think along about sound, in a car and outside one. There does not need to be a job behind it and there is no invoice.',
+      'Unsure about a set of speakers you have found second-hand? Wondering why your system at home or in the workshop never sounds the way you hoped? Building something yourself and stuck halfway?',
+      'Just send a message. I enjoy talking sound with people, in a car and well outside one. There does not need to be a job in it for me, and no invoice follows.',
     ],
     adviesKnop: 'Send a message',
     merkenEyebrow: 'What we work with',
+    garantieEyebrow: 'What you can count on',
     merkenKop: 'Brands are chosen per car',
     merkenTekst:
       'No brand is tied to a package: what goes in depends on your car, your music and your budget. We do not sell a brand, we solve a problem.',

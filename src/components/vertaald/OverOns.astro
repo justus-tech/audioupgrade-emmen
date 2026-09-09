@@ -76,9 +76,12 @@ const adviesLink = whatsappLink(
         <a class="btn" href={pad(padVan('prijzen', taal))}>{t.ui.alg.allePrijzen}</a>
       </div>
       <div class="troef">
-        <span class="eyebrow">{t.hero.eyebrow}</span>
-        <h2>{t.pakketten.garantieStrip}</h2>
-        <p>{t.pakketten.garantieKlein}</p>
+        {/* Een eigen opschrift. Hier stond de hero-eyebrow ("Emmen,
+            Niederlande · nur nach Vereinbarung"), en die hoort niet boven
+            een blok over garantie. */}
+        <span class="eyebrow">{p.over.garantieEyebrow}</span>
+        <h2>{t.pakketten.garantieKop}</h2>
+        <p>{t.pakketten.garantieStrip} {t.pakketten.garantieKlein}</p>
         <a class="btn" href={pad(padVan('contact', taal))}>{t.ui.alg.naarContact}</a>
       </div>
     </div>

@@ -77,8 +77,10 @@ const t = tekstenVan(taal);
         <p>{t.garantie.tekst}</p>
       </div>
       <div class="troef">
-        <h2>{t.pakketten.garantieStrip}</h2>
-        <p>{t.pakketten.garantieKlein}</p>
+        {/* De korte kop, niet de hele zin: die eindigt op een punt en leest
+            als kop niet. De zin zelf staat eronder. */}
+        <h2>{t.pakketten.garantieKop}</h2>
+        <p>{t.pakketten.garantieStrip} {t.pakketten.garantieKlein}</p>
       </div>
     </div>
   </div>

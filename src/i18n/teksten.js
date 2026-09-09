@@ -111,7 +111,9 @@ export const TEKSTEN = {
         'Schluss mit blechernem Klang. Wir bauen hochwertiges Car-Hifi hinter Ihre Originalverkleidungen — ohne eine einzige Leitung zu durchtrennen, und ohne dass Ihre Werksgarantie darunter leidet.',
       knopWa: 'Foto vom Armaturenbrett senden',
       knopPrijzen: 'Preise ansehen',
-      bewijs: 'Festpreise · Lebenslange Garantie auf unsere Arbeit · Werksgarantie bleibt',
+      /* "Werksgarantie bleibt" stond hier eerst en dat is een halve zin — in
+         het Nederlands kan "fabrieksgarantie blijft", in het Duits niet. */
+      bewijs: 'Festpreise · Lebenslange Garantie auf unsere Arbeit · Werksgarantie bleibt erhalten',
     },
 
     grens: {
@@ -120,7 +122,7 @@ export const TEKSTEN = {
       alineas: [
         'Von Lingen, Nordhorn oder Meppen sind Sie in einer knappen halben Stunde bei uns. Viele deutsche Kunden kommen genau deshalb: Festpreise inklusive Einbau statt Stundensätze, und jemand, der Ihnen vorher ehrlich sagt, was in Ihrem Auto möglich ist.',
         'Sie können auf Deutsch schreiben. Wir antworten auf Deutsch — schriftlich über WhatsApp geht das am einfachsten und Sie haben alles schwarz auf weiß.',
-        'Ein Hinweis zur Ehrlichkeit: Die Kennzeichenabfrage auf unserer niederländischen Seite funktioniert nur mit niederländischen Kennzeichen. Schicken Sie stattdessen einfach ein Foto Ihres Armaturenbretts, dann sagen wir Ihnen innerhalb von 24 Stunden, was geht und was es kostet.',
+        'Der Ehrlichkeit halber: Die Kennzeichenabfrage auf unseren niederländischen Seiten funktioniert nur mit niederländischen Kennzeichen. Schicken Sie stattdessen einfach ein Foto Ihres Armaturenbretts, dann sagen wir Ihnen innerhalb von 24 Stunden, was geht und was es kostet.',
       ],
     },
 
@@ -128,8 +130,9 @@ export const TEKSTEN = {
       eyebrow: 'Festpreise, inklusive Einbau und Mehrwertsteuer',
       kop: 'Was wir machen',
       lead:
-        'Vier Pakete. Der Preis, den Sie hier sehen, ist der Preis, den Sie zahlen — Einbau und Material inbegriffen, keine Anfahrtskosten, keine Überraschung am Ende.',
+        'Vier Pakete. Der Preis, den Sie hier sehen, ist der Preis, den Sie zahlen — Einbau und Material inbegriffen, keine Anfahrtskosten, nichts Zusätzliches bei der Abholung.',
       duurLabel: 'Dauer',
+      garantieKop: 'Lebenslange Garantie auf unsere Arbeit',
       garantieStrip: 'Lebenslange Garantie auf unsere Einbauarbeit und die von uns verlegten Kabel.',
       garantieKlein: 'Solange das Fahrzeug Ihnen gehört. Für die Geräte selbst gilt die Herstellergarantie.',
     },
@@ -165,11 +168,16 @@ export const TEKSTEN = {
     over: {
       eyebrow: 'Inhaber und Audio Engineer',
       kop: 'Wer an Ihrem Auto arbeitet',
+      /**
+       * "Autointerieurs" stond hier eerst — dat is Nederlands met een Duits
+       * jasje aan. Een Duitser zegt "Fahrzeuginnenraum". Zulke leenwoorden
+       * zijn precies wat een lezer van over de grens er meteen uit pikt.
+       */
       alineas: [
-        'Ich habe an Autointerieurs geschraubt, bevor ich einen Führerschein hatte, und danach das Handwerk am Konservatorium gelernt — als Audio Engineer. Beides kommt in Ihrem Auto zusammen.',
+        'Ich habe Fahrzeuginnenräume zerlegt, bevor ich einen Führerschein hatte, und danach das Handwerk am Konservatorium gelernt — als Audio Engineer. Beides kommt in Ihrem Auto zusammen.',
         'Was in Ihr Auto kommt, entscheide ich mit den Ohren.',
       ],
-      feiten: ['Ausgebildeter Audio Engineer', 'Seit 2018 im Ton', 'Baut eigene Lautsprecher'],
+      feiten: ['Ausgebildeter Audio Engineer', 'Seit 2018 im Audiobereich', 'Baut eigene Lautsprecher'],
     },
 
     slot: {
@@ -237,14 +245,14 @@ export const TEKSTEN = {
         'Done with tinny sound? We build premium car audio behind your original panels — without cutting a single factory wire, and without touching your warranty.',
       knopWa: 'Send a photo of your dashboard',
       knopPrijzen: 'See the pricing',
-      bewijs: 'All-in prices · Lifetime guarantee on our work · Factory warranty stays',
+      bewijs: 'All-in prices · Lifetime guarantee on our work · Factory warranty intact',
     },
 
     grens: {
       eyebrow: 'For visitors from abroad',
       kop: 'Yes, we speak your language',
       alineas: [
-        'We are in Emmen, in the north-east of the Netherlands, twenty minutes from the German border. Plenty of our customers drive an hour to get here, and a fair number cross a border to do it.',
+        'We are in Emmen, in the north-east of the Netherlands, twenty minutes from the German border. Plenty of our customers drive an hour to get here, and a good few cross the border to do it.',
         'Write to us in English and you will get an answer in English. WhatsApp is easiest — you keep everything in writing, and you can send photos straight from your phone.',
         'One honest note: the licence plate check on our Dutch pages only works with Dutch plates. Send a photo of your dashboard instead and we will tell you within 24 hours what is possible and what it costs.',
       ],
@@ -254,8 +262,9 @@ export const TEKSTEN = {
       eyebrow: 'All-in prices, fitting and VAT included',
       kop: 'What we do',
       lead:
-        'Four packages. The price you see is the price you pay — parts and fitting included, no call-out charge, no surprise at the end.',
+        'Four packages. The price you see is the price you pay — parts and fitting included, no call-out charge, nothing extra when you come to collect it.',
       duurLabel: 'Time needed',
+      garantieKop: 'Lifetime guarantee on our work',
       garantieStrip: 'Lifetime guarantee on our installation work and the wiring we lay.',
       garantieKlein: 'For as long as the car is yours. The equipment itself carries its manufacturer warranty.',
     },
@@ -291,11 +300,20 @@ export const TEKSTEN = {
     over: {
       eyebrow: 'Owner and audio engineer',
       kop: 'Who works on your car',
+      /**
+       * "Conservatory" stond hier eerst. Dat is in het Engels een serre — de
+       * muziekopleiding heet "conservatoire". Precies het soort woord dat een
+       * vertaalmachine erdoorheen laat en dat een Engelse lezer meteen ziet.
+       *
+       * De tweede regel liep ook in Nederlandse woordvolgorde ("What goes
+       * into your car, I choose by ear"). Nu staat het onderwerp voorop,
+       * zoals het hoort, en blijft het even kort als het Nederlands.
+       */
       alineas: [
-        'I was stripping car interiors before I had a driving licence, and learned the trade afterwards at the conservatory — as an audio engineer. Both of those meet in your car.',
-        'What goes into your car, I choose by ear.',
+        'I was pulling car interiors apart before I had a driving licence, and learned the trade properly afterwards — at a music conservatoire, as an audio engineer. Those two things meet in your car.',
+        'What ends up in your car, I choose with my ears.',
       ],
-      feiten: ['Trained audio engineer', 'In sound since 2018', 'Builds his own speakers'],
+      feiten: ['Trained audio engineer', 'In audio since 2018', 'Builds his own speakers'],
     },
 
     slot: {
