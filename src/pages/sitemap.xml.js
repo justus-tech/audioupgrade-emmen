@@ -13,6 +13,7 @@ import { MODELS } from '../data/models.js';
 import { MERKEN_MET_MODELLEN } from '../data/merken.js';
 import { JURIDISCHE_PAGINAS } from '../data/juridisch.js';
 import { SITE } from '../data/site.js';
+import { PADEN, padVan } from '../i18n/talen.js';
 
 /** De vaste pagina's, met hoe belangrijk ze zijn. */
 const VAST = [
@@ -30,11 +31,23 @@ const VAST = [
   ...JURIDISCHE_PAGINAS.map((d) => [`/${d.slug}`, 0.3]),
 ];
 
+/**
+ * De Duitse en Engelse pagina's.
+ *
+ * Ze staan wat lager dan hun Nederlandse tegenhangers: het Nederlands is de
+ * hoofdtaal en heeft veruit de meeste inhoud. Dat is geen oordeel over hun
+ * belang maar een hint over waar Google zijn tijd het beste besteedt.
+ */
+const VERTAALDE_PADEN = ['de', 'en'].flatMap((taal) =>
+  Object.keys(PADEN).map((sleutel) => [padVan(sleutel, taal), sleutel === 'home' ? 0.8 : 0.6])
+);
+
 export async function GET() {
   const vandaag = new Date().toISOString().slice(0, 10);
 
   const paden = [
     ...VAST,
+    ...VERTAALDE_PADEN,
     ...MERKEN_MET_MODELLEN.map((m) => [`/merk/${m.slug}`, 0.7]),
     ...MODELS.map((m) => [`/audio-upgrade/${m.slug}`, 0.8]),
   ];

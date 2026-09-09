@@ -25,7 +25,8 @@ const faqSchema = {
   })),
 };
 ---
-<Base title={OLDTIMER.titel} description={OLDTIMER.beschrijving} path={`/${OLDTIMER.slug}`}>
+<Base title={OLDTIMER.titel} description={OLDTIMER.beschrijving}
+      path={`/${OLDTIMER.slug}`} sleutel="oldtimer">
   <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
 
   <section>

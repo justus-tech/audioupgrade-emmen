@@ -1,0 +1,23 @@
+---
+/**
+ * Gegenereerd door scripts/vertaalde-routes.mjs — niet met de hand aanpassen.
+ *
+ * De inhoud staat in src/components/vertaald/Oldtimer.astro, de teksten in
+ * src/i18n/paginas.js. Dit bestand koppelt alleen het adres aan de taal.
+ */
+import Base from '../../layouts/Base.astro';
+import Oldtimer from '../../components/vertaald/Oldtimer.astro';
+import { paginasVan } from '../../i18n/paginas.js';
+import { PADEN } from '../../i18n/talen.js';
+
+const t = paginasVan('de').oldtimer;
+---
+<Base
+  title={t.titel}
+  description={t.omschrijving}
+  path={PADEN.oldtimer.de}
+  sleutel="oldtimer"
+  taal="de"
+>
+  <Oldtimer taal="de" />
+</Base>

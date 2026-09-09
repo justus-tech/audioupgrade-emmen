@@ -52,6 +52,13 @@ export const TEKSTEN = {
         privacy: 'Privacybeleid',
         cookies: 'Cookiebeleid',
       },
+      alg: {
+        meerLezen: 'Lees meer',
+        allePrijzen: 'Bekijk alle prijzen',
+        naarContact: 'Contact en route',
+        vragenLink: 'Of lees eerst de veelgestelde vragen',
+        adres: 'Werkplaats en bezoekadres',
+      },
     },
   },
 
@@ -67,6 +74,14 @@ export const TEKSTEN = {
         werkwijze: 'Ablauf',
         over: 'Über uns',
         contact: 'Kontakt',
+      },
+      /* Losse woordjes die op meerdere pagina's terugkomen. */
+      alg: {
+        meerLezen: 'Mehr erfahren',
+        allePrijzen: 'Alle Preise ansehen',
+        naarContact: 'Kontakt und Anfahrt',
+        vragenLink: 'Oder lesen Sie zuerst die häufigen Fragen',
+        adres: 'Werkstatt und Besucheradresse',
       },
       voettekst: {
         opAfspraak: 'Nur nach Vereinbarung',
@@ -186,6 +201,13 @@ export const TEKSTEN = {
         werkwijze: 'How it works',
         over: 'About',
         contact: 'Contact',
+      },
+      alg: {
+        meerLezen: 'Read more',
+        allePrijzen: 'See all pricing',
+        naarContact: 'Contact and directions',
+        vragenLink: 'Or read the frequently asked questions first',
+        adres: 'Workshop and visiting address',
       },
       voettekst: {
         opAfspraak: 'By appointment only',

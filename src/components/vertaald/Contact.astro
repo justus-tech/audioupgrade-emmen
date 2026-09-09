@@ -1,0 +1,101 @@
+---
+/**
+ * De contactpagina in het Duits en het Engels.
+ *
+ * De kaart laadt pas na een klik, net als op de Nederlandse pagina: een
+ * Google Maps-embed zet meteen cookies bij je bezoeker en die keuze laten we
+ * aan hem. De uitleg erbij staat in de taal van de pagina.
+ *
+ * Voor Duitse bezoekers staat er een regel over de afstand tot de grens bij.
+ * Dat is voor hen de eerste praktische vraag.
+ */
+import { SITE, ADRES } from '../../data/site.js';
+import { paginasVan } from '../../i18n/paginas.js';
+import { tekstenVan } from '../../i18n/teksten.js';
+import { whatsappLink, berichtOverAuto } from '../../lib/whatsapp.js';
+
+const { taal } = Astro.props;
+const p = paginasVan(taal);
+const t = tekstenVan(taal);
+
+const q = encodeURIComponent(SITE.mapsQuery);
+const kaartUrl = `https://www.google.com/maps?q=${q}&output=embed`;
+const routeUrl = `https://www.google.com/maps/search/?api=1&query=${q}`;
+
+const waLink = whatsappLink(berichtOverAuto(null, taal), taal);
+---
+<section>
+  <div class="wrap center">
+    <span class="eyebrow">{p.contact.eyebrow}</span>
+    <h1>{p.contact.kop}</h1>
+    <p style="margin:1.4em auto 2.2em;">{p.contact.lead}</p>
+    <a class="btn wa" href={waLink}>{t.slot.knop}</a>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <h2 class="center">{p.contact.manierenKop}</h2>
+    <div class="grid cols-3 mt">
+      <div class="card center contact-kaart">
+        <h3>{p.contact.manieren[0].kop}</h3>
+        <p>{p.contact.manieren[0].tekst}</p>
+        <a class="btn wa" href={waLink}>{p.contact.manieren[0].knop}</a>
+      </div>
+      <div class="card center contact-kaart">
+        <h3>{p.contact.manieren[1].kop}</h3>
+        <p>{p.contact.manieren[1].tekst}</p>
+        <a class="btn solid" href={`tel:${SITE.phone}`}>{SITE.phoneDisplay}</a>
+      </div>
+      <div class="card center contact-kaart">
+        <h3>{p.contact.manieren[2].kop}</h3>
+        <p>{p.contact.manieren[2].tekst}</p>
+        <a class="btn solid" href={`mailto:${SITE.email}`}>{p.contact.manieren[2].knop}</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <span class="eyebrow">{p.contact.waarKop}</span>
+    <h2>{SITE.street}</h2>
+    <p style="margin-top:.6em">{SITE.postalCode} {SITE.city} · {p.contact.waarTekst}</p>
+    {taal === 'de' && <p style="margin-top:.6em">{p.contact.grens}</p>}
+
+    {/* De kaart laadt pas na een klik. Een Google Maps-embed zet meteen
+        cookies bij je bezoeker, en die keuze laten we aan hem. */}
+    <div class="kaart mt" id="kaart" data-src={kaartUrl}>
+      <button class="btn solid kaart-knop" type="button" id="kaart-knop">
+        {p.contact.kaartKnop}
+      </button>
+      <p class="kaart-uitleg">{p.contact.kaartUitleg}</p>
+    </div>
+
+    <p class="mt">
+      <a class="btn" href={routeUrl} target="_blank" rel="noopener">{p.contact.routeKnop} →</a>
+    </p>
+  </div>
+</section>
+
+<script>
+  const vak = document.getElementById('kaart');
+  const knop = document.getElementById('kaart-knop');
+  if (vak && knop) {
+    knop.addEventListener('click', () => {
+      const frame = document.createElement('iframe');
+      frame.src = vak.dataset.src;
+      frame.title = 'Audio Upgrade Emmen';
+      frame.loading = 'lazy';
+      frame.referrerPolicy = 'no-referrer-when-downgrade';
+      frame.allowFullscreen = true;
+      vak.replaceChildren(frame);
+    });
+  }
+</script>
+
+<style>
+  /* De drie kaarten zijn even hoog; margin-top:auto duwt de knop naar onderen
+     zodat alle drie de knoppen op dezelfde hoogte staan. */
+  .contact-kaart .btn { align-self: center; margin-top: auto; }
+</style>

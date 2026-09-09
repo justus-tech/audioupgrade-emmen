@@ -1,0 +1,83 @@
+---
+/**
+ * De vragenpagina in het Duits en het Engels.
+ *
+ * Zelfde opzet als de Nederlandse: alle antwoorden staan open, en er staat
+ * een FAQPage-blok onder zodat Google ze rechtstreeks in de zoekresultaten
+ * kan tonen. Dat blok moet woord voor woord gelijk zijn aan wat er op de
+ * pagina staat — er staat een test op die dat bewaakt.
+ *
+ * Er zit één vraag in die in het Nederlands niet bestaat: "ik kom uit
+ * Duitsland, kan dat?". Dat is de vraag die deze bezoeker als eerste stelt en
+ * die een Nederlander nooit stelt.
+ */
+import { paginasVan } from '../../i18n/paginas.js';
+import { tekstenVan } from '../../i18n/teksten.js';
+import { padVan } from '../../i18n/talen.js';
+import { pad } from '../../lib/pad.js';
+import { whatsappLink, berichtOverAuto } from '../../lib/whatsapp.js';
+
+const { taal } = Astro.props;
+const p = paginasVan(taal);
+const t = tekstenVan(taal);
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  inLanguage: taal,
+  mainEntity: p.vragen.lijst.map((v) => ({
+    '@type': 'Question',
+    name: v.vraag,
+    acceptedAnswer: { '@type': 'Answer', text: v.antwoord },
+  })),
+};
+---
+<section>
+  <div class="wrap">
+    <span class="eyebrow">{p.vragen.eyebrow}</span>
+    <h1>{p.vragen.kop}</h1>
+    <p class="lead" style="max-width:60ch">{p.vragen.lead}</p>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <div class="vragen">
+      {p.vragen.lijst.map((v) => (
+        <div class="vraag">
+          <h2>{v.vraag}</h2>
+          <p>{v.antwoord}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<section class="center">
+  <div class="wrap">
+    <h2>{p.vragen.slotKop}</h2>
+    <p style="margin:0 auto 2em;">{p.vragen.slotTekst}</p>
+    <a class="btn wa" href={whatsappLink(berichtOverAuto(null, taal), taal)}>{t.slot.knop}</a>
+    <p style="margin-top:2em">
+      <a href={pad(padVan('prijzen', taal))}>{t.ui.alg.allePrijzen} →</a>
+    </p>
+  </div>
+</section>
+
+<script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+<style>
+  .vragen {
+    max-width: 68ch; margin: 0 auto;
+    display: grid; gap: 2.4rem;
+  }
+  .vraag { border-top: 1px solid var(--line-strong); padding-top: 1.6rem; }
+  .vraag:first-child { border-top: none; padding-top: 0; }
+  .vraag h2 { font-size: clamp(1.05rem, 2.8vw, 1.25rem); line-height: 1.3; }
+  .vraag h2::before {
+    content: ''; display: inline-block;
+    width: 16px; height: 2px; margin-right: .7em;
+    vertical-align: middle; background: var(--accent);
+  }
+  .vraag p { margin-top: .9em; }
+</style>

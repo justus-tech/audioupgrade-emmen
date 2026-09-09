@@ -21,6 +21,7 @@ import { PACKAGES, SITE, SCHEMA_SOORT } from '../src/data/site.js';
 import { VRAGEN } from '../src/data/vragen.js';
 import { OVER } from '../src/data/generiek.js';
 import { REVIEWS } from '../src/data/reviews.js';
+import { PADEN, padVan } from '../src/i18n/talen.js';
 import { berichtOverAuto } from '../src/lib/whatsapp.js';
 
 const DIST = fileURLToPath(new URL('../dist/', import.meta.url));
@@ -424,10 +425,26 @@ describe('drie talen', alsGebouwd, () => {
   });
 
   test('elke pagina meldt zich aan in de juiste taal', () => {
-    const verwacht = { '/de': 'de-DE', '/en': 'en' };
+    /* De taal volgt uit het pad: alles onder /de is Duits, alles onder /en
+       Engels, de rest Nederlands. Zo hoeft deze test niet bijgewerkt te
+       worden als er een pagina bijkomt. */
+    const taalVan = (p) =>
+      p === '/de' || p.startsWith('/de/') ? 'de-DE'
+      : p === '/en' || p.startsWith('/en/') ? 'en'
+      : 'nl-NL';
+
     for (const [pad, html] of inhoud) {
       const lang = /<html lang="([^"]+)"/.exec(html)?.[1];
-      assert.equal(lang, verwacht[pad] ?? 'nl-NL', `${pad}: lang=${lang}`);
+      assert.equal(lang, taalVan(pad), `${pad}: lang=${lang}`);
+    }
+  });
+
+  test('elke vertaalde pagina bestaat in beide talen', () => {
+    for (const sleutel of Object.keys(PADEN)) {
+      for (const taal of ['de', 'en']) {
+        const p = padVan(sleutel, taal);
+        assert.ok(inhoud.get(p), `${p} ontbreekt (${sleutel} in ${taal})`);
+      }
     }
   });
 
@@ -466,18 +483,30 @@ describe('drie talen', alsGebouwd, () => {
     }
   });
 
-  test('er staat geen Nederlandse tekst meer op de Duitse pagina', () => {
-    /* Scripts eruit voordat we kijken. Daar staat Nederlands commentaar in en
-       dat leest geen bezoeker — het gaat om wat er op het scherm komt. */
-    const zichtbaar = inhoud.get('/de').replace(/<script[\s\S]*?<\/script>/g, '');
-    for (const woord of [
-      'Fabriekssysteem',
-      'Stuur foto dashboard',
-      'Naar de inhoud',
-      'Uitsluitend op afspraak',
-      'Veelgestelde vragen',
-    ]) {
-      assert.ok(!zichtbaar.includes(woord), `/de: hier staat nog "${woord}"`);
+  /**
+   * Geen Nederlandse tekst op een vertaalde pagina.
+   *
+   * Dit gaat over wat de bezoeker ziet, dus scripts, stijlen en attributen
+   * gaan er eerst uit. Zonder dat filter slaat de test alarm op dingen als
+   * `id="akoestische-basis-grond"` (een SVG-kleurverloop) en de hreflang-link
+   * naar /veelgestelde-vragen — allebei precies goed, allebei onzichtbaar.
+   */
+  test('op een vertaalde pagina staat geen Nederlandse tekst', () => {
+    const NL = [
+      'Vanaf', 'excl. btw', 'Uitsluitend', 'Stuur foto', 'Veelgestelde vragen',
+      'Klaar in', 'Draadloze', 'Akoestische', 'Prijs op aanvraag',
+      'Wie zijn wij', 'Fabriekssysteem', 'Naar de inhoud',
+    ];
+
+    for (const [pad, html] of inhoud) {
+      if (!/^\/(de|en)(\/|$)/.test(pad)) continue;
+      const zichtbaar = html
+        .replace(/<script[\s\S]*?<\/script>/g, '')
+        .replace(/<style[\s\S]*?<\/style>/g, '')
+        .replace(/<[^>]+>/g, ' ');
+      for (const woord of NL) {
+        assert.ok(!zichtbaar.includes(woord), `${pad}: hier staat nog "${woord}"`);
+      }
     }
   });
 });

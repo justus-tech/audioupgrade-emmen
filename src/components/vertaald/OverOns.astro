@@ -1,0 +1,141 @@
+---
+/**
+ * De pagina "wie zijn wij" in het Duits en het Engels.
+ *
+ * Het portret en de drie feiten komen uit hetzelfde beeld en dezelfde
+ * gedachte als de Nederlandse versie; de tekst staat in i18n/teksten.js.
+ * De uitnodiging om ook zonder opdracht iets te vragen staat er ook op —
+ * dat is de laagste drempel van de hele site en dat geldt in elke taal.
+ */
+import { Image } from 'astro:assets';
+import portret from '../../assets/justus.jpg';
+import { SITE, AUDIOMERKEN, ADRES } from '../../data/site.js';
+import { paginasVan } from '../../i18n/paginas.js';
+import { tekstenVan } from '../../i18n/teksten.js';
+import { padVan } from '../../i18n/talen.js';
+import { pad } from '../../lib/pad.js';
+import { whatsappLink, berichtOverAuto } from '../../lib/whatsapp.js';
+
+const { taal } = Astro.props;
+const p = paginasVan(taal);
+const t = tekstenVan(taal);
+
+/* Een eigen bericht, zodat Justus meteen ziet dat dit geen inbouwvraag is. */
+const adviesLink = whatsappLink(
+  taal === 'de'
+    ? 'ich habe eine Frage zum Thema Klang. Es geht nicht direkt um einen Einbau, aber ich bin auf Ihre Meinung gespannt.'
+    : 'I have a question about sound. It is not directly about an installation, but I would value your opinion.',
+  taal
+);
+---
+<section>
+  <div class="wrap center">
+    <span class="eyebrow">{p.over.eyebrow}</span>
+    <h1>{p.over.kop}</h1>
+    <p class="lead" style="max-width:54ch;margin:1.3em auto 0;">{p.over.lead}</p>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <div class="over">
+      <div class="over-foto">
+        <Image src={portret} alt={`Justus — ${t.over.eyebrow}`} widths={[280, 420, 640]}
+               sizes="(max-width: 760px) 60vw, 320px" loading="lazy" decoding="async" />
+      </div>
+      <div class="over-tekst">
+        <span class="eyebrow">{t.over.eyebrow}</span>
+        <h2>{t.over.kop}</h2>
+        {t.over.alineas.map((regel) => <p>{regel}</p>)}
+        <ul class="over-feiten">
+          {t.over.feiten.map((f) => <li>{f}</li>)}
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="troef troef-breed">
+      <span class="eyebrow">{p.over.adviesEyebrow}</span>
+      <h2>{p.over.adviesKop}</h2>
+      {p.over.adviesAlineas.map((regel) => <p>{regel}</p>)}
+      <a class="btn wa" href={adviesLink}>{p.over.adviesKnop}</a>
+    </div>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <div class="grid cols-2">
+      <div class="troef">
+        <span class="eyebrow">{p.over.merkenEyebrow}</span>
+        <h2>{p.over.merkenKop}</h2>
+        <p>{AUDIOMERKEN.join(', ')}. {p.over.merkenTekst}</p>
+        <a class="btn" href={pad(padVan('prijzen', taal))}>{t.ui.alg.allePrijzen}</a>
+      </div>
+      <div class="troef">
+        <span class="eyebrow">{t.hero.eyebrow}</span>
+        <h2>{t.pakketten.garantieStrip}</h2>
+        <p>{t.pakketten.garantieKlein}</p>
+        <a class="btn" href={pad(padVan('contact', taal))}>{t.ui.alg.naarContact}</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="center">
+  <div class="wrap">
+    <h2>{t.slot.kop}</h2>
+    <p style="margin:0 auto 2em;">{t.slot.tekst}</p>
+    <a class="btn wa" href={whatsappLink(berichtOverAuto(null, taal), taal)}>{t.slot.knop}</a>
+    <p style="margin-top:1.8em">{SITE.name} · {ADRES}</p>
+  </div>
+</section>
+
+<style>
+  /* Zelfde opzet als OverJustus.astro; zie de uitleg daar. */
+  .over {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: clamp(2rem, 5vw, 3.6rem);
+    align-items: start;
+  }
+  .over-foto {
+    border-top: 3px solid var(--accent);
+    background: var(--panel);
+    overflow: hidden;
+  }
+  .over-foto :global(img) {
+    display: block; width: 100%;
+    aspect-ratio: 1; object-fit: cover;
+    filter: saturate(.92) contrast(1.04);
+  }
+  .over-tekst h2 { margin-top: .4em; font-size: clamp(1.4rem, 3.6vw, 2rem); }
+  .over-tekst p { margin-top: 1.1em; }
+  .over-feiten {
+    display: flex; flex-wrap: wrap; gap: .6rem 1.6rem;
+    margin: 2em 0 0; padding: 1.4em 0 0;
+    list-style: none; border-top: 1px solid var(--line);
+  }
+  .over-feiten li {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase; letter-spacing: .14em;
+    font-size: .68rem; color: var(--text-dim);
+  }
+  .over-feiten li::before {
+    content: ''; display: inline-block;
+    width: 14px; height: 2px; margin-right: .7em;
+    vertical-align: middle; background: var(--accent);
+  }
+
+  @media (max-width: 760px) {
+    .over {
+      grid-template-columns: 1fr; gap: 1.8rem;
+      justify-items: center; text-align: center;
+    }
+    .over-foto { width: min(230px, 60vw); }
+    .over-feiten { justify-content: center; }
+  }
+</style>

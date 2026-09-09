@@ -21,14 +21,14 @@
 import { TALEN, TAALVOLGORDE, wisselPad } from '../i18n/talen.js';
 import { pad } from '../lib/pad.js';
 
-const { taal, path = '/' } = Astro.props;
+const { taal, sleutel = null } = Astro.props;
 ---
 <nav class="taalkiezer" aria-label="Taal">
   {TAALVOLGORDE.map((code) => {
     const hier = code === taal;
     return (
       <a
-        href={pad(wisselPad(code, path))}
+        href={pad(wisselPad(code, sleutel))}
         hreflang={TALEN[code].hreflang}
         lang={TALEN[code].htmlLang}
         aria-current={hier ? 'true' : undefined}

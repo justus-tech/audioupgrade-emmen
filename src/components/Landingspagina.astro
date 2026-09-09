@@ -22,11 +22,14 @@ import Golflijn from './Golflijn.astro';
 import portret from '../assets/justus.jpg';
 import { SITE, PACKAGES, ADRES } from '../data/site.js';
 import { tekstenVan } from '../i18n/teksten.js';
+import { paginasVan } from '../i18n/paginas.js';
 import { whatsappLink, berichtOverAuto, berichtOverPakket } from '../lib/whatsapp.js';
 import { pad } from '../lib/pad.js';
 
 const { taal } = Astro.props;
 const t = tekstenVan(taal);
+/* De pakketvertalingen: namen, prijzen en omschrijvingen per taal. */
+const p = paginasVan(taal);
 
 /* Zelfde selectie als op de Nederlandse homepage: de isolatie-optie is geen
    los pakket maar onderdeel van de andere drie. */
@@ -68,22 +71,26 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
     <p style="margin-top:1.2em">{t.pakketten.lead}</p>
 
     <div class="grid cols-4 mt">
-      {pakketten.map((pkg) => (
+      {pakketten.map((pkg) => {
+        /* Naam en prijs komen uit de vertaling: in site.js staan ze in het
+           Nederlands ("Vanaf € 695,00"). Het bedrag is hetzelfde, alleen de
+           woorden eromheen verschillen. */
+        const v = p.pakketten[pkg.slug];
+        return (
         <div class="card">
-          {/* De naam en de prijs blijven staan zoals ze zijn. Een pakketnaam
-              is een merknaam en die vertaal je niet — "Draadloze CarPlay
-              Upgrade" heet in Duitsland ook zo op de factuur. */}
-          <h3>{pkg.name}</h3>
+          <h3>{v.naam}</h3>
           <div class="price">
-            {pkg.price}
-            <small>{t.pakketten.eyebrow}</small>
+            {v.prijs}
+            {v.prijsNoot && <small>{v.prijsNoot}</small>}
           </div>
-          {pkg.duur && <p class="duur">{t.pakketten.duurLabel}: {pkg.duur}</p>}
-          <a class="btn" href={whatsappLink(berichtOverPakket(pkg.name, null, taal), taal)}>
-            {t.hero.knopWa}
+          <p>{v.short}</p>
+          <p class="duur">{t.pakketten.duurLabel}: {v.duur}</p>
+          <a class="btn" href={whatsappLink(berichtOverPakket(v.naam, null, taal), taal)}>
+            {v.cta}
           </a>
         </div>
-      ))}
+        );
+      })}
     </div>
 
     <p class="garantiestrip">

@@ -63,25 +63,37 @@ export const TAALVOLGORDE = ['nl', 'en', 'de'];
 export const STANDAARDTAAL = 'nl';
 
 /**
- * De pagina's die in alle drie de talen bestaan.
+ * DE ROUTEKAART.
  *
- * Alles wat hier niet in staat, bestaat alleen in het Nederlands. Sta je op
- * zo'n pagina en klik je op DE, dan kom je op de Duitse startpagina uit — dat
- * is beter dan een 404, en beter dan een knop die niets doet.
+ * Elke rij is één pagina in drie talen. De sleutel links (bijvoorbeeld
+ * `prijzen`) is de naam die we in de code gebruiken; de adressen erachter
+ * zijn wat de bezoeker ziet.
  *
- * LET OP BIJ UITBREIDEN: zet een pad hier pas bij als /de en /en die pagina
- * ook echt hebben. Anders wijst de taalknop naar een adres dat niet bestaat.
- * Er staat een test op (tests/gebouwd.test.js) die daarop let, en die heeft
- * precies deze fout al een keer gevangen.
+ * WAAROM DE ADRESSEN VERTAALD ZIJN
+ * /de/preise en niet /de/upgrades. Een Duitser die "preise" in zijn adresbalk
+ * ziet staan begrijpt waar hij is, en Google weegt het woord in het adres mee
+ * bij een Duitse zoekopdracht. Het kost niets extra en het is meteen goed —
+ * een adres later veranderen kost je wél je plek in de zoekresultaten.
+ *
+ * Nederlands staat op de wortel: die adressen bestaan al en staan in Google
+ * en in WhatsApp-gesprekken. Die raken we niet aan.
  */
-export const VERTAALD = ['/'];
+export const PADEN = {
+  home: { nl: '/', de: '/', en: '/' },
+  prijzen: { nl: '/upgrades', de: '/preise', en: '/pricing' },
+  werkwijze: { nl: '/werkwijze', de: '/ablauf', en: '/how-it-works' },
+  vragen: { nl: '/veelgestelde-vragen', de: '/fragen', en: '/faq' },
+  over: { nl: '/over-ons', de: '/ueber-uns', en: '/about' },
+  contact: { nl: '/contact', de: '/kontakt', en: '/contact' },
+  oldtimer: { nl: '/oldtimer-audio', de: '/oldtimer', en: '/classics' },
+};
 
 /**
  * Zet een pad om naar de versie in een bepaalde taal.
  *
- *   taalPad('de', '/upgrades')  ->  '/de/upgrades'
- *   taalPad('nl', '/upgrades')  ->  '/upgrades'
- *   taalPad('de', '/')          ->  '/de'
+ *   taalPad('de', '/preise')  ->  '/de/preise'
+ *   taalPad('nl', '/upgrades') ->  '/upgrades'
+ *   taalPad('de', '/')         ->  '/de'
  */
 export function taalPad(taal, pad) {
   const prefix = TALEN[taal]?.prefix ?? '';
@@ -90,11 +102,18 @@ export function taalPad(taal, pad) {
 }
 
 /**
- * Waar de schakelaar naartoe wijst vanaf de pagina waar je nu staat.
+ * Waar de taalknop naartoe wijst vanaf de pagina waar je nu staat.
  *
- * Bestaat deze pagina niet in die taal, dan gaat hij naar de startpagina van
- * die taal. Zo loopt niemand tegen een dood adres aan.
+ * Sta je op /de/preise en klik je op EN, dan ga je naar /en/pricing — niet
+ * naar de Engelse startpagina. Alleen als de pagina in die taal niet bestaat
+ * (een modelpagina, de voorwaarden) val je terug op de startpagina. Beter dan
+ * een dood adres, en beter dan een knop die niets doet.
  */
-export function wisselPad(naarTaal, huidigPad) {
-  return VERTAALD.includes(huidigPad) ? taalPad(naarTaal, huidigPad) : taalPad(naarTaal, '/');
+export function wisselPad(naarTaal, sleutel) {
+  const rij = PADEN[sleutel];
+  if (!rij || !rij[naarTaal]) return taalPad(naarTaal, '/');
+  return taalPad(naarTaal, rij[naarTaal]);
 }
+
+/** Het pad van een pagina in een bepaalde taal, mét voorvoegsel. */
+export const padVan = (sleutel, taal) => taalPad(taal, PADEN[sleutel]?.[taal] ?? '/');

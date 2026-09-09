@@ -7,7 +7,7 @@ import Herkomst from '../components/Herkomst.astro';
 import { pad } from '../lib/pad.js';
 import { whatsappLink, berichtOverAuto } from '../lib/whatsapp.js';
 import Taalkiezer from '../components/Taalkiezer.astro';
-import { TALEN, TAALVOLGORDE, STANDAARDTAAL, taalPad, wisselPad } from '../i18n/talen.js';
+import { TALEN, TAALVOLGORDE, STANDAARDTAAL, taalPad, wisselPad, padVan } from '../i18n/talen.js';
 import { tekstenVan } from '../i18n/teksten.js';
 
 /**
@@ -15,7 +15,17 @@ import { tekstenVan } from '../i18n/teksten.js';
  * hreflang-verwijzingen. Zonder opgave: Nederlands. Zo blijven alle
  * bestaande pagina's werken zonder dat er iets aan hoeft.
  */
-const { title, description, path = '/', noindex = false, taal = STANDAARDTAAL } = Astro.props;
+/**
+ * `sleutel` is de naam van de pagina in de routekaart (zie i18n/talen.js).
+ * Daarmee weet de taalknop dat /de/preise en /en/pricing dezelfde pagina
+ * zijn. Pagina's zonder tegenhanger in andere talen — de modelpagina's, de
+ * voorwaarden — geven hem niet mee; daar valt de taalknop terug op de
+ * startpagina van die taal.
+ */
+const {
+  title, description, path = '/', noindex = false,
+  taal = STANDAARDTAAL, sleutel = null,
+} = Astro.props;
 
 const T = tekstenVan(taal).ui;
 const dezeTaal = TALEN[taal] ?? TALEN[STANDAARDTAAL];
@@ -64,19 +74,30 @@ const METEN_TOKEN = '5d1c66fd18124f3ebb875587dd008168';
  * daar (nog) niet, en een menu-item dat naar een Nederlandse pagina wijst is
  * erger dan geen menu-item. Daar tonen we dus alleen wat er echt is.
  */
-const NAV_NL = [
-  { href: '/', label: T.menu.home },
-  { href: '/upgrades', label: T.menu.upgrades },
-  { href: '/audio-upgrade', label: T.menu.auto },
-  { href: '/werkwijze', label: T.menu.werkwijze },
+/**
+ * In het Nederlands staat de modellenlijst in het menu. In het Duits en Engels
+ * niet: die pagina's zijn Nederlands en de kenteken-check erop werkt alleen
+ * met Nederlandse kentekens. De rest van het menu is in alle talen hetzelfde.
+ */
+const MENU = [
+  { sleutel: 'home', label: T.menu.home },
+  { sleutel: 'prijzen', label: T.menu.upgrades },
+  ...(taal === STANDAARDTAAL
+    ? [{ href: '/audio-upgrade', label: T.menu.auto }]
+    : []),
+  { sleutel: 'werkwijze', label: T.menu.werkwijze },
   /* Op verzoek van Justus' broer erbij gezet, naast Contact. Zes items passen:
      op een telefoon schuift het menu horizontaal (zie nav.main in global.css),
      dus er valt niets af. */
-  { href: '/over-ons', label: T.menu.over },
-  { href: '/contact', label: T.menu.contact },
+  { sleutel: 'over', label: T.menu.over },
+  { sleutel: 'contact', label: T.menu.contact },
 ];
 
-const nav = taal === STANDAARDTAAL ? NAV_NL : [];
+const nav = MENU.map((item) => ({
+  label: item.label,
+  href: item.sleutel ? padVan(item.sleutel, taal) : item.href,
+  hier: item.sleutel ? item.sleutel === sleutel : item.href === path,
+}));
 
 /**
  * De verwijzingen naar dezelfde pagina in de andere talen.
@@ -87,7 +108,7 @@ const nav = taal === STANDAARDTAAL ? NAV_NL : [];
  */
 const anderetalen = TAALVOLGORDE.map((code) => ({
   hreflang: TALEN[code].hreflang,
-  href: new URL(pad(wisselPad(code, path)), Astro.site).href,
+  href: new URL(pad(wisselPad(code, sleutel)), Astro.site).href,
 }));
 ---
 <!doctype html>
@@ -125,7 +146,7 @@ const anderetalen = TAALVOLGORDE.map((code) => ({
     <link rel="alternate" hreflang={t.hreflang} href={t.href} />
   ))}
   {!noindex && (
-    <link rel="alternate" hreflang="x-default" href={new URL(pad(wisselPad('nl', path)), Astro.site).href} />
+    <link rel="alternate" hreflang="x-default" href={new URL(pad(wisselPad('nl', sleutel)), Astro.site).href} />
   )}
   {(noindex || voorbeeld) && <meta name="robots" content="noindex, nofollow" />}
   <meta property="og:title" content={title} />
@@ -232,19 +253,17 @@ const anderetalen = TAALVOLGORDE.map((code) => ({
         <Logo height={26} decoratief={true} />
         <span class="logo-text">Audio Upgrade <span>Emmen</span></span>
       </a>
-      {nav.length > 0 && (
-        <nav class="main">
-          {nav.map((item) => (
-            <a href={pad(item.href)} aria-current={path === item.href ? 'page' : undefined}>{item.label}</a>
-          ))}
-        </nav>
-      )}
+      <nav class="main">
+        {nav.map((item) => (
+          <a href={pad(item.href)} aria-current={item.hier ? 'page' : undefined}>{item.label}</a>
+        ))}
+      </nav>
 
       {/* De twee schakelaars rechtsboven, in één rijtje. Op een telefoon staat
           dit hele blokje op de regel van het logo — zie .hulpmiddelen in
           global.css. */}
       <div class="hulpmiddelen">
-        <Taalkiezer taal={taal} path={path} />
+        <Taalkiezer taal={taal} sleutel={sleutel} />
 
       {/* Wisselen tussen licht en donker. Twee tekeningen over elkaar: de CSS
           laat zien welke van de twee bij de huidige stand hoort. */}
@@ -395,18 +414,15 @@ const anderetalen = TAALVOLGORDE.map((code) => ({
       </div>
       <div>
         <a href={whatsappLink(berichtOverAuto(null, taal), taal)}>{T.voettekst.appDashboard}</a><br />
-        {/* De inhoudelijke pagina's bestaan alleen in het Nederlands. In de
-            andere talen zou dit een rijtje links naar onbegrijpelijke pagina's
-            worden, dus die laten we daar weg. */}
+        <a href={pad(padVan('prijzen', taal))}>{T.voettekst.upgrades}</a><br />
+        <a href={pad(padVan('vragen', taal))}>{T.voettekst.vragen}</a><br />
+        <a href={pad(padVan('over', taal))}>{T.voettekst.over}</a><br />
+        {/* De modellenlijst bestaat alleen in het Nederlands: de kenteken-check
+            erop werkt met de open data van de RDW en kent geen Duitse platen. */}
         {taal === STANDAARDTAAL && (
-          <>
-            <a href={pad("/upgrades")}>{T.voettekst.upgrades}</a><br />
-            <a href={pad("/veelgestelde-vragen")}>{T.voettekst.vragen}</a><br />
-            <a href={pad("/over-ons")}>{T.voettekst.over}</a><br />
-            <a href={pad("/audio-upgrade")}>{T.voettekst.modellen}</a><br />
-            <a href={pad("/oldtimer-audio")}>{T.voettekst.klassiekers}</a>
-          </>
+          <><a href={pad("/audio-upgrade")}>{T.voettekst.modellen}</a><br /></>
         )}
+        <a href={pad(padVan('oldtimer', taal))}>{T.voettekst.klassiekers}</a>
       </div>
       <div class="legal">
         {/* De juridische teksten staan alleen in het Nederlands, en dat blijft

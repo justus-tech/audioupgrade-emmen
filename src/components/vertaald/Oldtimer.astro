@@ -1,0 +1,62 @@
+---
+/**
+ * Klassiekers en youngtimers in het Duits en het Engels.
+ *
+ * Bewust kort. Hier zijn geen vaste prijzen en geen pakketten, dus er valt
+ * ook niets op te sommen: het gaat om drie beloftes — het dashboard blijft,
+ * alles is terug te bouwen, en de prijs bespreken we vooraf.
+ */
+import { paginasVan } from '../../i18n/paginas.js';
+import { tekstenVan } from '../../i18n/teksten.js';
+import { padVan } from '../../i18n/talen.js';
+import { pad } from '../../lib/pad.js';
+import { whatsappLink } from '../../lib/whatsapp.js';
+
+const { taal } = Astro.props;
+const p = paginasVan(taal);
+const t = tekstenVan(taal);
+
+/* Een eigen bericht: bij een klassieker is het merk en bouwjaar het eerste
+   wat Justus wil weten, niet het pakket. */
+const waLink = whatsappLink(
+  taal === 'de'
+    ? 'ich fahre einen Klassiker und würde gern wissen, was sich beim Klang machen lässt, ohne das Armaturenbrett anzutasten.'
+    : 'I drive a classic and would like to know what can be done about the sound without touching the dashboard.',
+  taal
+);
+---
+<section>
+  <div class="wrap center">
+    <span class="eyebrow">{p.oldtimer.eyebrow}</span>
+    <h1>{p.oldtimer.kop}</h1>
+    <p class="lead" style="max-width:56ch;margin:1.3em auto 0;">{p.oldtimer.lead}</p>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <div class="grid cols-3">
+      {p.oldtimer.punten.map((punt) => (
+        <div class="troef">
+          <h2>{punt.kop}</h2>
+          <p>{punt.tekst}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<section class="center">
+  <div class="wrap">
+    <h2>{p.oldtimer.slotKop}</h2>
+    <p style="margin:0 auto 2em;">{p.oldtimer.slotTekst}</p>
+    <a class="btn wa" href={waLink}>{t.slot.knop}</a>
+    <p style="margin-top:2em">
+      <a href={pad(padVan('prijzen', taal))}>{t.ui.alg.allePrijzen} →</a>
+    </p>
+  </div>
+</section>
+
+<style>
+  .troef h2 { font-size: clamp(1.1rem, 2.6vw, 1.35rem); }
+</style>

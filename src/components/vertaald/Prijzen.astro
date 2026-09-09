@@ -1,0 +1,117 @@
+---
+/**
+ * De prijzenpagina in het Duits en het Engels.
+ *
+ * De bedragen komen uit site.js, de teksten eromheen uit i18n/paginas.js.
+ * Eén component voor beide talen: zo kunnen de Duitse en de Engelse pagina
+ * nooit uit elkaar lopen in opmaak, alleen in woorden.
+ *
+ * De kenteken-check staat er niet op — zie de uitleg in i18n/talen.js.
+ */
+import PakketBeeld from '../PakketBeeld.astro';
+import { PACKAGES } from '../../data/site.js';
+import { paginasVan } from '../../i18n/paginas.js';
+import { tekstenVan } from '../../i18n/teksten.js';
+import { padVan } from '../../i18n/talen.js';
+import { pad } from '../../lib/pad.js';
+import { whatsappLink, berichtOverPakket, berichtOverAuto } from '../../lib/whatsapp.js';
+
+const { taal } = Astro.props;
+const p = paginasVan(taal);
+const t = tekstenVan(taal);
+---
+<section>
+  <div class="wrap center">
+    <span class="eyebrow">{p.prijzen.eyebrow}</span>
+    <h1>{p.prijzen.kop}</h1>
+    <p class="lead" style="max-width:62ch;margin:1.3em auto 0;">{p.prijzen.lead}</p>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <div class="grid pakketten">
+      {PACKAGES.map((pkg) => {
+        const v = p.pakketten[pkg.slug];
+        return (
+          <div class:list={['card', pkg.populair && 'card-populair']}>
+            <PakketBeeld slug={pkg.slug} />
+            {/* Naam, prijs en btw-regel komen uit de vertaling en niet uit
+                site.js: daar staan ze in het Nederlands ("Vanaf € 695,00",
+                "excl. btw"). Het bedrág is hetzelfde, alleen de woorden
+                eromheen verschillen. */}
+            <h2>{v.naam}</h2>
+            <p class="tagline">{v.tagline}</p>
+
+            <div class="price">
+              {v.prijs}
+              {v.prijsNoot && <small>{v.prijsNoot}</small>}
+              {v.prijsExcl && <small class="excl">{v.prijsExcl}</small>}
+            </div>
+
+            <p>{v.short}</p>
+
+            <details class="meer">
+              <summary>{p.prijzen.meer}</summary>
+              <p>{v.body}</p>
+              <p class="wat-label">{p.prijzen.watLabel}</p>
+              <ul class="kenmerken">
+                {v.features.map((f) => <li>{f}</li>)}
+              </ul>
+            </details>
+
+            <p class="duur">{p.prijzen.duurLabel}: {v.duur}</p>
+            <a class="btn" href={whatsappLink(berichtOverPakket(v.naam, null, taal), taal)}>{v.cta}</a>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="grid cols-2">
+      <div class="troef">
+        <h2>{t.garantie.kop}</h2>
+        <p>{t.garantie.tekst}</p>
+      </div>
+      <div class="troef">
+        <h2>{t.pakketten.garantieStrip}</h2>
+        <p>{t.pakketten.garantieKlein}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="alt center">
+  <div class="wrap">
+    <h2>{t.slot.kop}</h2>
+    <p style="margin:0 auto 2em;">{t.slot.tekst}</p>
+    <a class="btn wa" href={whatsappLink(berichtOverAuto(null, taal), taal)}>{t.slot.knop}</a>
+    <p style="margin-top:2em">
+      <a href={pad(padVan('vragen', taal))}>{t.ui.alg.vragenLink} →</a>
+    </p>
+  </div>
+</section>
+
+<style>
+  .tagline {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase; letter-spacing: .14em;
+    font-size: .7rem; color: var(--accent-text);
+    margin-top: .5em;
+  }
+  .duur {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase; letter-spacing: .12em;
+    font-size: .68rem; color: var(--text-dim);
+    margin-top: 1.2em;
+  }
+  .wat-label {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase; letter-spacing: .14em;
+    font-size: .68rem; color: var(--text-dim);
+    margin-top: 1.4em;
+  }
+</style>
