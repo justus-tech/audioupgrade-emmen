@@ -1,0 +1,259 @@
+---
+/**
+ * De volledige pagina voor een bezoeker die geen Nederlands leest.
+ *
+ * ÉÉN PAGINA, GEEN VERTAALDE SITE
+ * Een Duitse of Engelse bezoeker moet vier dingen weten: wat je doet, wat het
+ * kost, welke garantie je geeft en hoe hij je bereikt. Dat past op één pagina.
+ * Dat is beter dan acht dunne vertaalde pagina's waarvan de helft doorlinkt
+ * naar Nederlandse tekst.
+ *
+ * WAT ER BEWUST NIET OP STAAT
+ * De kenteken-check. Die werkt op de open data van de RDW en kent alleen
+ * Nederlandse kentekens. Een veld dat voor deze bezoeker altijd "niet
+ * gevonden" zegt, is erger dan geen veld.
+ *
+ * De teksten komen uit src/i18n/teksten.js, de prijzen uit src/data/site.js.
+ * Prijzen staan dus maar op één plek voor alle drie de talen: wijzigt er een
+ * bedrag, dan wijzigt het overal mee.
+ */
+import { Image } from 'astro:assets';
+import Golflijn from './Golflijn.astro';
+import portret from '../assets/justus.jpg';
+import { SITE, PACKAGES, ADRES } from '../data/site.js';
+import { tekstenVan } from '../i18n/teksten.js';
+import { whatsappLink, berichtOverAuto, berichtOverPakket } from '../lib/whatsapp.js';
+import { pad } from '../lib/pad.js';
+
+const { taal } = Astro.props;
+const t = tekstenVan(taal);
+
+/* Zelfde selectie als op de Nederlandse homepage: de isolatie-optie is geen
+   los pakket maar onderdeel van de andere drie. */
+const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
+---
+<div class="hero">
+  <Golflijn taal={taal} />
+  <div class="wrap">
+    <span class="eyebrow">{t.hero.eyebrow}</span>
+    <h1>{t.hero.kop}<br /><span class="hero-accent">{t.hero.kopAccent}</span></h1>
+    <p class="lead">{t.hero.lead}</p>
+
+    <div class="hero-knoppen">
+      <a class="btn wa" href={whatsappLink(berichtOverAuto(null, taal), taal)}>{t.hero.knopWa}</a>
+      <a class="btn" href="#prijzen">{t.hero.knopPrijzen}</a>
+    </div>
+    <p class="hero-bewijs">{t.hero.bewijs}</p>
+  </div>
+</div>
+
+{/* Direct onder de hero: waarom deze bezoeker hier goed zit. Voor een Duitser
+    is "mag ik daar wel heen en verstaan ze me" de eerste vraag, nog vóór de
+    prijs. */}
+<section class="alt">
+  <div class="wrap">
+    <div class="troef troef-breed">
+      <span class="eyebrow">{t.grens.eyebrow}</span>
+      <h2>{t.grens.kop}</h2>
+      {t.grens.alineas.map((regel) => <p>{regel}</p>)}
+      <a class="btn wa" href={whatsappLink(berichtOverAuto(null, taal), taal)}>{t.hero.knopWa}</a>
+    </div>
+  </div>
+</section>
+
+<section id="prijzen">
+  <div class="wrap">
+    <span class="eyebrow">{t.pakketten.eyebrow}</span>
+    <h2>{t.pakketten.kop}</h2>
+    <p style="margin-top:1.2em">{t.pakketten.lead}</p>
+
+    <div class="grid cols-4 mt">
+      {pakketten.map((pkg) => (
+        <div class="card">
+          {/* De naam en de prijs blijven staan zoals ze zijn. Een pakketnaam
+              is een merknaam en die vertaal je niet — "Draadloze CarPlay
+              Upgrade" heet in Duitsland ook zo op de factuur. */}
+          <h3>{pkg.name}</h3>
+          <div class="price">
+            {pkg.price}
+            <small>{t.pakketten.eyebrow}</small>
+          </div>
+          {pkg.duur && <p class="duur">{t.pakketten.duurLabel}: {pkg.duur}</p>}
+          <a class="btn" href={whatsappLink(berichtOverPakket(pkg.name, null, taal), taal)}>
+            {t.hero.knopWa}
+          </a>
+        </div>
+      ))}
+    </div>
+
+    <p class="garantiestrip">
+      <strong>{t.pakketten.garantieStrip}</strong>
+      <span>{t.pakketten.garantieKlein}</span>
+    </p>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <span class="eyebrow">{t.vakwerk.eyebrow}</span>
+    <h2>{t.vakwerk.kop}</h2>
+    <div class="grid cols-3 mt">
+      {t.vakwerk.punten.map((p) => (
+        <div class="step">
+          <h3>{p.kop}</h3>
+          <p>{p.tekst}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="troef troef-breed">
+      <h2>{t.garantie.kop}</h2>
+      <p>{t.garantie.tekst}</p>
+    </div>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <div class="over">
+      <div class="over-foto">
+        <Image src={portret} alt={`${t.over.kop} — Justus`} widths={[280, 420, 640]}
+               sizes="(max-width: 760px) 60vw, 320px" loading="lazy" decoding="async" />
+      </div>
+      <div class="over-tekst">
+        <span class="eyebrow">{t.over.eyebrow}</span>
+        <h2>{t.over.kop}</h2>
+        {t.over.alineas.map((regel) => <p>{regel}</p>)}
+        <ul class="over-feiten">
+          {t.over.feiten.map((f) => <li>{f}</li>)}
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="center">
+  <div class="wrap">
+    <h2>{t.slot.kop}</h2>
+    <p style="margin:0 auto 2em;">{t.slot.tekst}</p>
+    <a class="btn wa" href={whatsappLink(berichtOverAuto(null, taal), taal)}>{t.slot.knop}</a>
+
+    <p class="adres">
+      <strong>{t.slot.adresLabel}</strong>
+      <span>{SITE.name} · {ADRES}</span>
+      <a href={`tel:${SITE.phone}`}>{SITE.phoneDisplay}</a>
+    </p>
+  </div>
+</section>
+
+<style>
+  .hero { position: relative; min-height: 78vh; padding-bottom: clamp(150px, 21vh, 220px); }
+  .hero .wrap { position: relative; z-index: 1; }
+  .hero-accent { color: var(--accent-text); }
+  .hero h1 { line-height: 1.06; }
+  .hero-knoppen {
+    display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+    margin-top: .4em;
+  }
+  .hero-bewijs {
+    margin: 2.4em auto 0;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase; letter-spacing: .2em;
+    font-size: .68rem; color: var(--text-dim);
+  }
+
+  .garantiestrip {
+    max-width: 62ch;
+    margin: 3.2rem auto 0;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--accent);
+    text-align: center;
+  }
+  .garantiestrip strong {
+    display: block;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase; letter-spacing: .12em;
+    font-size: clamp(.82rem, 2.4vw, .98rem);
+  }
+  .garantiestrip span {
+    display: block; margin-top: .7em;
+    font-size: .88rem; color: var(--text-dim);
+  }
+
+  .duur {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase; letter-spacing: .12em;
+    font-size: .7rem; color: var(--text-dim);
+    margin-top: 1em;
+  }
+
+  /* Zelfde opzet als op de Nederlandse homepage; zie OverJustus.astro. */
+  .over {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: clamp(2rem, 5vw, 3.6rem);
+    align-items: start;
+  }
+  .over-foto {
+    border-top: 3px solid var(--accent);
+    background: var(--panel);
+    overflow: hidden;
+  }
+  .over-foto :global(img) {
+    display: block; width: 100%;
+    aspect-ratio: 1; object-fit: cover;
+    filter: saturate(.92) contrast(1.04);
+  }
+  .over-tekst h2 { margin-top: .4em; font-size: clamp(1.4rem, 3.6vw, 2rem); }
+  .over-tekst p { margin-top: 1.1em; }
+  .over-feiten {
+    display: flex; flex-wrap: wrap; gap: .6rem 1.6rem;
+    margin: 2em 0 0; padding: 1.4em 0 0;
+    list-style: none; border-top: 1px solid var(--line);
+  }
+  .over-feiten li {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase; letter-spacing: .14em;
+    font-size: .68rem; color: var(--text-dim);
+  }
+  .over-feiten li::before {
+    content: ''; display: inline-block;
+    width: 14px; height: 2px; margin-right: .7em;
+    vertical-align: middle; background: var(--accent);
+  }
+
+  .adres {
+    margin: 2.6em auto 0;
+    padding-top: 1.6em;
+    border-top: 1px solid var(--line);
+    max-width: 48ch;
+  }
+  .adres strong {
+    display: block;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase; letter-spacing: .14em;
+    font-size: .7rem; color: var(--text-dim);
+    margin-bottom: .6em;
+  }
+  .adres span { display: block; }
+  .adres a { display: inline-block; margin-top: .4em; }
+
+  @media (max-width: 760px) {
+    .over {
+      grid-template-columns: 1fr; gap: 1.8rem;
+      justify-items: center; text-align: center;
+    }
+    .over-foto { width: min(230px, 60vw); }
+    .over-feiten { justify-content: center; }
+  }
+
+  @media (max-width: 700px) {
+    .hero { min-height: 72vh; padding-bottom: 178px; }
+    .hero-knoppen { flex-direction: column; }
+    .hero-bewijs { letter-spacing: .14em; line-height: 2; }
+  }
+</style>

@@ -1,0 +1,17 @@
+---
+/**
+ * De Duitse pagina: audioupgradeemmen.nl/de
+ *
+ * De inhoud staat in Landingspagina.astro, de teksten in i18n/teksten.js.
+ * Dit bestand doet niets anders dan de taal doorgeven, zodat de Duitse en de
+ * Engelse versie nooit uit elkaar kunnen lopen in opmaak.
+ */
+import Base from '../../layouts/Base.astro';
+import Landingspagina from '../../components/Landingspagina.astro';
+import { tekstenVan } from '../../i18n/teksten.js';
+
+const t = tekstenVan('de');
+---
+<Base title={t.meta.titel} description={t.meta.omschrijving} path="/" taal="de">
+  <Landingspagina taal="de" />
+</Base>

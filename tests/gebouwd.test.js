@@ -408,6 +408,80 @@ describe('niets van buiten de site', alsGebouwd, () => {
   });
 });
 
+/**
+ * De drie talen.
+ *
+ * Het gevaarlijkste in een meertalige site is niet een verkeerde vertaling —
+ * dat zie je. Het gevaarlijke is een taalknop die naar een pagina wijst die
+ * in die taal niet bestaat, of een Duitse pagina die zich als Nederlands
+ * aanmeldt bij Google. Beide zie je met het blote oog niet.
+ */
+describe('drie talen', alsGebouwd, () => {
+  test('de Duitse en de Engelse pagina zijn gebouwd', () => {
+    for (const p of ['/de', '/en']) {
+      assert.ok(inhoud.get(p), `${p} ontbreekt`);
+    }
+  });
+
+  test('elke pagina meldt zich aan in de juiste taal', () => {
+    const verwacht = { '/de': 'de-DE', '/en': 'en' };
+    for (const [pad, html] of inhoud) {
+      const lang = /<html lang="([^"]+)"/.exec(html)?.[1];
+      assert.equal(lang, verwacht[pad] ?? 'nl-NL', `${pad}: lang=${lang}`);
+    }
+  });
+
+  test('de taalknop wijst nooit naar een pagina die niet bestaat', () => {
+    /* Precies de fout die hier ooit in zat: /upgrades stond als vertaald
+       gemarkeerd terwijl /de/upgrades niet bestond. */
+    const kapot = [];
+    for (const [pad, html] of inhoud) {
+      const kiezer = /<nav class="taalkiezer"[\s\S]*?<\/nav>/.exec(html)?.[0] ?? '';
+      for (const m of kiezer.matchAll(/href="([^"]+)"/g)) {
+        const doel = m[1].replace(/\/$/, '') || '/';
+        if (!inhoud.has(doel)) kapot.push(`${pad} → ${m[1]}`);
+      }
+    }
+    assert.deepEqual(kapot, []);
+  });
+
+  test('elke pagina noemt zijn tegenhangers in de andere talen', () => {
+    for (const [pad, html] of inhoud) {
+      if (html.includes('noindex')) continue; // de foutpagina hoort er niet bij
+      for (const code of ['nl', 'de', 'en', 'x-default']) {
+        assert.ok(
+          html.includes(`rel="alternate" hreflang="${code}"`),
+          `${pad}: geen hreflang voor ${code}`
+        );
+      }
+    }
+  });
+
+  test('op de Duitse en Engelse pagina staat geen kenteken-veld', () => {
+    /* De kenteken-check werkt op de open data van de RDW en kent alleen
+       Nederlandse kentekens. Voor deze bezoekers zou het veld altijd "niet
+       gevonden" zeggen. */
+    for (const p of ['/de', '/en']) {
+      assert.ok(!inhoud.get(p).includes('kenteken-input'), `${p}: kenteken-veld staat erop`);
+    }
+  });
+
+  test('er staat geen Nederlandse tekst meer op de Duitse pagina', () => {
+    /* Scripts eruit voordat we kijken. Daar staat Nederlands commentaar in en
+       dat leest geen bezoeker — het gaat om wat er op het scherm komt. */
+    const zichtbaar = inhoud.get('/de').replace(/<script[\s\S]*?<\/script>/g, '');
+    for (const woord of [
+      'Fabriekssysteem',
+      'Stuur foto dashboard',
+      'Naar de inhoud',
+      'Uitsluitend op afspraak',
+      'Veelgestelde vragen',
+    ]) {
+      assert.ok(!zichtbaar.includes(woord), `/de: hier staat nog "${woord}"`);
+    }
+  });
+});
+
 describe('WhatsApp-knoppen', alsGebouwd, () => {
   const links = (html) =>
     [...html.matchAll(/href="(https:\/\/wa\.me\/[^"]*)"/g)].map((m) =>
@@ -424,11 +498,14 @@ describe('WhatsApp-knoppen', alsGebouwd, () => {
   });
 
   test('elke knop heeft een bericht dat met de aanhef begint', () => {
+    /* Drie aanhefjes, één per taal. Een Duitse bezoeker die op de knop tikt
+       hoort geen Nederlands bericht in zijn WhatsApp te zien staan. */
+    const aanhef = /^(Hoi|Hallo|Hi) Justus, /;
     for (const [pad, html] of inhoud) {
       for (const link of links(html)) {
         const tekst = new URL(link).searchParams.get('text');
         assert.ok(tekst, `${pad}: WhatsApp-link zonder bericht — ${link}`);
-        assert.match(tekst, /^Hoi Justus, /, `${pad}: bericht begint verkeerd`);
+        assert.match(tekst, aanhef, `${pad}: bericht begint verkeerd`);
       }
     }
   });

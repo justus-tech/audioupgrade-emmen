@@ -1,0 +1,90 @@
+---
+/**
+ * NL · EN · DE, rechtsboven naast de knop voor licht en donker.
+ *
+ * DRIE LINKS, GEEN UITKLAPMENU
+ * Bij drie talen is een uitklapmenu een klik extra voor niets. Zo zie je in
+ * één oogopslag dat de site in drie talen bestaat, en in welke je nu zit.
+ *
+ * ECHTE LINKS, GEEN JAVASCRIPT
+ * Een taalwissel is een andere pagina, geen instelling. Daarom <a> en geen
+ * knop: hij werkt zonder JavaScript, je kunt hem in een nieuw tabblad openen,
+ * en Google kan de andere talen erdoor vinden. De donker/licht-knop is wél
+ * een knop, want die verandert niets aan de pagina waar je staat.
+ *
+ * WAAROM GEEN VLAGGETJES
+ * Een vlag is een land, geen taal. Engels is niet Brits, en Duits is niet
+ * alleen Duitsland — de klanten die we hiermee bedienen wonen vlak over de
+ * grens, maar ook in Oostenrijk of Zwitserland kan iemand dit lezen. Twee
+ * letters zijn korter, duidelijker en schalen naar elke taal.
+ */
+import { TALEN, TAALVOLGORDE, wisselPad } from '../i18n/talen.js';
+import { pad } from '../lib/pad.js';
+
+const { taal, path = '/' } = Astro.props;
+---
+<nav class="taalkiezer" aria-label="Taal">
+  {TAALVOLGORDE.map((code) => {
+    const hier = code === taal;
+    return (
+      <a
+        href={pad(wisselPad(code, path))}
+        hreflang={TALEN[code].hreflang}
+        lang={TALEN[code].htmlLang}
+        aria-current={hier ? 'true' : undefined}
+        title={TALEN[code].naam}
+      >
+        {TALEN[code].label}
+      </a>
+    );
+  })}
+</nav>
+
+<style>
+  .taalkiezer {
+    display: flex;
+    align-items: stretch;
+    flex: none;
+    border: 1px solid var(--line-strong);
+  }
+
+  .taalkiezer a {
+    display: grid;
+    place-items: center;
+    min-width: 34px;
+    padding: 0 6px;
+    font-family: 'Oswald', sans-serif;
+    font-size: .68rem;
+    letter-spacing: .1em;
+    text-decoration: none;
+    color: var(--text-dim);
+    transition: color .15s ease, background-color .15s ease;
+  }
+
+  /* Haarlijntjes tussen de drie, in plaats van drie losse kadertjes. Zo leest
+     het als één schakelaar met drie standen — net als de knop ernaast. */
+  .taalkiezer a + a { border-left: 1px solid var(--line); }
+
+  .taalkiezer a:hover { color: var(--text); }
+
+  /* De taal waar je nu in zit. Oranje vlak in plaats van alleen een kleurtje:
+     bij drie kleine woordjes naast elkaar is een kleurverschil te subtiel om
+     op een telefoon te zien. */
+  .taalkiezer a[aria-current] {
+    background: var(--accent);
+    color: var(--accent-ink);
+    cursor: default;
+  }
+
+  .taalkiezer a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* Op een telefoon staat hij naast de themaknop rechtsboven, en daar is het
+     krap. Iets smaller, maar niet onder de 32 pixels: dan is hij met een duim
+     niet meer te raken. */
+  @media (max-width: 700px) {
+    .taalkiezer a { min-width: 32px; padding: 7px 4px; font-size: .63rem; }
+  }
+</style>

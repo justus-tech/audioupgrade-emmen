@@ -109,6 +109,20 @@ const vlak = (ys) => `${pad(ys)} L${BREEDTE} ${HOOGTE} L0 ${HOOGTE} Z`;
 
 const startFabriek = curve(fabriek, 0);
 const startNa = curve(ingemeten, 0);
+
+/**
+ * De twee woordjes onder de curve. Dit is het enige stukje van de tekening
+ * dat iets beweert, dus het moet meevertalen — anders staat er op de Duitse
+ * pagina ineens "fabriekssysteem" onder een grafiek.
+ */
+const LEGENDA = {
+  nl: { was: 'Fabriekssysteem', wordt: 'Na DSP-tuning' },
+  de: { was: 'Werkssystem', wordt: 'Nach DSP-Abstimmung' },
+  en: { was: 'Factory system', wordt: 'After DSP tuning' },
+};
+
+const { taal = 'nl' } = Astro.props;
+const legenda = LEGENDA[taal] ?? LEGENDA.nl;
 ---
 <div class="golflijn">
   <svg viewBox={`0 0 ${BREEDTE} ${HOOGTE}`} preserveAspectRatio="none" aria-hidden="true">
@@ -141,8 +155,8 @@ const startNa = curve(ingemeten, 0);
   {/* Echte tekst, geen plaatje: dit is het enige stukje van de tekening dat
       iets beweert, dus het moet ook voorleesbaar zijn. */}
   <p class="curve-legenda">
-    <span class="was">Fabriekssysteem</span>
-    <span class="wordt">Na DSP-tuning</span>
+    <span class="was">{legenda.was}</span>
+    <span class="wordt">{legenda.wordt}</span>
   </p>
 </div>
 

@@ -6,13 +6,24 @@ import Logo from '../components/Logo.astro';
 import Herkomst from '../components/Herkomst.astro';
 import { pad } from '../lib/pad.js';
 import { whatsappLink, berichtOverAuto } from '../lib/whatsapp.js';
+import Taalkiezer from '../components/Taalkiezer.astro';
+import { TALEN, TAALVOLGORDE, STANDAARDTAAL, taalPad, wisselPad } from '../i18n/talen.js';
+import { tekstenVan } from '../i18n/teksten.js';
 
-const { title, description, path = '/', noindex = false } = Astro.props;
+/**
+ * `taal` bepaalt het lang-attribuut, het menu, de voettekst en de
+ * hreflang-verwijzingen. Zonder opgave: Nederlands. Zo blijven alle
+ * bestaande pagina's werken zonder dat er iets aan hoeft.
+ */
+const { title, description, path = '/', noindex = false, taal = STANDAARDTAAL } = Astro.props;
+
+const T = tekstenVan(taal).ui;
+const dezeTaal = TALEN[taal] ?? TALEN[STANDAARDTAAL];
 /**
  * Het volledige adres van deze pagina. pad() zet de mapnaam ervoor als de
  * site op de voorbeeldplek staat; Astro.site levert het domein.
  */
-const canonical = new URL(pad(path), Astro.site).href;
+const canonical = new URL(pad(taalPad(taal, path)), Astro.site).href;
 
 /**
  * Draait dit de voorbeeldsite op GitHub? Die mag NIET in Google komen: de
@@ -45,20 +56,42 @@ const meten = !voorbeeld && process.env.METEN === '1';
  */
 const METEN_TOKEN = '5d1c66fd18124f3ebb875587dd008168';
 
-const nav = [
-  { href: '/', label: 'Home' },
-  { href: '/upgrades', label: 'Upgrades' },
-  { href: '/audio-upgrade', label: 'Jouw auto' },
-  { href: '/werkwijze', label: 'Werkwijze' },
+/**
+ * Het menu.
+ *
+ * In het Nederlands staan hier zes ingangen. In het Duits en het Engels is de
+ * site één pagina: de modelpagina's, de werkwijze en de vragenpagina bestaan
+ * daar (nog) niet, en een menu-item dat naar een Nederlandse pagina wijst is
+ * erger dan geen menu-item. Daar tonen we dus alleen wat er echt is.
+ */
+const NAV_NL = [
+  { href: '/', label: T.menu.home },
+  { href: '/upgrades', label: T.menu.upgrades },
+  { href: '/audio-upgrade', label: T.menu.auto },
+  { href: '/werkwijze', label: T.menu.werkwijze },
   /* Op verzoek van Justus' broer erbij gezet, naast Contact. Zes items passen:
      op een telefoon schuift het menu horizontaal (zie nav.main in global.css),
      dus er valt niets af. */
-  { href: '/over-ons', label: 'Over ons' },
-  { href: '/contact', label: 'Contact' },
+  { href: '/over-ons', label: T.menu.over },
+  { href: '/contact', label: T.menu.contact },
 ];
+
+const nav = taal === STANDAARDTAAL ? NAV_NL : [];
+
+/**
+ * De verwijzingen naar dezelfde pagina in de andere talen.
+ *
+ * Zonder deze regels weet Google niet dat /de en / hetzelfde bedrijf zijn en
+ * kan hij ze als concurrenten van elkaar behandelen. x-default vertelt hem
+ * welke versie hij moet tonen als hij de taal van de bezoeker niet kent.
+ */
+const anderetalen = TAALVOLGORDE.map((code) => ({
+  hreflang: TALEN[code].hreflang,
+  href: new URL(pad(wisselPad(code, path)), Astro.site).href,
+}));
 ---
 <!doctype html>
-<html lang="nl">
+<html lang={dezeTaal.htmlLang}>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -85,6 +118,15 @@ const nav = [
   <title>{title}</title>
   <meta name="description" content={description} />
   <link rel="canonical" href={canonical} />
+  {/* Welke versie hoort bij welke taal. Zonder dit kan Google /de en / als
+      twee concurrerende pagina's zien in plaats van als twee talen van
+      hetzelfde. x-default is wat hij toont als hij de taal niet kent. */}
+  {!noindex && anderetalen.map((t) => (
+    <link rel="alternate" hreflang={t.hreflang} href={t.href} />
+  ))}
+  {!noindex && (
+    <link rel="alternate" hreflang="x-default" href={new URL(pad(wisselPad('nl', path)), Astro.site).href} />
+  )}
   {(noindex || voorbeeld) && <meta name="robots" content="noindex, nofollow" />}
   <meta property="og:title" content={title} />
   <meta property="og:description" content={description} />
@@ -177,7 +219,7 @@ const nav = [
   {/* Voor wie met het toetsenbord navigeert. Zonder dit moet je op elke
       pagina eerst door het hele menu tabben voordat je bij de inhoud bent.
       De link is onzichtbaar tot hij focus krijgt. */}
-  <a class="overslaan" href="#inhoud">Naar de inhoud</a>
+  <a class="overslaan" href="#inhoud">{T.overslaan}</a>
 
   {/* Zet "(via google)" achter het voorgetypte WhatsApp-bericht als iemand
       via ?bron=google binnenkomt. Zo ziet Justus in zijn eigen WhatsApp welke
@@ -186,20 +228,28 @@ const nav = [
 
   <header class="site">
     <div class="wrap">
-      <a class="logo" href={pad("/")} aria-label={`${SITE.name} — naar de homepage`}>
+      <a class="logo" href={pad(taalPad(taal, '/'))} aria-label={SITE.name}>
         <Logo height={26} decoratief={true} />
         <span class="logo-text">Audio Upgrade <span>Emmen</span></span>
       </a>
-      <nav class="main">
-        {nav.map((item) => (
-          <a href={pad(item.href)} aria-current={path === item.href ? 'page' : undefined}>{item.label}</a>
-        ))}
-      </nav>
+      {nav.length > 0 && (
+        <nav class="main">
+          {nav.map((item) => (
+            <a href={pad(item.href)} aria-current={path === item.href ? 'page' : undefined}>{item.label}</a>
+          ))}
+        </nav>
+      )}
+
+      {/* De twee schakelaars rechtsboven, in één rijtje. Op een telefoon staat
+          dit hele blokje op de regel van het logo — zie .hulpmiddelen in
+          global.css. */}
+      <div class="hulpmiddelen">
+        <Taalkiezer taal={taal} path={path} />
 
       {/* Wisselen tussen licht en donker. Twee tekeningen over elkaar: de CSS
           laat zien welke van de twee bij de huidige stand hoort. */}
       <button class="thema-knop" id="thema-knop" type="button"
-              aria-label="Wissel tussen licht en donker">
+              aria-label={T.themaKnop}>
         <svg viewBox="0 0 24 24" class="ik-zon" aria-hidden="true">
           <circle cx="12" cy="12" r="4.6" />
           <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1" />
@@ -208,6 +258,7 @@ const nav = [
           <path d="M20 14.2A8.4 8.4 0 0 1 9.8 4a8.4 8.4 0 1 0 10.2 10.2z" />
         </svg>
       </button>
+      </div>
     </div>
   </header>
 
@@ -218,8 +269,8 @@ const nav = [
   {/* Zweeft mee op de telefoon. Vrijwel al het bezoek komt van mobiel, en dit
       haalt de drempel weg om te appen: waar je ook op de pagina bent, de knop
       staat er. Op desktop verbergen we hem — daar staan de knoppen in beeld. */}
-  <a class="wa-zwevend" href={whatsappLink(berichtOverAuto())} aria-label="Stuur een foto van je dashboard via WhatsApp">
-    Stuur foto dashboard
+  <a class="wa-zwevend" href={whatsappLink(berichtOverAuto(), taal)} aria-label={T.voettekst.appDashboard}>
+    {T.voettekst.appDashboard}
   </a>
 
   <script define:vars={{ donkerKleur: BRAND.bg, lichtKleur: LICHT.bg }}>
@@ -338,22 +389,32 @@ const nav = [
         <strong>{SITE.name}</strong><br />
         {SITE.street}<br />
         {SITE.postalCode} {SITE.city}<br />
-        Uitsluitend op afspraak<br />
+        {T.voettekst.opAfspraak}<br />
         <a href={`tel:${SITE.phone}`}>{SITE.phoneDisplay}</a><br />
         <a href={`mailto:${SITE.email}`}>{SITE.email}</a>
       </div>
       <div>
-        <a href={whatsappLink(berichtOverAuto())}>Stuur foto dashboard</a><br />
-        <a href={pad("/upgrades")}>Upgrades</a><br />
-        <a href={pad("/veelgestelde-vragen")}>Veelgestelde vragen</a><br />
-        <a href={pad("/over-ons")}>Wie zijn wij</a><br />
-        <a href={pad("/audio-upgrade")}>Upgrade per automodel</a><br />
-        <a href={pad("/oldtimer-audio")}>Klassiekers en youngtimers</a>
+        <a href={whatsappLink(berichtOverAuto(null, taal), taal)}>{T.voettekst.appDashboard}</a><br />
+        {/* De inhoudelijke pagina's bestaan alleen in het Nederlands. In de
+            andere talen zou dit een rijtje links naar onbegrijpelijke pagina's
+            worden, dus die laten we daar weg. */}
+        {taal === STANDAARDTAAL && (
+          <>
+            <a href={pad("/upgrades")}>{T.voettekst.upgrades}</a><br />
+            <a href={pad("/veelgestelde-vragen")}>{T.voettekst.vragen}</a><br />
+            <a href={pad("/over-ons")}>{T.voettekst.over}</a><br />
+            <a href={pad("/audio-upgrade")}>{T.voettekst.modellen}</a><br />
+            <a href={pad("/oldtimer-audio")}>{T.voettekst.klassiekers}</a>
+          </>
+        )}
       </div>
       <div class="legal">
-        <a href={pad("/algemene-voorwaarden")}>Algemene voorwaarden</a><br />
-        <a href={pad("/privacybeleid")}>Privacybeleid</a><br />
-        <a href={pad("/cookiebeleid")}>Cookiebeleid</a><br />
+        {/* De juridische teksten staan alleen in het Nederlands, en dat blijft
+            zo: het zijn de voorwaarden waar je aan vastzit. Een vertaling die
+            net iets anders zegt is juridisch gevaarlijker dan geen vertaling. */}
+        <a href={pad("/algemene-voorwaarden")} hreflang="nl" lang="nl">{T.voettekst.voorwaarden}</a><br />
+        <a href={pad("/privacybeleid")} hreflang="nl" lang="nl">{T.voettekst.privacy}</a><br />
+        <a href={pad("/cookiebeleid")} hreflang="nl" lang="nl">{T.voettekst.cookies}</a><br />
         <span class="legal-klein">
           KVK: {SITE.kvk} · Btw: {SITE.btw}<br />
           © {new Date().getFullYear()} {SITE.name}

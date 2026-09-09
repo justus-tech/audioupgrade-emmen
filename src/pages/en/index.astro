@@ -1,0 +1,16 @@
+---
+/**
+ * De Engelse pagina: audioupgradeemmen.nl/en
+ *
+ * Zie de opmerking in de Duitse tegenhanger: alles komt uit hetzelfde
+ * component, alleen de taal verschilt.
+ */
+import Base from '../../layouts/Base.astro';
+import Landingspagina from '../../components/Landingspagina.astro';
+import { tekstenVan } from '../../i18n/teksten.js';
+
+const t = tekstenVan('en');
+---
+<Base title={t.meta.titel} description={t.meta.omschrijving} path="/" taal="en">
+  <Landingspagina taal="en" />
+</Base>

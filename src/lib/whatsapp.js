@@ -25,32 +25,60 @@ import { SITE } from '../data/site.js';
 /** wa.me wil het nummer zonder plus, spaties of streepjes. */
 const NUMMER = SITE.phone.replace(/[^0-9]/g, '');
 
-/** De aanhef. Staat hier één keer, zodat elk bericht hetzelfde begint. */
-const AANHEF = 'Hoi Justus,';
+/**
+ * De aanhef per taal. Schrijft een Duitser je aan, dan krijgt hij ook een
+ * Duits bericht voorgetypt — anders staat er ineens Nederlands in zijn
+ * WhatsApp en denkt hij dat hij op de verkeerde knop heeft gedrukt.
+ */
+const AANHEF = {
+  nl: 'Hoi Justus,',
+  de: 'Hallo Justus,',
+  en: 'Hi Justus,',
+};
 
 /**
  * Een WhatsApp-link. Zonder bericht krijg je gewoon een leeg gesprek.
  *
- *   whatsappLink()                        → leeg gesprek
- *   whatsappLink('ik heb een Golf.')      → "Hoi Justus, ik heb een Golf."
+ *   whatsappLink()                          → leeg gesprek
+ *   whatsappLink('ik heb een Golf.')        → "Hoi Justus, ik heb een Golf."
+ *   whatsappLink('ich habe einen Golf.','de') → "Hallo Justus, ich habe ..."
  */
-export function whatsappLink(zin) {
+export function whatsappLink(zin, taal = 'nl') {
   if (!zin) return `https://wa.me/${NUMMER}`;
-  return `https://wa.me/${NUMMER}?text=${encodeURIComponent(`${AANHEF} ${zin}`)}`;
+  const aanhef = AANHEF[taal] ?? AANHEF.nl;
+  return `https://wa.me/${NUMMER}?text=${encodeURIComponent(`${aanhef} ${zin}`)}`;
 }
 
 /**
  * Het standaardbericht als we alleen de auto weten en verder niets.
  * `auto` is bijvoorbeeld "Volkswagen Golf" of "Volkswagen Golf uit 2018".
  */
-export function berichtOverAuto(auto) {
+export function berichtOverAuto(auto, taal = 'nl') {
+  if (taal === 'de') {
+    return auto
+      ? `ich fahre einen ${auto}. Was wäre für dieses Auto möglich?`
+      : 'ich interessiere mich für eine Audio-Aufrüstung. Ich schicke gleich ein Foto von meinem Armaturenbrett.';
+  }
+  if (taal === 'en') {
+    return auto
+      ? `I drive a ${auto}. I would like to know what is possible for this car.`
+      : 'I am interested in an audio upgrade. I will send a photo of my dashboard shortly.';
+  }
   return auto
     ? `ik heb een ${auto}. Ik ben benieuwd wat er voor mijn auto mogelijk is.`
     : 'ik ben benieuwd wat er voor mijn auto mogelijk is. Ik stuur zo een foto van mijn dashboard.';
 }
 
 /** Het bericht bij een pakket, bijvoorbeeld vanaf een prijskaart. */
-export function berichtOverPakket(pakket, auto) {
+export function berichtOverPakket(pakket, auto, taal = 'nl') {
+  if (taal === 'de') {
+    const wat = auto ? ` für meinen ${auto}` : '';
+    return `ich interessiere mich für ${pakket}${wat}. Können Sie mir dazu mehr sagen?`;
+  }
+  if (taal === 'en') {
+    const wat = auto ? ` for my ${auto}` : '';
+    return `I am interested in ${pakket}${wat}. Could you tell me more about it?`;
+  }
   const wat = auto ? ` voor mijn ${auto}` : '';
   return `ik ben geïnteresseerd in ${pakket}${wat}. Kun je me daar meer over vertellen?`;
 }

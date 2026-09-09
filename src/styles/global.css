@@ -241,6 +241,15 @@ nav.main a[aria-current="page"] { color: var(--text); border-bottom-color: var(-
 
 /* ---- knop voor licht en donker ----
    Blijft klein en rustig: het is een hulpmiddel, geen actie die we willen. */
+/* De taalkiezer en de knop voor licht en donker staan naast elkaar rechtsboven.
+   Samen in één doosje, zodat ze op een telefoon als geheel te verplaatsen zijn. */
+.hulpmiddelen {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+
 .thema-knop {
   flex: none;
   display: grid; place-items: center;
@@ -454,14 +463,14 @@ footer.site .legal-klein { display: inline-block; margin-top: 14px; font-size: .
     /* Anker voor de themaknop hieronder. */
     position: relative;
   }
-  /* De knop hoort op de regel van het logo. In de kolomvolgorde zou hij
-     onder het menu belanden, en daar is hij niet te vinden. */
-  .thema-knop {
+  /* De schakelaars horen op de regel van het logo. In de kolomvolgorde zouden
+     ze onder het menu belanden, en daar zijn ze niet te vinden. */
+  .hulpmiddelen {
     position: absolute;
     right: 24px;
     top: 8px;
-    width: 34px; height: 34px;
   }
+  .thema-knop { width: 34px; height: 34px; }
   .thema-knop svg { width: 16px; height: 16px; }
   nav.main {
     width: 100%;
