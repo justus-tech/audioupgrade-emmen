@@ -46,7 +46,7 @@ const los = pakkettenVan(LOSSE_OPTIES);
 
         De kaart zelf is dezelfde als op de Nederlandse pagina — tekening,
         oranje kopregel, scorebalkjes en al. Zie PackageCard.astro. */}
-    <div class="grid vier pakketten mt">
+    <div class="grid vier gelijk pakketten mt">
       {audio.map((pkg) => (
         <PackageCard pkg={pkg} taal={taal} uitgebreid={true}
                      vertaling={p.pakketten[pkg.slug]} labels={t.kaart} />
@@ -56,7 +56,7 @@ const los = pakkettenVan(LOSSE_OPTIES);
     <div class="losse-opties">
       <h2 class="center">{t.pakketten.losKop}</h2>
       <p class="center" style="margin:0 auto 2.2em;">{t.pakketten.losLead}</p>
-      <div class="grid cols-2">
+      <div class="grid cols-2 gelijk">
         {los.map((pkg) => (
           <PackageCard pkg={pkg} taal={taal} uitgebreid={true} showScores={false}
                        vertaling={p.pakketten[pkg.slug]} labels={t.kaart} />

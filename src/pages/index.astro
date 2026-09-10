@@ -68,7 +68,7 @@ const los = pakkettenVan(LOSSE_OPTIES);
         Van rust in de cabine tot een auto die op een show staat. Ze bouwen op
         elkaar voort: elk pakket bevat wat er links van staat.
       </p>
-      <div class="grid vier mt">
+      <div class="grid vier gelijk mt">
         {audio.map((pkg) => <PackageCard pkg={pkg} />)}
       </div>
 
@@ -79,7 +79,7 @@ const los = pakkettenVan(LOSSE_OPTIES);
         <p class="center" style="margin:0 auto 2.2em;">
           Zoek je alleen een scherm dat wél werkt, of juist alleen rust?
         </p>
-        <div class="grid cols-2">
+        <div class="grid cols-2 gelijk">
           {los.map((pkg) => <PackageCard pkg={pkg} showScores={false} />)}
         </div>
       </div>

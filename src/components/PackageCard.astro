@@ -82,14 +82,32 @@ const scoreNaam = (label) => L.scores?.[label] ?? label;
 const scoresTonen = showScores && pkg.scores.length > 0;
 const kenmerkenTonen = uitgebreid && kenmerken.length > 0;
 ---
+{/*
+  TIEN VASTE PLEKKEN, ALTIJD IN DEZELFDE VOLGORDE.
+
+  Elke kaart zet precies tien dingen onder elkaar: beeld, label, naam,
+  kopregel, prijs, samenvatting, uitklapper, balkjes, doorlooptijd, knop.
+  Heeft een pakket er eentje niet, dan komt er een lege <span class="plek">
+  in plaats van niets.
+
+  Dat lijkt omslachtig maar het is precies waar het om draait: naast elkaar
+  liggen de kaarten zo op één lijn — de prijzen op dezelfde hoogte, de
+  balkjes op dezelfde hoogte, de knoppen op dezelfde hoogte. Zie .grid.vier
+  in global.css: die legt de tien rijen vast, elke kaart hangt eraan.
+
+  Zonder de lege plekken schoof alles wat ónder een ontbrekend onderdeel
+  staat een stukje omhoog. Dat zag je het duidelijkst bij de kaart met het
+  label: die begon één regel lager dan de rest, waardoor je vier prijzen op
+  vier verschillende hoogtes vergeleek.
+*/}
 <div class:list={['card', !scoresTonen && 'card-los', pkg.populair && 'card-populair']}>
   <PakketBeeld slug={pkg.slug} />
   {/* "Onze aanrader" en niet "Meest gekozen": zie de uitleg bij `populair`
       in site.js. Het eerste is een mening, het tweede een bewering over wat
       andere klanten deden — en die klopte niet. */}
-  {pkg.populair && <span class="badge">{L.badge}</span>}
+  {pkg.populair ? <span class="badge">{L.badge}</span> : <span class="plek"></span>}
   <h3>{naam}</h3>
-  {tagline && <p class="tagline">{tagline}</p>}
+  {tagline ? <p class="tagline">{tagline}</p> : <span class="plek"></span>}
 
   <div class="price">
     {prijs}
@@ -97,9 +115,9 @@ const kenmerkenTonen = uitgebreid && kenmerken.length > 0;
     {prijsExcl && <small class="excl">{prijsExcl}</small>}
   </div>
 
-  <p>{kort}</p>
+  <p class="kort">{kort}</p>
 
-  {uitgebreid && (kenmerkenTonen || verhaal) && (
+  {uitgebreid && (kenmerkenTonen || verhaal) ? (
     <details class="meer">
       <summary>{L.meer}</summary>
       {verhaal && <p>{verhaal}</p>}
@@ -109,9 +127,9 @@ const kenmerkenTonen = uitgebreid && kenmerken.length > 0;
         </ul>
       )}
     </details>
-  )}
+  ) : <span class="plek"></span>}
 
-  {scoresTonen && (
+  {scoresTonen ? (
     <div class="scores">
       {pkg.scores.map((s) => (
         <div class="score">
@@ -123,13 +141,54 @@ const kenmerkenTonen = uitgebreid && kenmerken.length > 0;
         </div>
       ))}
     </div>
-  )}
+  ) : <span class="plek"></span>}
 
-  {duur && <p class="duur">{duur}</p>}
+  {duur ? <p class="duur">{duur}</p> : <span class="plek"></span>}
 
-  <a class="btn wa-link" href={whatsappLink(berichtOverPakket(naam, auto, taal), taal)}
+  {/* Eén volle knop per rij, en dat is de aanrader. De andere drie blijven
+      een omlijning: dan is er één plek waar je oog naartoe wordt getrokken
+      in plaats van vier die even hard roepen. */}
+  <a class:list={['btn', 'wa-link', pkg.populair && 'solid']}
+     href={whatsappLink(berichtOverPakket(naam, auto, taal), taal)}
      data-wa-pakket={naam}>{knop}</a>
 </div>
+
+<script>
+  /**
+   * DE UITKLAPPERS IN ÉÉN RIJ BEWEGEN SAMEN.
+   *
+   * De kaarten in een rij zijn even hoog en staan op gedeelde rijen — dat is
+   * precies wat ze vergelijkbaar maakt. Maar het betekent ook dat één kaart
+   * openklappen de andere drie meetrekt: die werden even hoog, met een gat
+   * van zeshonderd pixels waar niets stond.
+   *
+   * Nu klappen ze samen open. Dat is niet alleen de nette oplossing voor dat
+   * gat, het is ook wat je op zo'n rij wilt doen: vier pakketten naast elkaar
+   * openslaan en lezen wat er in zit.
+   *
+   * Zonder JavaScript werkt elke uitklapper gewoon los. Dat is de bekende
+   * <details>, die heeft ons nergens voor nodig.
+   */
+  let bezig = false;
+
+  for (const rij of document.querySelectorAll('.grid')) {
+    const uitklappers = rij.querySelectorAll(':scope > .card > details.meer');
+    if (uitklappers.length < 2) continue;
+
+    for (const deze of uitklappers) {
+      deze.addEventListener('toggle', () => {
+        // Zonder deze vlag zet de ene uitklapper de andere open, die daarop
+        // weer een toggle afvuurt, en zo door.
+        if (bezig) return;
+        bezig = true;
+        for (const andere of uitklappers) {
+          if (andere !== deze) andere.open = deze.open;
+        }
+        bezig = false;
+      });
+    }
+  }
+</script>
 
 <style>
   .tagline {
@@ -142,11 +201,16 @@ const kenmerkenTonen = uitgebreid && kenmerken.length > 0;
   /* Het label "Meest Gekozen" van de oude site, nu als hoekvlag. */
   .card-populair { border-color: var(--accent); }
   .badge {
+    /* Allebei nodig. In een flex-kolom regelt align-self de breedte, in een
+       raster doet justify-self dat en betekent align-self ineens de hoogte.
+       De kaart is het een op een telefoon en het ander op een breed scherm,
+       en met alleen de eerste liep de oranje vlag over de volle kaartbreedte. */
     align-self: flex-start;
+    justify-self: start;
     font-family: 'Oswald', sans-serif;
     text-transform: uppercase; letter-spacing: .18em; font-size: .64rem;
     background: var(--accent); color: var(--accent-ink);
-    padding: 5px 12px; margin-bottom: -4px;
+    padding: 5px 12px; margin-bottom: 2px;
   }
 
   .excl { opacity: .72; margin-top: 2px !important; }

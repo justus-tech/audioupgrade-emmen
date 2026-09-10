@@ -80,7 +80,7 @@ const los = pakkettenVan(LOSSE_OPTIES);
         Ze bouwen op elkaar voort: elk pakket bevat wat er links van staat.
         Alle prijzen zijn all-in — inclusief montage en btw.
       </p>
-      <div class="grid vier pakketten mt">
+      <div class="grid vier gelijk pakketten mt">
         {audio.map((pkg) => <PackageCard pkg={pkg} uitgebreid={true} />)}
       </div>
 
@@ -91,7 +91,7 @@ const los = pakkettenVan(LOSSE_OPTIES);
         <p class="center" style="margin:0 auto 2.2em;">
           Zoek je alleen een scherm dat wél werkt, of juist alleen rust in de auto?
         </p>
-        <div class="grid cols-2">
+        <div class="grid cols-2 gelijk">
           {los.map((pkg) => <PackageCard pkg={pkg} uitgebreid={true} showScores={false} />)}
         </div>
       </div>

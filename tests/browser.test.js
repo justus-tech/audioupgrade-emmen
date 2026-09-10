@@ -268,6 +268,106 @@ describe('de upgradepagina', alsGebouwd, () => {
   });
 });
 
+/**
+ * De vier pakketten naast elkaar.
+ *
+ * Dit is de rij waar de bezoeker zijn keuze maakt, en dat werkt alleen als
+ * de vier kaarten regel voor regel op één lijn liggen: alle prijzen op
+ * dezelfde hoogte, alle balkjes, alle knoppen. Anders vergelijk je vier
+ * bedragen die op vier verschillende plekken staan.
+ *
+ * Dat wordt geregeld door `subgrid` in global.css, en dat is precies het
+ * soort constructie dat je stilletjes kwijtraakt: er komt een regel bij in
+ * de kaart, het aantal rijen klopt niet meer, en de uitlijning schuift een
+ * beetje. Je ziet het niet in de code en op een klein scherm ook niet.
+ * Daarom meten we het hier op de pagina zelf.
+ */
+describe('de pakketten naast elkaar', alsGebouwd, () => {
+  /* De bovenkant van een onderdeel in elke kaart, afgerond op hele pixels. */
+  const hoogtes = (p, kies) =>
+    p.$$eval(`.grid.vier > .card ${kies}`, (els) =>
+      els.map((el) => Math.round(el.getBoundingClientRect().top)));
+
+  test('prijzen, balkjes, doorlooptijd en knoppen liggen op één lijn', async () => {
+    const p = await open('upgrades');
+    await p.setViewportSize({ width: 1280, height: 900 });
+
+    for (const onderdeel of ['.price', '.scores', '.duur', '.btn']) {
+      const rij = await hoogtes(p, onderdeel);
+      assert.equal(rij.length, 4, `${onderdeel}: ${rij.length} kaarten in plaats van 4`);
+      const verschil = Math.max(...rij) - Math.min(...rij);
+      assert.ok(verschil <= 1, `${onderdeel} staat ${verschil}px uit elkaar: ${rij.join(', ')}`);
+    }
+    await p.close();
+  });
+
+  test('de knoppen zijn even hoog en even breed', async () => {
+    const p = await open('upgrades');
+    await p.setViewportSize({ width: 1280, height: 900 });
+    const maten = await p.$$eval('.grid.vier > .card .btn', (els) =>
+      els.map((el) => {
+        const r = el.getBoundingClientRect();
+        return { h: Math.round(r.height), b: Math.round(r.width) };
+      }));
+    const hoog = new Set(maten.map((m) => m.h));
+    const breed = new Set(maten.map((m) => m.b));
+    assert.equal(hoog.size, 1, `knophoogtes lopen uiteen: ${[...hoog].join(', ')}`);
+    assert.equal(breed.size, 1, `knopbreedtes lopen uiteen: ${[...breed].join(', ')}`);
+    await p.close();
+  });
+
+  /* De vlag hoort een vlag te zijn. In een raster betekent align-self iets
+     anders dan in een flex-kolom, en daardoor liep hij ooit over de volle
+     breedte van de kaart — dan leest hij als een balk en niet als een label. */
+  test('het label is een vlaggetje en geen balk over de hele kaart', async () => {
+    const p = await open('upgrades');
+    await p.setViewportSize({ width: 1280, height: 900 });
+    const { label, kaart } = await p.$eval('.grid.vier > .card-populair', (el) => ({
+      label: el.querySelector('.badge').getBoundingClientRect().width,
+      kaart: el.getBoundingClientRect().width,
+    }));
+    assert.ok(label < kaart * 0.8, `het label is ${Math.round(label)}px van ${Math.round(kaart)}px breed`);
+    await p.close();
+  });
+
+  /* Eén uitklapper openen trok de andere drie mee omhoog in hoogte, met een
+     leeg gat van honderden pixels tot gevolg. Ze bewegen nu samen. */
+  test('één uitklapper openen klapt de hele rij open', async () => {
+    const p = await open('upgrades');
+    await p.setViewportSize({ width: 1280, height: 900 });
+    assert.equal(await p.locator('.grid.vier details[open]').count(), 0);
+
+    await p.locator('.grid.vier > .card summary').nth(1).click();
+    await p.waitForFunction(() => document.querySelectorAll('.grid.vier details[open]').length === 4);
+
+    await p.locator('.grid.vier > .card summary').nth(1).click();
+    await p.waitForFunction(() => document.querySelectorAll('.grid.vier details[open]').length === 0);
+    await p.close();
+  });
+
+  test('ook opengeklapt staan de knoppen nog op één lijn', async () => {
+    const p = await open('upgrades');
+    await p.setViewportSize({ width: 1280, height: 900 });
+    await p.locator('.grid.vier > .card summary').first().click();
+    await p.waitForFunction(() => document.querySelectorAll('.grid.vier details[open]').length === 4);
+
+    const rij = await hoogtes(p, '.btn');
+    assert.ok(Math.max(...rij) - Math.min(...rij) <= 1, `knoppen staan uit elkaar: ${rij.join(', ')}`);
+    await p.close();
+  });
+
+  /* Op een telefoon staan de kaarten onder elkaar. De lege plekken die de
+     rijen openhouden mogen daar niet als gaten opduiken. */
+  test('op een telefoon staan er geen lege plekken in de kaart', async () => {
+    const p = await open('upgrades');
+    await p.setViewportSize({ width: 390, height: 844 });
+    const zichtbaar = await p.$$eval('.grid.vier > .card .plek', (els) =>
+      els.filter((el) => el.getBoundingClientRect().height > 0).length);
+    assert.equal(zichtbaar, 0, `${zichtbaar} lege plekken nemen ruimte in op een telefoon`);
+    await p.close();
+  });
+});
+
 describe('de modelpagina', alsGebouwd, () => {
   test('toont het kenteken van de bezoeker als bevestiging', async () => {
     const p = await open('');

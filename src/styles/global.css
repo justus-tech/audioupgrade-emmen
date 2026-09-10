@@ -323,6 +323,51 @@ nav.main a[aria-current="page"] { color: var(--text); border-bottom-color: var(-
 @media (min-width: 640px)  { .grid.vier { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 1100px) { .grid.vier { grid-template-columns: repeat(4, 1fr); } }
 
+/* ALLES OP ÉÉN LIJN — KAARTEN OP TIEN GEDEELDE RIJEN.
+   Zonder dit begint elke kaart zijn prijs op een andere hoogte, want de ene
+   naam loopt over twee regels en de andere niet, en de kaart met het label
+   begint sowieso al lager. Je vergelijkt dan vier prijzen die alle vier op
+   een andere plek staan, en dat is precies wat zo'n rij niet moet doen.
+
+   `subgrid` laat elke kaart meeliften op de rijen van het raster eromheen.
+   De hoogte van rij 5 (de prijs) is dus de hoogste prijs van de rij, in élke
+   kaart — en zo voor elke rij: de balkjes, de doorlooptijd, de knop. De kaart
+   levert er zijn eigen flex-indeling voor in; de tien plekken liggen vast in
+   PackageCard.astro.
+
+   Vanaf 640px, want daaronder staan de kaarten onder elkaar en valt er niets
+   uit te lijnen. Staan er vier in twee kolommen, dan lijnen ze per tweetal
+   uit — de onderste twee krijgen vanzelf de rijen 11 tot en met 20. */
+@media (min-width: 640px) {
+  .grid.gelijk {
+    grid-template-rows: repeat(10, auto);
+    /* Dezelfde 14px als de flex-gap van .card, zodat de kaart er in beide
+       indelingen identiek uitziet. De marges binnen de kaart (het beeld dat
+       doorloopt tot de rand, de kopregel die strak onder de naam hangt)
+       blijven daardoor kloppen. */
+    row-gap: 14px;
+  }
+  .grid.gelijk > .card {
+    grid-row: span 10;
+    display: grid;
+    grid-template-rows: subgrid;
+    gap: 0;
+  }
+  /* De lege plekken doen alleen hier mee: ze houden de rij open in de kaart
+     waar dat onderdeel ontbreekt. */
+  .grid.gelijk > .card > .plek { display: block; }
+  /* Het rijenraster lijnt de balkjes al uit; deze duw naar onderen is een
+     flex-truc die daar niets meer te zoeken heeft. */
+  .grid.gelijk > .card > .scores { margin-top: 0; }
+}
+
+/* Vier kaarten staan tussen 640 en 1100 pixels in twee kolommen van twee.
+   De rijafstand van 14px hierboven is bedoeld voor de rijen bínnen een kaart;
+   tussen twee kaarten ónder elkaar is dat te krap. */
+@media (min-width: 640px) and (max-width: 1099.98px) {
+  .grid.vier.gelijk > .card { margin-bottom: 14px; }
+}
+
 .card {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -333,14 +378,32 @@ nav.main a[aria-current="page"] { color: var(--text); border-bottom-color: var(-
 @media (hover: hover) {
   .card:hover { transform: translateY(-4px); border-color: var(--accent); }
 }
-.card .price { font-family: 'Oswald'; font-size: 1.6rem; letter-spacing: .05em; color: var(--text); line-height: 1.2; }
+/* De prijs krijgt lucht boven zich. Naam en kopregel horen bij elkaar en
+   staan strak onder elkaar; de prijs is het volgende dat je leest en moet
+   daar los van staan, anders lees je vier regels als één blok. */
+.card .price { font-family: 'Oswald'; font-size: 1.6rem; letter-spacing: .05em; color: var(--text); line-height: 1.2; margin-top: 8px; }
+.card > .kort { margin-top: 6px; }
 /* Eigen regel, anders breekt "incl. montage & btw" halverwege af. */
 .card .price small { display: block; font-size: .75rem; color: var(--text-dim); letter-spacing: .1em; margin-top: 4px; }
 .card p { font-size: .95rem; }
 /* Duwt de scorebalken naar onderen, zodat ze over alle kaarten op één lijn
    staan ook als de ene titel over twee regels loopt en de andere niet. */
 .card .scores { margin-top: auto; padding-top: 6px; }
-.card .btn { align-self: flex-start; margin-top: 6px; }
+/* De knop over de volle breedte van de kaart. Hij hing eerst links tegen de
+   rand, waardoor vier knoppen van vier verschillende breedtes onder elkaar
+   stonden; over de volle breedte staan ze op één lijn en is het trefvlak op
+   een telefoon meteen twee keer zo groot. */
+.card .btn {
+  align-self: stretch; text-align: center; margin-top: 6px;
+  /* Als flexbox, zodat een knop van één regel netjes in het midden staat
+     wanneer hij wordt uitgerekt tot de hoogte van een knop van twee. */
+  display: flex; align-items: center; justify-content: center;
+}
+/* De lege plekken in een pakketkaart. Ze bestaan alleen om een rij open te
+   houden als de kaarten naast elkaar staan — zie .grid.vier hierboven.
+   Staan de kaarten onder elkaar, dan zou zo'n plek alleen maar een gat van
+   14px opleveren. */
+.card .plek { display: none; }
 
 /* Kaarten op een .alt-sectie hebben dezelfde ondergrond als de sectie,
    dus daar doet de rand het werk. */
