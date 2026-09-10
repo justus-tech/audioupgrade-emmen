@@ -10,12 +10,20 @@ import Reviews from '../components/Reviews.astro';
 import { REVIEWS } from '../data/reviews.js';
 /* Foto: Unsplash — vrij te gebruiken. Zie src/components/Fotoband.astro. */
 import deurspeaker from '../assets/foto/deurspeaker.jpg';
-import { PACKAGES, SITE } from '../data/site.js';
+import { SITE, AUDIOPAKKETTEN, LOSSE_OPTIES, pakkettenVan } from '../data/site.js';
 import { ONTZORGEN, LEVENSLANG } from '../data/generiek.js';
 import { pad } from '../lib/pad.js';
 import { whatsappLink, berichtOverAuto } from '../lib/whatsapp.js';
 
-const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
+/**
+ * Vier audiopakketten in één rij, en daaronder de twee losse opties.
+ *
+ * Eerder stonden CarPlay en de audiopakketten door elkaar. Iemand die CarPlay
+ * wil vergeleek zijn 695 euro dan met een DSP-pakket van 2.195 — twee dingen
+ * die niet over hetzelfde gaan. Zie AUDIOPAKKETTEN in site.js.
+ */
+const audio = pakkettenVan(AUDIOPAKKETTEN);
+const los = pakkettenVan(LOSSE_OPTIES);
 ---
 <Base
   title="Car Audio & CarPlay Upgrades in Emmen | Audio Upgrade Emmen"
@@ -55,9 +63,25 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
   <section>
     <div class="wrap">
       <span class="eyebrow">Pasklaar maatwerk voor jouw auto</span>
-      <h2>Upgrades</h2>
-      <div class="grid cols-4 mt">
-        {pakketten.map((pkg) => <PackageCard pkg={pkg} />)}
+      <h2>Vier stappen in geluid</h2>
+      <p style="margin-top:1.1em">
+        Van rust in de cabine tot een auto die op een show staat. Ze bouwen op
+        elkaar voort: elk pakket bevat wat er links van staat.
+      </p>
+      <div class="grid vier mt">
+        {audio.map((pkg) => <PackageCard pkg={pkg} />)}
+      </div>
+
+      {/* CarPlay en isolatie gaan niet over geluidskwaliteit maar over gemak
+          en over stilte. Daarom apart, met hun eigen kop. */}
+      <div class="losse-opties">
+        <h3 class="center">Los te bestellen</h3>
+        <p class="center" style="margin:0 auto 2.2em;">
+          Zoek je alleen een scherm dat wél werkt, of juist alleen rust?
+        </p>
+        <div class="grid cols-2">
+          {los.map((pkg) => <PackageCard pkg={pkg} showScores={false} />)}
+        </div>
       </div>
 
       {/* Direct onder de prijzen, want daar wordt de afweging gemaakt. Stond
@@ -166,6 +190,16 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
     text-transform: uppercase; letter-spacing: .24em;
     font-size: .68rem; color: var(--text-dim);
   }
+  /* De losse opties staan onder de vier audiopakketten, met een streep ertussen
+     zodat je ziet dat het een andere vraag is en niet de vijfde en zesde trede
+     van dezelfde ladder. */
+  .losse-opties {
+    margin-top: 4rem;
+    padding-top: 2.6rem;
+    border-top: 1px solid var(--line-strong);
+  }
+  .losse-opties h3 { margin-bottom: .8em; }
+
   /* De garantieregel onder de prijzen. Een streep erboven in de accentkleur,
      zoals de troeven verderop en het portret van Justus — zo leest het als
      een eigen mededeling en niet als een voetnoot bij de laatste kaart. */

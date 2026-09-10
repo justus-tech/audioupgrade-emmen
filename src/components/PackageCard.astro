@@ -22,8 +22,57 @@ import { whatsappLink, berichtOverPakket } from '../lib/whatsapp.js';
  * op een modelpagina. Die zetten we in het WhatsApp-bericht, zodat Justus
  * meteen ziet waar het over gaat. Op de homepage weten we dat niet en blijft
  * het bericht algemeen.
+ *
+ * ==========================================================================
+ * ÉÉN KAART VOOR DRIE TALEN
+ * ==========================================================================
+ * `vertaling` vervangt de teksten door de Duitse of Engelse versie. Alles
+ * eromheen — de tekening, het oranje, de balkjes, het label, de opmaak —
+ * blijft precies gelijk.
+ *
+ * Dat is met een reden zo gebouwd. Eerst stond er voor Duits en Engels een
+ * eigen, vereenvoudigde kaart in Landingspagina.astro: zonder tekening,
+ * zonder scorebalkjes, zonder het oranje. Dat viel meteen op naast het
+ * Nederlands, en het was ook onvermijdelijk: twee kaarten voor hetzelfde
+ * doel lopen altijd uit elkaar. Nu is er één.
  */
-const { pkg, showScores = true, uitgebreid = false, auto = null } = Astro.props;
+const {
+  pkg,
+  showScores = true,
+  uitgebreid = false,
+  auto = null,
+  taal = 'nl',
+  vertaling = null,
+  labels = null,
+} = Astro.props;
+
+/* De teksten van deze kaart: vertaald als die er is, anders het Nederlands. */
+const v = vertaling ?? {};
+const naam = v.naam ?? pkg.name;
+const tagline = v.tagline ?? pkg.tagline;
+const prijs = v.prijs ?? pkg.price;
+const prijsNoot = v.prijsNoot ?? pkg.priceNote;
+const prijsExcl = v.prijsExcl ?? pkg.priceExcl;
+const kort = v.short ?? pkg.short;
+const verhaal = v.body ?? pkg.body;
+const kenmerken = v.features ?? pkg.features;
+const knop = v.cta ?? pkg.cta;
+const duur = v.duur ?? pkg.duur;
+
+/* De losse woordjes op de kaart. */
+const L = labels ?? {
+  badge: 'Onze aanrader',
+  meer: 'Meer over dit pakket',
+  vanDe5: (n) => `${n} van de 5`,
+  scores: null,
+};
+
+/**
+ * De scorebalkjes hebben eigen namen per taal. Staat er geen vertaling voor
+ * een label, dan blijft het Nederlandse staan — beter een woord dat niet
+ * vertaald is dan een leeg balkje zonder naam.
+ */
+const scoreNaam = (label) => L.scores?.[label] ?? label;
 
 /**
  * Bij Akoestische Isolatie tonen we geen scorebalkjes — dat deed de oude site
@@ -31,29 +80,32 @@ const { pkg, showScores = true, uitgebreid = false, auto = null } = Astro.props;
  * krijgt `los`, zodat hij niet meerekt tot de hoogte van de andere kaarten.
  */
 const scoresTonen = showScores && pkg.scores.length > 0;
-const kenmerkenTonen = uitgebreid && pkg.features.length > 0;
+const kenmerkenTonen = uitgebreid && kenmerken.length > 0;
 ---
 <div class:list={['card', !scoresTonen && 'card-los', pkg.populair && 'card-populair']}>
   <PakketBeeld slug={pkg.slug} />
-  {pkg.populair && <span class="badge">Meest gekozen</span>}
-  <h3>{pkg.name}</h3>
-  {pkg.tagline && <p class="tagline">{pkg.tagline}</p>}
+  {/* "Onze aanrader" en niet "Meest gekozen": zie de uitleg bij `populair`
+      in site.js. Het eerste is een mening, het tweede een bewering over wat
+      andere klanten deden — en die klopte niet. */}
+  {pkg.populair && <span class="badge">{L.badge}</span>}
+  <h3>{naam}</h3>
+  {tagline && <p class="tagline">{tagline}</p>}
 
   <div class="price">
-    {pkg.price}
-    {pkg.priceNote && <small>{pkg.priceNote}</small>}
-    {pkg.priceExcl && <small class="excl">{pkg.priceExcl}</small>}
+    {prijs}
+    {prijsNoot && <small>{prijsNoot}</small>}
+    {prijsExcl && <small class="excl">{prijsExcl}</small>}
   </div>
 
-  <p>{pkg.short}</p>
+  <p>{kort}</p>
 
-  {uitgebreid && (kenmerkenTonen || pkg.body) && (
+  {uitgebreid && (kenmerkenTonen || verhaal) && (
     <details class="meer">
-      <summary>Meer over dit pakket</summary>
-      {pkg.body && <p>{pkg.body}</p>}
+      <summary>{L.meer}</summary>
+      {verhaal && <p>{verhaal}</p>}
       {kenmerkenTonen && (
         <ul class="kenmerken">
-          {pkg.features.map((f) => <li>{f}</li>)}
+          {kenmerken.map((f) => <li>{f}</li>)}
         </ul>
       )}
     </details>
@@ -63,9 +115,9 @@ const kenmerkenTonen = uitgebreid && pkg.features.length > 0;
     <div class="scores">
       {pkg.scores.map((s) => (
         <div class="score">
-          <label>{s.label}</label>
+          <label>{scoreNaam(s.label)}</label>
           {/* Vijf blokjes, net als de oude site — alleen dan zonder emoji. */}
-          <div class="blokjes" role="img" aria-label={`${s.waarde} van de 5`}>
+          <div class="blokjes" role="img" aria-label={L.vanDe5(s.waarde)}>
             {[1, 2, 3, 4, 5].map((n) => <i class:list={[n <= s.waarde && 'aan']}></i>)}
           </div>
         </div>
@@ -73,10 +125,10 @@ const kenmerkenTonen = uitgebreid && pkg.features.length > 0;
     </div>
   )}
 
-  {pkg.duur && <p class="duur">{pkg.duur}</p>}
+  {duur && <p class="duur">{duur}</p>}
 
-  <a class="btn wa-link" href={whatsappLink(berichtOverPakket(pkg.name, auto))}
-     data-wa-pakket={pkg.name}>{pkg.cta}</a>
+  <a class="btn wa-link" href={whatsappLink(berichtOverPakket(naam, auto, taal), taal)}
+     data-wa-pakket={naam}>{knop}</a>
 </div>
 
 <style>

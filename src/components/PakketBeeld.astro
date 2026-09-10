@@ -157,6 +157,52 @@ const id = (naam) => `${slug}-${naam}`;
       </g>
     )}
 
+    {slug === 'competitie-show' && (
+      <g>
+        {/* Een opengeklapte kofferbak, van achteren gezien. Bij elk ander
+            pakket zit alles weg; hier is het beeld juist dat je het ziet. */}
+        <path d="M84 200V72c0-9 7-16 16-16h440c9 0 16 7 16 16v128" class="vlak" />
+
+        {/* Het middenstuk achter plexiglas: twee versterkers op elkaar, met
+            een streep licht eroverheen zodat het glas leest als glas. */}
+        <rect x="252" y="70" width="136" height="112" rx="6" class="vlak" />
+        <rect x="268" y="84" width="104" height="36" rx="4" class="scherm" />
+        <rect x="268" y="132" width="104" height="36" rx="4" class="scherm" />
+        <g class="dun">
+          <path d="M278 92v20M288 92v20M298 92v20M278 140v20M288 140v20M298 140v20" />
+        </g>
+        <circle cx="356" cy="102" r="5" class="stip aan" />
+        <circle cx="356" cy="150" r="5" class="stip aan" />
+        {/* Twee korte strepen in de hoek: zo leest het vlak als glas. Een
+            streep over de hele diagonaal leek een doorhaling. */}
+        <g class="glans">
+          <path d="M262 122L302 78" />
+          <path d="M282 176L318 134" />
+        </g>
+
+        {/* Twee subwoofers in zicht, links en rechts van het middenstuk. */}
+        <g transform="translate(160 122)">
+          <circle r="62" class="vlak" />
+          <circle r="50" class="rand" />
+          <circle r="38" class="conus" />
+          <circle r="14" class="stofkap" />
+        </g>
+        <g transform="translate(480 122)">
+          <circle r="62" class="vlak" />
+          <circle r="50" class="rand" />
+          <circle r="38" class="conus" />
+          <circle r="14" class="stofkap" />
+        </g>
+
+        {/* De verlichting onder de opbouw. */}
+        <g class="staaf">
+          <rect x="96" y="208" width="128" height="7" rx="3.5" />
+          <rect x="248" y="208" width="144" height="7" rx="3.5" />
+          <rect x="416" y="208" width="128" height="7" rx="3.5" />
+        </g>
+      </g>
+    )}
+
     {slug === 'akoestische-isolatie' && (
       <g>
         <defs>

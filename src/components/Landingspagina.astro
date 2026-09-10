@@ -19,11 +19,12 @@
  */
 import { Image } from 'astro:assets';
 import Golflijn from './Golflijn.astro';
+import PackageCard from './PackageCard.astro';
 import portret from '../assets/justus.jpg';
-import { SITE, PACKAGES, ADRES } from '../data/site.js';
+import { SITE, ADRES, AUDIOPAKKETTEN, LOSSE_OPTIES, pakkettenVan } from '../data/site.js';
 import { tekstenVan } from '../i18n/teksten.js';
 import { paginasVan } from '../i18n/paginas.js';
-import { whatsappLink, berichtOverAuto, berichtOverPakket } from '../lib/whatsapp.js';
+import { whatsappLink, berichtOverAuto } from '../lib/whatsapp.js';
 import { pad } from '../lib/pad.js';
 
 const { taal } = Astro.props;
@@ -31,9 +32,17 @@ const t = tekstenVan(taal);
 /* De pakketvertalingen: namen, prijzen en omschrijvingen per taal. */
 const p = paginasVan(taal);
 
-/* Zelfde selectie als op de Nederlandse homepage: de isolatie-optie is geen
-   los pakket maar onderdeel van de andere drie. */
-const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
+/**
+ * Dezelfde indeling als op de Nederlandse homepage: vier audiopakketten in
+ * één rij, daaronder de twee losse opties.
+ *
+ * En dezelfde kaart. Hier stond eerst een eigen, vereenvoudigde kaart —
+ * zonder tekening, zonder scorebalkjes, zonder het oranje. Naast het
+ * Nederlands zag je meteen dat het een andere site was. Nu rendert alle drie
+ * de talen door PackageCard.astro; alleen de woorden wisselen.
+ */
+const audio = pakkettenVan(AUDIOPAKKETTEN);
+const los = pakkettenVan(LOSSE_OPTIES);
 ---
 <div class="hero">
   <Golflijn taal={taal} />
@@ -70,27 +79,25 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
     <h2>{t.pakketten.kop}</h2>
     <p style="margin-top:1.2em">{t.pakketten.lead}</p>
 
-    <div class="grid cols-4 mt">
-      {pakketten.map((pkg) => {
-        /* Naam en prijs komen uit de vertaling: in site.js staan ze in het
-           Nederlands ("Vanaf € 695,00"). Het bedrag is hetzelfde, alleen de
-           woorden eromheen verschillen. */
-        const v = p.pakketten[pkg.slug];
-        return (
-        <div class="card">
-          <h3>{v.naam}</h3>
-          <div class="price">
-            {v.prijs}
-            {v.prijsNoot && <small>{v.prijsNoot}</small>}
-          </div>
-          <p>{v.short}</p>
-          <p class="duur">{t.pakketten.duurLabel}: {v.duur}</p>
-          <a class="btn" href={whatsappLink(berichtOverPakket(v.naam, null, taal), taal)}>
-            {v.cta}
-          </a>
-        </div>
-        );
-      })}
+    {/* Naam en prijs komen uit de vertaling: in site.js staan ze in het
+        Nederlands ("Vanaf € 695,00"). Het bedrag is hetzelfde, alleen de
+        woorden eromheen verschillen. */}
+    <div class="grid vier mt">
+      {audio.map((pkg) => (
+        <PackageCard pkg={pkg} taal={taal}
+                     vertaling={p.pakketten[pkg.slug]} labels={t.kaart} />
+      ))}
+    </div>
+
+    <div class="losse-opties">
+      <h3 class="center">{t.pakketten.losKop}</h3>
+      <p class="center" style="margin:0 auto 2.2em;">{t.pakketten.losLead}</p>
+      <div class="grid cols-2">
+        {los.map((pkg) => (
+          <PackageCard pkg={pkg} taal={taal} showScores={false}
+                       vertaling={p.pakketten[pkg.slug]} labels={t.kaart} />
+        ))}
+      </div>
     </div>
 
     <p class="garantiestrip">
@@ -191,12 +198,15 @@ const pakketten = PACKAGES.filter((p) => p.slug !== 'akoestische-isolatie');
     font-size: .88rem; color: var(--text-dim);
   }
 
-  .duur {
-    font-family: 'Oswald', sans-serif;
-    text-transform: uppercase; letter-spacing: .12em;
-    font-size: .7rem; color: var(--text-dim);
-    margin-top: 1em;
+  /* De losse opties onder de vier audiopakketten, met een streep ertussen
+     zodat je ziet dat het een andere vraag is en niet de vijfde en zesde
+     trede van dezelfde ladder. Zelfde stijl als op de Nederlandse homepage. */
+  .losse-opties {
+    margin-top: 4rem;
+    padding-top: 2.6rem;
+    border-top: 1px solid var(--line-strong);
   }
+  .losse-opties h3 { margin-bottom: .8em; }
 
   /* Zelfde opzet als op de Nederlandse homepage; zie OverJustus.astro. */
   .over {

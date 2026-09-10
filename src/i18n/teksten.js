@@ -128,13 +128,37 @@ export const TEKSTEN = {
 
     pakketten: {
       eyebrow: 'Festpreise, inklusive Einbau und Mehrwertsteuer',
-      kop: 'Was wir machen',
+      kop: 'Vier Stufen im Klang',
       lead:
-        'Vier Pakete. Der Preis, den Sie hier sehen, ist der Preis, den Sie zahlen — Einbau und Material inbegriffen, keine Anfahrtskosten, nichts Zusätzliches bei der Abholung.',
+        'Sie bauen aufeinander auf: jedes Paket enthält, was links davon steht. Der Preis, den Sie hier sehen, ist der Preis, den Sie zahlen — Einbau und Material inbegriffen, keine Anfahrtskosten, nichts Zusätzliches bei der Abholung.',
+      /* CarPlay en isolatie staan apart, net als op de Nederlandse homepage.
+         Zie de uitleg bij AUDIOPAKKETTEN in site.js. */
+      losKop: 'Einzeln bestellbar',
+      losLead: 'Suchen Sie nur ein Display, das funktioniert — oder einfach Ruhe?',
       duurLabel: 'Dauer',
       garantieKop: 'Lebenslange Garantie auf unsere Arbeit',
       garantieStrip: 'Lebenslange Garantie auf unsere Einbauarbeit und die von uns verlegten Kabel.',
       garantieKlein: 'Solange das Fahrzeug Ihnen gehört. Für die Geräte selbst gilt die Herstellergarantie.',
+    },
+
+    /**
+     * De losse woordjes óp een pakketkaart. Die kaart is voor alle drie de
+     * talen dezelfde (PackageCard.astro) — alleen deze woorden wisselen.
+     * De namen van de balkjes staan in site.js in het Nederlands; hier
+     * staat per taal wat er in plaats daarvan komt te staan.
+     */
+    kaart: {
+      badge: 'Unsere Empfehlung',
+      meer: 'Mehr über dieses Paket',
+      vanDe5: (n) => `${n} von 5`,
+      scores: {
+        Integratie: 'Integration',
+        Snelheid: 'Tempo',
+        Audio: 'Klang',
+        Volume: 'Pegel',
+        Bass: 'Bass',
+        Zuiverheid: 'Klarheit',
+      },
     },
 
     vakwerk: {
@@ -260,13 +284,29 @@ export const TEKSTEN = {
 
     pakketten: {
       eyebrow: 'All-in prices, fitting and VAT included',
-      kop: 'What we do',
+      kop: 'Four steps in sound',
       lead:
-        'Four packages. The price you see is the price you pay — parts and fitting included, no call-out charge, nothing extra when you come to collect it.',
+        'They build on one another: every package includes what sits to the left of it. The price you see is the price you pay — parts and fitting included, no call-out charge, nothing extra when you come to collect it.',
+      losKop: 'Available on its own',
+      losLead: 'After a screen that simply works — or just after quiet?',
       duurLabel: 'Time needed',
       garantieKop: 'Lifetime guarantee on our work',
       garantieStrip: 'Lifetime guarantee on our installation work and the wiring we lay.',
       garantieKlein: 'For as long as the car is yours. The equipment itself carries its manufacturer warranty.',
+    },
+
+    kaart: {
+      badge: 'Our recommendation',
+      meer: 'More about this package',
+      vanDe5: (n) => `${n} out of 5`,
+      scores: {
+        Integratie: 'Integration',
+        Snelheid: 'Speed',
+        Audio: 'Sound',
+        Volume: 'Volume',
+        Bass: 'Bass',
+        Zuiverheid: 'Clarity',
+      },
     },
 
     vakwerk: {

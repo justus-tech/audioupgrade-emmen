@@ -55,6 +55,32 @@ export const AUDIOMERKEN = [
 export const ADRES = `${SITE.street}, ${SITE.postalCode} ${SITE.city}`;
 
 /**
+ * DE VIER AUDIOPAKKETTEN, IN OPLOPENDE PRIJS.
+ *
+ * Dit is de rij die de bezoeker vergelijkt. Alleen pakketten die over
+ * geluidskwaliteit gaan, want dat is wat je tegen elkaar afweegt.
+ *
+ * Draadloze CarPlay en Akoestische Isolatie staan er bewust naast en niet
+ * in. CarPlay gaat over je scherm en je gemak, isolatie over stilte — dat
+ * zijn andere vragen. Stonden ze in dezelfde rij, dan vergelijkt iemand die
+ * CarPlay wil zijn 695 euro met een DSP-pakket van 2.195 en haakt af op een
+ * prijs die niet over hetzelfde gaat.
+ */
+export const AUDIOPAKKETTEN = [
+  'akoestische-basis',
+  'oem-plus-executive',
+  'reference-edition',
+  'competitie-show',
+];
+
+/** De twee losse opties, náást de vier hierboven. */
+export const LOSSE_OPTIES = ['carplay-upgrade', 'akoestische-isolatie'];
+
+/** Hulpje: de pakketten van een lijst met slugs, in díé volgorde. */
+export const pakkettenVan = (slugs) =>
+  slugs.map((s) => PACKAGES.find((p) => p.slug === s)).filter(Boolean);
+
+/**
  * Wat voor soort bedrijf dit is, voor de machineleesbare gegevens die in elke
  * pagina staan (zie Base.astro).
  *
@@ -166,7 +192,6 @@ export const PACKAGES = [
     bedrag: 2195,
     priceNote: 'Inclusief BTW & Montage',
     priceExcl: '€ 1.814,- excl. btw',
-    populair: true,
     short: 'Voor de veelrijder en echte autoliefhebber die het maximale eist met 0% laadruimteverlies.',
     body: 'Voor de veelrijder en ondernemer. Dit is niet zomaar een speaker-upgrade; dit is een totale herziening van je akoestiek. Het hart van dit systeem is een geavanceerde Digitale Sound Processor (DSP). Hiermee sturen we elke luidspreker actief aan en corrigeren we de looptijden van het geluid, zodat je letterlijk in het midden van de muziek zit. Aangevuld met een onzichtbare, voelbare subwoofer.',
     features: [
@@ -192,6 +217,24 @@ export const PACKAGES = [
     bedrag: 3695,
     priceNote: 'Inclusief BTW & Montage',
     priceExcl: 'Vanaf € 3.053,- excl. btw',
+    /**
+     * Het label stond eerst op The OEM+ Executive en zei "Meest gekozen".
+     * Twee dingen daaraan veranderd, en het tweede is het belangrijkst:
+     *
+     *   1. Het staat nu bij The Reference Edition. Met het competitiepakket
+     *      erboven leest 3.695 als het verstandige midden in plaats van als
+     *      het dure eind — mensen vergelijken alleen met wat ernaast staat.
+     *   2. Er staat niet meer "Meest gekozen" maar "Onze aanrader". Dat
+     *      eerste is een bewering over wat andere klanten deden, en die
+     *      klopte niet. Onware beweringen over populariteit staan met naam
+     *      op de zwarte lijst van misleidende handelspraktijken (art. 6:193g
+     *      BW). "Onze aanrader" is een mening, en die mag Justus geven.
+     *
+     * Het werkt voor hem waarschijnlijk ook beter: de hele site verkoopt
+     * zijn oordeel — conservatorium, eigen speakerbouw, afstellen op gehoor.
+     * Dan weegt "dit zou ik kiezen" zwaarder dan "anderen kozen dit".
+     */
+    populair: true,
     short: 'Ongeëvenaarde audiofiele perfectie voor wie weigert concessies te doen.',
     body: 'Voor de purist die weigert concessies te doen. Dit pakket wordt volledig rondom jouw voertuig en muzieksmaak ontworpen. We combineren de absolute wereldtop in versterking en luidsprekers met urenlange, specialistische fase-tuning via de laptop. Inclusief maatwerk subwoofer-behuizingen.',
     features: [
@@ -203,6 +246,52 @@ export const PACKAGES = [
     ],
     cta: 'Bespreek maatwerk',
     duur: 'Twee tot drie dagen, inclusief tuning',
+    scores: [
+      { label: 'Volume', waarde: 5 },
+      { label: 'Bass', waarde: 5 },
+      { label: 'Zuiverheid', waarde: 5 },
+    ],
+  },
+  {
+    /**
+     * NIEUW, september 2026. Het enige pakket dat niet van de oude site komt.
+     *
+     * WAAROM DIT ER IS
+     * Twee redenen, en allebei kloppen ze.
+     *
+     * De eerste is dat Justus dit werk kan en wil doen. Wedstrijd- en
+     * showopbouw is een echt onderdeel van car audio, en met een
+     * conservatoriumopleiding en zelfgebouwde kasten is hij er de man voor.
+     *
+     * De tweede is dat het de prijzen leesbaar maakt. Mensen weten niet wat
+     * car audio hoort te kosten; ze vergelijken alleen met wat ernaast staat.
+     * Met dit pakket erboven leest The Reference Edition als het verstandige
+     * midden in plaats van als de dure uitschieter. Dat is geen trucje: het
+     * is hoe mensen prijzen lezen, en het pakket bestaat echt.
+     *
+     * LET OP DE SPANNING MET DE REST VAN DE SITE
+     * Overal staat "onzichtbaar ingebouwd". Een showbuild is per definitie
+     * het tegenovergestelde. Dat wordt hieronder expliciet gezegd in plaats
+     * van weggemoffeld — anders leest het als een tegenspraak.
+     */
+    slug: 'competitie-show',
+    name: 'The Competition Build',
+    tagline: 'Voor wie het juist wél wil laten zien.',
+    price: 'Vanaf € 12.500,00',
+    bedrag: 12500,
+    priceNote: 'Inclusief BTW & Montage',
+    priceExcl: 'Vanaf € 10.330,- excl. btw',
+    short: 'Wedstrijd- en showopbouw op maat, waarbij de installatie zelf het pronkstuk is.',
+    body: 'Overal op deze site staat dat je er niets van ziet. Dit pakket is de uitzondering, en dat is precies de bedoeling. Een wedstrijd- of showopbouw wordt getekend voordat er een schroef in gaat: zichtbare versterkers achter plexiglas, een kofferbak die opengeklapt een installatie laat zien, en luidsprekerbehuizingen die in vorm en bekleding bij het interieur horen. Daaronder zit techniek die het waarmaakt — meerdere versterkers, actieve aansturing per weg, en een afstemming die over meerdere sessies gaat. Dit is geen pakket dat je bestelt; dit is een project dat we samen ontwerpen.',
+    features: [
+      'Ontwerp vooraf, in overleg getekend en besproken.',
+      'Zichtbare opbouw: plexiglas, verlichting en bekleding op maat.',
+      'Meerdere versterkers, volledig actief per weg aangestuurd.',
+      'Behuizingen met de hand gebouwd, passend bij het interieur.',
+      'Afstemming over meerdere sessies, met meetapparatuur.',
+    ],
+    cta: 'Bespreek je project',
+    duur: 'Een week of langer — in overleg',
     scores: [
       { label: 'Volume', waarde: 5 },
       { label: 'Bass', waarde: 5 },

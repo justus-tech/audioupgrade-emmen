@@ -20,10 +20,14 @@ import Fotoband from '../components/Fotoband.astro';
 import ModelKiezer from '../components/ModelKiezer.astro';
 /* Foto: Unsplash — vrij te gebruiken. Zie src/components/Fotoband.astro. */
 import speakerconus from '../assets/foto/speakerconus.jpg';
-import { PACKAGES, SITE } from '../data/site.js';
+import { SITE, AUDIOPAKKETTEN, LOSSE_OPTIES, pakkettenVan } from '../data/site.js';
 import { autoTabel } from '../data/autos.js';
 import { GARANTIE, LEVENSLANG, CTA } from '../data/generiek.js';
 import { whatsappLink, berichtOverAuto } from '../lib/whatsapp.js';
+
+/* Vier audiopakketten in één rij, de twee losse opties eronder. */
+const audio = pakkettenVan(AUDIOPAKKETTEN);
+const los = pakkettenVan(LOSSE_OPTIES);
 ---
 <Base
   title="Upgrades & prijzen — check je kenteken | Audio Upgrade Emmen"
@@ -71,10 +75,27 @@ import { whatsappLink, berichtOverAuto } from '../lib/whatsapp.js';
 
   <section>
     <div class="wrap">
-      <h2 id="pakketten-kop">Onze pakketten</h2>
-      <div class="grid pakketten mt">
-        {PACKAGES.map((pkg) => <PackageCard pkg={pkg} uitgebreid={true} />)}
+      <h2 id="pakketten-kop">Vier stappen in geluid</h2>
+      <p style="margin-top:1.1em">
+        Ze bouwen op elkaar voort: elk pakket bevat wat er links van staat.
+        Alle prijzen zijn all-in — inclusief montage en btw.
+      </p>
+      <div class="grid vier pakketten mt">
+        {audio.map((pkg) => <PackageCard pkg={pkg} uitgebreid={true} />)}
       </div>
+
+      {/* CarPlay en isolatie gaan over gemak en over stilte, niet over
+          geluidskwaliteit. Zie AUDIOPAKKETTEN in site.js. */}
+      <div class="losse-opties">
+        <h2 class="center">Los te bestellen</h2>
+        <p class="center" style="margin:0 auto 2.2em;">
+          Zoek je alleen een scherm dat wél werkt, of juist alleen rust in de auto?
+        </p>
+        <div class="grid cols-2">
+          {los.map((pkg) => <PackageCard pkg={pkg} uitgebreid={true} showScores={false} />)}
+        </div>
+      </div>
+
       <div style="margin-top:4rem"><Merken /></div>
     </div>
   </section>
@@ -288,6 +309,16 @@ import { whatsappLink, berichtOverAuto } from '../lib/whatsapp.js';
 
 <style>
   #upgrade-melding { margin-top: 18px; min-height: 24px; color: var(--text-dim); }
+
+  /* De losse opties onder de vier audiopakketten. De streep erboven zegt dat
+     hier een andere vraag begint: CarPlay en isolatie zijn niet de vijfde en
+     zesde trede van dezelfde ladder. Zelfde stijl als op de homepage. */
+  .losse-opties {
+    margin-top: 4rem;
+    padding-top: 2.6rem;
+    border-top: 1px solid var(--line-strong);
+  }
+  .losse-opties h2 { margin-bottom: .8em; }
 
   /* De inzichten onder de plaat. Twee kolommen op een breed scherm, want
      vier los onder elkaar duwt de pakketten te ver naar beneden. */

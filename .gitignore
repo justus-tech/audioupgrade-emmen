@@ -21,3 +21,6 @@ shots/
 
 # Het adres van de tijdelijke deellink (npm run deel)
 .tunnel-adres
+
+# Lokale instellingen van de editor
+.claude/

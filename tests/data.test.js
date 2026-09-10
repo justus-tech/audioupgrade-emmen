@@ -11,7 +11,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { MODELS, merkSlug, modelPerSlug } from '../src/data/models.js';
 import { MERKEN, merkenPerSlug, MERKEN_MET_MODELLEN } from '../src/data/merken.js';
-import { PACKAGES, SITE, AUDIOMERKEN } from '../src/data/site.js';
+import { PACKAGES, SITE, AUDIOMERKEN, AUDIOPAKKETTEN, LOSSE_OPTIES, pakkettenVan } from '../src/data/site.js';
 import { STANDAARD_PAKKETTEN } from '../src/data/generiek.js';
 import { AUTOS, autoTabel } from '../src/data/autos.js';
 import { REVIEWS, reviewsOpDatum } from '../src/data/reviews.js';
@@ -224,8 +224,38 @@ describe('merken', () => {
 });
 
 describe('pakketten en prijzen', () => {
-  test('alle vijf pakketten staan er', () => {
-    assert.equal(PACKAGES.length, 5);
+  test('alle zes pakketten staan er', () => {
+    assert.equal(PACKAGES.length, 6);
+  });
+
+  // De site toont de pakketten in twee groepen: vier audiopakketten in één
+  // rij en daarnaast de twee losse opties. Raakt een pakket buiten beide
+  // lijsten, dan staat het nergens meer op de site — en dat merk je verder
+  // nergens aan, want de pagina bouwt gewoon.
+  test('elk pakket staat in precies één van de twee lijsten', () => {
+    const ingedeeld = [...AUDIOPAKKETTEN, ...LOSSE_OPTIES];
+    assert.equal(new Set(ingedeeld).size, ingedeeld.length, 'een slug staat in beide lijsten');
+    assert.deepEqual(
+      [...ingedeeld].sort(),
+      PACKAGES.map((p) => p.slug).sort(),
+      'de twee lijsten dekken niet precies alle pakketten',
+    );
+  });
+
+  test('de audiopakketten lopen op in prijs', () => {
+    const bedragen = pakkettenVan(AUDIOPAKKETTEN).map((p) => p.bedrag);
+    for (let i = 1; i < bedragen.length; i++) {
+      assert.ok(
+        bedragen[i] > bedragen[i - 1],
+        `${AUDIOPAKKETTEN[i]} is niet duurder dan ${AUDIOPAKKETTEN[i - 1]}`,
+      );
+    }
+  });
+
+  // "Onze aanrader" hoort bij één pakket. Bij twee is het geen aanrader meer
+  // maar een sticker, en dan doet hij niets.
+  test('precies één pakket draagt het label', () => {
+    assert.equal(PACKAGES.filter((p) => p.populair).length, 1);
   });
 
   test('elke pakketslug is uniek', () => {
@@ -241,6 +271,9 @@ describe('pakketten en prijzen', () => {
       'akoestische-basis': '€ 995,00',
       'oem-plus-executive': '€ 2.195,00',
       'reference-edition': 'Vanaf € 3.695,00',
+      // Nieuw, op verzoek van Justus: het duurste pakket bovenaan de rij,
+      // zodat de Reference Edition ernaast redelijk oogt.
+      'competitie-show': 'Vanaf € 12.500,00',
       'akoestische-isolatie': 'Prijs op aanvraag',
     };
     for (const p of PACKAGES) {

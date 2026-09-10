@@ -8,17 +8,22 @@
  *
  * De kenteken-check staat er niet op — zie de uitleg in i18n/talen.js.
  */
-import PakketBeeld from '../PakketBeeld.astro';
-import { PACKAGES } from '../../data/site.js';
+import PackageCard from '../PackageCard.astro';
+import { AUDIOPAKKETTEN, LOSSE_OPTIES, pakkettenVan } from '../../data/site.js';
 import { paginasVan } from '../../i18n/paginas.js';
 import { tekstenVan } from '../../i18n/teksten.js';
 import { padVan } from '../../i18n/talen.js';
 import { pad } from '../../lib/pad.js';
-import { whatsappLink, berichtOverPakket, berichtOverAuto } from '../../lib/whatsapp.js';
+import { whatsappLink, berichtOverAuto } from '../../lib/whatsapp.js';
 
 const { taal } = Astro.props;
 const p = paginasVan(taal);
 const t = tekstenVan(taal);
+
+/* Dezelfde volgorde en dezelfde tweedeling als op de Nederlandse
+   upgradepagina: vier audiopakketten, daarna de twee losse opties. */
+const audio = pakkettenVan(AUDIOPAKKETTEN);
+const los = pakkettenVan(LOSSE_OPTIES);
 ---
 <section>
   <div class="wrap center">
@@ -30,41 +35,33 @@ const t = tekstenVan(taal);
 
 <section class="alt">
   <div class="wrap">
-    <div class="grid pakketten">
-      {PACKAGES.map((pkg) => {
-        const v = p.pakketten[pkg.slug];
-        return (
-          <div class:list={['card', pkg.populair && 'card-populair']}>
-            <PakketBeeld slug={pkg.slug} />
-            {/* Naam, prijs en btw-regel komen uit de vertaling en niet uit
-                site.js: daar staan ze in het Nederlands ("Vanaf € 695,00",
-                "excl. btw"). Het bedrág is hetzelfde, alleen de woorden
-                eromheen verschillen. */}
-            <h2>{v.naam}</h2>
-            <p class="tagline">{v.tagline}</p>
+    {/* De kop hoort hier te staan en niet alleen bovenaan de pagina: zonder
+        deze h2 springt de pagina van de h1 naar de h3 van de eerste kaart, en
+        dan mist een schermlezer een niveau. */}
+    <h2 class="center">{t.pakketten.kop}</h2>
 
-            <div class="price">
-              {v.prijs}
-              {v.prijsNoot && <small>{v.prijsNoot}</small>}
-              {v.prijsExcl && <small class="excl">{v.prijsExcl}</small>}
-            </div>
+    {/* Naam, prijs en btw-regel komen uit de vertaling en niet uit site.js:
+        daar staan ze in het Nederlands ("Vanaf € 695,00", "excl. btw"). Het
+        bedrág is hetzelfde, alleen de woorden eromheen verschillen.
 
-            <p>{v.short}</p>
+        De kaart zelf is dezelfde als op de Nederlandse pagina — tekening,
+        oranje kopregel, scorebalkjes en al. Zie PackageCard.astro. */}
+    <div class="grid vier pakketten mt">
+      {audio.map((pkg) => (
+        <PackageCard pkg={pkg} taal={taal} uitgebreid={true}
+                     vertaling={p.pakketten[pkg.slug]} labels={t.kaart} />
+      ))}
+    </div>
 
-            <details class="meer">
-              <summary>{p.prijzen.meer}</summary>
-              <p>{v.body}</p>
-              <p class="wat-label">{p.prijzen.watLabel}</p>
-              <ul class="kenmerken">
-                {v.features.map((f) => <li>{f}</li>)}
-              </ul>
-            </details>
-
-            <p class="duur">{p.prijzen.duurLabel}: {v.duur}</p>
-            <a class="btn" href={whatsappLink(berichtOverPakket(v.naam, null, taal), taal)}>{v.cta}</a>
-          </div>
-        );
-      })}
+    <div class="losse-opties">
+      <h2 class="center">{t.pakketten.losKop}</h2>
+      <p class="center" style="margin:0 auto 2.2em;">{t.pakketten.losLead}</p>
+      <div class="grid cols-2">
+        {los.map((pkg) => (
+          <PackageCard pkg={pkg} taal={taal} uitgebreid={true} showScores={false}
+                       vertaling={p.pakketten[pkg.slug]} labels={t.kaart} />
+        ))}
+      </div>
     </div>
   </div>
 </section>
@@ -98,22 +95,12 @@ const t = tekstenVan(taal);
 </section>
 
 <style>
-  .tagline {
-    font-family: 'Oswald', sans-serif;
-    text-transform: uppercase; letter-spacing: .14em;
-    font-size: .7rem; color: var(--accent-text);
-    margin-top: .5em;
+  /* De opmaak van de kaarten zelf staat in PackageCard.astro — daar hoort
+     hij, want die kaart staat nu op alle drie de talen. */
+  .losse-opties {
+    margin-top: 4rem;
+    padding-top: 2.6rem;
+    border-top: 1px solid var(--line-strong);
   }
-  .duur {
-    font-family: 'Oswald', sans-serif;
-    text-transform: uppercase; letter-spacing: .12em;
-    font-size: .68rem; color: var(--text-dim);
-    margin-top: 1.2em;
-  }
-  .wat-label {
-    font-family: 'Oswald', sans-serif;
-    text-transform: uppercase; letter-spacing: .14em;
-    font-size: .68rem; color: var(--text-dim);
-    margin-top: 1.4em;
-  }
+  .losse-opties h2 { margin-bottom: .8em; }
 </style>

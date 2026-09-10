@@ -439,6 +439,50 @@ describe('drie talen', alsGebouwd, () => {
     }
   });
 
+  /**
+   * Precies de fout die Justus zelf zag: de Duitse en Engelse pakketkaarten
+   * hadden geen tekening, geen oranje kopregel en geen scorebalkjes. Oorzaak
+   * was een tweede, vereenvoudigde kaart die alleen voor die twee talen
+   * bestond. Er is er nu nog één (PackageCard.astro), en deze test houdt dat
+   * zo: zodra er ergens weer een eigen kaart bijkomt, valt die door de mand
+   * omdat een van deze onderdelen ontbreekt.
+   */
+  test('de vertaalde pakketkaarten zien er hetzelfde uit als de Nederlandse', () => {
+    const paren = [
+      ['/', '/de', '/en'],
+      ['/upgrades', '/de/preise', '/en/pricing'],
+    ];
+    const tel = (html, patroon) => (html.match(patroon) ?? []).length;
+
+    for (const [nl, ...vertaald] of paren) {
+      const bron = inhoud.get(nl);
+      assert.ok(bron, `${nl} ontbreekt`);
+      const verwacht = {
+        tekening: tel(bron, /class="beeld"/g),
+        tagline: tel(bron, /class="tagline/g),
+        label: tel(bron, /class="badge/g),
+        scorebalk: tel(bron, /class="blokjes"/g),
+      };
+      /* Als het Nederlands zelf niets meer toont, meet deze test niets. */
+      assert.ok(verwacht.tekening >= 4, `${nl}: maar ${verwacht.tekening} tekeningen`);
+      assert.equal(verwacht.label, 1, `${nl}: het label hoort op precies één kaart`);
+
+      for (const p of vertaald) {
+        const html = inhoud.get(p);
+        assert.ok(html, `${p} ontbreekt`);
+        for (const [wat, aantal] of Object.entries(verwacht)) {
+          const gevonden = tel(html, {
+            tekening: /class="beeld"/g,
+            tagline: /class="tagline/g,
+            label: /class="badge/g,
+            scorebalk: /class="blokjes"/g,
+          }[wat]);
+          assert.equal(gevonden, aantal, `${p}: ${gevonden}× ${wat}, ${nl} heeft er ${aantal}`);
+        }
+      }
+    }
+  });
+
   test('elke vertaalde pagina bestaat in beide talen', () => {
     for (const sleutel of Object.keys(PADEN)) {
       for (const taal of ['de', 'en']) {

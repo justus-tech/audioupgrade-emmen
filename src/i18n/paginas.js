@@ -109,6 +109,27 @@ const PAKKETTEN_DE = {
     cta: 'Maßarbeit besprechen',
     duur: 'Zwei bis drei Tage, inklusive Abstimmung',
   },
+  /* Het duurste pakket. In het Duits mag dit gerust groot klinken: daar is
+     "Wettbewerbsanlage" een begrip en showbouw een eigen wereld. */
+  'competitie-show': {
+    naam: "The Competition Build",
+    prijs: "ab 12.500 €",
+    prijsNoot: "Inklusive MwSt. und Einbau",
+    prijsExcl: "ab 10.330 € zzgl. MwSt.",
+    tagline: 'Für alle, die es zeigen wollen.',
+    short: 'Wettbewerbs- und Showanlagen nach Maß, bei denen der Einbau selbst das Schaustück ist.',
+    body:
+      'Überall auf dieser Seite steht, dass man nichts davon sieht. Dieses Paket ist die Ausnahme, und genau das ist der Sinn. Eine Wettbewerbs- oder Showanlage wird gezeichnet, bevor die erste Schraube gesetzt wird: sichtbare Endstufen hinter Plexiglas, ein Kofferraum, der aufgeklappt eine ganze Anlage zeigt, und Gehäuse, die in Form und Bezug zum Interieur passen. Darunter steckt die Technik, die das trägt — mehrere Endstufen, vollaktive Ansteuerung und eine Abstimmung über mehrere Sitzungen. Das ist kein Paket, das man bestellt, sondern ein Projekt, das wir gemeinsam entwerfen.',
+    features: [
+      'Entwurf vorab, gemeinsam gezeichnet und besprochen.',
+      'Sichtbarer Aufbau: Plexiglas, Beleuchtung und Bezug nach Maß.',
+      'Mehrere Endstufen, vollaktiv pro Weg angesteuert.',
+      'Handgebaute Gehäuse, passend zum Interieur.',
+      'Abstimmung über mehrere Sitzungen, mit Messtechnik.',
+    ],
+    cta: 'Projekt besprechen',
+    duur: 'Eine Woche oder länger — nach Absprache',
+  },
   'akoestische-isolatie': {
     naam: "Akustik-Dämmung",
     prijs: "Preis auf Anfrage",
@@ -209,6 +230,25 @@ const PAKKETTEN_EN = {
     ],
     cta: 'Discuss a bespoke build',
     duur: 'Two to three days, tuning included',
+  },
+  'competitie-show': {
+    naam: "The Competition Build",
+    prijs: "from €12,500",
+    prijsNoot: "VAT and fitting included",
+    prijsExcl: "from €10,330 excl. VAT",
+    tagline: 'For the ones who want it seen.',
+    short: 'Competition and show builds to order, where the installation itself is the showpiece.',
+    body:
+      'Everywhere else on this site we tell you that you will not see a thing. This package is the exception, and that is entirely the point. A competition or show build is drawn before a single screw goes in: amplifiers on display behind acrylic, a boot that opens onto a full installation, and enclosures shaped and trimmed to match the interior. Underneath sits the engineering that backs it up — multiple amplifiers, fully active on every way, and tuning spread over several sessions. This is not a package you order; it is a project we design together.',
+    features: [
+      'Design up front, drawn and agreed with you.',
+      'Visible build: acrylic, lighting and trim to order.',
+      'Multiple amplifiers, fully active on every way.',
+      'Hand-built enclosures, matched to the interior.',
+      'Tuning across several sessions, with measuring equipment.',
+    ],
+    cta: 'Discuss your project',
+    duur: 'A week or longer — by arrangement',
   },
   'akoestische-isolatie': {
     naam: "Acoustic Insulation",
