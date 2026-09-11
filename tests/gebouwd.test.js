@@ -617,6 +617,47 @@ describe('vindbaar voor zoekmachines en AI-assistenten', alsGebouwd, () => {
     assert.ok(robots.includes(`Sitemap: ${SITE.url}/sitemap.xml`), 'de sitemap wordt niet genoemd');
   });
 
+  /**
+   * Het favicon: het rondje naast de naam in Google.
+   *
+   * Daar stond eerst een onherkenbaar donker rondje. Er was alleen een SVG
+   * met een wit logo op een donker vlak, en /favicon.ico gaf een 404 —
+   * precies het adres waar Google als eerste kijkt. Zie scripts/favicon.mjs.
+   */
+  test('het favicon bestaat in alle maten die Google en telefoons vragen', () => {
+    /* De maat van een PNG staat altijd op byte 16 tot en met 23. */
+    const pngMaat = (naam) => {
+      const b = readFileSync(join(DIST, naam));
+      return [b.readUInt32BE(16), b.readUInt32BE(20)];
+    };
+
+    // Google wil een veelvoud van 48 pixels; 192 is 4 × 48.
+    assert.deepEqual(pngMaat('icon-192.png'), [192, 192]);
+    // Het beginschermicoon van een iPhone is vierkant, 180 × 180.
+    assert.deepEqual(pngMaat('apple-touch-icon.png'), [180, 180]);
+
+    /* Een .ico begint met 0, 1 en dan het aantal plaatjes; per plaatje staat
+       de breedte op een vaste plek. Er moet een van 48 bij zitten. */
+    const ico = readFileSync(join(DIST, 'favicon.ico'));
+    assert.equal(ico.readUInt16LE(0), 0, 'favicon.ico is geen icoonbestand');
+    assert.equal(ico.readUInt16LE(2), 1, 'favicon.ico is geen icoonbestand');
+    const maten = Array.from({ length: ico.readUInt16LE(4) }, (_, i) => ico.readUInt8(6 + 16 * i));
+    assert.ok(maten.includes(48), `favicon.ico heeft geen 48 × 48, alleen ${maten.join(', ')}`);
+
+    /* Zwart op wit, zoals Justus vroeg: een wit vlak eronder. */
+    const svg = lees('favicon.svg');
+    assert.match(svg, /<rect[^>]*fill="#ffffff"/, 'favicon.svg heeft geen witte ondergrond');
+  });
+
+  test('elke pagina wijst naar het favicon, en het aanraakicoon is vierkant', () => {
+    for (const [pad, html] of inhoud) {
+      assert.ok(html.includes('href="/favicon.ico"'), `${pad}: geen favicon.ico in de kop`);
+      assert.ok(html.includes('href="/favicon.svg"'), `${pad}: geen favicon.svg in de kop`);
+      const aanraak = /<link rel="apple-touch-icon" href="([^"]+)"/.exec(html)?.[1];
+      assert.equal(aanraak, '/apple-touch-icon.png', `${pad}: aanraakicoon wijst naar ${aanraak}`);
+    }
+  });
+
   test('de foutpagina staat er, en blijft uit de zoekresultaten', () => {
     /* GitHub Pages toont /404.html bij elk onbekend adres. Die pagina moet er
        zijn — anders krijgt iemand die via Google op een oud Squarespace-adres

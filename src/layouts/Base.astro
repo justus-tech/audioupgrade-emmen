@@ -165,8 +165,18 @@ const anderetalen = TAALVOLGORDE.map((code) => ({
   <meta property="og:image:alt" content="Audio Upgrade Emmen — groots geluid, onzichtbaar ingebouwd" />
   <meta property="og:site_name" content={SITE.name} />
   <meta name="twitter:card" content="summary_large_image" />
-  <link rel="icon" type="image/svg+xml" href={pad("/favicon.svg")} />
-  <link rel="apple-touch-icon" href={pad("/og-image.png")} />
+  {/* Het favicon: zwart AUE op wit. Zie scripts/favicon.mjs voor het hoe en
+      waarom, en daar maak je ze ook opnieuw.
+
+      De .ico staat vooraan voor Google en alles wat op het vaste adres kijkt;
+      de maat erbij zorgt dat Chrome in het tabblad toch de scherpe SVG pakt.
+      De PNG van 192 is voor Google, dat een veelvoud van 48 pixels wil. Het
+      aanraakicoon stond eerst op het deelplaatje van 1200 × 630 — dat werd
+      op een iPhone-beginscherm platgedrukt tot een vierkant. */}
+  <link rel="icon" href={pad("/favicon.ico")} sizes="48x48" />
+  <link rel="icon" href={pad("/favicon.svg")} type="image/svg+xml" />
+  <link rel="icon" href={pad("/icon-192.png")} type="image/png" sizes="192x192" />
+  <link rel="apple-touch-icon" href={pad("/apple-touch-icon.png")} />
   {/* De lettertypen staan op onze eigen server; zie de kop van global.css.
       Hier stond eerst een verwijzing naar fonts.googleapis.com, en daarmee
       ging het IP-adres van elke bezoeker naar Google.
