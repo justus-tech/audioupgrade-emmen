@@ -85,7 +85,7 @@ export const LOSSE_OPTIES = ['carplay-upgrade', 'akoestische-isolatie'];
  * Iemand die 1.500 euro meer betaalt zag dus vrijwel niets veranderen, en dat
  * is een argument om het niet te doen.
  *
- * Nu: Basis 2/2/3, Executive 4/4/4, Reference 5/5/5. Elke trede is zichtbaar.
+ * Nu: Basis 3/2/2, Executive 4/4/4, Reference 5/5/5. Elke trede is zichtbaar.
  *
  * TWEE REGELS, EN DE EERSTE IS DE MOEILIJKE
  *
@@ -98,9 +98,11 @@ export const LOSSE_OPTIES = ['carplay-upgrade', 'akoestische-isolatie'];
  *   2. De vijf is van het duurste pakket. Staat er bij Executive al een vijf
  *      op bas, dan valt er voor de Reference niets meer te verkopen.
  *
- * En het klopt ook gewoon. De Basis heeft geen subwoofer en draait op de
- * fabrieksversterker: meer bas dan af fabriek, maar geen diepte erbij. De
- * Executive heeft een DSP-versterker en een verstopte sub. De Reference heeft
+ * En het klopt ook gewoon. De cijfers van de Basis komen van Justus zelf:
+ * volume op 3 omdat betere speakers meer aankunnen zonder schel te worden,
+ * bas op 2 omdat geen sub naar wel sub minstens twee streepjes scheelt, en
+ * zuiverheid op 2 omdat zuiverheid van de DSP komt en die er niet in zit.
+ * De Executive heeft die DSP wel, plus een verstopte sub. De Reference heeft
  * acht kanalen, een op maat gebouwde kast en urenlange fase-afstemming.
  *
  * The Competition Build heeft helemaal geen balkjes meer — zie `uitgelicht`
@@ -213,12 +215,19 @@ export const PACKAGES = [
     ],
     cta: 'Kies Basis',
     duur: 'Klaar in een halve dag',
-    /* Zie de uitleg bij DE BALKJES onderaan dit bestand. Laag durven zijn:
-       dit pakket heeft geen subwoofer en draait op de fabrieksversterker. */
+    /**
+     * Deze drie zijn door Justus zelf bepaald, en per onderdeel om een reden:
+     *
+     *   Volume 3      betere speakers kunnen meer aan zonder schel te worden
+     *   Bass 2        geen sub naar wel sub is minstens twee streepjes
+     *   Zuiverheid 2  zuiverheid komt van de DSP, en die zit hier niet in
+     *
+     * Zie verder DE BALKJES hierboven.
+     */
     scores: [
-      { label: 'Volume', waarde: 2 },
+      { label: 'Volume', waarde: 3 },
       { label: 'Bass', waarde: 2 },
-      { label: 'Zuiverheid', waarde: 3 },
+      { label: 'Zuiverheid', waarde: 2 },
     ],
   },
   {
