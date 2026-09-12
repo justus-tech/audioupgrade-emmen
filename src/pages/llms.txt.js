@@ -16,7 +16,7 @@
  */
 import { MODELS } from '../data/models.js';
 import { MERKEN_MET_MODELLEN } from '../data/merken.js';
-import { PACKAGES, SITE, ADRES, AUDIOMERKEN } from '../data/site.js';
+import { PACKAGES, SITE, ADRES, AUDIOMERKEN, TIJDEN_KORT } from '../data/site.js';
 import { GARANTIE, LEVENSLANG, WERKWIJZE, ONTZORGEN, OVER } from '../data/generiek.js';
 import { VRAGEN } from '../data/vragen.js';
 
@@ -37,7 +37,7 @@ export async function GET() {
   const tekst = `# Audio Upgrade Emmen
 
 > Premium car audio, draadloze CarPlay- en Android Auto-inbouw, DSP-tuning en
-> akoestische demping. Gevestigd in Emmen (Drenthe, Nederland), uitsluitend op
+> akoestische demping. Gevestigd in Emmen (Drenthe, Nederland); bezoek gaat op
 > afspraak. Alles wordt onzichtbaar achter de originele panelen weggewerkt en
 > de fabrieksgarantie blijft intact.
 
@@ -51,7 +51,7 @@ export async function GET() {
 - KvK: ${SITE.kvk}
 - Btw: ${SITE.btw}
 - Werkgebied: Emmen, Drenthe en omstreken
-- Openingstijden: uitsluitend op afspraak
+- Openingstijden: ${TIJDEN_KORT} (zondag gesloten), bezoek op afspraak
 - Website: ${SITE.url}
 
 ## Wat wij doen
@@ -68,7 +68,7 @@ ziet.
 
 ## Prijzen
 
-Alle bedragen zijn all-in: inclusief montage en btw. Er zijn vijf pakketten.
+Alle bedragen zijn all-in: inclusief montage en btw. Er zijn ${PACKAGES.length} pakketten.
 
 ${pakketten}
 ## Werkwijze

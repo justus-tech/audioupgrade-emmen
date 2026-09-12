@@ -21,7 +21,7 @@
  *
  * Achter elk antwoord staat waar het vandaan komt, zodat dat na te lopen is.
  */
-import { SITE, PACKAGES } from './site.js';
+import { SITE, PACKAGES, TIJDEN_KORT } from './site.js';
 import { VANAF_JAAR } from './oldtimer.js';
 
 const goedkoopste = PACKAGES.reduce(
@@ -100,7 +100,7 @@ export const VRAGEN = [
   },
   {
     vraag: 'Waar zitten jullie?',
-    antwoord: `In Emmen, ${SITE.street}. Uitsluitend op afspraak, zodat je niet voor een dichte deur staat en we de tijd voor je auto vrij kunnen houden.`,
+    antwoord: `In Emmen, ${SITE.street}. We zijn open ${TIJDEN_KORT}, en op zondag gesloten. Langskomen gaat op afspraak, zodat je niet voor een dichte deur staat en we de tijd voor je auto vrij kunnen houden.`,
   },
 ];
 

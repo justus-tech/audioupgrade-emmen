@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css';
-import { SITE, PACKAGES, SCHEMA_SOORT } from '../data/site.js';
+import { SITE, PACKAGES, SCHEMA_SOORT, openingsblokken } from '../data/site.js';
 import { BRAND, LICHT, cssThema } from '../data/brand.js';
 import Logo from '../components/Logo.astro';
 import Herkomst from '../components/Herkomst.astro';
@@ -9,7 +9,7 @@ import { DEALERS } from '../data/dealers.js';
 import { whatsappLink, berichtOverAuto } from '../lib/whatsapp.js';
 import Taalkiezer from '../components/Taalkiezer.astro';
 import { TALEN, TAALVOLGORDE, STANDAARDTAAL, taalPad, wisselPad, padVan } from '../i18n/talen.js';
-import { tekstenVan } from '../i18n/teksten.js';
+import { tekstenVan, tijdenKortVan } from '../i18n/teksten.js';
 
 /**
  * `taal` bepaalt het lang-attribuut, het menu, de voettekst en de
@@ -232,11 +232,28 @@ const anderetalen = TAALVOLGORDE.map((code) => ({
     ],
     knowsLanguage: 'nl-NL',
     availableLanguage: 'Nederlands',
-    /* Geen vaste openingstijden: het is uitsluitend op afspraak. Dat zetten
-       we in de omschrijving en niet in openingHours, want daar zou je dan
-       tijden moeten verzinnen die niet kloppen. */
+    /**
+     * De openingstijden, machineleesbaar.
+     *
+     * Hier stond niets, met als reden dat het uitsluitend op afspraak gaat.
+     * Dat kostte bezoek: zonder deze regels valt het bedrijf buiten het
+     * filter "nu geopend" in Google Maps, en bedrijvengidsen die hun
+     * gegevens van Google overnemen zetten er "onbekend" neer.
+     *
+     * Op afspraak werken en openingstijden hebben sluiten elkaar niet uit.
+     * Het eerste staat in de omschrijving hieronder, het tweede hier — en
+     * beide kloppen. Zie OPENINGSTIJDEN in site.js.
+     */
+    openingHoursSpecification: openingsblokken()
+      .filter((b) => !b.gesloten)
+      .map((b) => ({
+        '@type': 'OpeningHoursSpecification',
+        dayOfWeek: b.dagen.map((d) => `https://schema.org/${d.schema}`),
+        opens: b.open,
+        closes: b.dicht,
+      })),
     description:
-      'Premium car audio, draadloze CarPlay- en Android Auto-inbouw, DSP-tuning en akoestische deurdemping in Emmen (Drenthe). Uitsluitend op afspraak. Onzichtbaar weggewerkt achter de originele panelen, met behoud van fabrieksgarantie.',
+      'Premium car audio, draadloze CarPlay- en Android Auto-inbouw, DSP-tuning en akoestische deurdemping in Emmen (Drenthe). Werken op afspraak. Onzichtbaar weggewerkt achter de originele panelen, met behoud van fabrieksgarantie.',
     makesOffer: PACKAGES.map((p) => ({
       '@type': 'Offer',
       name: p.name,
@@ -419,6 +436,10 @@ const anderetalen = TAALVOLGORDE.map((code) => ({
         <strong>{SITE.name}</strong><br />
         {SITE.street}<br />
         {SITE.postalCode} {SITE.city}<br />
+        {/* De tijden erbij, en niet alleen "op afspraak". Zonder tijden weet
+            een bezoeker niet wanneer hij je kan bereiken, en zoekmachines en
+            bedrijvengidsen zetten er "onbekend" neer. */}
+        <span class="tijden">{tijdenKortVan(taal)}</span><br />
         {T.voettekst.opAfspraak}<br />
         <a href={`tel:${SITE.phone}`}>{SITE.phoneDisplay}</a><br />
         <a href={`mailto:${SITE.email}`}>{SITE.email}</a>

@@ -55,6 +55,115 @@ export const AUDIOMERKEN = [
 export const ADRES = `${SITE.street}, ${SITE.postalCode} ${SITE.city}`;
 
 /**
+ * ==========================================================================
+ * DE OPENINGSTIJDEN
+ * ==========================================================================
+ * Hier stond niets, en op de site stond alleen "uitsluitend op afspraak".
+ * Dat kostte klanten op twee manieren.
+ *
+ * Een profiel zonder openingstijden valt buiten het filter "nu geopend" in
+ * Google Maps, oogt verlaten, en bedrijvengidsen die de gegevens van Google
+ * overnemen zetten er "onbekend" neer. Op afspraak werken is prima — maar
+ * dat is een eigenschap van het bedrijf en geen reden om geen tijden te
+ * hebben.
+ *
+ * Voor 24/7 is bewust niet gekozen. Dat leest bij een werkplaats als een
+ * leugen, en het ís er ook een: wie 's avonds laat appt en pas de volgende
+ * ochtend antwoord krijgt, voelt zich in de maling genomen. Deze hele site
+ * draait op vertrouwen (all-in prijzen, levenslange garantie) en daar past
+ * geen openingstijd bij die niet waargemaakt wordt.
+ *
+ * ZATERDAG IS DE BELANGRIJKSTE REGEL VAN DEZE LIJST
+ * Car audio is geen pech maar een wens: mensen regelen dat in hun vrije tijd.
+ * Zonder zaterdag moet iemand een halve dag vrij nemen om zijn auto te
+ * brengen, en dat stelt hij uit tot nooit. De meeste garages in de omgeving
+ * zijn zaterdag dicht. Het CarPlay-pakket is in twee uur klaar: dat is
+ * precies een zaterdagochtend.
+ *
+ * De donderdagavond vangt de klant die van negen tot vijf werkt — en dat is
+ * ook het moment waarop mensen op hun telefoon kijken wat er in hun auto kan.
+ *
+ * LET OP: DEZE TIJDEN ZIJN EEN BELOFTE
+ * Ze staan op de site, in de machineleesbare gegevens én in het
+ * Google-profiel. Die drie moeten gelijk zijn, anders vertrouwt Google er
+ * geen van alle. Verandert er iets, pas het hier aan en zet het dezelfde dag
+ * in het Google-profiel.
+ *
+ * Bevestigd door Justus op 12 september 2026.
+ */
+export const OPENINGSTIJDEN = [
+  { dag: 'Maandag', kort: 'ma', schema: 'Monday', open: '09:00', dicht: '17:30' },
+  { dag: 'Dinsdag', kort: 'di', schema: 'Tuesday', open: '09:00', dicht: '17:30' },
+  { dag: 'Woensdag', kort: 'wo', schema: 'Wednesday', open: '09:00', dicht: '17:30' },
+  /* Koopavond: de klant die overdag werkt kan hier alleen 's avonds heen. */
+  { dag: 'Donderdag', kort: 'do', schema: 'Thursday', open: '09:00', dicht: '20:00' },
+  { dag: 'Vrijdag', kort: 'vr', schema: 'Friday', open: '09:00', dicht: '17:30' },
+  { dag: 'Zaterdag', kort: 'za', schema: 'Saturday', open: '09:00', dicht: '14:00' },
+  { dag: 'Zondag', kort: 'zo', schema: 'Sunday', gesloten: true },
+];
+
+/**
+ * De tijden gegroepeerd: opeenvolgende dagen met dezelfde uren bij elkaar.
+ * Zo staat er "Maandag t/m woensdag 09:00 - 17:30" in plaats van drie keer
+ * dezelfde regel, en zo wil schema.org het ook hebben.
+ */
+export const openingsblokken = () => {
+  const blokken = [];
+  for (const dag of OPENINGSTIJDEN) {
+    if (dag.gesloten) {
+      blokken.push({ dagen: [dag], gesloten: true });
+      continue;
+    }
+    const vorige = blokken[blokken.length - 1];
+    const zelfde =
+      vorige && !vorige.gesloten && vorige.open === dag.open && vorige.dicht === dag.dicht;
+    if (zelfde) vorige.dagen.push(dag);
+    else blokken.push({ dagen: [dag], open: dag.open, dicht: dag.dicht });
+  }
+  return blokken;
+};
+
+/**
+ * Eén korte regel voor de voettekst.
+ *
+ * Blok voor blok opsommen werd te lang ("ma t/m wo 09:00–17:30 · do 09:00–
+ * 20:00 · vr 09:00–17:30 · za 09:00–14:00"). Daarom: één regel voor de
+ * doordeweekse dagen, met de koopavond tussen haakjes als uitzondering, en de
+ * zaterdag erachter.
+ *
+ * `woorden` levert de dagafkortingen en de twee verbindingswoorden, want die
+ * verschillen per taal: "ma t/m vr" in het Nederlands, "Mo bis Fr" in het
+ * Duits. De tijden zelf zijn overal gelijk. Zie tijdenKortVan() in
+ * src/i18n/teksten.js voor de tabellen.
+ */
+export const tijdenKort = (woorden) => {
+  const kortVan = (dag) => woorden[dag.schema] ?? dag.kort;
+  const doordeweeks = OPENINGSTIJDEN.filter((d) => !d.gesloten && d.schema !== 'Saturday');
+  /* De uren die het vaakst voorkomen zijn de gewone; de rest is uitzondering. */
+  const hoevaak = new Map();
+  for (const d of doordeweeks) {
+    const sleutel = `${d.open}–${d.dicht}`;
+    hoevaak.set(sleutel, (hoevaak.get(sleutel) ?? 0) + 1);
+  }
+  const gewoon = [...hoevaak.entries()].sort((a, b) => b[1] - a[1])[0][0];
+  const anders = doordeweeks.filter((d) => `${d.open}–${d.dicht}` !== gewoon);
+
+  const eerste = kortVan(doordeweeks[0]);
+  const laatste = kortVan(doordeweeks[doordeweeks.length - 1]);
+  let regel = `${eerste} ${woorden.totEnMet} ${laatste} ${gewoon}`;
+  if (anders.length) {
+    regel += ` (${anders.map((d) => `${kortVan(d)} ${woorden.tot} ${d.dicht}`).join(', ')})`;
+  }
+
+  const zaterdag = OPENINGSTIJDEN.find((d) => d.schema === 'Saturday' && !d.gesloten);
+  if (zaterdag) regel += ` · ${kortVan(zaterdag)} ${zaterdag.open}–${zaterdag.dicht}`;
+  return regel;
+};
+
+/** De Nederlandse versie, voor llms.txt en de veelgestelde vragen. */
+export const TIJDEN_KORT = tijdenKort({ totEnMet: 't/m', tot: 'tot' });
+
+/**
  * DE VIER AUDIOPAKKETTEN, IN OPLOPENDE PRIJS.
  *
  * Dit is de rij die de bezoeker vergelijkt. Alleen pakketten die over

@@ -26,6 +26,8 @@
  * overal mee.
  */
 
+import { tijdenKort } from '../data/site.js';
+
 export const TEKSTEN = {
   /* ---------------------------------------------------------------- NL --- */
   nl: {
@@ -41,7 +43,10 @@ export const TEKSTEN = {
         contact: 'Contact',
       },
       voettekst: {
-        opAfspraak: 'Uitsluitend op afspraak',
+        /* 'Uitsluitend op afspraak' stond hier, en dat sprak de openingstijden
+           ernaast tegen. Nu zeggen de twee samen het juiste: we zijn deze uren
+           open, maar meld je even aan. */
+        opAfspraak: 'Bezoek op afspraak',
         appDashboard: 'Stuur foto dashboard',
         upgrades: 'Upgrades',
         vragen: 'Veelgestelde vragen',
@@ -85,7 +90,7 @@ export const TEKSTEN = {
         adres: 'Werkstatt und Besucheradresse',
       },
       voettekst: {
-        opAfspraak: 'Nur nach Vereinbarung',
+        opAfspraak: 'Besuch nach Vereinbarung',
         appDashboard: 'Foto per WhatsApp',
         upgrades: 'Preise',
         vragen: 'Häufige Fragen',
@@ -243,7 +248,7 @@ export const TEKSTEN = {
         adres: 'Workshop and visiting address',
       },
       voettekst: {
-        opAfspraak: 'By appointment only',
+        opAfspraak: 'Visits by appointment',
         appDashboard: 'Send dashboard photo',
         upgrades: 'Pricing',
         vragen: 'Frequently asked questions',
@@ -376,5 +381,23 @@ export const TEKSTEN = {
 
 /** De teksten van één taal, met Nederlands als vangnet. */
 export const tekstenVan = (taal) => TEKSTEN[taal] ?? TEKSTEN.nl;
+
+/**
+ * De openingstijden op één regel, in de taal van de bezoeker.
+ *
+ * De tijden zelf staan in site.js en zijn overal gelijk; alleen de
+ * dagafkortingen en de twee verbindingswoorden verschillen. Zonder dit stond
+ * er "ma t/m vr" onderaan de Duitse pagina.
+ */
+const DAGWOORDEN = {
+  nl: { Monday: 'ma', Tuesday: 'di', Wednesday: 'wo', Thursday: 'do',
+        Friday: 'vr', Saturday: 'za', Sunday: 'zo', totEnMet: 't/m', tot: 'tot' },
+  de: { Monday: 'Mo', Tuesday: 'Di', Wednesday: 'Mi', Thursday: 'Do',
+        Friday: 'Fr', Saturday: 'Sa', Sunday: 'So', totEnMet: 'bis', tot: 'bis' },
+  en: { Monday: 'Mon', Tuesday: 'Tue', Wednesday: 'Wed', Thursday: 'Thu',
+        Friday: 'Fri', Saturday: 'Sat', Sunday: 'Sun', totEnMet: 'to', tot: 'until' },
+};
+
+export const tijdenKortVan = (taal) => tijdenKort(DAGWOORDEN[taal] ?? DAGWOORDEN.nl);
 
 export default TEKSTEN;

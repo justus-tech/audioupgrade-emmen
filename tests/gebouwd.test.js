@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { MODELS } from '../src/data/models.js';
 import { MERKEN_MET_MODELLEN } from '../src/data/merken.js';
 import { JURIDISCHE_PAGINAS } from '../src/data/juridisch.js';
-import { PACKAGES, SITE, SCHEMA_SOORT } from '../src/data/site.js';
+import { PACKAGES, SITE, SCHEMA_SOORT, OPENINGSTIJDEN } from '../src/data/site.js';
 import { DEALERS } from '../src/data/dealers.js';
 import { VRAGEN } from '../src/data/vragen.js';
 import { OVER } from '../src/data/generiek.js';
@@ -253,6 +253,61 @@ describe('gestructureerde gegevens voor Google', alsGebouwd, () => {
         `${pad}: bedrijfsgegevens ontbreken`
       );
       assert.ok(html.includes(SITE.street), `${pad}: adres ontbreekt`);
+    }
+  });
+
+  /**
+   * De openingstijden, machineleesbaar.
+   *
+   * Zonder deze regels valt het bedrijf buiten het filter "nu geopend" in
+   * Google Maps, en bedrijvengidsen die hun gegevens van Google overnemen
+   * zetten er "onbekend" neer. Ze stonden er niet in omdat het op afspraak
+   * gaat; dat is geen reden om geen tijden te hebben.
+   *
+   * De tijden op de contactpagina en die in dit blok komen uit dezelfde
+   * bron. Deze test houdt vast dat ze daar ook allebei terechtkomen — lopen
+   * ze uiteen, dan staat er in Google iets anders dan op het scherm.
+   */
+  test('elke pagina geeft de openingstijden door aan Google', () => {
+    const open = OPENINGSTIJDEN.filter((d) => !d.gesloten);
+
+    for (const [pad, html] of inhoud) {
+      const blok = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+        .map((x) => JSON.parse(x[1]))
+        .find((x) => x['@type'] === SCHEMA_SOORT);
+      assert.ok(blok, `${pad}: geen bedrijfsblok`);
+
+      const spec = blok.openingHoursSpecification;
+      assert.ok(Array.isArray(spec) && spec.length, `${pad}: geen openingstijden`);
+
+      /* Elke open dag moet er precies één keer in staan, met de juiste uren. */
+      for (const dag of open) {
+        const regel = spec.find((s) => s.dayOfWeek.includes(`https://schema.org/${dag.schema}`));
+        assert.ok(regel, `${pad}: ${dag.dag} ontbreekt in de openingstijden`);
+        assert.equal(regel.opens, dag.open, `${pad}: ${dag.dag} opent verkeerd`);
+        assert.equal(regel.closes, dag.dicht, `${pad}: ${dag.dag} sluit verkeerd`);
+      }
+
+      /* En een dag die dicht is, hoort er niet tussen te staan. */
+      for (const dag of OPENINGSTIJDEN.filter((d) => d.gesloten)) {
+        const regel = spec.find((s) => s.dayOfWeek.includes(`https://schema.org/${dag.schema}`));
+        assert.equal(regel, undefined, `${pad}: ${dag.dag} staat erin terwijl het gesloten is`);
+      }
+    }
+  });
+
+  test('de contactpagina toont dezelfde tijden als Google krijgt', () => {
+    const html = inhoud.get('/contact');
+    assert.ok(html, '/contact ontbreekt');
+    for (const dag of OPENINGSTIJDEN) {
+      if (dag.gesloten) {
+        assert.ok(html.includes(dag.dag), `/contact: ${dag.dag} staat er niet op`);
+        continue;
+      }
+      assert.ok(
+        html.includes(`${dag.open} – ${dag.dicht}`),
+        `/contact: de tijden van ${dag.dag} staan er niet op`
+      );
     }
   });
 
