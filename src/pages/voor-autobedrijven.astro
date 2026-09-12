@@ -1,0 +1,172 @@
+---
+/**
+ * De pagina voor autobedrijven.
+ *
+ * Geen pakketten en geen prijzen: die spreekt Justus per bedrijf af, en een
+ * handelsprijs hoort niet op een pagina waar zijn particuliere klanten bij
+ * kunnen. Zie de uitleg boven in src/data/dealers.js.
+ *
+ * Deze pagina staat bewust niet in het hoofdmenu. Dat menu is voor de klant
+ * met een auto, en dat is negenennegentig van de honderd bezoekers. Een
+ * autobedrijf komt hier via de voettekst, via het blok op de homepage, of
+ * via Google.
+ */
+import Base from '../layouts/Base.astro';
+import Fotoband from '../components/Fotoband.astro';
+import { DEALERS } from '../data/dealers.js';
+import { LEVENSLANG } from '../data/generiek.js';
+import { SITE } from '../data/site.js';
+import { pad } from '../lib/pad.js';
+/* Foto: Unsplash — vrij te gebruiken. Zie src/components/Fotoband.astro. */
+import deurspeaker from '../assets/foto/deurspeaker.jpg';
+import { whatsappLink } from '../lib/whatsapp.js';
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: DEALERS.faq.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+};
+---
+<Base title={DEALERS.titel} description={DEALERS.beschrijving}
+      path={`/${DEALERS.slug}`}>
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <section>
+    <div class="wrap">
+      <span class="eyebrow">{DEALERS.eyebrow}</span>
+      <h1>{DEALERS.kop}</h1>
+      <p class="lead" style="margin-top:1.4em">{DEALERS.intro}</p>
+      <a class="btn wa" style="margin-top:2em"
+         href={whatsappLink(DEALERS.cta.bericht)}>{DEALERS.cta.knop}</a>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap">
+      <h2>{DEALERS.waarom.kop}</h2>
+      {/* Geen nummers hier: dit zijn drie losse argumenten en geen volgorde.
+          De nummers staan bij "hoe het loopt", want dat is wél een volgorde. */}
+      <div class="grid cols-3 mt">
+        {DEALERS.waarom.punten.map((p) => (
+          <div class="belofte">
+            <h3>{p.kop}</h3>
+            <p>{p.tekst}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>{DEALERS.hoe.kop}</h2>
+      {/* Vier stappen op een rij, en anders twee — nooit drie met eentje er
+          los onder. Zie .grid.vier in global.css. */}
+      <div class="grid vier mt">
+        {DEALERS.hoe.stappen.map((s, i) => (
+          <div class="step">
+            <span class="num">0{i + 1}</span>
+            <h3 style="margin-top:12px">{s.kop}</h3>
+            <p>{s.tekst}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <Fotoband
+    foto={deurspeaker}
+    hoogte="laag"
+    alt="Speakerrooster in een deurpaneel, verlicht door de sfeerverlichting van de auto"
+    kop="Aan de buitenkant zie je er niets van"
+    tekst="Alles zit achter de originele panelen. Je levert een auto af die er af fabriek uitziet en niet zo klinkt."
+  />
+
+  <section class="alt">
+    <div class="wrap">
+      <h2>{DEALERS.zorgen.kop}</h2>
+      <div class="grid cols-3 mt">
+        {DEALERS.zorgen.punten.map((p) => (
+          <div class="belofte">
+            <h3>{p.kop}</h3>
+            <p>{p.tekst}</p>
+          </div>
+        ))}
+      </div>
+      <p class="garantiestrip">
+        <strong>{LEVENSLANG.kort}</strong>
+        <span>Zolang de auto van je klant blijft. Voor de apparatuur geldt de fabrieksgarantie.</span>
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="troef troef-breed">
+        <span class="eyebrow">Voor later</span>
+        <h2>{DEALERS.voorraad.kop}</h2>
+        <p>{DEALERS.voorraad.tekst}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap">
+      <h2>Veelgestelde vragen</h2>
+      <div class="mt">
+        {DEALERS.faq.map((f) => (
+          <details>
+            <summary>{f.q}</summary>
+            <p>{f.a}</p>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="center">
+    <div class="wrap">
+      <h2>{DEALERS.cta.kop}</h2>
+      <p style="margin:0 auto 2em;">{DEALERS.cta.tekst}</p>
+      <a class="btn wa" href={whatsappLink(DEALERS.cta.bericht)}>{DEALERS.cta.knop}</a>
+      <p style="margin-top:2em">
+        Liever bellen: <a href={`tel:${SITE.phone}`}>{SITE.phoneDisplay}</a> ·
+        <a href={pad('/upgrades')}>bekijk eerst de pakketten</a>
+      </p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .belofte { border-top: 1px solid var(--line-strong); padding-top: 18px; }
+  .belofte h3 { margin-bottom: 12px; }
+  .belofte p { font-size: .94rem; }
+
+  .step h3 { margin-bottom: 10px; }
+
+  /* Zelfde regel als onder de prijzen op de homepage. */
+  .garantiestrip {
+    max-width: 62ch;
+    margin: 3.2rem auto 0;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--accent);
+    text-align: center;
+  }
+  .garantiestrip strong {
+    display: block;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    font-size: clamp(.82rem, 2.4vw, .98rem);
+  }
+  .garantiestrip span {
+    display: block;
+    margin-top: .7em;
+    font-size: .88rem;
+    color: var(--text-dim);
+  }
+</style>

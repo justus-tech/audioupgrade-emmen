@@ -18,6 +18,7 @@ import { MODELS } from '../src/data/models.js';
 import { MERKEN_MET_MODELLEN } from '../src/data/merken.js';
 import { JURIDISCHE_PAGINAS } from '../src/data/juridisch.js';
 import { PACKAGES, SITE, SCHEMA_SOORT } from '../src/data/site.js';
+import { DEALERS } from '../src/data/dealers.js';
 import { VRAGEN } from '../src/data/vragen.js';
 import { OVER } from '../src/data/generiek.js';
 import { REVIEWS } from '../src/data/reviews.js';
@@ -91,6 +92,47 @@ describe('opgeleverde pagina\'s', alsGebouwd, () => {
         assert.ok(html.includes(`href="/${doc.slug}"`), `${pad}: geen link naar /${doc.slug}`);
       }
     }
+  });
+
+  /**
+   * De pagina voor autobedrijven.
+   *
+   * Die staat bewust niet in het menu — dat is voor de klant met een auto —
+   * maar moet wel vanaf elke Nederlandse pagina te vinden zijn, en op de
+   * Duitse en Engelse juist niet: het gaat over dealers in Drenthe.
+   */
+  test('de dealerpagina staat er en is vanaf elke Nederlandse pagina te vinden', () => {
+    const adres = `/${DEALERS.slug}`;
+    assert.ok(inhoud.has(adres), `ontbreekt: ${adres}`);
+
+    for (const [pad, html] of inhoud) {
+      const vertaald = pad === '/de' || pad === '/en' || pad.startsWith('/de/') || pad.startsWith('/en/');
+      const linkt = html.includes(`href="${adres}"`);
+      if (vertaald) {
+        assert.equal(linkt, false, `${pad}: verwijst naar een Nederlandse pagina`);
+      } else {
+        assert.ok(linkt, `${pad}: geen link naar ${adres}`);
+      }
+    }
+  });
+
+  /**
+   * Twee dingen die op deze pagina niet thuishoren, en allebei om een reden
+   * die je pas merkt als het misgaat.
+   *
+   * Inkoopprijzen: die spreekt Justus per bedrijf af, en zijn particuliere
+   * klanten kunnen deze pagina gewoon lezen. Staat er een handelsprijs op,
+   * dan weet iedereen wat de marge is.
+   *
+   * Namen van autobedrijven: er is er nog geen een. Een logo of een "wij
+   * werken samen met" is dan gewoon niet waar.
+   */
+  test('de dealerpagina noemt geen bedragen', () => {
+    const html = inhoud.get(`/${DEALERS.slug}`);
+    // Alleen in de eigenlijke tekst kijken: de gestructureerde gegevens en de
+    // voettekst van de site staan er ook in.
+    const tekst = (html.match(/<main[\s\S]*?<\/main>/) || [html])[0];
+    assert.doesNotMatch(tekst, /€\s?\d/, 'er staat een bedrag op de dealerpagina');
   });
 
   test('geen enkele pagina is verdacht klein', () => {

@@ -129,6 +129,7 @@ ${VRAGEN.map((v) => `**${v.vraag}**\n${v.antwoord}`).join('\n\n')}
 - ${SITE.url}/upgrades — alle pakketten met prijzen
 - ${SITE.url}/audio-upgrade — alle modellen, doorzoekbaar
 - ${SITE.url}/oldtimer-audio — klassiekers en youngtimers, prijs in overleg
+- ${SITE.url}/voor-autobedrijven — voor dealers: een upgrade als derde optie, ingebouwd vóór de aflevering
 - ${SITE.url}/werkwijze — hoe het in zijn werk gaat
 - ${SITE.url}/contact — contact en route
 `;

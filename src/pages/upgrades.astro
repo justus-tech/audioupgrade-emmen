@@ -18,6 +18,7 @@ import Kentekenplaat from '../components/Kentekenplaat.astro';
 import Merken from '../components/Merken.astro';
 import Fotoband from '../components/Fotoband.astro';
 import ModelKiezer from '../components/ModelKiezer.astro';
+import NogGeenAuto from '../components/NogGeenAuto.astro';
 /* Foto: Unsplash — vrij te gebruiken. Zie src/components/Fotoband.astro. */
 import speakerconus from '../assets/foto/speakerconus.jpg';
 import { SITE, AUDIOPAKKETTEN, LOSSE_OPTIES, pakkettenVan } from '../data/site.js';
@@ -107,6 +108,14 @@ const los = pakkettenVan(LOSSE_OPTIES);
     kop="Geweven conus, geen papier"
     tekst="Waar de fabriek papier gebruikt, gebruiken wij materiaal dat vorm houdt — ook na tien jaar in een deur vol vocht."
   />
+
+  {/* Wie hier de prijzen staat te vergelijken heeft soms de auto nog niet.
+      Dan kan het vooraf, via het autobedrijf. */}
+  <section>
+    <div class="wrap">
+      <NogGeenAuto />
+    </div>
+  </section>
 
   {/* Doorkijk per pakket. Eén tekening: het bovenaanzicht verschilt niet
       per carrosserie, dus er is geen reden om zeven varianten te renderen. */}

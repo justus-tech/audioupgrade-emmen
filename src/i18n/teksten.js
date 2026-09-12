@@ -48,6 +48,7 @@ export const TEKSTEN = {
         over: 'Wie zijn wij',
         modellen: 'Upgrade per automodel',
         klassiekers: 'Klassiekers en youngtimers',
+        autobedrijven: 'Voor autobedrijven',
         voorwaarden: 'Algemene voorwaarden',
         privacy: 'Privacybeleid',
         cookies: 'Cookiebeleid',

@@ -1,0 +1,48 @@
+---
+/**
+ * Het blok voor wie nog aan het zoeken is naar een auto.
+ *
+ * Staat op de homepage en op de upgradepagina. Eén component, want twee keer
+ * dezelfde tekst op twee plekken gaat vroeg of laat uit elkaar lopen — en
+ * Google ziet twee bijna gelijke stukken tekst liever niet.
+ *
+ * De tekst zelf staat in src/data/dealers.js, samen met de dealerpagina waar
+ * de onderste link naartoe wijst.
+ */
+import { NOG_GEEN_AUTO, DEALERS } from '../data/dealers.js';
+import { pad } from '../lib/pad.js';
+import { whatsappLink } from '../lib/whatsapp.js';
+---
+<div class="zoekend troef troef-breed">
+  <span class="eyebrow">{NOG_GEEN_AUTO.eyebrow}</span>
+  <h2>{NOG_GEEN_AUTO.kop}</h2>
+  <p>{NOG_GEEN_AUTO.tekst}</p>
+  <p class="slot">{NOG_GEEN_AUTO.slot}</p>
+  <a class="btn wa" href={whatsappLink(NOG_GEEN_AUTO.bericht)}>{NOG_GEEN_AUTO.knop}</a>
+  {/* Klein en onderaan met opzet: negenennegentig van de honderd bezoekers
+      hebben hier niets te zoeken. De enkeling die een autobedrijf heeft,
+      vindt hem precies op het moment dat het over zijn vak gaat. */}
+  <p class="voor-de-handel">
+    <a href={pad(`/${DEALERS.slug}`)}>{NOG_GEEN_AUTO.link} →</a>
+  </p>
+</div>
+
+<style>
+  .slot { font-weight: 600; }
+  .voor-de-handel {
+    margin-top: 1.8em;
+    padding-top: 1.4em;
+    border-top: 1px solid var(--line);
+    font-size: .84rem;
+  }
+  .voor-de-handel a {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    font-size: .72rem;
+    color: var(--text-dim);
+  }
+  @media (hover: hover) {
+    .voor-de-handel a:hover { color: var(--accent-text); }
+  }
+</style>

@@ -7,6 +7,7 @@ import Golflijn from '../components/Golflijn.astro';
 import Fotoband from '../components/Fotoband.astro';
 import OverJustus from '../components/OverJustus.astro';
 import Reviews from '../components/Reviews.astro';
+import NogGeenAuto from '../components/NogGeenAuto.astro';
 import { REVIEWS } from '../data/reviews.js';
 /* Foto: Unsplash — vrij te gebruiken. Zie src/components/Fotoband.astro. */
 import deurspeaker from '../assets/foto/deurspeaker.jpg';
@@ -103,6 +104,15 @@ const los = pakkettenVan(LOSSE_OPTIES);
     kop="Onzichtbaar ingebouwd"
     tekst="Aan de buitenkant verandert er niets. Het verschil zit achter het paneel."
   />
+
+  {/* Voor wie nog aan het zoeken is naar een auto. Staat hier en niet hoger:
+      wie al weet wat hij wil, moet eerst de pakketten en de prijzen zien.
+      De fotoband hierboven is de scheiding, dus deze mag de andere tint. */}
+  <section class="alt">
+    <div class="wrap">
+      <NogGeenAuto />
+    </div>
+  </section>
 
   <section>
     <div class="wrap">

@@ -5,6 +5,7 @@ import { BRAND, LICHT, cssThema } from '../data/brand.js';
 import Logo from '../components/Logo.astro';
 import Herkomst from '../components/Herkomst.astro';
 import { pad } from '../lib/pad.js';
+import { DEALERS } from '../data/dealers.js';
 import { whatsappLink, berichtOverAuto } from '../lib/whatsapp.js';
 import Taalkiezer from '../components/Taalkiezer.astro';
 import { TALEN, TAALVOLGORDE, STANDAARDTAAL, taalPad, wisselPad, padVan } from '../i18n/talen.js';
@@ -432,7 +433,13 @@ const anderetalen = TAALVOLGORDE.map((code) => ({
         {taal === STANDAARDTAAL && (
           <><a href={pad("/audio-upgrade")}>{T.voettekst.modellen}</a><br /></>
         )}
-        <a href={pad(padVan('oldtimer', taal))}>{T.voettekst.klassiekers}</a>
+        <a href={pad(padVan('oldtimer', taal))}>{T.voettekst.klassiekers}</a><br />
+        {/* De pagina voor autobedrijven staat hier en niet in het menu: het
+            menu is voor de klant met een auto, en dat is vrijwel iedereen.
+            Alleen in het Nederlands — het gaat over dealers in Drenthe. */}
+        {taal === STANDAARDTAAL && (
+          <a href={pad(`/${DEALERS.slug}`)}>{T.voettekst.autobedrijven}</a>
+        )}
       </div>
       <div class="legal">
         {/* De juridische teksten staan alleen in het Nederlands, en dat blijft

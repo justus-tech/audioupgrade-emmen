@@ -24,6 +24,8 @@ const VAST = [
   ['/over-ons', 0.7],
   ['/contact', 0.7],
   ['/oldtimer-audio', 0.8],
+  // Eigen doelgroep: autobedrijven die een derde optie willen aanbieden.
+  ['/voor-autobedrijven', 0.6],
   // Hoog, want dit is de pagina die op losse vragen moet ranken.
   ['/veelgestelde-vragen', 0.8],
   // De juridische pagina's horen wel in de sitemap — mensen zoeken er soms
