@@ -85,7 +85,7 @@ export const LOSSE_OPTIES = ['carplay-upgrade', 'akoestische-isolatie'];
  * Iemand die 1.500 euro meer betaalt zag dus vrijwel niets veranderen, en dat
  * is een argument om het niet te doen.
  *
- * Nu: Basis 3/2/2, Executive 4/4/4, Reference 5/5/5. Elke trede is zichtbaar.
+ * Nu: Basis 3/2/3, Executive 4/4/4, Reference 5/5/5. Elke trede is zichtbaar.
  *
  * TWEE REGELS, EN DE EERSTE IS DE MOEILIJKE
  *
@@ -101,7 +101,8 @@ export const LOSSE_OPTIES = ['carplay-upgrade', 'akoestische-isolatie'];
  * En het klopt ook gewoon. De cijfers van de Basis komen van Justus zelf:
  * volume op 3 omdat betere speakers meer aankunnen zonder schel te worden,
  * bas op 2 omdat geen sub naar wel sub minstens twee streepjes scheelt, en
- * zuiverheid op 2 omdat zuiverheid van de DSP komt en die er niet in zit.
+ * zuiverheid op 3 omdat het loepzuiver is tegenover de fabrieksspeakers maar
+ * nog lang niet op het niveau van de Reference.
  * De Executive heeft die DSP wel, plus een verstopte sub. De Reference heeft
  * acht kanalen, een op maat gebouwde kast en urenlange fase-afstemming.
  *
@@ -220,14 +221,16 @@ export const PACKAGES = [
      *
      *   Volume 3      betere speakers kunnen meer aan zonder schel te worden
      *   Bass 2        geen sub naar wel sub is minstens twee streepjes
-     *   Zuiverheid 2  zuiverheid komt van de DSP, en die zit hier niet in
+     *   Zuiverheid 3  loepzuiver tegenover de fabrieksspeakers, maar nog
+     *                 lang niet op het niveau van de Reference — die
+     *                 laatste stap komt van de DSP
      *
      * Zie verder DE BALKJES hierboven.
      */
     scores: [
       { label: 'Volume', waarde: 3 },
       { label: 'Bass', waarde: 2 },
-      { label: 'Zuiverheid', waarde: 2 },
+      { label: 'Zuiverheid', waarde: 3 },
     ],
   },
   {
