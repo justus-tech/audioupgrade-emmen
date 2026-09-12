@@ -280,6 +280,45 @@ describe('pakketten en prijzen', () => {
    * de duurste kaart letterlijk "even goed als die hiernaast". Dat is een
    * argument om hem niet te kopen, en het is ook nog eens niet waar te maken.
    */
+  /**
+   * Elke trede moet zichtbaar zijn.
+   *
+   * De balkjes hebben maar één taak: laten zien wat je erbij krijgt als je
+   * een pakket hoger gaat. Staat er bij het ene 4/5/5 en bij het volgende
+   * 5/5/5, dan zie je voor 1.500 euro één blokje verschil — en dat is een
+   * argument om het niet te doen. Zie DE BALKJES in site.js.
+   */
+  test('de balkjes lopen per onderdeel op met de prijs', () => {
+    const metBalkjes = pakkettenVan(AUDIOPAKKETTEN).filter((p) => p.scores.length > 0);
+    const labels = metBalkjes[0].scores.map((s) => s.label);
+
+    for (const label of labels) {
+      let vorige = null;
+      for (const p of metBalkjes) {
+        const score = p.scores.find((s) => s.label === label);
+        assert.ok(score, `${p.slug}: heeft geen ${label} terwijl de anderen dat wel hebben`);
+        if (vorige) {
+          assert.ok(
+            score.waarde > vorige.waarde,
+            `${label}: ${p.slug} staat op ${score.waarde} en ${vorige.slug} ook al op ${vorige.waarde}`
+          );
+        }
+        vorige = { waarde: score.waarde, slug: p.slug };
+      }
+    }
+  });
+
+  /* De vijf is van het duurste pakket. Staat er eerder al een vijf, dan valt
+     er voor het pakket erboven niets meer te verkopen. */
+  test('alleen het hoogste audiopakket met balkjes haalt de vijf', () => {
+    const metBalkjes = pakkettenVan(AUDIOPAKKETTEN).filter((p) => p.scores.length > 0);
+    for (const p of metBalkjes.slice(0, -1)) {
+      for (const s of p.scores) {
+        assert.ok(s.waarde < 5, `${p.slug}: ${s.label} staat al op 5`);
+      }
+    }
+  });
+
   test('geen twee audiopakketten tonen dezelfde balkjes', () => {
     const gezien = new Map();
     for (const p of pakkettenVan(AUDIOPAKKETTEN)) {

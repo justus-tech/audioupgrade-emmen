@@ -76,6 +76,37 @@ export const AUDIOPAKKETTEN = [
 /** De twee losse opties, náást de vier hierboven. */
 export const LOSSE_OPTIES = ['carplay-upgrade', 'akoestische-isolatie'];
 
+/**
+ * ==========================================================================
+ * DE BALKJES, EN WAAROM ZE ONDERIN LAAG ZIJN
+ * ==========================================================================
+ * Ze stonden eerst zo: Basis 3/4/4, Executive 4/5/5, Reference 5/5/5. Alles
+ * hoog, en tussen Executive en Reference één blokje verschil op vijftien.
+ * Iemand die 1.500 euro meer betaalt zag dus vrijwel niets veranderen, en dat
+ * is een argument om het niet te doen.
+ *
+ * Nu: Basis 2/2/3, Executive 4/4/4, Reference 5/5/5. Elke trede is zichtbaar.
+ *
+ * TWEE REGELS, EN DE EERSTE IS DE MOEILIJKE
+ *
+ *   1. De onderkant moet laag durven zijn. De verleiding is om je instapper
+ *      ook mooi te laten scoren, maar dan zeggen de balkjes niets meer en
+ *      heeft niemand een reden om hoger te kijken. Erger nog: wie de Basis
+ *      koopt in de verwachting van 4 op bas, komt teleurgesteld terug. Die
+ *      teleurstelling kost meer dan het verschil in de verkoop.
+ *
+ *   2. De vijf is van het duurste pakket. Staat er bij Executive al een vijf
+ *      op bas, dan valt er voor de Reference niets meer te verkopen.
+ *
+ * En het klopt ook gewoon. De Basis heeft geen subwoofer en draait op de
+ * fabrieksversterker: meer bas dan af fabriek, maar geen diepte erbij. De
+ * Executive heeft een DSP-versterker en een verstopte sub. De Reference heeft
+ * acht kanalen, een op maat gebouwde kast en urenlange fase-afstemming.
+ *
+ * The Competition Build heeft helemaal geen balkjes meer — zie `uitgelicht`
+ * daar. Die stond op 5/5/5, precies als de Reference ernaast.
+ */
+
 /** Hulpje: de pakketten van een lijst met slugs, in díé volgorde. */
 export const pakkettenVan = (slugs) =>
   slugs.map((s) => PACKAGES.find((p) => p.slug === s)).filter(Boolean);
@@ -154,10 +185,14 @@ export const PACKAGES = [
     ],
     cta: 'Kies CarPlay',
     duur: 'Klaar in ± 2 uur',
+    /* Audio op 2 en niet op 3. Dit pakket raakt je speakers niet aan; het
+       enige dat je wint is een betere bron. Stond het hoger, dan leek CarPlay
+       op een modelpagina beter te klinken dan de Akoestische Basis ernaast —
+       en dan stuur je iemand die geluid wil naar het verkeerde pakket. */
     scores: [
       { label: 'Integratie', waarde: 5 },
       { label: 'Snelheid', waarde: 5 },
-      { label: 'Audio', waarde: 3 },
+      { label: 'Audio', waarde: 2 },
     ],
   },
   {
@@ -178,10 +213,12 @@ export const PACKAGES = [
     ],
     cta: 'Kies Basis',
     duur: 'Klaar in een halve dag',
+    /* Zie de uitleg bij DE BALKJES onderaan dit bestand. Laag durven zijn:
+       dit pakket heeft geen subwoofer en draait op de fabrieksversterker. */
     scores: [
-      { label: 'Volume', waarde: 3 },
-      { label: 'Bass', waarde: 4 },
-      { label: 'Zuiverheid', waarde: 4 },
+      { label: 'Volume', waarde: 2 },
+      { label: 'Bass', waarde: 2 },
+      { label: 'Zuiverheid', waarde: 3 },
     ],
   },
   {
@@ -203,10 +240,12 @@ export const PACKAGES = [
     ],
     cta: 'Kies Executive',
     duur: 'Je auto staat één werkdag bij ons',
+    /* Vier over de hele linie: een DSP-versterker, een verstopte subwoofer
+       en een volledige afstemming. De vijf blijft voor de Reference. */
     scores: [
       { label: 'Volume', waarde: 4 },
-      { label: 'Bass', waarde: 5 },
-      { label: 'Zuiverheid', waarde: 5 },
+      { label: 'Bass', waarde: 4 },
+      { label: 'Zuiverheid', waarde: 4 },
     ],
   },
   {
