@@ -89,9 +89,9 @@ const PAKKETTEN_DE = {
   },
   'reference-edition': {
     naam: "The Reference Edition",
-    prijs: "ab 3.695 €",
+    prijs: "3.695 €",
     prijsNoot: "Inklusive MwSt. und Einbau",
-    prijsExcl: "ab 3.053 € zzgl. MwSt.",
+    prijsExcl: "3.053 € zzgl. MwSt.",
     tagline: 'Kompromisslose audiophile Perfektion.',
     short: 'Audiophile Perfektion für alle, die sich weigern, Kompromisse zu machen.',
     body:
@@ -106,16 +106,16 @@ const PAKKETTEN_DE = {
       'Komplette Dämmung: Außenhaut, Innenhaut und Verkleidung.',
       'Stundenlange Phasenabstimmung am Laptop durch den Spezialisten.',
     ],
-    cta: 'Maßarbeit besprechen',
+    cta: 'Reference anfragen',
     duur: 'Zwei bis drei Tage, inklusive Abstimmung',
   },
   /* Het duurste pakket. In het Duits mag dit gerust groot klinken: daar is
      "Wettbewerbsanlage" een begrip en showbouw een eigen wereld. */
   'competitie-show': {
     naam: "The Competition Build",
-    prijs: "ab 12.500 €",
-    prijsNoot: "Inklusive MwSt. und Einbau",
-    prijsExcl: "ab 10.330 € zzgl. MwSt.",
+    prijs: "Preis auf Anfrage",
+    prijsNoot: "Projekte beginnen bei rund 12.500 €",
+    prijsExcl: "Inklusive MwSt. und Einbau",
     tagline: 'Für alle, die es zeigen wollen.',
     short: 'Wettbewerbs- und Showanlagen nach Maß, bei denen der Einbau selbst das Schaustück ist.',
     body:
@@ -129,6 +129,13 @@ const PAKKETTEN_DE = {
     ],
     cta: 'Projekt besprechen',
     duur: 'Eine Woche oder länger — nach Absprache',
+    /* Geen balkjes maar drie regels; zie `uitgelicht` in site.js. */
+    uitgelicht: [
+      { label: 'Stil', waarde: 'Bewusst sichtbar statt versteckt' },
+      { label: 'Entwurf', waarde: 'Vorab gezeichnet, gemeinsam bestimmt' },
+      { label: 'Aufbau', waarde: 'Von Hand, komplett nach Maß' },
+    ],
+    vlag: 'Maßarbeit',
   },
   'akoestische-isolatie': {
     naam: "Akustik-Dämmung",
@@ -211,9 +218,9 @@ const PAKKETTEN_EN = {
   },
   'reference-edition': {
     naam: "The Reference Edition",
-    prijs: "from €3,695",
+    prijs: "€3,695",
     prijsNoot: "VAT and fitting included",
-    prijsExcl: "from €3,053 excl. VAT",
+    prijsExcl: "€3,053 excl. VAT",
     tagline: 'Audiophile perfection, no compromises.',
     short: 'Audiophile perfection for those who refuse to compromise.',
     body:
@@ -228,14 +235,14 @@ const PAKKETTEN_EN = {
       'Complete damping: outer skin, inner skin and panel.',
       'Hours of specialist phase tuning by laptop.',
     ],
-    cta: 'Discuss a bespoke build',
+    cta: 'Ask about Reference',
     duur: 'Two to three days, tuning included',
   },
   'competitie-show': {
     naam: "The Competition Build",
-    prijs: "from €12,500",
-    prijsNoot: "VAT and fitting included",
-    prijsExcl: "from €10,330 excl. VAT",
+    prijs: "Price on request",
+    prijsNoot: "Projects start at around €12,500",
+    prijsExcl: "VAT and fitting included",
     tagline: 'For the ones who want it seen.',
     short: 'Competition and show builds to order, where the installation itself is the showpiece.',
     body:
@@ -249,6 +256,12 @@ const PAKKETTEN_EN = {
     ],
     cta: 'Discuss your project',
     duur: 'A week or longer — by arrangement',
+    uitgelicht: [
+      { label: 'Style', waarde: 'Built to be seen, not hidden' },
+      { label: 'Design', waarde: 'Drawn up front, agreed together' },
+      { label: 'Build', waarde: 'By hand, entirely bespoke' },
+    ],
+    vlag: 'Bespoke',
   },
   'akoestische-isolatie': {
     naam: "Acoustic Insulation",

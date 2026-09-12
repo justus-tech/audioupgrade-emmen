@@ -80,6 +80,22 @@ const scoreNaam = (label) => L.scores?.[label] ?? label;
  * krijgt `los`, zodat hij niet meerekt tot de hoogte van de andere kaarten.
  */
 const scoresTonen = showScores && pkg.scores.length > 0;
+
+/**
+ * Sommige pakketten hebben geen balkjes maar drie regels tekst op die plek.
+ * The Competition Build is er zo een: daar zeggen Volume, Bass en Zuiverheid
+ * niets, want die staan bij het pakket ernaast ook al op vijf. Zie de uitleg
+ * bij `uitgelicht` in site.js.
+ */
+const uitgelicht = v.uitgelicht ?? pkg.uitgelicht ?? [];
+const uitgelichtTonen = showScores && !scoresTonen && uitgelicht.length > 0;
+/* Staat er in het midden van de kaart iets? Zo niet, dan hoeft hij niet mee
+   te rekken tot de hoogte van de kaart ernaast. */
+const middenTonen = scoresTonen || uitgelichtTonen;
+
+/* Het open vlaggetje, voor een pakket dat een soort apart is. */
+const vlag = v.vlag ?? pkg.vlag ?? null;
+
 const kenmerkenTonen = uitgebreid && kenmerken.length > 0;
 ---
 {/*
@@ -100,12 +116,20 @@ const kenmerkenTonen = uitgebreid && kenmerken.length > 0;
   label: die begon één regel lager dan de rest, waardoor je vier prijzen op
   vier verschillende hoogtes vergeleek.
 */}
-<div class:list={['card', !scoresTonen && 'card-los', pkg.populair && 'card-populair']}>
+<div class:list={['card', !middenTonen && 'card-los', pkg.populair && 'card-populair']}>
   <PakketBeeld slug={pkg.slug} />
   {/* "Onze aanrader" en niet "Meest gekozen": zie de uitleg bij `populair`
       in site.js. Het eerste is een mening, het tweede een bewering over wat
-      andere klanten deden — en die klopte niet. */}
-  {pkg.populair ? <span class="badge">{L.badge}</span> : <span class="plek"></span>}
+      andere klanten deden — en die klopte niet.
+
+      Op dezelfde plek kan een open vlaggetje staan voor een pakket dat een
+      soort apart is. Zonder oranje vulling, zodat het de aanrader niet
+      beconcurreert: dat is een advies, dit is een categorie. */}
+  {pkg.populair
+    ? <span class="badge">{L.badge}</span>
+    : vlag
+      ? <span class="badge badge-open">{vlag}</span>
+      : <span class="plek"></span>}
   <h3>{naam}</h3>
   {tagline ? <p class="tagline">{tagline}</p> : <span class="plek"></span>}
 
@@ -138,6 +162,17 @@ const kenmerkenTonen = uitgebreid && kenmerken.length > 0;
           <div class="blokjes" role="img" aria-label={L.vanDe5(s.waarde)}>
             {[1, 2, 3, 4, 5].map((n) => <i class:list={[n <= s.waarde && 'aan']}></i>)}
           </div>
+        </div>
+      ))}
+    </div>
+  ) : uitgelichtTonen ? (
+    /* Zelfde vorm als de balkjes — label links, inhoud rechts — zodat de
+       kaarten naast elkaar op één lijn blijven staan. */
+    <div class="scores uitgelicht">
+      {uitgelicht.map((u) => (
+        <div class="score">
+          <label>{u.label}</label>
+          <span class="waarde">{u.waarde}</span>
         </div>
       ))}
     </div>
@@ -280,6 +315,27 @@ const kenmerkenTonen = uitgebreid && kenmerken.length > 0;
     font-size: .68rem; letter-spacing: .16em; text-transform: uppercase;
     color: var(--text-dim);
   }
+  /* Het open vlaggetje: dezelfde vorm als de aanrader, maar een omlijning in
+     plaats van een vlak. Het vertelt om wat voor soort pakket het gaat en
+     hoort niet net zo hard te roepen als een advies. */
+  .badge-open {
+    background: transparent;
+    color: var(--accent-text);
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+
+  /* Drie regels in plaats van drie balkjes. Zie `uitgelicht` in site.js.
+     Boven uitlijnen en niet in het midden: loopt de rechterkant over twee
+     regels, dan hoort het label bij de eerste. */
+  .uitgelicht .score { align-items: start; margin: 10px 0; }
+  .uitgelicht label { padding-top: 1px; }
+  .uitgelicht .waarde {
+    flex: 1;
+    font-size: .82rem;
+    line-height: 1.35;
+    color: var(--text-dim);
+  }
+
   .blokjes { display: flex; gap: 4px; flex: 1; }
   .blokjes i {
     flex: 1; height: 5px; border-radius: 2px;

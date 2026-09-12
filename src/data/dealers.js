@@ -140,7 +140,9 @@ export const DEALERS = {
       'Bel of app Justus. Dan lopen we langs de auto\'s die bij je staan en hoor je wat er in dat soort modellen mogelijk is — zonder dat je ergens aan vastzit.',
     knop: 'App Justus',
     /* Het bericht dat al in WhatsApp staat als een dealer op de knop tikt. */
-    bericht: 'Hoi Justus, ik heb een autobedrijf en las de pagina voor autobedrijven op je site. Kunnen we even bellen?',
+    /* Zonder aanhef: whatsappLink() zet er zelf "Hoi Justus," voor. Stond
+       die hier ook, dan begon het bericht met een dubbele begroeting. */
+    bericht: 'ik heb een autobedrijf en las de pagina voor autobedrijven op je site. Kunnen we even bellen?',
   },
 };
 
@@ -163,7 +165,8 @@ export const NOG_GEEN_AUTO = {
     'Regel het voordat je de sleutels krijgt. Vraag bij je autobedrijf naar Audio Upgrade Emmen: wij bouwen de upgrade in terwijl de auto daar toch nog staat te wachten op poetsen en papieren. Dan rijd je weg met geluid dat er af fabriek niet in zat, en heb je er geen dag je auto voor hoeven missen.',
   slot: 'Kent je verkoper ons nog niet? Stuur ons de naam van het bedrijf, dan bellen wij.',
   knop: 'Stuur ons je dealer',
-  bericht: 'Hoi Justus, ik ben een auto aan het uitzoeken en wil er goed geluid in. Mijn dealer is:',
+  /* Ook hier geen aanhef — die komt uit whatsappLink(). */
+  bericht: 'ik ben een auto aan het uitzoeken en wil er goed geluid in. Mijn dealer is:',
   link: 'Ben je zelf autobedrijf? Zo werkt het',
 };
 

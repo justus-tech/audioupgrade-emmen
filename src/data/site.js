@@ -213,10 +213,26 @@ export const PACKAGES = [
     slug: 'reference-edition',
     name: 'The Reference Edition',
     tagline: 'Compromisloze audiofiele perfectie.',
-    price: 'Vanaf € 3.695,00',
+    /**
+     * GEEN "VANAF" MEER, EN DAT IS EEN BELOFTE.
+     *
+     * Hier stond "Vanaf € 3.695,00". Dat woord kost klanten: wie "vanaf"
+     * leest, weet niet wat hij gaat betalen en stelt de beslissing uit. Op
+     * elke pagina van deze site staat dat de prijs die je ziet de prijs is
+     * die je betaalt, en "vanaf" spreekt dat tegen.
+     *
+     * Het kan nu weg omdat The Competition Build ernaast staat. Dat is het
+     * pakket waar de prijs wél per project verschilt. Daarmee krijgt de rij
+     * een eerlijk verhaal: drie vaste prijzen en één op aanvraag.
+     *
+     * Voorwaarde: dit bedrag hoort bij een vastgelegde samenstelling. Wil een
+     * klant er componenten in die daar niet in zitten, dan is dat een ander
+     * gesprek — en dat gesprek heet The Competition Build.
+     */
+    price: '€ 3.695,00',
     bedrag: 3695,
     priceNote: 'Inclusief BTW & Montage',
-    priceExcl: 'Vanaf € 3.053,- excl. btw',
+    priceExcl: '€ 3.053,- excl. btw',
     /**
      * Het label stond eerst op The OEM+ Executive en zei "Meest gekozen".
      * Twee dingen daaraan veranderd, en het tweede is het belangrijkst:
@@ -244,7 +260,10 @@ export const PACKAGES = [
       'Totale ontdreuning (buitenschaal, binnenschaal, paneel).',
       'Urenlange specialistische fase-tuning via laptop.',
     ],
-    cta: 'Bespreek maatwerk',
+    /* Stond op 'Bespreek maatwerk'. Dat past niet meer: maatwerk is nu het
+       pakket ernaast, en een vaste prijs verdient een knop die kiest in
+       plaats van een knop die overlegt. */
+    cta: 'Kies Reference',
     duur: 'Twee tot drie dagen, inclusief tuning',
     scores: [
       { label: 'Volume', waarde: 5 },
@@ -277,10 +296,26 @@ export const PACKAGES = [
     slug: 'competitie-show',
     name: 'The Competition Build',
     tagline: 'Voor wie het juist wél wil laten zien.',
-    price: 'Vanaf € 12.500,00',
+    /**
+     * PRIJS OP AANVRAAG, MET HET STARTBEDRAG ERONDER.
+     *
+     * Er stond "Vanaf € 12.500,00". Dat is voor dit pakket niet eerlijk: bij
+     * een showbouw hangt de prijs af van wat er getekend wordt, en dat kan
+     * het dubbele zijn.
+     *
+     * Het startbedrag blijft er wel staan, in de kleine regel eronder, en
+     * daar is een reden voor. Dit pakket staat in de rij omdat het de prijs
+     * ernaast leesbaar maakt: naast 12.500 is 3.695 het verstandige midden.
+     * Haal je dat getal helemaal weg, dan is 3.695 weer het duurste bedrag
+     * op de pagina en werkt de rij tegen je in plaats van vóór je.
+     *
+     * Dus: de kop nodigt uit tot een gesprek, de kleine regel houdt het anker
+     * overeind, en allebei zijn ze waar.
+     */
+    price: 'Prijs op aanvraag',
     bedrag: 12500,
-    priceNote: 'Inclusief BTW & Montage',
-    priceExcl: 'Vanaf € 10.330,- excl. btw',
+    priceNote: 'Projecten starten rond € 12.500',
+    priceExcl: 'Inclusief btw en montage',
     short: 'Wedstrijd- en showopbouw op maat, waarbij de installatie zelf het pronkstuk is.',
     body: 'Overal op deze site staat dat je er niets van ziet. Dit pakket is de uitzondering, en dat is precies de bedoeling. Een wedstrijd- of showopbouw wordt getekend voordat er een schroef in gaat: zichtbare versterkers achter plexiglas, een kofferbak die opengeklapt een installatie laat zien, en luidsprekerbehuizingen die in vorm en bekleding bij het interieur horen. Daaronder zit techniek die het waarmaakt — meerdere versterkers, actieve aansturing per weg, en een afstemming die over meerdere sessies gaat. Dit is geen pakket dat je bestelt; dit is een project dat we samen ontwerpen.',
     features: [
@@ -292,11 +327,29 @@ export const PACKAGES = [
     ],
     cta: 'Bespreek je project',
     duur: 'Een week of langer — in overleg',
-    scores: [
-      { label: 'Volume', waarde: 5 },
-      { label: 'Bass', waarde: 5 },
-      { label: 'Zuiverheid', waarde: 5 },
+    /**
+     * GEEN SCOREBALKJES, MAAR DRIE REGELS OVER WAT HET ÁNDERS MAAKT.
+     *
+     * Hier stonden Volume, Bass en Zuiverheid op vijf van de vijf. Precies
+     * dezelfde balkjes als bij The Reference Edition ernaast, en daarmee
+     * zeiden ze het verkeerde: "even goed als het pakket hiernaast, maar dan
+     * een stuk duurder". Dat is een argument om het níét te kopen.
+     *
+     * Dit pakket is ook geen hogere trede op dezelfde ladder. Het gaat over
+     * iets anders: zichtbaar in plaats van onzichtbaar, getekend in plaats
+     * van besteld. Daarom staat er nu dat. Dezelfde vorm als de balkjes —
+     * label links, inhoud rechts — zodat de rij kaarten op één lijn blijft,
+     * maar met een andere boodschap.
+     */
+    uitgelicht: [
+      { label: 'Stijl', waarde: 'Zichtbaar en over de top' },
+      { label: 'Ontwerp', waarde: 'Vooraf getekend, samen bepaald' },
+      { label: 'Bouw', waarde: 'Met de hand, volledig op maat' },
     ],
+    /* Een open vlaggetje op de plek van "Onze aanrader". Zonder oranje vulling,
+       want het is een soort en geen aanbeveling — die hoort bij één pakket. */
+    vlag: 'Op maat',
+    scores: [],
   },
   {
     slug: 'akoestische-isolatie',

@@ -499,26 +499,28 @@ describe('drie talen', alsGebouwd, () => {
     for (const [nl, ...vertaald] of paren) {
       const bron = inhoud.get(nl);
       assert.ok(bron, `${nl} ontbreekt`);
-      const verwacht = {
-        tekening: tel(bron, /class="beeld"/g),
-        tagline: tel(bron, /class="tagline/g),
-        label: tel(bron, /class="badge/g),
-        scorebalk: tel(bron, /class="blokjes"/g),
+      /* Het vlaggetje van The Competition Build draagt twee klassen, de
+         aanrader maar één. Zo blijven ze uit elkaar te houden. */
+      const patronen = {
+        tekening: /class="beeld"/g,
+        tagline: /class="tagline/g,
+        aanrader: /class="badge"/g,
+        vlaggetje: /class="badge badge-open"/g,
+        scorebalk: /class="blokjes"/g,
+        uitgelicht: /class="scores uitgelicht"/g,
       };
+      const verwacht = Object.fromEntries(
+        Object.entries(patronen).map(([wat, p]) => [wat, tel(bron, p)])
+      );
       /* Als het Nederlands zelf niets meer toont, meet deze test niets. */
       assert.ok(verwacht.tekening >= 4, `${nl}: maar ${verwacht.tekening} tekeningen`);
-      assert.equal(verwacht.label, 1, `${nl}: het label hoort op precies één kaart`);
+      assert.equal(verwacht.aanrader, 1, `${nl}: de aanrader hoort op precies één kaart`);
 
       for (const p of vertaald) {
         const html = inhoud.get(p);
         assert.ok(html, `${p} ontbreekt`);
         for (const [wat, aantal] of Object.entries(verwacht)) {
-          const gevonden = tel(html, {
-            tekening: /class="beeld"/g,
-            tagline: /class="tagline/g,
-            label: /class="badge/g,
-            scorebalk: /class="blokjes"/g,
-          }[wat]);
+          const gevonden = tel(html, patronen[wat]);
           assert.equal(gevonden, aantal, `${p}: ${gevonden}× ${wat}, ${nl} heeft er ${aantal}`);
         }
       }
@@ -621,6 +623,24 @@ describe('WhatsApp-knoppen', alsGebouwd, () => {
         const tekst = new URL(link).searchParams.get('text');
         assert.ok(tekst, `${pad}: WhatsApp-link zonder bericht — ${link}`);
         assert.match(tekst, aanhef, `${pad}: bericht begint verkeerd`);
+      }
+    }
+  });
+
+  /**
+   * De aanhef staat er één keer in, niet twee keer.
+   *
+   * whatsappLink() plakt er zelf "Hoi Justus, " voor. Schrijf je die aanhef
+   * ook in de zin zelf, dan krijgt de klant "Hoi Justus, Hoi Justus, ik heb
+   * een autobedrijf..." in beeld. Dat is precies wat er gebeurde bij de knop
+   * op de dealerpagina, en je ziet het pas als je zelf op de knop drukt.
+   */
+  test('de aanhef staat maar één keer in een bericht', () => {
+    for (const [pad, html] of inhoud) {
+      for (const link of links(html)) {
+        const tekst = new URL(link).searchParams.get('text') ?? '';
+        const keer = (tekst.match(/(Hoi|Hallo|Hi) Justus,/g) ?? []).length;
+        assert.equal(keer, 1, `${pad}: de aanhef staat er ${keer}× in — ${tekst.slice(0, 60)}`);
       }
     }
   });

@@ -258,6 +258,41 @@ describe('pakketten en prijzen', () => {
     assert.equal(PACKAGES.filter((p) => p.populair).length, 1);
   });
 
+  /**
+   * Het midden van de kaart mag niet leeg zijn.
+   *
+   * Daar staan de balkjes, of — bij een pakket waar balkjes niets zeggen —
+   * drie regels over wat het anders maakt. Valt allebei weg, dan staat er een
+   * gat tussen de samenvatting en de doorlooptijd.
+   */
+  test('elk audiopakket toont balkjes of drie regels', () => {
+    for (const p of pakkettenVan(AUDIOPAKKETTEN)) {
+      const heeft = p.scores.length > 0 || (p.uitgelicht?.length ?? 0) > 0;
+      assert.ok(heeft, `${p.slug}: niets in het midden van de kaart`);
+    }
+  });
+
+  /**
+   * Twee pakketten naast elkaar met exact dezelfde balkjes.
+   *
+   * Dat stond er: The Competition Build had Volume, Bass en Zuiverheid op
+   * vijf van de vijf, precies als The Reference Edition ernaast. Daarmee zei
+   * de duurste kaart letterlijk "even goed als die hiernaast". Dat is een
+   * argument om hem niet te kopen, en het is ook nog eens niet waar te maken.
+   */
+  test('geen twee audiopakketten tonen dezelfde balkjes', () => {
+    const gezien = new Map();
+    for (const p of pakkettenVan(AUDIOPAKKETTEN)) {
+      if (p.scores.length === 0) continue;
+      const vinger = p.scores.map((s) => `${s.label}:${s.waarde}`).join('|');
+      assert.equal(
+        gezien.has(vinger), false,
+        `${p.slug} heeft dezelfde balkjes als ${gezien.get(vinger)}`
+      );
+      gezien.set(vinger, p.slug);
+    }
+  });
+
   test('elke pakketslug is uniek', () => {
     const slugs = PACKAGES.map((p) => p.slug);
     assert.equal(new Set(slugs).size, slugs.length);
@@ -270,10 +305,13 @@ describe('pakketten en prijzen', () => {
       'carplay-upgrade': 'Vanaf € 695,00',
       'akoestische-basis': '€ 995,00',
       'oem-plus-executive': '€ 2.195,00',
-      'reference-edition': 'Vanaf € 3.695,00',
-      // Nieuw, op verzoek van Justus: het duurste pakket bovenaan de rij,
-      // zodat de Reference Edition ernaast redelijk oogt.
-      'competitie-show': 'Vanaf € 12.500,00',
+      // Zonder "vanaf": het bedrag hoort bij een vastgelegde samenstelling.
+      // Zie de uitleg bij dit pakket in site.js.
+      'reference-edition': '€ 3.695,00',
+      // Het duurste pakket, en het enige waar de prijs per project verschilt.
+      // Het startbedrag staat in de kleine regel eronder — dat is het anker
+      // dat 3.695 ernaast leesbaar houdt.
+      'competitie-show': 'Prijs op aanvraag',
       'akoestische-isolatie': 'Prijs op aanvraag',
     };
     for (const p of PACKAGES) {
@@ -413,6 +451,26 @@ describe('vertalingen', () => {
         for (const veld of velden) {
           assert.ok(v[veld]?.trim(), `${taal}/${pkg.slug}: ${veld} is leeg`);
         }
+      }
+    }
+  });
+
+  /* Staan er drie regels in plaats van balkjes, dan moeten die er in het
+     Duits en Engels ook staan — anders heeft die kaart daar een gat waar de
+     Nederlandse kaart zijn verhaal vertelt. */
+  test('drie regels in plaats van balkjes worden meevertaald', () => {
+    for (const taal of TALEN) {
+      for (const pkg of PACKAGES) {
+        if (!pkg.uitgelicht?.length) continue;
+        const v = PAGINAS[taal].pakketten[pkg.slug];
+        assert.equal(
+          v.uitgelicht?.length, pkg.uitgelicht.length,
+          `${taal}/${pkg.slug}: uitgelicht ontbreekt of is korter`
+        );
+        for (const regel of v.uitgelicht ?? []) {
+          assert.ok(regel.label?.trim() && regel.waarde?.trim(), `${taal}/${pkg.slug}: lege regel`);
+        }
+        assert.ok(v.vlag?.trim(), `${taal}/${pkg.slug}: het vlaggetje is niet vertaald`);
       }
     }
   });
