@@ -184,6 +184,42 @@ montage en (bij particulieren) btw er al in. Je inkoopprijzen, je marge en je
 uurtarief staan er nooit op — daar staat een test op in
 `tests/werkbak.test.js`.
 
+### Elk kabeltje klopt
+
+Bij een onderdeel zet je onder **Wat hoort hier verplicht bij** de ringen,
+adapterkabels en butyl die er altijd bij gaan, met artikelnummer en leverancier.
+Kies je dat onderdeel op een offerte, dan komt de hele sleep automatisch mee:
+
+- in je **inkoop**, dus je marge klopt (twee ringen van € 14,50 zijn geen ruis);
+- op je **werkbon**, dus je staat niet bij de auto met een kabel te weinig;
+- **niet** op de offerte van de klant — die ziet één regel met één prijs.
+
+### De werkbon
+
+Naast de offerte maakt de app een tweede pdf, voor jezelf. Daarop staat:
+
+1. de auto, met wat er over dat model is vastgelegd;
+2. de stuklijst — elk artikel apart, met artikelnummer, om af te vinken;
+3. de werkinstructie stap voor stap, van stoelhoes tot proefrit.
+
+Er staan **geen prijzen** op. Een werkbon ligt op de bumper; daar hoort je marge
+niet te liggen. Daar staat een test op.
+
+### Auto's: wat de RDW niet weet
+
+Van de RDW krijg je merk, model, bouwjaar en kleur. Niet: welke speakermaat
+erin zit, welke adapterring past, welk fabrieksscherm het is, welke stekker
+erachter zit. Dat verschilt per uitvoering en is nergens op te halen.
+
+**De app verzint dat dus niet.** Waar het dossier leeg is, komt er op de werkbon
+een lege regel met een streep — geen gok. Een verzonnen stekkertype kost een
+middag; een verzonnen draadkleur kost de fabrieksgarantie van je klant.
+
+Onder **Auto's** leg je per model vast wat je hebt nagemeten. De volgende keer
+dat zo'n auto op de brug staat, herkent de app hem aan het kenteken en staat
+alles al ingevuld. Vul bij de bouwjaren de jaren van de **generatie** in (een
+Golf 7 liep van 2013 tot 2020), niet het bouwjaar van de auto die er nu staat.
+
 **Waar je gegevens staan.** In de browser van je telefoon, nergens anders.
 Geen server, geen database, geen inlog. Dat betekent ook: raakt je telefoon
 kwijt, dan is je lijst weg. Druk daarom af en toe op **Bewaar als bestand**

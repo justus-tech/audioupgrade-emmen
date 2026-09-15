@@ -16,10 +16,16 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import {
   euro, naarCent, regelPrijs, totalen, marge, offertenummer, datumNl, geldigTot,
-  STANDAARD_INSTELLINGEN, SOORTEN, BTW_PCT,
+  stuklijst, soortenIn, STANDAARD_INSTELLINGEN, SOORTEN, BTW_PCT,
 } from '../src/lib/werkbak/rekenen.js';
 import { nieuwPdf, naarPdfTekens, breedteVan, breekAf } from '../src/lib/werkbak/pdf.js';
-import { offertePdf, pdfBestandsnaam, kentekenMetStreepjes } from '../src/lib/werkbak/offerte-pdf.js';
+import { offertePdf, pdfBestandsnaam } from '../src/lib/werkbak/offerte-pdf.js';
+import { werkbonPdf, werkbonBestandsnaam } from '../src/lib/werkbak/werkbon.js';
+import { blokkenVoor, stappenlijst, WERKBLOKKEN } from '../src/lib/werkbak/stappen.js';
+import {
+  DOSSIER_VELDEN, autoSleutel, zoekDossier, dossierStand, leegDossier, dossierNaam,
+} from '../src/lib/werkbak/autos.js';
+import { MODELS } from '../src/data/models.js';
 
 const INST = { ...STANDAARD_INSTELLINGEN, uurtariefCent: 7500, margePct: 60, btwPct: 21 };
 
@@ -155,51 +161,6 @@ describe('nummers en datums', () => {
     assert.equal(datumNl(geldigTot(new Date('2026-09-15'), 30)), '15-10-2026');
     // Ook over een maandgrens en een jaargrens heen.
     assert.equal(datumNl(geldigTot(new Date('2026-12-20'), 30)), '19-01-2027');
-  });
-});
-
-describe('het kenteken met streepjes', () => {
-  const gevallen = [
-    ['XX9999', null, 'XX-99-99'],
-    ['9999XX', null, '99-99-XX'],
-    ['99XX99', null, '99-XX-99'],
-    ['XX99XX', null, 'XX-99-XX'],
-    ['XX999X', null, 'XX-999-X'],
-    ['X999XX', null, 'X-999-XX'],
-    ['XXX99X', null, 'XXX-99-X'],
-    ['X99XXX', null, 'X-99-XXX'],
-    ['9XXX99', null, '9-XXX-99'],
-    ['99XXX9', null, '99-XXX-9'],
-  ];
-
-  for (const [kaal, jaar, verwacht] of gevallen) {
-    test(`${kaal} wordt ${verwacht}`, () => {
-      assert.equal(kentekenMetStreepjes(kaal, jaar), verwacht);
-    });
-  }
-
-  test('bij twee mogelijke indelingen geeft het bouwjaar de doorslag', () => {
-    // 99XXXX kan 99-XX-XX (vanaf 1991) of 99-XXX-X (vanaf 2005) zijn.
-    assert.equal(kentekenMetStreepjes('99XXXX', 1996), '99-XX-XX');
-    assert.equal(kentekenMetStreepjes('99XXXX', 2012), '99-XXX-X');
-    // XXXX99 kan XX-XX-99 (vanaf 1999) of X-XXX-99 (vanaf 2008) zijn.
-    assert.equal(kentekenMetStreepjes('XXXX99', 2002), 'XX-XX-99');
-    assert.equal(kentekenMetStreepjes('XXXX99', 2011), 'X-XXX-99');
-  });
-
-  test('zonder bouwjaar kiest hij de nieuwste indeling', () => {
-    assert.equal(kentekenMetStreepjes('99XXXX'), '99-XXX-X');
-  });
-
-  test('wat geen Nederlands kenteken is blijft met rust', () => {
-    // Liever geen streepjes dan streepjes op de verkeerde plek.
-    assert.equal(kentekenMetStreepjes('ABCDEF'), 'ABCDEF');
-    assert.equal(kentekenMetStreepjes('12345'), '12345');
-    assert.equal(kentekenMetStreepjes(''), '');
-  });
-
-  test('streepjes en kleine letters in de invoer maken niet uit', () => {
-    assert.equal(kentekenMetStreepjes('xx-99-xx'), 'XX-99-XX');
   });
 });
 
@@ -418,5 +379,319 @@ describe('de werkbak blijft buiten de zoekresultaten', alsGebouwd, () => {
      */
     const html = werkbak();
     assert.doesNotMatch(html, /inkoopCent\s*:\s*[1-9]/, 'er staat een inkoopbedrag in de pagina');
+  });
+});
+
+/* ======================================================================
+   ELK KABELTJE MOET KLOPPEN
+   ====================================================================== */
+describe('wat er verplicht bij een onderdeel hoort', () => {
+  const composet = {
+    omschrijving: 'Premium 2-weg composet voor',
+    artikelnummer: 'GL-165-2W',
+    leverancier: 'Gladen',
+    soort: 'speakers-voor',
+    inkoopCent: 24000, margePct: 60, uren: 3, aantal: 1,
+    toebehoren: [
+      { omschrijving: 'Adapterringen VW 165 mm', artikelnummer: 'ACV-271120-05', leverancier: 'ACV', aantal: 2, inkoopCent: 1450 },
+      { omschrijving: 'Speakeradapterkabel VW', artikelnummer: 'ACV-51-1210-03', leverancier: 'ACV', aantal: 2, inkoopCent: 650 },
+    ],
+  };
+
+  test('de kabels tellen mee in de inkoop', () => {
+    // 240,00 + 2x 14,50 + 2x 6,50 = 282,00. Tellen ze niet mee, dan lijkt de
+    // marge 42 euro hoger dan hij is — elke klus opnieuw.
+    const p = regelPrijs(composet, INST);
+    assert.equal(p.kostprijsCent, 28200);
+  });
+
+  test('en dus ook in de verkoopprijs', () => {
+    const zonder = regelPrijs({ ...composet, toebehoren: [] }, INST);
+    const met = regelPrijs(composet, INST);
+    assert.ok(met.exclCent > zonder.exclCent, 'de kabels zitten niet in de prijs');
+    // 282,00 + 60% = 451,20, plus 3 uur à 75 = 225. Samen 676,20 excl.
+    assert.equal(met.perStukExcl, 67620);
+  });
+
+  test('de marge klopt met de kabels erin', () => {
+    const m = marge([composet], INST);
+    assert.equal(m.kostprijsCent, 28200);
+    assert.equal(m.margeCent, m.omzetCent - 28200);
+  });
+
+  test('twee composets betekent vier ringen', () => {
+    const lijst = stuklijst([{ ...composet, aantal: 2 }]);
+    const ringen = lijst.find((r) => r.artikelnummer === 'ACV-271120-05');
+    assert.equal(ringen.aantal, 4, 'het aantal per stuk is niet vermenigvuldigd');
+    assert.equal(lijst[0].aantal, 2);
+  });
+
+  test('de stuklijst noemt elk artikel met zijn nummer en leverancier', () => {
+    const lijst = stuklijst([composet]);
+    assert.equal(lijst.length, 3, 'niet elk artikel staat erin');
+    assert.equal(lijst[0].hoofd, true);
+    assert.equal(lijst[1].hoofd, false, 'toebehoren horen niet als hoofdartikel te tellen');
+    for (const artikel of lijst) {
+      assert.ok(artikel.omschrijving, 'artikel zonder omschrijving');
+      assert.ok(artikel.artikelnummer, 'artikel zonder artikelnummer');
+      assert.ok(artikel.leverancier, 'artikel zonder leverancier');
+    }
+  });
+
+  test('een onderdeel zonder toebehoren levert gewoon één regel', () => {
+    assert.equal(stuklijst([{ omschrijving: 'Losse rol butyl', aantal: 1 }]).length, 1);
+  });
+});
+
+describe('welk werk hoort bij deze offerte', () => {
+  test('losse onderdelen leveren hun eigen soort', () => {
+    assert.deepEqual(
+      soortenIn([{ soort: 'carplay' }, { soort: 'demping' }, { soort: 'carplay' }]).sort(),
+      ['carplay', 'demping']
+    );
+  });
+
+  test('een pakket raakt meerdere soorten tegelijk', () => {
+    // De Akoestische Basis is speakers én demping: allebei de blokken moeten
+    // op de werkbon komen, anders sla je de halve klus over.
+    const soorten = soortenIn([{ soorten: ['speakers-voor', 'demping'] }]);
+    assert.deepEqual(soorten.sort(), ['demping', 'speakers-voor']);
+  });
+
+  test('regels zonder soort doen geen kwaad', () => {
+    assert.deepEqual(soortenIn([{ omschrijving: 'Eigen regel' }]), []);
+  });
+});
+
+describe('de werkinstructie', () => {
+  test('voorbereiding en afronden staan er altijd op', () => {
+    const namen = blokkenVoor([]).map((b) => b.id);
+    assert.deepEqual(namen, ['voorbereiding', 'afronden']);
+  });
+
+  test('alleen de blokken die bij dit werk horen', () => {
+    const ids = blokkenVoor(['carplay']).map((b) => b.id);
+    assert.ok(ids.includes('carplay'));
+    assert.ok(!ids.includes('demping'), 'demping hoort hier niet bij');
+    assert.ok(!ids.includes('speakers'), 'speakers horen hier niet bij');
+  });
+
+  test('de volgorde is die van de inbouw, niet die van de offerte', () => {
+    // Deur open vóór demping, demping vóór speakers erin, afronden als laatste.
+    const ids = blokkenVoor(['speakers-voor', 'demping']).map((b) => b.id);
+    assert.ok(ids.indexOf('deur-open') < ids.indexOf('demping'));
+    assert.ok(ids.indexOf('demping') < ids.indexOf('speakers'));
+    assert.equal(ids[ids.length - 1], 'afronden');
+  });
+
+  test('de stappen zijn doorlopend genummerd over de blokken heen', () => {
+    const blokken = stappenlijst(['speakers-voor', 'demping'], {});
+    const nummers = blokken.flatMap((b) => b.stappen).map((s) => s.nummer);
+    assert.deepEqual(nummers, nummers.map((_, i) => i + 1));
+  });
+
+  test('een vastgelegd gegeven komt in de stap te staan', () => {
+    const blokken = stappenlijst(['speakers-voor'], { speakerVoor: '165 mm' });
+    const stap = blokken.flatMap((b) => b.stappen).find((s) => s.veld === 'speakerVoor');
+    assert.equal(stap.waarde, '165 mm');
+    assert.equal(stap.invullen, false);
+  });
+
+  test('en wat niet vastligt wordt een lege regel, geen gok', () => {
+    /**
+     * Dit is de belangrijkste test van dit blok. Een verzonnen speakermaat of
+     * stekkertype kost een middag; een verzonnen draadkleur kost de
+     * fabrieksgarantie van de klant. De app hoort te zwijgen waar ze het niet
+     * weet.
+     */
+    const blokken = stappenlijst(['speakers-voor'], {});
+    const stap = blokken.flatMap((b) => b.stappen).find((s) => s.veld === 'speakerVoor');
+    assert.equal(stap.waarde, '', 'er staat een waarde die nergens vandaan komt');
+    assert.equal(stap.invullen, true, 'er komt geen invulregel op de bon');
+  });
+
+  test('elk blok heeft stappen en elke stap een tekst', () => {
+    for (const blok of WERKBLOKKEN) {
+      assert.ok(blok.naam, `${blok.id} heeft geen naam`);
+      assert.ok(blok.stappen.length, `${blok.id} heeft geen stappen`);
+      assert.ok(blok.soorten.length, `${blok.id} hoort bij geen enkel soort werk`);
+      for (const stap of blok.stappen) assert.ok(stap.tekst, `lege stap in ${blok.id}`);
+    }
+  });
+
+  test('elk veld waar een stap naar verwijst bestaat ook echt', () => {
+    // Anders vraagt de werkbon om iets wat je nergens kunt invullen.
+    const bekend = new Set(DOSSIER_VELDEN.map((v) => v.id));
+    for (const blok of WERKBLOKKEN) {
+      for (const stap of blok.stappen) {
+        if (stap.meet) assert.ok(bekend.has(stap.meet), `onbekend veld: ${stap.meet}`);
+      }
+    }
+  });
+});
+
+describe('het autodossier', () => {
+  const golf = { merk: 'VOLKSWAGEN', handelsbenaming: 'GOLF VII 1.4 TSI', voertuigsoort: 'Personenauto' };
+
+  test('de RDW-naam wordt herleid tot het model van de site', () => {
+    // "GOLF VII 1.4 TSI" en "GOLF PLUS" horen bij hetzelfde dossier.
+    assert.equal(autoSleutel(golf, MODELS), 'volkswagen-golf');
+    assert.equal(
+      autoSleutel({ ...golf, handelsbenaming: 'GOLF PLUS' }, MODELS),
+      'volkswagen-golf'
+    );
+  });
+
+  test('een model dat de site niet kent krijgt toch een sleutel', () => {
+    assert.equal(autoSleutel({ merk: 'PROTON', handelsbenaming: 'SAVVY' }, MODELS), 'proton-savvy');
+  });
+
+  test('het bouwjaar kiest de juiste generatie', () => {
+    // Een Golf 7 is geen Golf 4: andere speakers, ander scherm, andere stekker.
+    const dossiers = [
+      { ...leegDossier('volkswagen-golf', 'Volkswagen Golf'), vanJaar: 2013, totJaar: 2020, speakerVoor: '165 mm' },
+      { ...leegDossier('volkswagen-golf', 'Volkswagen Golf'), vanJaar: 2003, totJaar: 2012, speakerVoor: '165 mm oud' },
+    ];
+    assert.equal(zoekDossier(dossiers, 'volkswagen-golf', 2018).vanJaar, 2013);
+    assert.equal(zoekDossier(dossiers, 'volkswagen-golf', 2008).vanJaar, 2003);
+  });
+
+  test('een dossier zonder jaren geldt voor alle jaren', () => {
+    const dossiers = [{ ...leegDossier('saab-9-3', 'Saab 9-3'), speakerVoor: '165 mm' }];
+    assert.ok(zoekDossier(dossiers, 'saab-9-3', 1999));
+    assert.ok(zoekDossier(dossiers, 'saab-9-3', 2010));
+  });
+
+  test('een onbekend model levert niets in plaats van iets willekeurigs', () => {
+    assert.equal(zoekDossier([], 'volkswagen-golf', 2018), null);
+    const dossiers = [{ ...leegDossier('volkswagen-golf'), vanJaar: 2013, totJaar: 2020 }];
+    assert.equal(zoekDossier(dossiers, 'bmw-3-serie', 2018), null);
+  });
+
+  test('de stand zegt eerlijk wat er nog ontbreekt', () => {
+    const leeg = dossierStand(null);
+    assert.equal(leeg.deel, 0);
+    assert.ok(leeg.ontbreekt.length, 'een leeg dossier zou compleet lijken');
+
+    const half = dossierStand({ ...leegDossier('x'), speakerVoor: '165 mm', radio: 'MIB2' });
+    assert.deepEqual(half.ontbreekt, ['stekker']);
+  });
+
+  test('de naam laat de bouwjaren zien', () => {
+    assert.equal(
+      dossierNaam({ sleutel: 'volkswagen-golf', naam: 'Volkswagen Golf', vanJaar: 2013, totJaar: 2020 }),
+      'Volkswagen Golf (2013-2020)'
+    );
+    assert.equal(dossierNaam({ sleutel: 'x', naam: 'Zonder jaren' }), 'Zonder jaren');
+  });
+});
+
+describe('de werkbon', () => {
+  const datum = new Date('2026-09-15');
+  const offerte = {
+    nummer: '2026-014', datum,
+    klant: { naam: 'Mark de Vries', telefoon: '06 12 34 56 78' },
+    auto: { kenteken: 'XX99XX', merk: 'Volkswagen', model: 'Golf VII', bouwjaar: '2018' },
+    regels: [
+      {
+        omschrijving: 'Premium 2-weg composet voor', artikelnummer: 'GL-165-2W', leverancier: 'Gladen',
+        soort: 'speakers-voor', aantal: 1, inkoopCent: 24000, margePct: 63, uren: 3,
+        toebehoren: [
+          { omschrijving: 'Adapterringen VW 165 mm', artikelnummer: 'ACV-271120-05', leverancier: 'ACV', aantal: 2, inkoopCent: 1450 },
+        ],
+      },
+    ],
+  };
+  const dossier = {
+    ...leegDossier('volkswagen-golf', 'Volkswagen Golf'),
+    vanJaar: 2013, totJaar: 2020,
+    speakerVoor: '165 mm (6,5")', radio: 'Composition Media', stekker: 'Quadlock',
+    stroom: 'Rubber doorvoer linksonder schutbord, achter de zekeringkast',
+  };
+  const tekst = (d = dossier) => Buffer.from(werkbonPdf(offerte, d).naarBytes()).toString('latin1');
+
+  test('elk artikel staat erop, met artikelnummer', () => {
+    const pdf = tekst();
+    assert.match(pdf, /Premium 2-weg composet voor/);
+    assert.match(pdf, /GL-165-2W/);
+    assert.match(pdf, /Adapterringen VW 165 mm/, 'de ringen staan niet op de bon');
+    assert.match(pdf, /ACV-271120-05/, 'het artikelnummer van de ringen ontbreekt');
+    assert.match(pdf, /2x/, 'het aantal ringen ontbreekt');
+  });
+
+  test('de vastgelegde gegevens staan erop', () => {
+    const pdf = tekst();
+    assert.match(pdf, /Composition Media/);
+    assert.match(pdf, /Quadlock/);
+    assert.match(pdf, /165 mm/);
+  });
+
+  test('zonder dossier zegt hij dat, in plaats van iets te verzinnen', () => {
+    const pdf = tekst(null);
+    assert.match(pdf, /nog niets vastgelegd/i);
+    assert.match(pdf, /Meet na en noteer/, 'er komen geen invulregels op de bon');
+  });
+
+  test('er staat GEEN prijs op', () => {
+    /**
+     * Een werkbon ligt op de bumper en gaat mee de werkplaats in. Daar hoort
+     * geen inkoopprijs, geen marge en geen verkoopprijs op te liggen.
+     */
+    const pdf = tekst();
+    for (const verboden of ['240,00', '14,50', '63\\s*%', 'marge', 'Totaal', 'btw']) {
+      assert.doesNotMatch(pdf, new RegExp(verboden, 'i'), `"${verboden}" staat op de werkbon`);
+    }
+    assert.doesNotMatch(pdf, /€/, 'er staat een bedrag op de werkbon');
+  });
+
+  test('hij zegt zelf dat hij niet naar de klant mag', () => {
+    assert.match(tekst(), /niet aan de klant/i);
+  });
+
+  test('de stappen staan erop, genummerd', () => {
+    const pdf = tekst();
+    // De kopjes staan in hoofdletters op de bon, vandaar de i.
+    assert.match(pdf, /Stap voor stap/i);
+    assert.match(pdf, /Deurpaneel eruit/);
+    assert.match(pdf, /Speakers monteren/);
+    assert.match(pdf, /Afronden en controleren/);
+  });
+
+  test('geen enkele tekst wordt onderweg verminkt', () => {
+    /**
+     * De tekenset van een pdf kent geen pijl en geen vinkje. Zulke tekens
+     * worden een vraagteken, en op papier zie je dat pas als het document al
+     * bij de auto ligt.
+     *
+     * We tellen daarom vraagtekens vóór en ná de omzetting. Een stap die
+     * eindigt op een échte vraag ("past de magneet vrij achter het raam?")
+     * mag zijn vraagteken houden; alleen een vraagteken dat erbíj komt is
+     * een verminkt teken.
+     */
+    const teksten = WERKBLOKKEN.flatMap((blok) =>
+      blok.stappen.flatMap((stap) => [stap.tekst, stap.let].filter(Boolean))
+    );
+    for (const regel of teksten) {
+      const voor = (regel.match(/\?/g) || []).length;
+      const na = (naarPdfTekens(regel).match(/\?/g) || []).length;
+      assert.equal(na, voor, `verminkt teken in: ${regel}`);
+    }
+  });
+
+  test('het teken voor een vastgelegd gegeven komt er goed uit', () => {
+    // Hier stond een pijl, en die bestaat niet in een pdf: op papier werd het
+    // "? 165 mm" in plaats van "» 165 mm".
+    const pdf = tekst();
+    assert.match(pdf, /\xbb 165 mm/, 'het gegeven staat er niet netjes op');
+    assert.doesNotMatch(pdf, /\? 165 mm/, 'er staat een verminkt teken voor');
+  });
+
+  test('de bon loopt netjes door over meerdere bladzijden', () => {
+    const doc = werkbonPdf(offerte, dossier);
+    assert.ok(doc.paginas >= 2, 'alles op één blad — dat kan niet met deze instructie');
+  });
+
+  test('de bestandsnaam zegt om welke auto het gaat', () => {
+    assert.equal(werkbonBestandsnaam(offerte), 'werkbon-2026-014-XX99XX.pdf');
   });
 });

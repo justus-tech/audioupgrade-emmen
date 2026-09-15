@@ -103,7 +103,23 @@ export const STANDAARD_INSTELLINGEN = {
  */
 export function regelPrijs(regel, inst = STANDAARD_INSTELLINGEN) {
   const aantal = Math.max(1, Math.round(Number(regel.aantal) || 1));
-  const inkoopCent = Math.max(0, Math.round(Number(regel.inkoopCent) || 0));
+  /**
+   * De inkoop is het onderdeel zélf plus alles wat er verplicht bij hoort:
+   * adapterringen, stekkerkabels, butyl, zekeringhouder.
+   *
+   * Waarom dat hier bij elkaar geteld wordt en niet als losse regels op de
+   * offerte staat: de klant koopt "speakers voorin", geen zes artikelen. Maar
+   * die zes artikelen kosten wél geld, en tellen ze niet mee, dan lijkt de
+   * marge hoger dan hij is en loop je elke klus een paar tientjes mis.
+   *
+   * Op de werkbon staan ze wél allemaal apart — daar moet elk kabeltje
+   * kloppen, want daar werk je mee.
+   */
+  const toebehorenCent = (regel.toebehoren || []).reduce(
+    (som, t) => som + Math.max(0, Math.round(Number(t.inkoopCent) || 0)) * Math.max(1, Math.round(Number(t.aantal) || 1)),
+    0
+  );
+  const inkoopCent = Math.max(0, Math.round(Number(regel.inkoopCent) || 0)) + toebehorenCent;
   const uren = Math.max(0, Number(regel.uren) || 0);
   const margePct = Number.isFinite(Number(regel.margePct))
     ? Number(regel.margePct)
@@ -173,6 +189,58 @@ export function marge(regels = [], inst = STANDAARD_INSTELLINGEN) {
     arbeidCent: t.arbeidCent,
     urenTotaal: t.urenTotaal,
   };
+}
+
+/**
+ * DE STUKLIJST — elk artikel apart, voor de werkbon.
+ *
+ * Waar de offerte één regel toont ("Premium composet voor"), moet de werkbon
+ * elk artikel noemen: de speakers, de ringen, de adapterkabels, de rol butyl.
+ * Anders sta je bij de auto en mis je één kabeltje.
+ *
+ * Elke regel levert dus het hoofdartikel plus zijn toebehoren op, met het
+ * aantal al vermenigvuldigd met het aantal van de regel: twee composets
+ * betekent vier ringen.
+ */
+export function stuklijst(regels = []) {
+  const uit = [];
+  for (const regel of regels) {
+    const aantal = Math.max(1, Math.round(Number(regel.aantal) || 1));
+    uit.push({
+      omschrijving: regel.omschrijving || 'Onbenoemd artikel',
+      artikelnummer: regel.artikelnummer || '',
+      leverancier: regel.leverancier || '',
+      aantal,
+      hoofd: true,
+    });
+    for (const toebehoren of regel.toebehoren || []) {
+      uit.push({
+        omschrijving: toebehoren.omschrijving || 'Onbenoemd artikel',
+        artikelnummer: toebehoren.artikelnummer || '',
+        leverancier: toebehoren.leverancier || '',
+        aantal: Math.max(1, Math.round(Number(toebehoren.aantal) || 1)) * aantal,
+        hoofd: false,
+      });
+    }
+  }
+  return uit;
+}
+
+/**
+ * Welke soorten werk zitten er in deze offerte? Bepaalt de werkinstructie.
+ *
+ * Een los onderdeel heeft één soort ("speakers-voor"). Een pakket van de site
+ * raakt er meerdere tegelijk: bij de Akoestische Basis gaan de deuren open,
+ * komt er demping in én komen er speakers. Daarom mag een regel ook een lijst
+ * `soorten` hebben; dan verschijnen alle bijbehorende blokken op de werkbon.
+ */
+export function soortenIn(regels = []) {
+  const uit = new Set();
+  for (const regel of regels) {
+    if (regel.soort) uit.add(regel.soort);
+    for (const soort of regel.soorten || []) if (soort) uit.add(soort);
+  }
+  return [...uit];
 }
 
 /**

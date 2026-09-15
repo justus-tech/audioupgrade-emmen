@@ -116,12 +116,40 @@ const GROEPEN = {
   LDDLLL: [1, 2, 3], DLLDDD: [1, 2, 3],
 };
 
-export function formatteerKenteken(invoer) {
+/**
+ * TWEE PATRONEN BESTAAN TWEE KEER, EN DAAR HELPT HET BOUWJAAR.
+ *
+ * Twee van de veertien indelingen delen hun vorm met een andere:
+ *
+ *   DDLLLL   99-XX-XX (vanaf 1991)   of   99-XXX-X (vanaf 2005)
+ *   LLLLDD   XX-XX-99 (vanaf 1999)   of   X-XXX-99 (vanaf 2008)
+ *
+ * Aan het kenteken alleen is niet te zien welke van de twee het is. In de
+ * tabel hierboven staat de oudste vorm, want die werkt zonder verdere
+ * gegevens. Weten we het bouwjaar wél — en van de RDW krijgen we dat er
+ * gratis bij — dan kan het exact. Op een werkbon telt dat: daar staat het
+ * kenteken zoals het op de plaat staat.
+ */
+const JONGERE_INDELING = {
+  DDLLLL: { vanaf: 2005, groepen: [2, 3, 1] },
+  LLLLDD: { vanaf: 2007, groepen: [1, 3, 2] },
+};
+
+/**
+ * @param {string} invoer      het kenteken, met of zonder streepjes
+ * @param {number|string} [bouwjaar]  jaar van eerste toelating, als je het weet
+ */
+export function formatteerKenteken(invoer, bouwjaar) {
   const k = normaliseerKenteken(invoer);
   if (k.length !== 6) return k;
 
   const patroon = [...k].map((c) => (/\d/.test(c) ? 'D' : 'L')).join('');
-  const groepen = GROEPEN[patroon];
+  const jaar = Number(String(bouwjaar ?? '').slice(0, 4));
+  const jonger = JONGERE_INDELING[patroon];
+  const groepen =
+    jonger && Number.isFinite(jaar) && jaar >= jonger.vanaf
+      ? jonger.groepen
+      : GROEPEN[patroon];
   if (!groepen) return k;
 
   const delen = [];
@@ -138,26 +166,46 @@ const AFKORTINGEN = new Set([
   'TDI', 'TSI', 'TFSI', 'GTI', 'GTE', 'GTD', 'AMG', 'BMW', 'SUV', 'CDI',
   'HDI', 'DCI', 'CVT', 'AWD', 'FWD', 'RWD', 'PHEV', 'BEV', 'LPG', 'CNG',
   'XDRIVE', 'QUATTRO', 'AUT',
+  /* Romeinse cijfers: de RDW schrijft "GOLF VII" en "PASSAT VIII". Zonder
+     deze regels werd dat "Golf Vii". Bewust een vaste lijst en geen patroon:
+     "MIX" bestaat ook uit Romeinse letters en is gewoon een woord. */
+  'II', 'III', 'IV', 'VI', 'VII', 'VIII', 'IX', 'XI', 'XII',
 ]);
 
 /**
  * Maakt van een RDW-schrijfwijze een leesbare naam.
  * "VOLKSWAGEN GOLF PLUS" -> "Volkswagen Golf Plus"
  *
+ * Ook gebruikt door de werkbak: daar komen merk en model apart op een
+ * offerte te staan, dus die hebben deze functie los nodig.
+ *
  * Woorden met een cijfer erin blijven ongemoeid ("ID.3", "150", "4S"),
  * net als korte codes ("GT", "KW") en bekende afkortingen ("TDI").
  * Zonder die uitzondering wordt "ID.3 PRO 150 KW" namelijk "Id.3 Pro 150 Kw".
  */
-function kapitaliseer(tekst) {
+export function kapitaliseer(tekst) {
+  /** Eén woord, zonder koppelteken erin. */
+  const woordje = (woord) => {
+    const kaal = woord.replace(/[^A-Za-z0-9]/g, '');
+    if (!kaal) return woord;
+    if (/\d/.test(woord)) return woord;                  // ID.3, 150, 4S
+    if (kaal.length <= 2) return woord.toUpperCase();    // GT, KW, S
+    if (AFKORTINGEN.has(kaal.toUpperCase())) return woord.toUpperCase();
+    return woord.charAt(0).toUpperCase() + woord.slice(1).toLowerCase();
+  };
+
   return String(tekst || '')
     .trim()
     .split(/\s+/)
     .map((woord) => {
-      const kaal = woord.replace(/[^A-Za-z0-9]/g, '');
-      if (/\d/.test(woord)) return woord;                  // ID.3, 150, 4S
-      if (kaal.length <= 2) return woord.toUpperCase();    // GT, KW, S
-      if (AFKORTINGEN.has(kaal.toUpperCase())) return woord.toUpperCase();
-      return woord.charAt(0).toUpperCase() + woord.slice(1).toLowerCase();
+      /* Een woord met een cijfer erin blijft helemaal met rust: "9-3" van
+         Saab en "ID.3" van Volkswagen schrijf je niet met een hoofdletter
+         achter het streepje. */
+      if (/\d/.test(woord)) return woord;
+      /* Elk deel achter een koppelteken krijgt zijn eigen hoofdletter.
+         Zonder dit werd "MERCEDES-BENZ" namelijk "Mercedes-benz", en dat
+         staat dan zo op de offerte van een klant met een Mercedes. */
+      return woord.split('-').map(woordje).join('-');
     })
     .join(' ');
 }

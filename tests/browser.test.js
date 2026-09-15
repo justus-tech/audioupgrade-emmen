@@ -899,3 +899,171 @@ describe('de werkbak', alsGebouwd, () => {
     await pagina.close();
   });
 });
+
+/**
+ * DE WERKBON EN HET AUTODOSSIER.
+ *
+ * Hier draait het om wat er in de werkplaats gebeurt: klopt elk kabeltje, en
+ * staat er op de bon wat er over deze auto is vastgelegd. Twee dingen mogen
+ * hier nooit misgaan — een prijs op de werkbon, en een verzonnen speakermaat.
+ */
+describe('de werkbon en het autodossier', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+
+  const GOLF = [{
+    kenteken: 'XX99XX',
+    voertuigsoort: 'Personenauto',
+    merk: 'VOLKSWAGEN',
+    handelsbenaming: 'GOLF VII 1.4 TSI',
+    eerste_kleur: 'ZWART',
+    datum_eerste_toelating: '20180417',
+  }];
+
+  async function openWerkbak(voertuig = GOLF) {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    await pagina.route(RDW_VOERTUIG, (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(voertuig) })
+    );
+    await pagina.goto(paginaUrl('werkbak'));
+    await pagina.evaluate(() => document.fonts.ready);
+    return { pagina, fouten };
+  }
+
+  /** Een composet met de ringen en kabels die erbij horen. */
+  async function vulOnderdeelMetKabels(pagina) {
+    await pagina.click('[data-tab="catalogus"]');
+    await pagina.fill('#wb-o-naam', 'Premium 2-weg composet voor');
+    await pagina.selectOption('#wb-o-soort', 'speakers-voor');
+    await pagina.fill('#wb-o-artikelnummer', 'GL-165-2W');
+    await pagina.fill('#wb-o-leverancier', 'Gladen');
+    await pagina.fill('#wb-o-inkoop', '240,00');
+    await pagina.fill('#wb-o-marge', '60');
+    await pagina.fill('#wb-o-uren', '3');
+    await pagina.click('#wb-o-toebehoren-erbij');
+    const rij = pagina.locator('.wb-toebehoren').last();
+    await rij.locator('.wb-t-naam').fill('Adapterringen VW 165 mm');
+    await rij.locator('.wb-t-artikel').fill('ACV-271120-05');
+    await rij.locator('.wb-t-leverancier').fill('ACV');
+    await rij.locator('.wb-t-aantal').fill('2');
+    await rij.locator('.wb-t-inkoop').fill('14,50');
+    await rij.locator('.wb-t-inkoop').blur();
+    await pagina.click('#wb-o-bewaar');
+    await pagina.click('[data-tab="offerte"]');
+  }
+
+  test('de kabels tellen mee in de prijs die de klant betaalt', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await vulOnderdeelMetKabels(pagina);
+    await pagina.click('#wb-onderdelen .wb-toevoeg >> nth=0');
+    // 240 + 2x 14,50 = 269 inkoop, +60% = 430,40, plus 3 uur à 75 = 225.
+    // Samen 655,40 excl, 793,03 incl. Zonder de ringen zou het 736,89 zijn:
+    // die 56 euro liep je elke klus mis.
+    assert.equal(await pagina.textContent('#wb-totaal'), '€ 793,03');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('de app zegt het als er over deze auto nog niets vastligt', async () => {
+    const { pagina } = await openWerkbak();
+    await pagina.fill('#wb-kenteken', 'XX99XX');
+    await pagina.click('#wb-kenteken-form button[type=submit]');
+    await pagina.waitForFunction(() =>
+      document.querySelector('#wb-auto-melding').textContent.includes('Gevonden')
+    );
+    assert.match(await pagina.textContent('#wb-dossier-melding'), /nog niets vastgelegd/);
+    await pagina.close();
+  });
+
+  test('de RDW-naam wordt netjes geschreven, met de Romeinse cijfers heel', async () => {
+    // "GOLF VII 1.4 TSI" mag geen "Golf Vii 1.4 Tsi" worden: dat staat zo op
+    // de offerte van de klant.
+    const { pagina } = await openWerkbak();
+    await pagina.fill('#wb-kenteken', 'XX99XX');
+    await pagina.click('#wb-kenteken-form button[type=submit]');
+    await pagina.waitForFunction(() =>
+      document.querySelector('#wb-auto-melding').textContent.includes('Gevonden')
+    );
+    assert.equal(await pagina.inputValue('#wb-model'), 'Golf VII 1.4 TSI');
+    await pagina.close();
+  });
+
+  test('een model vastleggen doe je vanaf de offerte, en het blijft staan', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.fill('#wb-kenteken', 'XX99XX');
+    await pagina.click('#wb-kenteken-form button[type=submit]');
+    await pagina.waitForFunction(() =>
+      document.querySelector('#wb-auto-melding').textContent.includes('Gevonden')
+    );
+    await pagina.click('#wb-dossier-melding .wb-link');
+    await pagina.waitForTimeout(150);
+
+    // Het dossier hoort op de modelnaam te staan, niet op de uitvoering: de
+    // speakermaat van een 1.4 TSI is dezelfde als die van een 2.0 TDI.
+    assert.equal(await pagina.inputValue('#wb-a-naam'), 'Volkswagen Golf');
+    // En de bouwjaren blijven leeg: 2018 is deze auto, niet de generatie.
+    assert.equal(await pagina.inputValue('#wb-a-van'), '');
+
+    await pagina.fill('[data-dossier="speakerVoor"]', '165 mm (6,5")');
+    await pagina.fill('[data-dossier="radio"]', 'Composition Media');
+    await pagina.fill('[data-dossier="stekker"]', 'Quadlock');
+    await pagina.click('#wb-a-bewaar');
+    await pagina.click('[data-tab="offerte"]');
+    await pagina.waitForTimeout(150);
+    assert.match(await pagina.textContent('#wb-dossier-melding'), /Vastgelegd: Volkswagen Golf/);
+
+    // Na opnieuw openen staat het er nog.
+    await pagina.reload();
+    await pagina.waitForSelector('#wb-a-lijst', { state: 'attached' });
+    await pagina.click('[data-tab="autos"]');
+    assert.match(await pagina.textContent('#wb-a-lijst'), /Volkswagen Golf/);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('de werkbon komt eruit met de auto in de bestandsnaam', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await vulOnderdeelMetKabels(pagina);
+    await pagina.fill('#wb-kenteken', 'XX99XX');
+    await pagina.click('#wb-kenteken-form button[type=submit]');
+    await pagina.waitForFunction(() =>
+      document.querySelector('#wb-auto-melding').textContent.includes('Gevonden')
+    );
+    await pagina.click('#wb-onderdelen .wb-toevoeg >> nth=0');
+
+    const wachten = pagina.waitForEvent('download');
+    await pagina.click('#wb-werkbon');
+    const bestand = await wachten;
+    assert.match(bestand.suggestedFilename(), /^werkbon-\d{4}-\d{3}-XX99XX\.pdf$/);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een lege offerte levert geen werkbon op', async () => {
+    const { pagina } = await openWerkbak();
+    let gemeld = '';
+    pagina.on('dialog', (venster) => { gemeld = venster.message(); venster.dismiss(); });
+    await pagina.click('#wb-werkbon');
+    await pagina.waitForTimeout(200);
+    assert.match(gemeld, /eerst iets/);
+    await pagina.close();
+  });
+
+  test('het tabblad Auto\'s past ook op een smal scherm', async () => {
+    for (const breedte of [320, 390]) {
+      const pagina = await browser.newPage({ ...telefoon, viewport: { width: breedte, height: 844 } });
+      await pagina.goto(paginaUrl('werkbak'));
+      await pagina.evaluate(() => document.fonts.ready);
+      for (const tab of ['autos', 'catalogus']) {
+        await pagina.click(`[data-tab="${tab}"]`);
+        if (tab === 'catalogus') await pagina.click('#wb-o-toebehoren-erbij');
+        const overloop = await pagina.evaluate(
+          () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+        );
+        assert.equal(overloop, 0, `${tab} bij ${breedte} pixels: er steekt iets uit`);
+      }
+      await pagina.close();
+    }
+  });
+});
