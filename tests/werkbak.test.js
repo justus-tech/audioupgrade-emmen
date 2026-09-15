@@ -16,11 +16,13 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import {
   euro, naarCent, regelPrijs, totalen, marge, offertenummer, datumNl, geldigTot,
-  stuklijst, soortenIn, STANDAARD_INSTELLINGEN, SOORTEN, BTW_PCT,
+  stuklijst, soortenIn, aanbetaling, factuurnummer,
+  STANDAARD_INSTELLINGEN, SOORTEN, BTW_PCT,
 } from '../src/lib/werkbak/rekenen.js';
 import { nieuwPdf, naarPdfTekens, breedteVan, breekAf } from '../src/lib/werkbak/pdf.js';
 import { offertePdf, pdfBestandsnaam } from '../src/lib/werkbak/offerte-pdf.js';
 import { werkbonPdf, werkbonBestandsnaam } from '../src/lib/werkbak/werkbon.js';
+import { factuurPdf, factuurBestandsnaam } from '../src/lib/werkbak/factuur.js';
 import { blokkenVoor, stappenlijst, WERKBLOKKEN } from '../src/lib/werkbak/stappen.js';
 import {
   DOSSIER_VELDEN, autoSleutel, zoekDossier, dossierStand, leegDossier, dossierNaam,
@@ -721,5 +723,164 @@ describe('de werkbon', () => {
 
   test('de bestandsnaam zegt om welke auto het gaat', () => {
     assert.equal(werkbonBestandsnaam(offerte), 'werkbon-2026-014-XX99XX.pdf');
+  });
+});
+
+/* ======================================================================
+   DE AANBETALING EN DE FACTUUR
+   ====================================================================== */
+describe('de aanbetaling uitrekenen', () => {
+  const regels = [{ vastExclCent: 57438 }, { inkoopCent: 24000, margePct: 63, uren: 3 }];
+  const totaal = totalen(regels, INST);
+
+  test('het percentage gaat over het bedrag dat de klant overmaakt', () => {
+    // 30% van het totaal inclusief btw, want dat is wat er op de rekening komt.
+    const a = aanbetaling(regels, INST, 30);
+    assert.equal(a.inclCent, Math.round(totaal.inclCent * 0.3));
+  });
+
+  test('aanbetaling plus restant is exact het totaal', () => {
+    /**
+     * Hier gaat het mis als je het restant apart uitrekent in plaats van
+     * aftrekt: twee keer afronden laat er een cent tussen vallen, en dan
+     * klopt de eindfactuur niet met wat er al betaald is.
+     */
+    for (const pct of [0, 1, 7, 30, 33.3, 50, 66.67, 99, 100]) {
+      const a = aanbetaling(regels, INST, pct);
+      assert.equal(a.inclCent + a.restInclCent, totaal.inclCent, `bij ${pct}%`);
+    }
+  });
+
+  test('bedrag zonder btw plus btw is exact de aanbetaling', () => {
+    for (const pct of [7, 30, 33.3, 50, 66.67, 100]) {
+      const a = aanbetaling(regels, INST, pct);
+      assert.equal(a.exclCent + a.btwCent, a.inclCent, `bij ${pct}%`);
+    }
+  });
+
+  test('zonder percentage geldt de standaard uit de instellingen', () => {
+    const inst = { ...INST, aanbetalingPct: 40 };
+    assert.equal(aanbetaling(regels, inst).pct, 40);
+  });
+
+  test('een onmogelijk percentage wordt teruggebracht tot iets mogelijks', () => {
+    // Een typefout mag geen factuur van min duizend euro opleveren.
+    assert.equal(aanbetaling(regels, INST, -20).pct, 0);
+    assert.equal(aanbetaling(regels, INST, 500).pct, 100);
+    assert.equal(aanbetaling(regels, INST, 500).inclCent, totaal.inclCent);
+  });
+
+  test('een lege offerte rekent niet stuk', () => {
+    const a = aanbetaling([], INST, 30);
+    assert.equal(a.inclCent, 0);
+    assert.equal(a.restInclCent, 0);
+  });
+
+  test('het factuurnummer is een eigen reeks, los van de offertes', () => {
+    // Anders zitten er gaten in je factuurreeks zodra een offerte niet doorgaat.
+    assert.equal(factuurnummer(14, new Date('2026-09-16')), '2026-F014');
+    assert.equal(factuurnummer(1, new Date('2026-01-02')), '2026-F001');
+    assert.notEqual(factuurnummer(14, new Date('2026-09-16')), offertenummer(14, new Date('2026-09-16')));
+  });
+});
+
+describe('de aanbetalingsfactuur', () => {
+  const datum = new Date('2026-09-16');
+  const inst = {
+    ...INST,
+    iban: 'NL91 KNAB 0417 1643 00',
+    tenaamstelling: 'Audio Upgrade Emmen',
+    betaaltermijnDagen: 14,
+  };
+  const offerte = {
+    nummer: '2026-014',
+    datum,
+    klant: {
+      naam: 'Mark de Vries',
+      adres: 'Hoofdstraat 12, 7811 AA Emmen',
+      email: 'mark@example.nl',
+    },
+    auto: { kenteken: 'XX99XX', merk: 'Volkswagen', model: 'Golf VII', bouwjaar: '2018' },
+    regels: [
+      { omschrijving: 'Draadloze CarPlay Upgrade', aantal: 1, vastExclCent: 57438, inkoopCent: 22222 },
+      { omschrijving: 'Premium 2-weg composet voor', aantal: 1, inkoopCent: 24444, margePct: 63, uren: 3 },
+    ],
+  };
+  const maak = (opties = {}) =>
+    factuurPdf(offerte, inst, { nummer: '2026-F014', datum, percentage: 30, ...opties });
+  const tekst = (opties) => Buffer.from(maak(opties).naarBytes()).toString('latin1');
+
+  test('alles staat erop wat er volgens de Belastingdienst op moet', () => {
+    const pdf = tekst();
+    assert.match(pdf, /2026-F014/, 'geen factuurnummer');
+    assert.match(pdf, /16-09-2026/, 'geen factuurdatum');
+    assert.match(pdf, /Mark de Vries/, 'geen naam van de klant');
+    assert.match(pdf, /Hoofdstraat 12/, 'geen adres van de klant');
+    assert.match(pdf, /KVK 96356723/, 'geen KVK-nummer');
+    assert.match(pdf, /NL005205204B66/, 'geen btw-nummer');
+    assert.match(pdf, /Charles Darwinstraat/, 'geen adres van het bedrijf');
+    assert.match(pdf, /Btw 21%/, 'geen btw-tarief');
+  });
+
+  test('het bedrag klopt met de rekensom van de app', () => {
+    const a = aanbetaling(offerte.regels, inst, 30);
+    const pdf = tekst();
+    assert.ok(pdf.includes(euro(a.inclCent).replace('€ ', '')), 'het te betalen bedrag ontbreekt');
+    assert.ok(pdf.includes(euro(a.exclCent).replace('€ ', '')), 'het bedrag zonder btw ontbreekt');
+    assert.ok(pdf.includes(euro(a.btwCent).replace('€ ', '')), 'het btw-bedrag ontbreekt');
+    assert.ok(pdf.includes(euro(a.restInclCent).replace('€ ', '')), 'het restant ontbreekt');
+  });
+
+  test('de klant kan zien hoe hij moet betalen', () => {
+    const pdf = tekst();
+    assert.match(pdf, /NL91 KNAB 0417 1643 00/, 'geen rekeningnummer');
+    assert.match(pdf, /Audio Upgrade Emmen/, 'geen tenaamstelling');
+    assert.match(pdf, /Kenmerk/, 'geen betaalkenmerk');
+    assert.match(pdf, /30-09-2026/, 'geen vervaldatum (14 dagen)');
+  });
+
+  test('en waar de aanbetaling voor is', () => {
+    const pdf = tekst();
+    assert.match(pdf, /Aanbetaling 30% op offerte 2026-014/);
+    assert.match(pdf, /Draadloze CarPlay Upgrade/);
+    assert.match(pdf, /vooruitbetaling/i);
+  });
+
+  test('er staat GEEN inkoopprijs, marge of uurtarief op', () => {
+    // Dezelfde regel als bij de offerte: dit gaat naar een klant toe.
+    const pdf = tekst();
+    for (const verboden of ['222,22', '244,44', '63\\s*%', 'marge', 'uurtarief', '75,00']) {
+      assert.doesNotMatch(pdf, new RegExp(verboden, 'i'), `"${verboden}" staat op de factuur`);
+    }
+  });
+
+  test('zonder rekeningnummer zegt de factuur dat met zoveel woorden', () => {
+    // De app blokkeert dit, maar mocht er ooit toch een doorheen glippen, dan
+    // moet er geen lege regel staan waar de klant overheen leest.
+    const pdf = Buffer.from(
+      factuurPdf(offerte, { ...inst, iban: '' }, { nummer: '2026-F014', datum }).naarBytes()
+    ).toString('latin1');
+    assert.match(pdf, /nog niet ingevuld/);
+  });
+
+  test('geen enkele tekst raakt onderweg verminkt', () => {
+    const zichtbaar = [...tekst().matchAll(/\(([^)]*)\) Tj/g)].map((m) => m[1]);
+    const verdacht = zichtbaar.filter((regel) => /\?/.test(regel) && !/\?$/.test(regel));
+    assert.deepEqual(verdacht, []);
+  });
+
+  test('de bestandsnaam zegt om welke factuur het gaat', () => {
+    assert.equal(factuurBestandsnaam('2026-F014', offerte), 'factuur-2026-F014-XX99XX.pdf');
+  });
+
+  test('een offerte met veel regels loopt netjes door', () => {
+    const veel = Array.from({ length: 30 }, (_, i) => ({
+      omschrijving: `Onderdeel met een tamelijk lange naam nummer ${i + 1}`,
+      inkoopCent: 5000, margePct: 50, uren: 1,
+    }));
+    const doc = factuurPdf({ ...offerte, regels: veel }, inst, { nummer: '2026-F014', datum });
+    assert.ok(doc.paginas >= 1);
+    const pdf = Buffer.from(doc.naarBytes()).toString('latin1');
+    assert.match(pdf, /Kenmerk/, 'het betaalblok is van het blad gevallen');
   });
 });

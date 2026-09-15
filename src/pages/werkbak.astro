@@ -92,8 +92,16 @@ import { pad } from '../lib/pad.js';
       <div class="wb-veldrij">
         <label class="wb-breed" id="wb-bedrijf-veld" hidden>Bedrijfsnaam<input type="text" id="wb-bedrijf" /></label>
         <label class="wb-breed">Naam<input type="text" id="wb-naam" autocomplete="name" /></label>
+        <label class="wb-breed">Adres
+          <input type="text" id="wb-adres" autocomplete="street-address"
+                 placeholder="Hoofdstraat 12, 7811 AA Emmen" />
+        </label>
         <label>Telefoon<input type="tel" id="wb-telefoon" inputmode="tel" /></label>
         <label>E-mail<input type="email" id="wb-email" inputmode="email" /></label>
+        <p class="wb-uitleg wb-breed">
+          Het adres heb je alleen nodig als je een factuur stuurt. Boven de honderd
+          euro is een factuur zonder adres van de klant niet geldig.
+        </p>
       </div>
     </div>
 
@@ -140,6 +148,22 @@ import { pad } from '../lib/pad.js';
       <span class="eyebrow">Alleen voor jou</span>
       <div class="wb-cijfers" id="wb-marge"></div>
       <p class="wb-uitleg">Deze cijfers staan <strong>niet</strong> op de pdf.</p>
+    </div>
+
+    <!-- ---- aanbetaling ---- -->
+    <div class="wb-kaart">
+      <span class="eyebrow">Aanbetaling</span>
+      <p class="wb-uitleg">
+        Een nette factuur in plaats van een kaal betaalverzoek. Hij ziet eruit als
+        de offerte en heeft alles erop wat er volgens de Belastingdienst op moet.
+      </p>
+      <div class="wb-veldrij">
+        <label>Percentage
+          <input type="text" id="wb-aanbetaling-pct" inputmode="decimal" placeholder="30" />
+        </label>
+      </div>
+      <div class="wb-cijfers" id="wb-aanbetaling"></div>
+      <button type="button" class="btn solid wb-vol" id="wb-factuur">Aanbetalingsfactuur maken</button>
     </div>
 
     <div class="wb-kaart">
@@ -308,6 +332,31 @@ import { pad } from '../lib/pad.js';
         Ze staan nooit op de offerte — de klant ziet één bedrag per regel.
       </p>
     </div>
+
+    <div class="wb-kaart">
+      <span class="eyebrow">Voor je facturen</span>
+      <div class="wb-veldrij">
+        <label class="wb-breed">Rekeningnummer (IBAN)
+          <input type="text" id="wb-i-iban" placeholder="NL00 BANK 0000 0000 00" />
+        </label>
+        <label class="wb-breed">Ten name van
+          <input type="text" id="wb-i-tenaamstelling" placeholder="Audio Upgrade Emmen" />
+        </label>
+        <label>Standaard aanbetaling %
+          <input type="text" id="wb-i-aanbetaling" inputmode="decimal" />
+        </label>
+        <label>Betaaltermijn (dagen)
+          <input type="text" id="wb-i-betaaltermijn" inputmode="numeric" />
+        </label>
+        <label>Volgend factuurnummer
+          <input type="text" id="wb-i-factuurnummer" inputmode="numeric" />
+        </label>
+      </div>
+      <p class="wb-uitleg">
+        Je rekeningnummer staat alleen in deze telefoon, niet in de code van de site.
+        Facturen krijgen een eigen doorlopende reeks: offerte 2026-014, factuur 2026-F014.
+      </p>
+    </div>
   </section>
 </main>
 
@@ -324,10 +373,11 @@ import { pad } from '../lib/pad.js';
   import { PACKAGES, SITE } from '../data/site.js';
   import {
     SOORTEN, STANDAARD_INSTELLINGEN, euro, naarCent, regelPrijs, totalen, marge,
-    offertenummer, geldigTot, stuklijst,
+    offertenummer, geldigTot, stuklijst, aanbetaling, factuurnummer,
   } from '../lib/werkbak/rekenen.js';
   import { offertePdf, pdfBestandsnaam } from '../lib/werkbak/offerte-pdf.js';
   import { werkbonPdf, werkbonBestandsnaam } from '../lib/werkbak/werkbon.js';
+  import { factuurPdf, factuurBestandsnaam } from '../lib/werkbak/factuur.js';
   import {
     DOSSIER_VELDEN, autoSleutel, zoekDossier, dossierNaam, dossierStand, leegDossier,
   } from '../lib/werkbak/autos.js';
@@ -484,7 +534,9 @@ import { pad } from '../lib/pad.js';
     });
   });
 
-  const klantVelden = { naam: 'naam', telefoon: 'telefoon', email: 'email', bedrijf: 'bedrijf' };
+  const klantVelden = {
+    naam: 'naam', adres: 'adres', telefoon: 'telefoon', email: 'email', bedrijf: 'bedrijf',
+  };
   Object.entries(klantVelden).forEach(([sleutel, id]) => {
     $(`#wb-${id}`).addEventListener('input', (e) => { offerte.klant[sleutel] = e.target.value; });
   });
@@ -726,11 +778,43 @@ import { pad } from '../lib/pad.js';
         : '');
   }
 
+  /**
+   * Het percentage dat nu in het veld staat. Leeg betekent: de standaard uit
+   * de instellingen. Zo hoeft Justus het niet elke keer in te tikken, maar kan
+   * hij er per klant van afwijken.
+   */
+  function huidigPercentage() {
+    const ingetypt = $('#wb-aanbetaling-pct').value.trim();
+    if (ingetypt === '') return staat.instellingen.aanbetalingPct;
+    return Number(ingetypt.replace(',', '.')) || 0;
+  }
+
+  function tekenAanbetaling() {
+    const pct = huidigPercentage();
+    const a = aanbetaling(offerte.regels, staat.instellingen, pct);
+    const vak = $('#wb-aanbetaling');
+    if (!offerte.regels.length) {
+      vak.innerHTML = '<p class="wb-leeg">Zet er eerst iets op de offerte.</p>';
+      return;
+    }
+    vak.innerHTML = `
+      <div><span>Klant betaalt nu</span><strong>${euro(a.inclCent)}</strong></div>
+      <div><span>Restant bij oplevering</span><strong>${euro(a.restInclCent)}</strong></div>
+      <div><span>Waarvan btw ${staat.instellingen.btwPct}%</span><strong>${euro(a.btwCent)}</strong></div>` +
+      (staat.instellingen.iban
+        ? ''
+        : `<p class="wb-waarschuwing">Je rekeningnummer staat nog niet ingevuld. Zonder dat
+           kan de klant niet betalen — zet hem bij <strong>Instellingen</strong>.</p>`);
+  }
+
+  $('#wb-aanbetaling-pct').addEventListener('input', tekenAanbetaling);
+
   function tekenAlles() {
     tekenRegels();
     tekenOnderdeelknoppen();
     werkTotalenBij();
     tekenDossierMelding();
+    tekenAanbetaling();
   }
 
   /* ================= CATALOGUS ================= */
@@ -1084,6 +1168,11 @@ import { pad } from '../lib/pad.js';
     ['#wb-i-btw', 'btwPct', (v) => Number(v.replace(',', '.')) || 0, (w) => w],
     ['#wb-i-geldig', 'geldigDagen', (v) => Number(v) || 0, (w) => w],
     ['#wb-i-volgnummer', 'volgnummer', (v) => Number(v) || 1, (w) => w],
+    ['#wb-i-iban', 'iban', (v) => v.trim(), (w) => w || ''],
+    ['#wb-i-tenaamstelling', 'tenaamstelling', (v) => v.trim(), (w) => w || ''],
+    ['#wb-i-aanbetaling', 'aanbetalingPct', (v) => Number(v.replace(',', '.')) || 0, (w) => w],
+    ['#wb-i-betaaltermijn', 'betaaltermijnDagen', (v) => Number(v) || 0, (w) => w],
+    ['#wb-i-factuurnummer', 'factuurVolgnummer', (v) => Number(v) || 1, (w) => w],
   ];
 
   function tekenInstellingen() {
@@ -1219,8 +1308,8 @@ import { pad } from '../lib/pad.js';
     offerte = nieuweOfferte();
     voorkeuren = new Set();
     $$('#wb-voorkeuren .wb-chip').forEach((c) => c.classList.remove('aan'));
-    ['#wb-kenteken', '#wb-naam', '#wb-telefoon', '#wb-email', '#wb-bedrijf', '#wb-opmerking',
-     '#wb-merk', '#wb-model', '#wb-bouwjaar'].forEach((kies) => { $(kies).value = ''; });
+    ['#wb-kenteken', '#wb-naam', '#wb-adres', '#wb-telefoon', '#wb-email', '#wb-bedrijf', '#wb-opmerking',
+     '#wb-merk', '#wb-model', '#wb-bouwjaar', '#wb-aanbetaling-pct'].forEach((kies) => { $(kies).value = ''; });
     toonAutoVelden(false);
     melden('');
     tekenAlles();
@@ -1256,6 +1345,7 @@ import { pad } from '../lib/pad.js';
   function vulFormulierUitOfferte() {
     $('#wb-kenteken').value = offerte.auto?.kenteken || '';
     $('#wb-naam').value = offerte.klant?.naam || '';
+    $('#wb-adres').value = offerte.klant?.adres || '';
     $('#wb-telefoon').value = offerte.klant?.telefoon || '';
     $('#wb-email').value = offerte.klant?.email || '';
     $('#wb-bedrijf').value = offerte.klant?.bedrijf || '';
@@ -1316,6 +1406,90 @@ import { pad } from '../lib/pad.js';
       window.open(`https://wa.me/${internationaal}?text=${encodeURIComponent(bericht)}`, '_blank');
     }
   });
+
+  /* ================= DE AANBETALINGSFACTUUR ================= */
+  $('#wb-factuur').addEventListener('click', async () => {
+    if (!offerte.regels.length) {
+      alert('Zet er eerst iets op de offerte.');
+      return;
+    }
+    /* Zonder rekeningnummer is een factuur waardeloos: de klant weet niet
+       waar het geld heen moet. Daarom blokkeren en niet alleen waarschuwen. */
+    if (!staat.instellingen.iban) {
+      alert('Vul eerst je rekeningnummer in bij Instellingen. Zonder dat kan de klant niet betalen.');
+      return;
+    }
+    if (!offerte.klant?.naam && !offerte.klant?.bedrijf) {
+      alert('Vul eerst de naam van de klant in. Een factuur zonder naam is niet geldig.');
+      return;
+    }
+    const pct = huidigPercentage();
+    const deel = aanbetaling(offerte.regels, staat.instellingen, pct);
+    /**
+     * Het adres is boven de honderd euro wettelijk verplicht op een factuur.
+     * Daaronder mag een vereenvoudigde factuur. We blokkeren niet — Justus
+     * kent zijn klant — maar we zeggen het wel, één keer, met het bedrag erbij.
+     */
+    if (!offerte.klant?.adres && deel.inclCent > 10000) {
+      const toch = confirm(
+        `Er staat geen adres bij de klant. Boven de honderd euro — en dit is ` +
+        `${euro(deel.inclCent)} — is een factuur zonder adres van de klant niet geldig.\n\n` +
+        'Toch doorgaan?'
+      );
+      if (!toch) return;
+    }
+
+    const datum = new Date();
+    const nummer = factuurnummer(staat.instellingen.factuurVolgnummer, datum);
+    const doc = factuurPdf(offerte, staat.instellingen, { nummer, datum, percentage: pct });
+    const blob = doc.naarBlob();
+    const naam = factuurBestandsnaam(nummer, offerte);
+    const bestand = new File([blob], naam, { type: 'application/pdf' });
+
+    const auto = [offerte.auto?.merk, offerte.auto?.model].filter(Boolean).join(' ');
+    const bericht = `Hoi${offerte.klant?.naam ? ` ${offerte.klant.naam.split(' ')[0]}` : ''}, ` +
+      `hierbij de aanbetalingsfactuur${auto ? ` voor je ${auto}` : ''}: ${euro(deel.inclCent)}. ` +
+      `Zodra die binnen is plan ik je in. Groet, Justus — ${SITE.name}`;
+
+    if (navigator.canShare?.({ files: [bestand] })) {
+      try {
+        await navigator.share({ files: [bestand], text: bericht });
+        naFactuur(nummer, deel);
+        return;
+      } catch (err) {
+        /* Afgebroken: dan gewoon downloaden. */
+      }
+    }
+    const adres = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = adres;
+    link.download = naam;
+    link.click();
+    URL.revokeObjectURL(adres);
+    naFactuur(nummer, deel);
+  });
+
+  /**
+   * Na het versturen schuift het factuurnummer op.
+   *
+   * Dat moet, en het moet ook maar één keer: een factuurnummer mag niet twee
+   * keer bestaan. Het nummer en het bedrag blijven bij de offerte staan, zodat
+   * je bij de eindfactuur weet wat er al betaald is.
+   */
+  function naFactuur(nummer, deel) {
+    offerte.factuur = {
+      nummer,
+      pct: deel.pct,
+      inclCent: deel.inclCent,
+      restInclCent: deel.restInclCent,
+      datum: new Date().toISOString(),
+    };
+    staat.instellingen.factuurVolgnummer =
+      (Number(staat.instellingen.factuurVolgnummer) || 1) + 1;
+    opslaan();
+    tekenInstellingen();
+    tekenAanbetaling();
+  }
 
   /* ================= DE WERKBON ================= */
   $('#wb-werkbon').addEventListener('click', async () => {

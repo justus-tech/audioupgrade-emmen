@@ -220,6 +220,29 @@ dat zo'n auto op de brug staat, herkent de app hem aan het kenteken en staat
 alles al ingevuld. Vul bij de bouwjaren de jaren van de **generatie** in (een
 Golf 7 liep van 2013 tot 2020), niet het bouwjaar van de auto die er nu staat.
 
+### De aanbetalingsfactuur
+
+Onder de offerte staat **Aanbetaling**. Vul een percentage in — of laat het leeg
+voor je standaard uit Instellingen — en je ziet meteen wat de klant nu betaalt en
+wat er bij oplevering nog komt. De knop maakt er een pdf van die eruitziet als je
+offerte, en die je net zo via WhatsApp stuurt.
+
+**Eerst even instellen.** Bij Instellingen vul je je **rekeningnummer** en de
+tenaamstelling in. Zonder rekeningnummer maakt de app geen factuur: de klant zou
+niet weten waar het geld heen moet.
+
+**Wat er op de factuur staat**, omdat de Belastingdienst dat wil: een doorlopend
+factuurnummer, de datum, jouw naam en adres, je KVK- en btw-nummer, de naam en het
+adres van de klant, wat je levert, het bedrag zonder btw, het btw-tarief en het
+btw-bedrag.
+
+Dat adres van de klant is geen sierlijkheid: **boven de honderd euro is een factuur
+zonder adres niet geldig.** Staat het er niet, dan vraagt de app het je eerst.
+
+**Facturen hebben een eigen nummerreeks**: offerte 2026-014, factuur 2026-F014. Zou
+je één teller delen, dan zitten er gaten in je factuurreeks zodra een offerte niet
+doorgaat — en dat wil je niet uitleggen aan de Belastingdienst.
+
 ### Prijslijsten inlezen
 
 Leveranciersprijzen komen als bestand binnen, dat je bij **Onderdelen** inleest

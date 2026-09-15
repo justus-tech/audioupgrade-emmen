@@ -92,6 +92,30 @@ export const STANDAARD_INSTELLINGEN = {
   geldigDagen: 30,
   /** Het nummer dat de eerstvolgende offerte krijgt. */
   volgnummer: 1,
+
+  /* ---- voor de aanbetalingsfactuur ---- */
+  /**
+   * Het nummer dat de eerstvolgende factuur krijgt.
+   *
+   * Bewust een EIGEN reeks, los van de offertes. De Belastingdienst wil dat
+   * factuurnummers doorlopen en niet dubbel voorkomen; deel je één teller met
+   * je offertes, dan zitten er gaten in je factuurreeks zodra een offerte
+   * niet doorgaat. Een offerte heet 2026-014, een factuur 2026-F014.
+   */
+  factuurVolgnummer: 1,
+  /** Welk deel je vooraf vraagt. Justus kan dit per factuur aanpassen. */
+  aanbetalingPct: 30,
+  /** Binnen hoeveel dagen de factuur betaald moet zijn. */
+  betaaltermijnDagen: 14,
+  /**
+   * Rekeningnummer en tenaamstelling.
+   *
+   * Leeg bij het begin, en met opzet: dit staat nergens in deze code. De map
+   * staat openbaar op GitHub. Justus vult ze één keer in bij Instellingen,
+   * en dan blijven ze in zijn telefoon.
+   */
+  iban: '',
+  tenaamstelling: '',
 };
 
 /**
@@ -253,6 +277,62 @@ export function soortenIn(regels = []) {
 export function offertenummer(volgnummer, datum = new Date()) {
   const n = Math.max(1, Math.round(Number(volgnummer) || 1));
   return `${datum.getFullYear()}-${String(n).padStart(3, '0')}`;
+}
+
+/**
+ * DE AANBETALING UITREKENEN.
+ *
+ * Het percentage gaat over het bedrag INCLUSIEF btw, want dat is het bedrag
+ * dat de klant overmaakt. Zegt Justus 30% van € 1.488,63, dan komt er
+ * € 446,59 op zijn rekening — niet 30% van een bedrag zonder btw dat de klant
+ * nergens ziet staan.
+ *
+ * TWEE DINGEN MOETEN TOT DE CENT KLOPPEN
+ *
+ * 1. Aanbetaling plus restant is precies het totaal. Daarom trekken we het
+ *    restant af in plaats van het apart uit te rekenen: twee keer afronden
+ *    laat er anders een cent tussen vallen, en dan klopt de eindfactuur niet
+ *    met de aanbetaling die al betaald is.
+ *
+ * 2. Bedrag zonder btw plus btw is precies de aanbetaling. Ook hier: eerst
+ *    het bedrag zonder btw afronden, dan de btw als het verschil nemen.
+ *    Andersom kan er een cent verschil ontstaan tussen de regel en het
+ *    totaal op de factuur, en dat is precies waar een boekhouder over belt.
+ *
+ * Over de btw zelf: bij een vooruitbetaling is de btw verschuldigd op het
+ * moment dat het geld binnenkomt. De aanbetalingsfactuur vermeldt hem dus,
+ * en de eindfactuur rekent alleen nog over het restant.
+ */
+export function aanbetaling(regels = [], inst = STANDAARD_INSTELLINGEN, percentage) {
+  const t = totalen(regels, inst);
+  const pct = Math.min(100, Math.max(0, Number(
+    percentage ?? inst.aanbetalingPct ?? STANDAARD_INSTELLINGEN.aanbetalingPct
+  ) || 0));
+  const btwPct = Number(inst.btwPct) ?? BTW_PCT;
+
+  const inclCent = Math.round((t.inclCent * pct) / 100);
+  const exclCent = Math.round((inclCent * 100) / (100 + btwPct));
+
+  return {
+    pct,
+    inclCent,
+    exclCent,
+    btwCent: inclCent - exclCent,
+    restInclCent: t.inclCent - inclCent,
+    totaalInclCent: t.inclCent,
+    totaalExclCent: t.exclCent,
+  };
+}
+
+/**
+ * Het factuurnummer: 2026-F014.
+ *
+ * De F zit ertussen zodat een factuur nooit te verwarren is met een offerte
+ * van hetzelfde nummer — op papier niet, en in je boekhouding niet.
+ */
+export function factuurnummer(volgnummer, datum = new Date()) {
+  const n = Math.max(1, Math.round(Number(volgnummer) || 1));
+  return `${datum.getFullYear()}-F${String(n).padStart(3, '0')}`;
 }
 
 /** Datum als 15-09-2026 — hoe iedereen in Nederland hem leest. */

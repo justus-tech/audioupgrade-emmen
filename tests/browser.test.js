@@ -1216,3 +1216,145 @@ describe('een prijslijst inlezen', alsGebouwd, () => {
     await pagina.close();
   });
 });
+
+/**
+ * DE AANBETALINGSFACTUUR IN DE APP.
+ *
+ * Dit is het enige document dat om geld vraagt. Twee dingen mogen hier nooit
+ * misgaan: een factuur zonder rekeningnummer of naam de deur uit, en een
+ * factuurnummer dat twee keer bestaat.
+ */
+describe('de aanbetaling', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+
+  async function open({ iban = 'NL91 KNAB 0417 1643 00', klant = true } = {}) {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    const meldingen = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    pagina.on('dialog', (venster) => { meldingen.push(venster.message()); venster.accept(); });
+    await pagina.route(RDW_VOERTUIG, (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(SAAB) })
+    );
+    await pagina.goto(paginaUrl('werkbak'));
+    await pagina.evaluate(() => document.fonts.ready);
+
+    await pagina.click('[data-tab="instellingen"]');
+    if (iban) {
+      await pagina.fill('#wb-i-iban', iban);
+      await pagina.locator('#wb-i-iban').blur();
+    }
+    await pagina.click('[data-tab="offerte"]');
+    // Een echte factuur hoort bij een echte auto: kenteken er dus in.
+    await pagina.fill('#wb-kenteken', '92DJHG');
+    await pagina.click('#wb-kenteken-form button[type=submit]');
+    await pagina.waitForFunction(() =>
+      document.querySelector('#wb-auto-melding').textContent.includes('Gevonden')
+    );
+    if (klant) {
+      await pagina.fill('#wb-naam', 'Mark de Vries');
+      await pagina.fill('#wb-adres', 'Hoofdstraat 12, 7811 AA Emmen');
+    }
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+    await pagina.waitForTimeout(150);
+    return { pagina, fouten, meldingen };
+  }
+
+  test('het percentage rekent meteen mee', async () => {
+    const { pagina, fouten } = await open();
+    // Het CarPlay-pakket is € 695,00. Dertig procent is € 208,50.
+    assert.match(await pagina.textContent('#wb-aanbetaling'), /€ 208,50/);
+    await pagina.fill('#wb-aanbetaling-pct', '50');
+    await pagina.waitForTimeout(150);
+    const tekst = await pagina.textContent('#wb-aanbetaling');
+    assert.match(tekst, /€ 347,50/);
+    // Aanbetaling en restant samen zijn precies het offertetotaal.
+    assert.equal((tekst.match(/€ 347,50/g) || []).length, 2, 'restant klopt niet met de aanbetaling');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('de factuur komt eruit met een eigen nummerreeks', async () => {
+    const { pagina, fouten } = await open();
+    const wachten = pagina.waitForEvent('download');
+    await pagina.click('#wb-factuur');
+    const bestand = await wachten;
+    assert.match(bestand.suggestedFilename(), /^factuur-\d{4}-F\d{3}-92DJHG\.pdf$/);
+
+    // Het factuurnummer schuift één op, en niet meer dan één.
+    await pagina.click('[data-tab="instellingen"]');
+    assert.equal(await pagina.inputValue('#wb-i-factuurnummer'), '2');
+    // En het offertenummer blijft waar het was: aparte reeksen.
+    assert.equal(await pagina.inputValue('#wb-i-volgnummer'), '1');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('zonder rekeningnummer komt er geen factuur', async () => {
+    // Een factuur waar de klant niet op kan betalen is erger dan geen factuur.
+    const { pagina, meldingen } = await open({ iban: '' });
+    await pagina.click('#wb-factuur');
+    await pagina.waitForTimeout(250);
+    assert.match(meldingen.join(' '), /rekeningnummer/i);
+    await pagina.close();
+  });
+
+  test('en de app zegt het ook al vóór je op de knop drukt', async () => {
+    const { pagina } = await open({ iban: '' });
+    assert.match(await pagina.textContent('#wb-aanbetaling'), /rekeningnummer staat nog niet/i);
+    await pagina.close();
+  });
+
+  test('zonder naam van de klant ook niet', async () => {
+    const { pagina, meldingen } = await open({ klant: false });
+    await pagina.click('#wb-factuur');
+    await pagina.waitForTimeout(250);
+    assert.match(meldingen.join(' '), /naam van de klant/i);
+    await pagina.close();
+  });
+
+  test('zonder adres vraagt hij het eerst, want dat is wettelijk vereist', async () => {
+    const pagina = await browser.newPage(telefoon);
+    const meldingen = [];
+    pagina.on('dialog', (venster) => { meldingen.push(venster.message()); venster.dismiss(); });
+    await pagina.goto(paginaUrl('werkbak'));
+    await pagina.click('[data-tab="instellingen"]');
+    await pagina.fill('#wb-i-iban', 'NL91 KNAB 0417 1643 00');
+    await pagina.locator('#wb-i-iban').blur();
+    await pagina.click('[data-tab="offerte"]');
+    await pagina.fill('#wb-naam', 'Mark de Vries');
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+    await pagina.waitForTimeout(150);
+    await pagina.click('#wb-factuur');
+    await pagina.waitForTimeout(250);
+    assert.match(meldingen.join(' '), /geen adres/i);
+    assert.match(meldingen.join(' '), /honderd euro/i);
+
+    // Afgewezen: dan geen factuur, en het nummer schuift niet op.
+    await pagina.click('[data-tab="instellingen"]');
+    assert.equal(await pagina.inputValue('#wb-i-factuurnummer'), '1');
+    await pagina.close();
+  });
+
+  test('het rekeningnummer blijft staan als je de app opnieuw opent', async () => {
+    const { pagina } = await open();
+    await pagina.reload();
+    await pagina.click('[data-tab="instellingen"]');
+    assert.equal(await pagina.inputValue('#wb-i-iban'), 'NL91 KNAB 0417 1643 00');
+    await pagina.close();
+  });
+
+  test('de aanbetalingskaart past ook op een smal scherm', async () => {
+    const pagina = await browser.newPage({ ...telefoon, viewport: { width: 320, height: 844 } });
+    await pagina.goto(paginaUrl('werkbak'));
+    await pagina.evaluate(() => document.fonts.ready);
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+    await pagina.fill('#wb-aanbetaling-pct', '33,5');
+    await pagina.waitForTimeout(150);
+    const overloop = await pagina.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+    );
+    assert.equal(overloop, 0);
+    await pagina.close();
+  });
+});
