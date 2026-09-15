@@ -162,6 +162,86 @@ test op die controleert dat ze elkaar niet tegenspreken.
 
 ---
 
+## De werkbak — je offerte-app
+
+Op `/werkbak` staat een app voor jezelf, niet voor klanten. Je vult een
+kenteken in, vinkt aan wat de klant wil, en er rolt een pdf-offerte uit die
+je meteen via WhatsApp kunt versturen.
+
+**Je zet hem één keer klaar:**
+
+1. Open `audioupgradeemmen.nl/werkbak` op je telefoon.
+2. Ga naar **Instellingen** en vul je uurtarief en je standaard marge in.
+3. Ga naar **Onderdelen** en zet erin wat je bij je leveranciers koopt:
+   naam, inkoopprijs, marge en hoeveel uur montage het kost.
+4. Zet de pagina op je beginscherm (in Safari: delen → "Zet op beginscherm").
+
+Daarna is een offerte maken: kenteken, naam, aantikken wat erin gaat,
+**Pdf & versturen**.
+
+**Wat de klant wél en niet ziet.** Op de pdf staat één bedrag per regel, met
+montage en (bij particulieren) btw er al in. Je inkoopprijzen, je marge en je
+uurtarief staan er nooit op — daar staat een test op in
+`tests/werkbak.test.js`.
+
+### Elk kabeltje klopt
+
+Bij een onderdeel zet je onder **Wat hoort hier verplicht bij** de ringen,
+adapterkabels en butyl die er altijd bij gaan, met artikelnummer en leverancier.
+Kies je dat onderdeel op een offerte, dan komt de hele sleep automatisch mee:
+
+- in je **inkoop**, dus je marge klopt (twee ringen van € 14,50 zijn geen ruis);
+- op je **werkbon**, dus je staat niet bij de auto met een kabel te weinig;
+- **niet** op de offerte van de klant — die ziet één regel met één prijs.
+
+### De werkbon
+
+Naast de offerte maakt de app een tweede pdf, voor jezelf. Daarop staat:
+
+1. de auto, met wat er over dat model is vastgelegd;
+2. de stuklijst — elk artikel apart, met artikelnummer, om af te vinken;
+3. de werkinstructie stap voor stap, van stoelhoes tot proefrit.
+
+Er staan **geen prijzen** op. Een werkbon ligt op de bumper; daar hoort je marge
+niet te liggen. Daar staat een test op.
+
+### Auto's: wat de RDW niet weet
+
+Van de RDW krijg je merk, model, bouwjaar en kleur. Niet: welke speakermaat
+erin zit, welke adapterring past, welk fabrieksscherm het is, welke stekker
+erachter zit. Dat verschilt per uitvoering en is nergens op te halen.
+
+**De app verzint dat dus niet.** Waar het dossier leeg is, komt er op de werkbon
+een lege regel met een streep — geen gok. Een verzonnen stekkertype kost een
+middag; een verzonnen draadkleur kost de fabrieksgarantie van je klant.
+
+Onder **Auto's** leg je per model vast wat je hebt nagemeten. De volgende keer
+dat zo'n auto op de brug staat, herkent de app hem aan het kenteken en staat
+alles al ingevuld. Vul bij de bouwjaren de jaren van de **generatie** in (een
+Golf 7 liep van 2013 tot 2020), niet het bouwjaar van de auto die er nu staat.
+
+### Prijslijsten inlezen
+
+Leveranciersprijzen komen als bestand binnen, dat je bij **Onderdelen** inleest
+met "Lees bestand in". Zo'n lijst wordt **toegevoegd** aan wat je al hebt: je
+instellingen, je eigen onderdelen en je auto's blijven staan. Lees je hem per
+ongeluk twee keer in, dan komt er niets dubbel bij.
+
+Alleen een bestand dat je zelf met **Bewaar als bestand** hebt gemaakt vervangt
+alles — dat is je reservekopie, en daar vraagt hij eerst nog bij of je het zeker
+weet.
+
+**Waar je gegevens staan.** In de browser van je telefoon, nergens anders.
+Geen server, geen database, geen inlog. Dat betekent ook: raakt je telefoon
+kwijt, dan is je lijst weg. Druk daarom af en toe op **Bewaar als bestand**
+bij Onderdelen en mail dat bestand naar jezelf.
+
+> **Belangrijk:** zet je inkoopprijzen nooit in de code van dit project. Deze
+> map staat openbaar op GitHub — iedereen kan hem lezen. In de app zelf is
+> veilig, in een bestand hier niet.
+
+---
+
 ## Publiceren
 
 De site staat nog **niet** live. Het domein `audioupgradeemmen.nl` wijst nog

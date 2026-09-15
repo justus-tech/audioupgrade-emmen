@@ -190,10 +190,49 @@ describe('matchAuto', () => {
   });
 });
 
+describe('formatteerKenteken met het bouwjaar erbij', () => {
+  test('twee indelingen delen hun vorm; het bouwjaar geeft de doorslag', () => {
+    // 99XXXX kan 99-XX-XX (vanaf 1991) of 99-XXX-X (vanaf 2005) zijn, en
+    // XXXX99 kan XX-XX-99 (vanaf 1999) of X-XXX-99 (vanaf 2008) zijn. Aan het
+    // kenteken alleen is dat niet te zien; aan het bouwjaar wel.
+    assert.equal(formatteerKenteken('99XXXX', 1996), '99-XX-XX');
+    assert.equal(formatteerKenteken('99XXXX', 2012), '99-XXX-X');
+    assert.equal(formatteerKenteken('XXXX99', 2002), 'XX-XX-99');
+    assert.equal(formatteerKenteken('XXXX99', 2011), 'X-XXX-99');
+  });
+
+  test('de RDW-datum mag er in zijn geheel in', () => {
+    // De RDW levert 20180417; wij hoeven alleen de eerste vier tekens.
+    assert.equal(formatteerKenteken('XXXX99', '20110417'), 'X-XXX-99');
+  });
+
+  test('zonder bouwjaar blijft het zoals het was', () => {
+    // Geen jaar bekend: dan de oudste indeling, zoals de site altijd al deed.
+    assert.equal(formatteerKenteken('99XXXX'), '99-XX-XX');
+    assert.equal(formatteerKenteken('XXXX99'), 'XX-XX-99');
+  });
+
+  test('een bouwjaar verandert niets aan de andere twaalf indelingen', () => {
+    assert.equal(formatteerKenteken('XX99XX', 2018), 'XX-99-XX');
+    assert.equal(formatteerKenteken('92DJHG', 1999), '92-DJ-HG');
+  });
+});
+
 describe('netteNaam', () => {
   test('maakt van geschreeuw een leesbare naam', () => {
     assert.equal(netteNaam('VOLKSWAGEN', 'GOLF'), 'Volkswagen Golf');
-    assert.equal(netteNaam('MERCEDES-BENZ', 'C 180'), 'Mercedes-benz C 180');
+    // Elk deel achter een koppelteken krijgt een hoofdletter. Hier stond
+    // "Mercedes-benz", en zo staat het merk op geen enkele auto.
+    assert.equal(netteNaam('MERCEDES-BENZ', 'C 180'), 'Mercedes-Benz C 180');
+  });
+
+  test('romeinse cijfers blijven in hoofdletters', () => {
+    // De RDW schrijft "GOLF VII". Zonder deze regel werd dat "Golf Vii" en
+    // stond dat zo op de offerte van de klant.
+    assert.equal(netteNaam('VOLKSWAGEN', 'GOLF VII 1.4 TSI'), 'Volkswagen Golf VII 1.4 TSI');
+    assert.equal(netteNaam('VOLKSWAGEN', 'PASSAT VIII'), 'Volkswagen Passat VIII');
+    // Maar een gewoon woord dat toevallig uit Romeinse letters bestaat niet.
+    assert.equal(netteNaam('TOYOTA', 'MIX'), 'Toyota Mix');
   });
 
   test('toont het merk niet dubbel', () => {

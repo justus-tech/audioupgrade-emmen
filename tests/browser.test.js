@@ -708,3 +708,511 @@ describe('op een telefoon', alsGebouwd, () => {
     await pagina.close();
   });
 });
+
+/**
+ * DE WERKBAK — de offerte-app van Justus zelf.
+ *
+ * Dit is de enige pagina van dit project waar de gebruiker geen bezoeker is
+ * maar Justus, met olie aan zijn handen, op zijn telefoon, naast de auto.
+ * Het hele nut van deze app is dat een offerte in een paar tikken klaar is;
+ * gaat er onderweg iets stuk, dan pakt hij Word er weer bij en zijn we terug
+ * bij af. Daarom loopt deze test de hele route af: kenteken, klant,
+ * onderdelen, pdf.
+ */
+describe('de werkbak', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+
+  /** De werkbak opent met een nagebootste RDW, net als de rest hierboven. */
+  async function openWerkbak() {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    pagina.on('console', (m) => {
+      if (m.type() === 'error' && !m.text().startsWith('Failed to load resource')) {
+        fouten.push(m.text());
+      }
+    });
+    await pagina.route(RDW_VOERTUIG, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(SAAB),
+      })
+    );
+    await pagina.goto(paginaUrl('werkbak'));
+    await pagina.evaluate(() => document.fonts.ready);
+    return { pagina, fouten };
+  }
+
+  /** Zet één onderdeel in de catalogus, zoals Justus dat één keer doet. */
+  async function vulCatalogus(pagina, { inkoop = '240,00', marge = '60', uren = '3' } = {}) {
+    await pagina.click('[data-tab="catalogus"]');
+    await pagina.fill('#wb-o-naam', 'Premium 2-weg composet voor');
+    await pagina.selectOption('#wb-o-soort', 'speakers-voor');
+    await pagina.fill('#wb-o-inkoop', inkoop);
+    await pagina.fill('#wb-o-marge', marge);
+    await pagina.fill('#wb-o-uren', uren);
+    await pagina.click('#wb-o-bewaar');
+    await pagina.click('[data-tab="offerte"]');
+  }
+
+  test('het kenteken haalt de auto op bij de RDW', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.fill('#wb-kenteken', '92DJHG');
+    await pagina.click('#wb-kenteken-form button[type=submit]');
+    await pagina.waitForFunction(() =>
+      document.querySelector('#wb-auto-melding').textContent.includes('Gevonden')
+    );
+    // De RDW schrijft alles in hoofdletters; op een offerte hoort dat niet.
+    assert.equal(await pagina.inputValue('#wb-merk'), 'Saab');
+    assert.equal(await pagina.inputValue('#wb-bouwjaar'), '1999');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een onbekend kenteken laat je het met de hand invullen', async () => {
+    // Doodlopende weg voorkomen: een oldtimer of een import staat soms niet
+    // in de open gegevens van de RDW, en dan moet de offerte gewoon door.
+    const pagina = await browser.newPage(telefoon);
+    await pagina.route(RDW_VOERTUIG, (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
+    );
+    await pagina.goto(paginaUrl('werkbak'));
+    await pagina.fill('#wb-kenteken', '99ZZ99');
+    await pagina.click('#wb-kenteken-form button[type=submit]');
+    await pagina.waitForFunction(() =>
+      document.querySelector('#wb-auto-melding').textContent.includes('hand')
+    );
+    assert.equal(await pagina.isVisible('#wb-merk'), true, 'de velden blijven verborgen');
+    await pagina.close();
+  });
+
+  test('een pakket van de site komt er voor de juiste prijs op', async () => {
+    const { pagina } = await openWerkbak();
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+    // De site belooft € 695,00 inclusief btw voor het CarPlay-pakket. Rekent
+    // de app daar btw overheen, dan staat er ineens € 840 op de offerte.
+    assert.equal(await pagina.textContent('#wb-totaal'), '€ 695,00');
+    await pagina.close();
+  });
+
+  test('een eigen onderdeel rekent inkoop, marge en montage bij elkaar op', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await vulCatalogus(pagina);
+    await pagina.click('#wb-onderdelen .wb-toevoeg >> nth=0');
+    // 240 + 60% = 384, plus 3 uur à 75 = 225. Samen 609 excl, 736,89 incl.
+    assert.equal(await pagina.textContent('#wb-totaal'), '€ 736,89');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('de schakelaar zakelijk haalt de btw uit de bedragen', async () => {
+    const { pagina } = await openWerkbak();
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+    await pagina.click('[data-klant="zakelijk"]');
+    assert.equal(await pagina.textContent('#wb-totaal'), '€ 574,38');
+    // En het bedrijfsnaamveld hoort er dan bij te staan.
+    assert.equal(await pagina.isVisible('#wb-bedrijf'), true);
+    await pagina.close();
+  });
+
+  test('het marge-overzicht waarschuwt als er geen inkoopprijs staat', async () => {
+    // Zonder die waarschuwing lijkt een pakket volledig winst en gaat Justus
+    // varen op een percentage dat niet klopt.
+    const { pagina } = await openWerkbak();
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+    assert.match(await pagina.textContent('#wb-marge'), /nog geen inkoopprijs/);
+    await pagina.close();
+  });
+
+  test('de catalogus blijft staan als je de app opnieuw opent', async () => {
+    // Anders zou hij zijn hele prijslijst elke ochtend opnieuw moeten typen.
+    const { pagina } = await openWerkbak();
+    await vulCatalogus(pagina);
+    await pagina.reload();
+    await pagina.waitForSelector('#wb-onderdelen .wb-toevoeg');
+    const knoppen = await pagina.$$('#wb-onderdelen .wb-toevoeg');
+    assert.equal(knoppen.length, 1);
+    await pagina.close();
+  });
+
+  test('de knop levert een pdf op met de naam van de offerte erin', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.fill('#wb-kenteken', '92DJHG');
+    await pagina.click('#wb-kenteken-form button[type=submit]');
+    await pagina.waitForFunction(() =>
+      document.querySelector('#wb-auto-melding').textContent.includes('Gevonden')
+    );
+    await pagina.fill('#wb-naam', 'Mark de Vries');
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+
+    const wachten = pagina.waitForEvent('download');
+    await pagina.click('#wb-pdf');
+    const bestand = await wachten;
+    assert.match(bestand.suggestedFilename(), /^offerte-\d{4}-\d{3}-92DJHG\.pdf$/);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een lege offerte levert geen pdf op maar een melding', async () => {
+    const { pagina } = await openWerkbak();
+    let gemeld = '';
+    pagina.on('dialog', (venster) => {
+      gemeld = venster.message();
+      venster.dismiss();
+    });
+    await pagina.click('#wb-pdf');
+    await pagina.waitForTimeout(200);
+    assert.match(gemeld, /eerst iets/);
+    await pagina.close();
+  });
+
+  test('niets loopt over de zijkant heen, ook niet op 320 pixels', async () => {
+    for (const breedte of [320, 390]) {
+      const pagina = await browser.newPage({ ...telefoon, viewport: { width: breedte, height: 844 } });
+      await pagina.goto(paginaUrl('werkbak'));
+      await pagina.evaluate(() => document.fonts.ready);
+      // Ook mét regels erop: dan staan de langste teksten pas op het scherm.
+      await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+      await pagina.click('#wb-eigen-regel');
+      const overloop = await pagina.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+      );
+      assert.equal(overloop, 0, `bij ${breedte} pixels steekt er iets uit`);
+      await pagina.close();
+    }
+  });
+
+  test('alles waar je op tikt is groot genoeg voor een duim', async () => {
+    const pagina = await browser.newPage(telefoon);
+    await pagina.goto(paginaUrl('werkbak'));
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+    const teKlein = await pagina.$$eval('button, input, select, textarea', (elementen) =>
+      elementen
+        .map((e) => ({
+          wat: (e.textContent || e.getAttribute('aria-label') || e.id || '').trim().slice(0, 30),
+          h: e.getBoundingClientRect().height,
+        }))
+        .filter((e) => e.h > 0 && e.h < 38)
+    );
+    assert.deepEqual(teKlein, []);
+    await pagina.close();
+  });
+});
+
+/**
+ * DE WERKBON EN HET AUTODOSSIER.
+ *
+ * Hier draait het om wat er in de werkplaats gebeurt: klopt elk kabeltje, en
+ * staat er op de bon wat er over deze auto is vastgelegd. Twee dingen mogen
+ * hier nooit misgaan — een prijs op de werkbon, en een verzonnen speakermaat.
+ */
+describe('de werkbon en het autodossier', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+
+  const GOLF = [{
+    kenteken: 'XX99XX',
+    voertuigsoort: 'Personenauto',
+    merk: 'VOLKSWAGEN',
+    handelsbenaming: 'GOLF VII 1.4 TSI',
+    eerste_kleur: 'ZWART',
+    datum_eerste_toelating: '20180417',
+  }];
+
+  async function openWerkbak(voertuig = GOLF) {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    await pagina.route(RDW_VOERTUIG, (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(voertuig) })
+    );
+    await pagina.goto(paginaUrl('werkbak'));
+    await pagina.evaluate(() => document.fonts.ready);
+    return { pagina, fouten };
+  }
+
+  /** Een composet met de ringen en kabels die erbij horen. */
+  async function vulOnderdeelMetKabels(pagina) {
+    await pagina.click('[data-tab="catalogus"]');
+    await pagina.fill('#wb-o-naam', 'Premium 2-weg composet voor');
+    await pagina.selectOption('#wb-o-soort', 'speakers-voor');
+    await pagina.fill('#wb-o-artikelnummer', 'GL-165-2W');
+    await pagina.fill('#wb-o-leverancier', 'Gladen');
+    await pagina.fill('#wb-o-inkoop', '240,00');
+    await pagina.fill('#wb-o-marge', '60');
+    await pagina.fill('#wb-o-uren', '3');
+    await pagina.click('#wb-o-toebehoren-erbij');
+    const rij = pagina.locator('.wb-toebehoren').last();
+    await rij.locator('.wb-t-naam').fill('Adapterringen VW 165 mm');
+    await rij.locator('.wb-t-artikel').fill('ACV-271120-05');
+    await rij.locator('.wb-t-leverancier').fill('ACV');
+    await rij.locator('.wb-t-aantal').fill('2');
+    await rij.locator('.wb-t-inkoop').fill('14,50');
+    await rij.locator('.wb-t-inkoop').blur();
+    await pagina.click('#wb-o-bewaar');
+    await pagina.click('[data-tab="offerte"]');
+  }
+
+  test('de kabels tellen mee in de prijs die de klant betaalt', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await vulOnderdeelMetKabels(pagina);
+    await pagina.click('#wb-onderdelen .wb-toevoeg >> nth=0');
+    // 240 + 2x 14,50 = 269 inkoop, +60% = 430,40, plus 3 uur à 75 = 225.
+    // Samen 655,40 excl, 793,03 incl. Zonder de ringen zou het 736,89 zijn:
+    // die 56 euro liep je elke klus mis.
+    assert.equal(await pagina.textContent('#wb-totaal'), '€ 793,03');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('de app zegt het als er over deze auto nog niets vastligt', async () => {
+    const { pagina } = await openWerkbak();
+    await pagina.fill('#wb-kenteken', 'XX99XX');
+    await pagina.click('#wb-kenteken-form button[type=submit]');
+    await pagina.waitForFunction(() =>
+      document.querySelector('#wb-auto-melding').textContent.includes('Gevonden')
+    );
+    assert.match(await pagina.textContent('#wb-dossier-melding'), /nog niets vastgelegd/);
+    await pagina.close();
+  });
+
+  test('de RDW-naam wordt netjes geschreven, met de Romeinse cijfers heel', async () => {
+    // "GOLF VII 1.4 TSI" mag geen "Golf Vii 1.4 Tsi" worden: dat staat zo op
+    // de offerte van de klant.
+    const { pagina } = await openWerkbak();
+    await pagina.fill('#wb-kenteken', 'XX99XX');
+    await pagina.click('#wb-kenteken-form button[type=submit]');
+    await pagina.waitForFunction(() =>
+      document.querySelector('#wb-auto-melding').textContent.includes('Gevonden')
+    );
+    assert.equal(await pagina.inputValue('#wb-model'), 'Golf VII 1.4 TSI');
+    await pagina.close();
+  });
+
+  test('een model vastleggen doe je vanaf de offerte, en het blijft staan', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.fill('#wb-kenteken', 'XX99XX');
+    await pagina.click('#wb-kenteken-form button[type=submit]');
+    await pagina.waitForFunction(() =>
+      document.querySelector('#wb-auto-melding').textContent.includes('Gevonden')
+    );
+    await pagina.click('#wb-dossier-melding .wb-link');
+    await pagina.waitForTimeout(150);
+
+    // Het dossier hoort op de modelnaam te staan, niet op de uitvoering: de
+    // speakermaat van een 1.4 TSI is dezelfde als die van een 2.0 TDI.
+    assert.equal(await pagina.inputValue('#wb-a-naam'), 'Volkswagen Golf');
+    // En de bouwjaren blijven leeg: 2018 is deze auto, niet de generatie.
+    assert.equal(await pagina.inputValue('#wb-a-van'), '');
+
+    await pagina.fill('[data-dossier="speakerVoor"]', '165 mm (6,5")');
+    await pagina.fill('[data-dossier="radio"]', 'Composition Media');
+    await pagina.fill('[data-dossier="stekker"]', 'Quadlock');
+    await pagina.click('#wb-a-bewaar');
+    await pagina.click('[data-tab="offerte"]');
+    await pagina.waitForTimeout(150);
+    assert.match(await pagina.textContent('#wb-dossier-melding'), /Vastgelegd: Volkswagen Golf/);
+
+    // Na opnieuw openen staat het er nog.
+    await pagina.reload();
+    await pagina.waitForSelector('#wb-a-lijst', { state: 'attached' });
+    await pagina.click('[data-tab="autos"]');
+    assert.match(await pagina.textContent('#wb-a-lijst'), /Volkswagen Golf/);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('de werkbon komt eruit met de auto in de bestandsnaam', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await vulOnderdeelMetKabels(pagina);
+    await pagina.fill('#wb-kenteken', 'XX99XX');
+    await pagina.click('#wb-kenteken-form button[type=submit]');
+    await pagina.waitForFunction(() =>
+      document.querySelector('#wb-auto-melding').textContent.includes('Gevonden')
+    );
+    await pagina.click('#wb-onderdelen .wb-toevoeg >> nth=0');
+
+    const wachten = pagina.waitForEvent('download');
+    await pagina.click('#wb-werkbon');
+    const bestand = await wachten;
+    assert.match(bestand.suggestedFilename(), /^werkbon-\d{4}-\d{3}-XX99XX\.pdf$/);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een lege offerte levert geen werkbon op', async () => {
+    const { pagina } = await openWerkbak();
+    let gemeld = '';
+    pagina.on('dialog', (venster) => { gemeld = venster.message(); venster.dismiss(); });
+    await pagina.click('#wb-werkbon');
+    await pagina.waitForTimeout(200);
+    assert.match(gemeld, /eerst iets/);
+    await pagina.close();
+  });
+
+  test('het tabblad Auto\'s past ook op een smal scherm', async () => {
+    for (const breedte of [320, 390]) {
+      const pagina = await browser.newPage({ ...telefoon, viewport: { width: breedte, height: 844 } });
+      await pagina.goto(paginaUrl('werkbak'));
+      await pagina.evaluate(() => document.fonts.ready);
+      for (const tab of ['autos', 'catalogus']) {
+        await pagina.click(`[data-tab="${tab}"]`);
+        if (tab === 'catalogus') await pagina.click('#wb-o-toebehoren-erbij');
+        const overloop = await pagina.evaluate(
+          () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+        );
+        assert.equal(overloop, 0, `${tab} bij ${breedte} pixels: er steekt iets uit`);
+      }
+      await pagina.close();
+    }
+  });
+});
+
+/**
+ * EEN PRIJSLIJST INLEZEN.
+ *
+ * Zo komen de leveranciersprijzen in de werkbak: als bestand dat Justus zelf
+ * inleest. Twee dingen mogen daarbij nooit gebeuren — zijn instellingen en
+ * zijn eigen werk wissen, en alles dubbel in de lijst zetten.
+ */
+describe('een prijslijst inlezen', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+
+  /** Een aangeleverde lijst: alleen onderdelen en auto's, geen instellingen. */
+  const PRIJSLIJST = {
+    catalogus: [
+      { omschrijving: '13W7AE-D1.5', soort: 'subwoofer', merk: 'JL Audio',
+        leverancier: 'JL Audio', artikelnummer: '010-03032-00', inkoopCent: 98926, uren: 0, toebehoren: [] },
+      { omschrijving: 'MSS 6', soort: 'speakers-voor', merk: 'STEG',
+        leverancier: 'STEG', artikelnummer: 'MSS6', inkoopCent: 32182, uren: 0, toebehoren: [] },
+    ],
+    dossiers: [
+      { sleutel: 'bmw-3-serie', naam: 'BMW 3er (E90)', vanJaar: '2005', totJaar: '2011',
+        chassis: 'E90', pastVoor: 'ONE 202 BMW', bron: 'Gladen compatibiliteitslijst BMW, december 2020' },
+    ],
+  };
+
+  async function lees(pagina, bestand) {
+    await pagina.setInputFiles('#wb-import', {
+      name: 'lijst.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify(bestand)),
+    });
+    await pagina.waitForTimeout(300);
+  }
+
+  const opslag = (pagina) =>
+    pagina.evaluate(() => JSON.parse(localStorage.getItem('aue-werkbak-v1') || '{}'));
+
+  async function open() {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    pagina.on('dialog', (venster) => venster.accept());
+    await pagina.goto(paginaUrl('werkbak'));
+    await pagina.evaluate(() => document.fonts.ready);
+    return { pagina, fouten };
+  }
+
+  test('een prijslijst komt erbij en wist niets', async () => {
+    const { pagina, fouten } = await open();
+    // Eerst iets eigens neerzetten: een uurtarief en een eigen onderdeel.
+    await pagina.click('[data-tab="instellingen"]');
+    await pagina.fill('#wb-i-uurtarief', '82,50');
+    await pagina.locator('#wb-i-uurtarief').blur();
+    await pagina.click('[data-tab="catalogus"]');
+    await pagina.fill('#wb-o-naam', 'Eigen rol butyl');
+    await pagina.fill('#wb-o-inkoop', '39,00');
+    await pagina.click('#wb-o-bewaar');
+
+    await lees(pagina, PRIJSLIJST);
+
+    const na = await opslag(pagina);
+    assert.equal(na.catalogus.length, 3, 'de lijst is niet toegevoegd maar vervangen');
+    assert.equal(na.dossiers.length, 1);
+    assert.equal(na.instellingen.uurtariefCent, 8250, 'het uurtarief is gewist');
+    assert.ok(
+      na.catalogus.some((o) => o.omschrijving === 'Eigen rol butyl'),
+      'het eigen onderdeel is verdwenen'
+    );
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('twee keer inlezen zet niets dubbel in de lijst', async () => {
+    const { pagina } = await open();
+    await pagina.click('[data-tab="catalogus"]');
+    await lees(pagina, PRIJSLIJST);
+    await lees(pagina, PRIJSLIJST);
+    const na = await opslag(pagina);
+    assert.equal(na.catalogus.length, 2, 'de artikelen staan dubbel');
+    assert.equal(na.dossiers.length, 1, 'de auto\'s staan dubbel');
+    await pagina.close();
+  });
+
+  test('een reservekopie vervangt wél — dat is waar hij voor is', async () => {
+    const { pagina } = await open();
+    await pagina.click('[data-tab="instellingen"]');
+    await pagina.fill('#wb-i-uurtarief', '82,50');
+    await pagina.locator('#wb-i-uurtarief').blur();
+    await pagina.click('[data-tab="catalogus"]');
+    await lees(pagina, {
+      soort: 'reservekopie',
+      instellingen: { uurtariefCent: 6000, margePct: 45, btwPct: 21, geldigDagen: 14, volgnummer: 7 },
+      catalogus: [PRIJSLIJST.catalogus[0]],
+      dossiers: [],
+      offertes: [],
+    });
+    const na = await opslag(pagina);
+    assert.equal(na.catalogus.length, 1);
+    assert.equal(na.instellingen.uurtariefCent, 6000, 'de reservekopie heeft de instellingen niet teruggezet');
+    await pagina.close();
+  });
+
+  test('de ingelezen auto wordt bij het kenteken teruggevonden', async () => {
+    // Een BMW 320i uit 2009 hoort het E90-dossier te vinden (2005-2011).
+    const pagina = await browser.newPage(telefoon);
+    pagina.on('dialog', (venster) => venster.accept());
+    await pagina.route(RDW_VOERTUIG, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([{
+          kenteken: 'XX99XX', merk: 'BMW', handelsbenaming: '320I',
+          voertuigsoort: 'Personenauto', datum_eerste_toelating: '20090417',
+        }]),
+      })
+    );
+    await pagina.goto(paginaUrl('werkbak'));
+    await pagina.click('[data-tab="catalogus"]');
+    await lees(pagina, PRIJSLIJST);
+    await pagina.click('[data-tab="offerte"]');
+    await pagina.fill('#wb-kenteken', 'XX99XX');
+    await pagina.click('#wb-kenteken-form button[type=submit]');
+    await pagina.waitForFunction(() =>
+      document.querySelector('#wb-auto-melding').textContent.includes('Gevonden')
+    );
+    await pagina.waitForTimeout(200);
+    const melding = await pagina.textContent('#wb-dossier-melding');
+    assert.match(melding, /BMW 3er \(E90\)/);
+    // En hij blijft eerlijk over wat er nog niet is nagemeten.
+    assert.match(melding, /Speakermaat voor/);
+    await pagina.close();
+  });
+
+  test('een bestand dat geen werkbak-bestand is wordt geweigerd', async () => {
+    const pagina = await browser.newPage(telefoon);
+    let gemeld = '';
+    pagina.on('dialog', (venster) => { gemeld = venster.message(); venster.accept(); });
+    await pagina.goto(paginaUrl('werkbak'));
+    await pagina.click('[data-tab="catalogus"]');
+    await pagina.setInputFiles('#wb-import', {
+      name: 'iets-anders.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify({ zomaar: 'iets' })),
+    });
+    await pagina.waitForTimeout(300);
+    assert.match(gemeld, /kon ik niet lezen/);
+    await pagina.close();
+  });
+});

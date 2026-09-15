@@ -1,0 +1,1690 @@
+---
+/**
+ * DE WERKBAK — de offerte-app van Justus zelf.
+ *
+ * WAAR DIT VOOR IS
+ * Een offerte maken kostte een half uur: prijslijsten van leveranciers
+ * doorzoeken, met een rekenmachine de marge erbij, alles overtypen in Word
+ * en dan omzetten naar pdf. Deze pagina doet dat in een paar tikken:
+ * kenteken erin, aanvinken wat de klant wil, pdf eruit, WhatsApp uit.
+ *
+ * DIT IS GEEN PAGINA VOOR BEZOEKERS
+ * Hij staat niet in het menu, niet in de sitemap, en hij zegt tegen Google
+ * dat hij niet opgenomen mag worden. Er staat ook niets geheims op: de
+ * inkoopprijzen zitten NIET in deze code maar in de telefoon van Justus
+ * zelf. Dat is met opzet — deze map staat openbaar op GitHub, dus alles wat
+ * hier in de code komt te staan kan iedereen lezen.
+ *
+ * WAAROM DE GEGEVENS OP DE TELEFOON BLIJVEN
+ * Geen database, geen server, geen inlog die gekraakt kan worden. De
+ * catalogus en de offertes staan in de opslag van de browser waarin je ze
+ * invult. Daarom staat er ook een knop om alles als bestand te bewaren:
+ * zonder die reservekopie ben je ze kwijt als de telefoon stukgaat.
+ */
+import '../styles/global.css';
+import { BRAND, cssThema } from '../data/brand.js';
+import { SITE } from '../data/site.js';
+import { SOORTEN } from '../lib/werkbak/rekenen.js';
+import { DOSSIER_VELDEN } from '../lib/werkbak/autos.js';
+import { pad } from '../lib/pad.js';
+---
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Werkbak — offertes | Audio Upgrade Emmen</title>
+  <meta name="description" content="Interne offerte-app van Audio Upgrade Emmen." />
+  {/* Deze pagina hoort niet in Google. Hij is voor Justus, niet voor klanten. */}
+  <meta name="robots" content="noindex, nofollow" />
+  <style is:global set:html={cssThema}></style>
+  {/* Geen losse kleurcode: brand.js is de enige plek waar kleuren staan. */}
+  <meta name="theme-color" content={BRAND.bg} />
+  {/* pad() zet de mapnaam ervoor op de voorbeeldsite; zonder dat zoekt de
+      browser het icoon op de verkeerde plek. */}
+  <link rel="icon" href={pad("/favicon.svg")} type="image/svg+xml" />
+  <link rel="apple-touch-icon" href={pad("/apple-touch-icon.png")} />
+</head>
+<body class="werkbak">
+
+<header class="wb-kop">
+  <strong>Werkbak</strong>
+  <span id="wb-nummer">offerte</span>
+</header>
+
+<nav class="wb-tabs" aria-label="Onderdelen">
+  <button type="button" class="wb-tab aan" data-tab="offerte">Offerte</button>
+  <button type="button" class="wb-tab" data-tab="catalogus">Onderdelen</button>
+  <button type="button" class="wb-tab" data-tab="autos">Auto's</button>
+  <button type="button" class="wb-tab" data-tab="instellingen">Instellingen</button>
+</nav>
+
+<main>
+  <!-- ================= OFFERTE ================= -->
+  <section class="wb-paneel" data-paneel="offerte">
+
+    <h1 class="wb-h">Nieuwe offerte</h1>
+
+    <!-- ---- de auto ---- -->
+    <div class="wb-kaart">
+      <span class="eyebrow">De auto</span>
+      <form class="wb-kenteken" id="wb-kenteken-form" autocomplete="off">
+        <input class="plate" id="wb-kenteken" type="text" placeholder="XX-99-XX"
+               maxlength="8" aria-label="Kenteken" inputmode="latin" />
+        <button class="btn solid" type="submit">Zoek auto</button>
+      </form>
+      <p class="wb-melding" id="wb-auto-melding" aria-live="polite"></p>
+      <div class="wb-veldrij" id="wb-auto-velden" hidden>
+        <label>Merk<input type="text" id="wb-merk" /></label>
+        <label>Model<input type="text" id="wb-model" /></label>
+        <label>Bouwjaar<input type="text" id="wb-bouwjaar" inputmode="numeric" maxlength="4" /></label>
+      </div>
+      <button type="button" class="wb-link" id="wb-auto-handmatig">Handmatig invullen</button>
+    </div>
+
+    <!-- ---- de klant ---- -->
+    <div class="wb-kaart">
+      <span class="eyebrow">De klant</span>
+      <div class="wb-schakel" role="group" aria-label="Soort klant">
+        <button type="button" class="wb-keuze aan" data-klant="particulier">Particulier</button>
+        <button type="button" class="wb-keuze" data-klant="zakelijk">Zakelijk</button>
+      </div>
+      <div class="wb-veldrij">
+        <label class="wb-breed" id="wb-bedrijf-veld" hidden>Bedrijfsnaam<input type="text" id="wb-bedrijf" /></label>
+        <label class="wb-breed">Naam<input type="text" id="wb-naam" autocomplete="name" /></label>
+        <label>Telefoon<input type="tel" id="wb-telefoon" inputmode="tel" /></label>
+        <label>E-mail<input type="email" id="wb-email" inputmode="email" /></label>
+      </div>
+    </div>
+
+    <!-- ---- wat wil de klant ---- -->
+    <div class="wb-kaart">
+      <span class="eyebrow">Wat wil de klant</span>
+      <p class="wb-uitleg">Vink aan wat er speelt. Daaronder zie je alleen de onderdelen die daarbij horen.</p>
+      <div class="wb-chips" id="wb-voorkeuren">
+        {SOORTEN.map((s) => (
+          <button type="button" class="wb-chip" data-soort={s.id}>{s.naam}</button>
+        ))}
+      </div>
+    </div>
+
+    <!-- ---- toevoegen ---- -->
+    <div class="wb-kaart">
+      <span class="eyebrow">Toevoegen</span>
+      <h2 class="wb-h3">Pakketten van de site</h2>
+      <div class="wb-knoprij" id="wb-pakketten"></div>
+
+      <h2 class="wb-h3">Je eigen onderdelen</h2>
+      <div class="wb-knoprij" id="wb-onderdelen"></div>
+      <p class="wb-leeg" id="wb-catalogus-leeg" hidden>
+        Je hebt nog geen onderdelen ingevoerd. Ga naar <strong>Onderdelen</strong> en zet je
+        leveranciersprijzen er één keer in — daarna kies je ze hier met één tik.
+      </p>
+
+      <button type="button" class="btn wb-vol" id="wb-eigen-regel">+ Eigen regel</button>
+    </div>
+
+    <!-- ---- de regels ---- -->
+    <div class="wb-kaart">
+      <span class="eyebrow">Op de offerte</span>
+      <div id="wb-regels"></div>
+      <p class="wb-leeg" id="wb-regels-leeg">Nog niets toegevoegd.</p>
+
+      <label class="wb-breed wb-opmerking">Opmerking op de offerte (optioneel)
+        <textarea id="wb-opmerking" rows="2" placeholder="Bijvoorbeeld: inbouw in overleg te plannen."></textarea>
+      </label>
+    </div>
+
+    <!-- ---- wat houd je eraan over ---- -->
+    <div class="wb-kaart wb-marge">
+      <span class="eyebrow">Alleen voor jou</span>
+      <div class="wb-cijfers" id="wb-marge"></div>
+      <p class="wb-uitleg">Deze cijfers staan <strong>niet</strong> op de pdf.</p>
+    </div>
+
+    <div class="wb-kaart">
+      <span class="eyebrow">Voor in de werkplaats</span>
+      <div id="wb-dossier-melding"></div>
+      <button type="button" class="btn wb-vol" id="wb-werkbon">Werkbon maken</button>
+      <p class="wb-uitleg">
+        Stuklijst met elk artikel om af te vinken, plus de werkinstructie stap voor
+        stap. Zonder prijzen — die bon hoort in de werkplaats, niet bij de klant.
+      </p>
+    </div>
+
+    <div class="wb-kaart">
+      <button type="button" class="btn wb-vol" id="wb-bewaar">Offerte bewaren</button>
+      <button type="button" class="btn wb-vol" id="wb-nieuw">Nieuwe offerte beginnen</button>
+      <div id="wb-bewaard"></div>
+    </div>
+  </section>
+
+  <!-- ================= CATALOGUS ================= -->
+  <section class="wb-paneel" data-paneel="catalogus" hidden>
+    <h1 class="wb-h">Je onderdelen</h1>
+    <p class="wb-uitleg">
+      Zet hier één keer in wat je bij je leveranciers inkoopt. Inkoopprijzen blijven
+      op deze telefoon: ze staan niet op de website en niet op de offerte.
+    </p>
+
+    <div class="wb-kaart">
+      <span class="eyebrow" id="wb-onderdeel-kop">Onderdeel toevoegen</span>
+      <div class="wb-veldrij">
+        <label class="wb-breed">Naam zoals de klant hem leest
+          <input type="text" id="wb-o-naam" placeholder="Premium 2-weg composet voor" />
+        </label>
+        <label class="wb-breed">Toelichting (optioneel)
+          <input type="text" id="wb-o-toelichting" placeholder="Inclusief montageringen en deurdemping" />
+        </label>
+        <label>Soort
+          <select id="wb-o-soort">
+            {SOORTEN.map((s) => <option value={s.id}>{s.naam}</option>)}
+          </select>
+        </label>
+        <label>Merk
+          <input type="text" id="wb-o-merk" placeholder="Gladen" />
+        </label>
+        <label>Artikelnummer
+          <input type="text" id="wb-o-artikelnummer" placeholder="GL-165-2W" />
+        </label>
+        <label class="wb-breed">Leverancier
+          <input type="text" id="wb-o-leverancier" placeholder="waar je het bestelt" />
+        </label>
+        <label>Inkoop excl. btw
+          <input type="text" id="wb-o-inkoop" inputmode="decimal" placeholder="240,00" />
+        </label>
+        <label>Marge %
+          <input type="text" id="wb-o-marge" inputmode="decimal" placeholder="60" />
+        </label>
+        <label>Montage-uren
+          <input type="text" id="wb-o-uren" inputmode="decimal" placeholder="3" />
+        </label>
+        <div class="wb-voorbeeld" id="wb-o-voorbeeld"></div>
+      </div>
+
+      <h2 class="wb-h3">Wat hoort hier verplicht bij</h2>
+      <p class="wb-uitleg">
+        Ringen, adapterkabels, butyl, zekeringhouder. Alles wat je erbij pakt en
+        wat geld kost. Dit komt op je werkbon te staan en telt mee in je inkoop,
+        zodat je marge klopt. Op de offerte van de klant blijft het één regel.
+      </p>
+      <div id="wb-o-toebehoren"></div>
+      <button type="button" class="wb-link" id="wb-o-toebehoren-erbij">+ Regel erbij</button>
+
+      <button type="button" class="btn solid wb-vol" id="wb-o-bewaar">Onderdeel bewaren</button>
+      <button type="button" class="btn wb-vol" id="wb-o-annuleer" hidden>Annuleren</button>
+    </div>
+
+    <div class="wb-kaart">
+      <span class="eyebrow">In je lijst</span>
+      <div id="wb-catalogus"></div>
+    </div>
+
+    <div class="wb-kaart">
+      <span class="eyebrow">Reservekopie</span>
+      <p class="wb-uitleg">
+        Alles staat in deze browser. Raakt je telefoon kwijt of wis je hem, dan ben je
+        je lijst kwijt. Bewaar hem af en toe als bestand — bijvoorbeeld in je e-mail.
+      </p>
+      <button type="button" class="btn wb-vol" id="wb-export">Bewaar als bestand</button>
+      <label class="btn wb-vol wb-bestand">Lees bestand in
+        <input type="file" id="wb-import" accept="application/json,.json" hidden />
+      </label>
+    </div>
+  </section>
+
+
+  <!-- ================= AUTO'S ================= -->
+  <section class="wb-paneel" data-paneel="autos" hidden>
+    <h1 class="wb-h">Auto's</h1>
+    <p class="wb-uitleg">
+      Wat je bij een model nameet, leg je hier vast. De volgende keer dat er zo'n
+      auto op de brug staat, staat het al op je werkbon. De RDW weet dit niet —
+      dit is wat jij aan de auto zelf hebt gezien.
+    </p>
+
+    <div class="wb-kaart">
+      <span class="eyebrow" id="wb-a-kop">Model vastleggen</span>
+      <div class="wb-veldrij">
+        <label class="wb-breed">Model
+          <input type="text" id="wb-a-naam" placeholder="Volkswagen Golf" />
+        </label>
+        <label>Vanaf bouwjaar
+          <input type="text" id="wb-a-van" inputmode="numeric" maxlength="4" placeholder="2013" />
+        </label>
+        <label>Tot en met
+          <input type="text" id="wb-a-tot" inputmode="numeric" maxlength="4" placeholder="2020" />
+        </label>
+        <p class="wb-uitleg wb-breed">
+          Vul de jaren van de <strong>generatie</strong> in, niet van de auto die nu op de
+          brug staat. Een Golf 7 liep van 2013 tot 2020: zet je hier 2018 neer, dan
+          vindt de app dit dossier niet meer bij een Golf 7 uit 2015. Weet je het niet
+          zeker? Laat ze leeg — dan geldt het dossier voor alle jaren.
+        </p>
+      </div>
+      <p class="wb-uitleg" id="wb-a-sleutel"></p>
+
+      <div class="wb-veldrij">
+        {DOSSIER_VELDEN.map((veld) => (
+          <label class={veld.id === 'let' ? 'wb-breed' : ''}>
+            {veld.naam}
+            <input type="text" data-dossier={veld.id} placeholder={veld.hint || ''} />
+          </label>
+        ))}
+      </div>
+      <button type="button" class="btn solid wb-vol" id="wb-a-bewaar">Model bewaren</button>
+      <button type="button" class="btn wb-vol" id="wb-a-annuleer" hidden>Annuleren</button>
+    </div>
+
+    <div class="wb-kaart">
+      <span class="eyebrow">Vastgelegde modellen</span>
+      <div id="wb-a-lijst"></div>
+    </div>
+  </section>
+
+  <!-- ================= INSTELLINGEN ================= -->
+  <section class="wb-paneel" data-paneel="instellingen" hidden>
+    <h1 class="wb-h">Instellingen</h1>
+    <div class="wb-kaart">
+      <div class="wb-veldrij">
+        <label>Uurtarief montage
+          <input type="text" id="wb-i-uurtarief" inputmode="decimal" />
+        </label>
+        <label>Standaard marge %
+          <input type="text" id="wb-i-marge" inputmode="decimal" />
+        </label>
+        <label>Btw %
+          <input type="text" id="wb-i-btw" inputmode="decimal" />
+        </label>
+        <label>Offerte geldig (dagen)
+          <input type="text" id="wb-i-geldig" inputmode="numeric" />
+        </label>
+        <label>Volgend offertenummer
+          <input type="text" id="wb-i-volgnummer" inputmode="numeric" />
+        </label>
+      </div>
+      <p class="wb-uitleg">
+        Het uurtarief en de marge gebruikt de app om uit te rekenen wat de klant betaalt.
+        Ze staan nooit op de offerte — de klant ziet één bedrag per regel.
+      </p>
+    </div>
+  </section>
+</main>
+
+{/* De belangrijkste knop staat altijd binnen duimbereik. */}
+<div class="wb-balk">
+  <div class="wb-balk-som">
+    <span>Totaal</span>
+    <strong id="wb-totaal">€ 0,00</strong>
+  </div>
+  <button type="button" class="btn solid" id="wb-pdf">Pdf &amp; versturen</button>
+</div>
+
+<script>
+  import { PACKAGES, SITE } from '../data/site.js';
+  import {
+    SOORTEN, STANDAARD_INSTELLINGEN, euro, naarCent, regelPrijs, totalen, marge,
+    offertenummer, geldigTot, stuklijst,
+  } from '../lib/werkbak/rekenen.js';
+  import { offertePdf, pdfBestandsnaam } from '../lib/werkbak/offerte-pdf.js';
+  import { werkbonPdf, werkbonBestandsnaam } from '../lib/werkbak/werkbon.js';
+  import {
+    DOSSIER_VELDEN, autoSleutel, zoekDossier, dossierNaam, dossierStand, leegDossier,
+  } from '../lib/werkbak/autos.js';
+  import { MODELS } from '../data/models.js';
+  /* Dezelfde schrijfwijze als de site: de RDW levert "GOLF VII 1.4 TSI" en dat
+     moet "Golf VII 1.4 TSI" worden, niet "Golf Vii 1.4 Tsi". */
+  import { kapitaliseer } from '../lib/match.js';
+
+  const $ = (kies) => document.querySelector(kies);
+  const $$ = (kies) => [...document.querySelectorAll(kies)];
+
+  /* ================= OPSLAG =================
+     Alles in één sleutel, zodat "bewaar als bestand" in één keer alles
+     meeneemt en er niets half overblijft bij het terugzetten. */
+  const SLEUTEL = 'aue-werkbak-v1';
+
+  const leegteStaat = () => ({
+    instellingen: { ...STANDAARD_INSTELLINGEN },
+    catalogus: [],
+    offertes: [],
+    /* Wat er per automodel is nagemeten. Zie src/lib/werkbak/autos.js. */
+    dossiers: [],
+  });
+
+  function laden() {
+    try {
+      const rauw = localStorage.getItem(SLEUTEL);
+      if (!rauw) return leegteStaat();
+      const gelezen = JSON.parse(rauw);
+      return {
+        instellingen: { ...STANDAARD_INSTELLINGEN, ...(gelezen.instellingen || {}) },
+        catalogus: Array.isArray(gelezen.catalogus) ? gelezen.catalogus : [],
+        offertes: Array.isArray(gelezen.offertes) ? gelezen.offertes : [],
+        /* Werkbakken van vóór de autodossiers hebben dit veld nog niet. */
+        dossiers: Array.isArray(gelezen.dossiers) ? gelezen.dossiers : [],
+      };
+    } catch (e) {
+      /* Kapotte of geblokkeerde opslag mag de app niet stilzetten. */
+      return leegteStaat();
+    }
+  }
+
+  function opslaan() {
+    try {
+      localStorage.setItem(SLEUTEL, JSON.stringify(staat));
+    } catch (e) {
+      melden('Opslaan lukt niet — staat je browser in privémodus?');
+    }
+  }
+
+  let staat = laden();
+
+  /* ================= DE OFFERTE DIE JE NU MAAKT ================= */
+  const nieuweOfferte = () => ({
+    nummer: offertenummer(staat.instellingen.volgnummer),
+    datum: new Date(),
+    zakelijk: false,
+    klant: {},
+    auto: {},
+    regels: [],
+    opmerking: '',
+  });
+
+  let offerte = nieuweOfferte();
+  let voorkeuren = new Set();
+  let bewerktOnderdeel = null;
+
+  const melden = (tekst) => { $('#wb-auto-melding').textContent = tekst; };
+  const eigenId = () => `r${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+
+  /* ================= TABBLADEN ================= */
+  $$('.wb-tab').forEach((knop) => {
+    knop.addEventListener('click', () => {
+      $$('.wb-tab').forEach((k) => k.classList.toggle('aan', k === knop));
+      $$('.wb-paneel').forEach((p) => { p.hidden = p.dataset.paneel !== knop.dataset.tab; });
+      window.scrollTo({ top: 0 });
+    });
+  });
+
+  /* ================= KENTEKEN ================= */
+  $('#wb-kenteken-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const plaat = $('#wb-kenteken').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (!/^[A-Z0-9]{6}$/.test(plaat)) {
+      melden('Een Nederlands kenteken heeft zes tekens.');
+      return;
+    }
+    melden('Even kijken…');
+    try {
+      const antwoord = await fetch(
+        `https://opendata.rdw.nl/resource/m9d7-ebf2.json?kenteken=${plaat}`
+      );
+      const gegevens = await antwoord.json();
+      if (!gegevens.length) {
+        melden('Niet gevonden bij de RDW. Vul hem hieronder met de hand in.');
+        toonAutoVelden(true);
+        offerte.auto = { kenteken: plaat };
+        tekenAlles();
+        return;
+      }
+      const auto = gegevens[0];
+      /* De RDW schrijft de datum als 20180417. De eerste vier tekens zijn
+         het jaar, en dat is het enige wat wij ervan nodig hebben. */
+      const jaar = String(auto.datum_eerste_toelating || '').slice(0, 4);
+      offerte.auto = {
+        kenteken: plaat,
+        merk: kapitaliseer(auto.merk),
+        model: kapitaliseer(auto.handelsbenaming),
+        bouwjaar: jaar,
+        kleur: kapitaliseer(auto.eerste_kleur).toLowerCase(),
+      };
+      vulAutoVelden();
+      toonAutoVelden(true);
+      melden(`Gevonden: ${offerte.auto.merk} ${offerte.auto.model} (${jaar}).`);
+      /* Nu pas weten we welke auto het is, dus nu pas kan de app zeggen of er
+         over dit model iets is vastgelegd. Zonder deze regel bleef daar
+         "vul eerst een kenteken in" staan. */
+      tekenAlles();
+    } catch (err) {
+      melden('De RDW is even niet bereikbaar. Vul de auto met de hand in.');
+      toonAutoVelden(true);
+      offerte.auto = { kenteken: plaat };
+    }
+  });
+
+  const toonAutoVelden = (aan) => { $('#wb-auto-velden').hidden = !aan; };
+
+  function vulAutoVelden() {
+    $('#wb-merk').value = offerte.auto.merk || '';
+    $('#wb-model').value = offerte.auto.model || '';
+    $('#wb-bouwjaar').value = offerte.auto.bouwjaar || '';
+  }
+
+  $('#wb-auto-handmatig').addEventListener('click', () => toonAutoVelden(true));
+  ['merk', 'model', 'bouwjaar'].forEach((veld) => {
+    $(`#wb-${veld}`).addEventListener('input', (e) => {
+      offerte.auto[veld] = e.target.value;
+    });
+    /* Pas als je klaar bent met typen kijken we of er een dossier bij hoort.
+       Bij elke toetsaanslag zou de melding staan te knipperen. */
+    $(`#wb-${veld}`).addEventListener('change', tekenDossierMelding);
+  });
+  $('#wb-kenteken').addEventListener('input', (e) => {
+    offerte.auto.kenteken = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  });
+
+  /* ================= KLANT ================= */
+  $$('.wb-keuze').forEach((knop) => {
+    knop.addEventListener('click', () => {
+      offerte.zakelijk = knop.dataset.klant === 'zakelijk';
+      $$('.wb-keuze').forEach((k) => k.classList.toggle('aan', k === knop));
+      $('#wb-bedrijf-veld').hidden = !offerte.zakelijk;
+      tekenAlles();
+    });
+  });
+
+  const klantVelden = { naam: 'naam', telefoon: 'telefoon', email: 'email', bedrijf: 'bedrijf' };
+  Object.entries(klantVelden).forEach(([sleutel, id]) => {
+    $(`#wb-${id}`).addEventListener('input', (e) => { offerte.klant[sleutel] = e.target.value; });
+  });
+  $('#wb-opmerking').addEventListener('input', (e) => { offerte.opmerking = e.target.value; });
+
+  /* ================= VOORKEUREN ================= */
+  $$('#wb-voorkeuren .wb-chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      const soort = chip.dataset.soort;
+      if (voorkeuren.has(soort)) voorkeuren.delete(soort);
+      else voorkeuren.add(soort);
+      chip.classList.toggle('aan', voorkeuren.has(soort));
+      tekenOnderdeelknoppen();
+    });
+  });
+
+  /* ================= TOEVOEGEN ================= */
+  /**
+   * Welk werk zit er in een pakket van de site?
+   *
+   * De pakketten staan in site.js met hun inhoud, maar niet met welke
+   * handelingen erbij horen. Dat staat hier, en het bepaalt welke blokken er
+   * op de werkbon komen: bij de Akoestische Basis gaan de deuren open, komt
+   * er demping in én komen er speakers.
+   *
+   * Overgenomen uit de omschrijvingen op de site. Klopt er iets niet met hoe
+   * je het werkelijk doet, pas het hier aan.
+   */
+  const PAKKET_WERK = {
+    'carplay-upgrade': ['carplay'],
+    'akoestische-basis': ['speakers-voor', 'demping'],
+    'oem-plus-executive': ['speakers-voor', 'demping', 'versterker', 'dsp', 'subwoofer'],
+    'reference-edition': ['speakers-voor', 'speakers-achter', 'demping', 'versterker', 'dsp', 'subwoofer'],
+    'competitie-show': ['speakers-voor', 'demping', 'versterker', 'dsp', 'subwoofer'],
+    'akoestische-isolatie': ['demping'],
+  };
+
+  function tekenPakketknoppen() {
+    const vak = $('#wb-pakketten');
+    vak.innerHTML = '';
+    for (const pakket of PACKAGES) {
+      /* Alleen pakketten met een vast bedrag. Het showbouw-pakket heeft dat
+         niet — daar hangt de prijs af van wat er getekend wordt. */
+      if (!pakket.bedrag) continue;
+      const knop = document.createElement('button');
+      knop.type = 'button';
+      knop.className = 'wb-toevoeg';
+      knop.innerHTML = `<span>${pakket.name}</span><em>${euro(pakket.bedrag * 100)}</em>`;
+      knop.addEventListener('click', () => {
+        /* De prijzen op de site zijn inclusief btw. In de offerte rekenen we
+           met bedragen exclusief; anders zou er btw over btw komen. */
+        const inclCent = Math.round(pakket.bedrag * 100);
+        const exclCent = Math.round(inclCent / (1 + staat.instellingen.btwPct / 100));
+        offerte.regels.push({
+          id: eigenId(),
+          omschrijving: pakket.name,
+          toelichting: pakket.short || '',
+          aantal: 1,
+          vastExclCent: exclCent,
+          inkoopCent: 0,
+          uren: 0,
+          soorten: PAKKET_WERK[pakket.slug] || [],
+          toebehoren: [],
+        });
+        tekenAlles();
+      });
+      vak.appendChild(knop);
+    }
+  }
+
+  function tekenOnderdeelknoppen() {
+    const vak = $('#wb-onderdelen');
+    vak.innerHTML = '';
+    const lijst = voorkeuren.size
+      ? staat.catalogus.filter((o) => voorkeuren.has(o.soort))
+      : staat.catalogus;
+    $('#wb-catalogus-leeg').hidden = staat.catalogus.length > 0;
+
+    for (const onderdeel of lijst) {
+      const prijs = regelPrijs(onderdeel, staat.instellingen);
+      const knop = document.createElement('button');
+      knop.type = 'button';
+      knop.className = 'wb-toevoeg';
+      const merk = onderdeel.merk ? `${onderdeel.merk} · ` : '';
+      knop.innerHTML =
+        `<span>${ontsnap(onderdeel.omschrijving)}<small>${ontsnap(merk)}${soortNaam(onderdeel.soort)}</small></span>` +
+        `<em>${euro(offerte.zakelijk ? prijs.exclCent : prijs.inclCent)}</em>`;
+      knop.addEventListener('click', () => {
+        offerte.regels.push({ ...onderdeel, id: eigenId(), aantal: 1 });
+        tekenAlles();
+      });
+      vak.appendChild(knop);
+    }
+    if (staat.catalogus.length && !lijst.length) {
+      const leeg = document.createElement('p');
+      leeg.className = 'wb-leeg';
+      leeg.textContent = 'Geen onderdelen in deze categorieën.';
+      vak.appendChild(leeg);
+    }
+  }
+
+  const soortNaam = (id) => (SOORTEN.find((s) => s.id === id) || {}).naam || 'Overig';
+
+  /** Tekst van een gebruiker nooit rauw in de pagina zetten. */
+  function ontsnap(tekst) {
+    return String(tekst ?? '').replace(/[&<>"']/g, (c) => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
+  }
+
+  $('#wb-eigen-regel').addEventListener('click', () => {
+    offerte.regels.push({
+      id: eigenId(), omschrijving: '', toelichting: '', aantal: 1,
+      inkoopCent: 0, margePct: staat.instellingen.margePct, uren: 0, open: true,
+    });
+    tekenAlles();
+  });
+
+  /* ================= DE REGELS ================= */
+  function tekenRegels() {
+    const vak = $('#wb-regels');
+    vak.innerHTML = '';
+    $('#wb-regels-leeg').hidden = offerte.regels.length > 0;
+
+    offerte.regels.forEach((regel, i) => {
+      const prijs = regelPrijs(regel, staat.instellingen);
+      const rij = document.createElement('div');
+      rij.className = 'wb-regel';
+      rij.innerHTML = `
+        <div class="wb-regel-kop">
+          <input type="text" class="wb-regel-naam" value="${ontsnap(regel.omschrijving)}"
+                 placeholder="Omschrijving" aria-label="Omschrijving" />
+          <strong>${euro(offerte.zakelijk ? prijs.exclCent : prijs.inclCent)}</strong>
+        </div>
+        <div class="wb-regel-rij">
+          <div class="wb-aantal">
+            <button type="button" class="wb-min" aria-label="Eén minder">−</button>
+            <span>${prijs.aantal}</span>
+            <button type="button" class="wb-plus" aria-label="Eén meer">+</button>
+          </div>
+          <button type="button" class="wb-link wb-open">${regel.open ? 'Verbergen' : 'Aanpassen'}</button>
+          <button type="button" class="wb-link wb-weg">Weghalen</button>
+        </div>
+        <div class="wb-regel-detail" ${regel.open ? '' : 'hidden'}>
+          <label class="wb-breed">Toelichting op de offerte
+            <input type="text" class="wb-d-toelichting" value="${ontsnap(regel.toelichting || '')}" />
+          </label>
+          <div class="wb-veldrij">
+            <label>Inkoop excl. btw
+              <input type="text" class="wb-d-inkoop" inputmode="decimal"
+                     value="${regel.inkoopCent ? (regel.inkoopCent / 100).toFixed(2).replace('.', ',') : ''}" />
+            </label>
+            <label>Marge %
+              <input type="text" class="wb-d-marge" inputmode="decimal"
+                     value="${regel.margePct ?? ''}" />
+            </label>
+            <label>Montage-uren
+              <input type="text" class="wb-d-uren" inputmode="decimal" value="${regel.uren || ''}" />
+            </label>
+            <label>Vaste prijs excl. btw
+              <input type="text" class="wb-d-vast" inputmode="decimal"
+                     value="${regel.vastExclCent != null ? (regel.vastExclCent / 100).toFixed(2).replace('.', ',') : ''}"
+                     placeholder="laat leeg om te rekenen" />
+            </label>
+          </div>
+          <p class="wb-uitleg">
+            Onderdeel ${euro(Math.round((regel.inkoopCent || 0) * (1 + (regel.margePct ?? staat.instellingen.margePct) / 100)))}
+            + montage ${euro(Math.round((regel.uren || 0) * staat.instellingen.uurtariefCent))}
+            = ${euro(prijs.perStukExcl)} excl. btw per stuk
+          </p>
+        </div>`;
+
+      const zetEnTeken = (sleutel, waarde) => { regel[sleutel] = waarde; tekenAlles(); };
+
+      rij.querySelector('.wb-regel-naam').addEventListener('input', (e) => {
+        /* Niet opnieuw tekenen tijdens typen: dan springt de cursor weg. */
+        regel.omschrijving = e.target.value;
+        werkTotalenBij();
+      });
+      rij.querySelector('.wb-min').addEventListener('click', () => {
+        zetEnTeken('aantal', Math.max(1, prijs.aantal - 1));
+      });
+      rij.querySelector('.wb-plus').addEventListener('click', () => {
+        zetEnTeken('aantal', prijs.aantal + 1);
+      });
+      rij.querySelector('.wb-open').addEventListener('click', () => {
+        zetEnTeken('open', !regel.open);
+      });
+      rij.querySelector('.wb-weg').addEventListener('click', () => {
+        offerte.regels.splice(i, 1);
+        tekenAlles();
+      });
+      rij.querySelector('.wb-d-toelichting').addEventListener('input', (e) => {
+        regel.toelichting = e.target.value;
+      });
+      rij.querySelector('.wb-d-inkoop').addEventListener('change', (e) => {
+        zetEnTeken('inkoopCent', naarCent(e.target.value));
+      });
+      rij.querySelector('.wb-d-marge').addEventListener('change', (e) => {
+        const n = Number(String(e.target.value).replace(',', '.'));
+        zetEnTeken('margePct', Number.isFinite(n) && e.target.value !== '' ? n : undefined);
+      });
+      rij.querySelector('.wb-d-uren').addEventListener('change', (e) => {
+        zetEnTeken('uren', Number(String(e.target.value).replace(',', '.')) || 0);
+      });
+      rij.querySelector('.wb-d-vast').addEventListener('change', (e) => {
+        const leeg = String(e.target.value).trim() === '';
+        zetEnTeken('vastExclCent', leeg ? undefined : naarCent(e.target.value));
+      });
+
+      vak.appendChild(rij);
+    });
+  }
+
+  /* ================= TOTALEN EN MARGE ================= */
+  function werkTotalenBij() {
+    const t = totalen(offerte.regels, staat.instellingen);
+    $('#wb-totaal').textContent = euro(offerte.zakelijk ? t.exclCent : t.inclCent);
+    $('#wb-nummer').textContent = `nr. ${offerte.nummer}`;
+
+    const m = marge(offerte.regels, staat.instellingen);
+    /* Een regel zonder inkoopprijs telt als gratis ingekocht en maakt de
+       marge mooier dan hij is. Dat gebeurt vanzelf bij de pakketten van de
+       site: die hebben wel een verkoopprijs, maar wat er aan onderdelen in
+       gaat weet alleen Justus. Dus zeggen we het erbij in plaats van een
+       percentage te tonen waar hij op zou gaan varen. */
+    const zonderInkoop = offerte.regels.filter((r) => !r.inkoopCent).length;
+    $('#wb-marge').innerHTML = `
+      <div><span>Omzet excl. btw</span><strong>${euro(m.omzetCent)}</strong></div>
+      <div><span>Inkoop</span><strong>${euro(m.kostprijsCent)}</strong></div>
+      <div><span>Marge</span><strong>${euro(m.margeCent)}</strong></div>
+      <div><span>Marge %</span><strong>${m.margePct.toFixed(1)}%</strong></div>
+      <div><span>Montage</span><strong>${m.urenTotaal} uur · ${euro(m.arbeidCent)}</strong></div>` +
+      (zonderInkoop
+        ? `<p class="wb-waarschuwing">Let op: bij ${zonderInkoop} ${
+            zonderInkoop === 1 ? 'regel staat' : 'regels staat'
+          } nog geen inkoopprijs. Je marge is dus lager dan hier staat — vul hem in bij
+          <strong>Aanpassen</strong>.</p>`
+        : '');
+  }
+
+  function tekenAlles() {
+    tekenRegels();
+    tekenOnderdeelknoppen();
+    werkTotalenBij();
+    tekenDossierMelding();
+  }
+
+  /* ================= CATALOGUS ================= */
+  function tekenCatalogus() {
+    const vak = $('#wb-catalogus');
+    vak.innerHTML = '';
+    if (!staat.catalogus.length) {
+      vak.innerHTML = '<p class="wb-leeg">Nog geen onderdelen.</p>';
+      return;
+    }
+    staat.catalogus.forEach((onderdeel, i) => {
+      const prijs = regelPrijs(onderdeel, staat.instellingen);
+      const rij = document.createElement('div');
+      rij.className = 'wb-regel';
+      rij.innerHTML = `
+        <div class="wb-regel-kop">
+          <span>${ontsnap(onderdeel.omschrijving)}
+            <small>${ontsnap(onderdeel.merk || '')} ${soortNaam(onderdeel.soort)}</small>
+          </span>
+          <strong>${euro(prijs.inclCent)}</strong>
+        </div>
+        <div class="wb-regel-rij">
+          <span class="wb-uitleg">inkoop ${euro(onderdeel.inkoopCent)} · ${onderdeel.margePct ?? staat.instellingen.margePct}% · ${onderdeel.uren || 0} uur</span>
+          <button type="button" class="wb-link wb-bewerk">Aanpassen</button>
+          <button type="button" class="wb-link wb-weg">Weghalen</button>
+        </div>`;
+      rij.querySelector('.wb-bewerk').addEventListener('click', () => {
+        bewerktOnderdeel = i;
+        $('#wb-o-naam').value = onderdeel.omschrijving || '';
+        $('#wb-o-toelichting').value = onderdeel.toelichting || '';
+        $('#wb-o-soort').value = onderdeel.soort || 'overig';
+        $('#wb-o-merk').value = onderdeel.merk || '';
+        $('#wb-o-artikelnummer').value = onderdeel.artikelnummer || '';
+        $('#wb-o-leverancier').value = onderdeel.leverancier || '';
+        toebehorenNu = (onderdeel.toebehoren || []).map((t) => ({ ...t }));
+        tekenToebehoren();
+        $('#wb-o-inkoop').value = (onderdeel.inkoopCent / 100).toFixed(2).replace('.', ',');
+        $('#wb-o-marge').value = onderdeel.margePct ?? '';
+        $('#wb-o-uren').value = onderdeel.uren || '';
+        $('#wb-onderdeel-kop').textContent = 'Onderdeel aanpassen';
+        $('#wb-o-annuleer').hidden = false;
+        toonVoorbeeld();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      rij.querySelector('.wb-weg').addEventListener('click', () => {
+        staat.catalogus.splice(i, 1);
+        opslaan();
+        tekenCatalogus();
+        tekenOnderdeelknoppen();
+      });
+      vak.appendChild(rij);
+    });
+  }
+
+  /**
+   * WAT ER VERPLICHT BIJ EEN ONDERDEEL HOORT.
+   *
+   * Een composet is nooit alleen een composet: er gaan ringen bij, twee
+   * adapterkabels en een rol butyl. Die staan hier, aan het onderdeel vast.
+   * Kies je het onderdeel op een offerte, dan komt de hele sleep mee — in de
+   * inkoop (dus in je marge) en op de werkbon (dus bij de auto). De klant
+   * blijft één regel zien.
+   *
+   * Dit is het antwoord op "alles moet kloppen met elk kabeltje": je legt het
+   * één keer vast bij het onderdeel, en daarna kun je het niet meer vergeten.
+   */
+  let toebehorenNu = [];
+
+  function tekenToebehoren() {
+    const vak = $('#wb-o-toebehoren');
+    vak.innerHTML = '';
+    if (!toebehorenNu.length) {
+      vak.innerHTML = '<p class="wb-leeg">Niets — dit onderdeel gaat er los in.</p>';
+      return;
+    }
+    toebehorenNu.forEach((stuk, i) => {
+      const rij = document.createElement('div');
+      rij.className = 'wb-toebehoren';
+      rij.innerHTML = `
+        <input type="text" class="wb-t-naam wb-breed" value="${ontsnap(stuk.omschrijving || '')}"
+               placeholder="Adapterringen 165 mm" aria-label="Omschrijving" />
+        <input type="text" class="wb-t-artikel" value="${ontsnap(stuk.artikelnummer || '')}"
+               placeholder="Artikelnr." aria-label="Artikelnummer" />
+        <input type="text" class="wb-t-leverancier" value="${ontsnap(stuk.leverancier || '')}"
+               placeholder="Leverancier" aria-label="Leverancier" />
+        <input type="text" class="wb-t-aantal" inputmode="numeric" value="${stuk.aantal || 1}"
+               placeholder="1" aria-label="Aantal" />
+        <input type="text" class="wb-t-inkoop" inputmode="decimal"
+               value="${stuk.inkoopCent ? (stuk.inkoopCent / 100).toFixed(2).replace('.', ',') : ''}"
+               placeholder="inkoop" aria-label="Inkoopprijs" />
+        <button type="button" class="wb-link wb-t-weg" aria-label="Regel weghalen">Weg</button>`;
+
+      rij.querySelector('.wb-t-naam').addEventListener('input', (e) => { stuk.omschrijving = e.target.value; });
+      rij.querySelector('.wb-t-artikel').addEventListener('input', (e) => { stuk.artikelnummer = e.target.value; });
+      rij.querySelector('.wb-t-leverancier').addEventListener('input', (e) => { stuk.leverancier = e.target.value; });
+      rij.querySelector('.wb-t-aantal').addEventListener('change', (e) => {
+        stuk.aantal = Math.max(1, Math.round(Number(e.target.value) || 1));
+        toonVoorbeeld();
+      });
+      rij.querySelector('.wb-t-inkoop').addEventListener('change', (e) => {
+        stuk.inkoopCent = naarCent(e.target.value);
+        toonVoorbeeld();
+      });
+      rij.querySelector('.wb-t-weg').addEventListener('click', () => {
+        toebehorenNu.splice(i, 1);
+        tekenToebehoren();
+        toonVoorbeeld();
+      });
+      vak.appendChild(rij);
+    });
+  }
+
+  $('#wb-o-toebehoren-erbij').addEventListener('click', () => {
+    toebehorenNu.push({ omschrijving: '', artikelnummer: '', leverancier: '', aantal: 1, inkoopCent: 0 });
+    tekenToebehoren();
+  });
+
+  function leesOnderdeelFormulier() {
+    const margeIn = $('#wb-o-marge').value.trim();
+    return {
+      omschrijving: $('#wb-o-naam').value.trim(),
+      toelichting: $('#wb-o-toelichting').value.trim(),
+      soort: $('#wb-o-soort').value,
+      merk: $('#wb-o-merk').value.trim(),
+      artikelnummer: $('#wb-o-artikelnummer').value.trim(),
+      leverancier: $('#wb-o-leverancier').value.trim(),
+      inkoopCent: naarCent($('#wb-o-inkoop').value),
+      margePct: margeIn === '' ? undefined : Number(margeIn.replace(',', '.')),
+      uren: Number($('#wb-o-uren').value.replace(',', '.')) || 0,
+      /* Een kopie, geen verwijzing: anders wijzigt het volgende onderdeel dat
+         je bewerkt stilletjes de toebehoren van het vorige mee. */
+      toebehoren: toebehorenNu.map((t) => ({ ...t })),
+    };
+  }
+
+  function toonVoorbeeld() {
+    const onderdeel = leesOnderdeelFormulier();
+    const prijs = regelPrijs(onderdeel, staat.instellingen);
+    const stukken = onderdeel.toebehoren.length;
+    $('#wb-o-voorbeeld').innerHTML = onderdeel.inkoopCent || onderdeel.uren || stukken
+      ? `<span>De klant betaalt</span><strong>${euro(prijs.inclCent)}</strong>
+         <em>incl. btw · marge ${euro(prijs.exclCent - prijs.kostprijsCent)}` +
+        (stukken ? ` · inkoop is incl. ${stukken} ${stukken === 1 ? 'bijartikel' : 'bijartikelen'}` : '') +
+        `</em>`
+      : '';
+  }
+
+  ['#wb-o-inkoop', '#wb-o-marge', '#wb-o-uren'].forEach((kies) => {
+    $(kies).addEventListener('input', toonVoorbeeld);
+  });
+
+  $('#wb-o-bewaar').addEventListener('click', () => {
+    const onderdeel = leesOnderdeelFormulier();
+    if (!onderdeel.omschrijving) {
+      alert('Geef het onderdeel eerst een naam.');
+      return;
+    }
+    if (bewerktOnderdeel != null) staat.catalogus[bewerktOnderdeel] = onderdeel;
+    else staat.catalogus.push(onderdeel);
+    opslaan();
+    leegOnderdeelFormulier();
+    tekenCatalogus();
+    tekenOnderdeelknoppen();
+  });
+
+  $('#wb-o-annuleer').addEventListener('click', leegOnderdeelFormulier);
+
+  function leegOnderdeelFormulier() {
+    bewerktOnderdeel = null;
+    ['#wb-o-naam', '#wb-o-toelichting', '#wb-o-merk', '#wb-o-artikelnummer',
+     '#wb-o-leverancier', '#wb-o-inkoop', '#wb-o-marge', '#wb-o-uren']
+      .forEach((kies) => { $(kies).value = ''; });
+    toebehorenNu = [];
+    tekenToebehoren();
+    $('#wb-onderdeel-kop').textContent = 'Onderdeel toevoegen';
+    $('#wb-o-annuleer').hidden = true;
+    toonVoorbeeld();
+  }
+
+  /* ================= AUTO'S: HET DOSSIER PER MODEL ================= */
+  let bewerktDossier = null;
+
+  /** De sleutel en het dossier die bij de auto op de offerte horen. */
+  function huidigDossier() {
+    const auto = offerte.auto || {};
+    if (!auto.merk && !auto.model) return { sleutel: '', naam: '', dossier: null };
+    const sleutel = autoSleutel(
+      { merk: auto.merk, handelsbenaming: auto.model, voertuigsoort: 'Personenauto' },
+      MODELS
+    );
+    /**
+     * De naam van het dossier is die van het MODEL, niet van de uitvoering.
+     * De RDW noemt een auto "GOLF VII 1.4 TSI"; het dossier moet "Volkswagen
+     * Golf" heten, want de speakermaat van een 1.4 TSI is dezelfde als die
+     * van een 2.0 TDI. Kent de site het model, dan nemen we die naam over.
+     */
+    const bekend = MODELS.find((m) => m.slug === sleutel);
+    const naam = bekend
+      ? `${bekend.brand} ${bekend.model}`
+      : [auto.merk, auto.model].filter(Boolean).join(' ');
+    return { sleutel, naam, dossier: zoekDossier(staat.dossiers, sleutel, auto.bouwjaar) };
+  }
+
+  /**
+   * De melding op de offerte: is er iets vastgelegd over deze auto?
+   *
+   * Dit staat er omdat je het vóór de klus wilt weten, niet als je al met een
+   * deurpaneel in je handen staat.
+   */
+  function tekenDossierMelding() {
+    const vak = $('#wb-dossier-melding');
+    const { sleutel, dossier } = huidigDossier();
+    if (!sleutel) {
+      vak.innerHTML = '<p class="wb-uitleg">Vul eerst een kenteken in.</p>';
+      return;
+    }
+    const stand = dossierStand(dossier);
+    if (!dossier) {
+      vak.innerHTML =
+        `<p class="wb-waarschuwing">Van deze auto is nog niets vastgelegd. Op de werkbon
+         komen lege regels om ter plekke in te vullen — de app verzint geen speakermaten
+         of stekkers. Leg het vast onder <strong>Auto's</strong>.</p>`;
+      const knop = document.createElement('button');
+      knop.type = 'button';
+      knop.className = 'wb-link';
+      knop.textContent = 'Dit model nu vastleggen';
+      knop.addEventListener('click', () => nieuwDossierVoorHuidigeAuto());
+      vak.appendChild(knop);
+      return;
+    }
+    vak.innerHTML =
+      `<p class="wb-uitleg">Vastgelegd: <strong>${ontsnap(dossierNaam(dossier))}</strong> —
+       ${stand.ingevuld} van de ${stand.totaal} gegevens ingevuld.</p>` +
+      (stand.ontbreekt.length
+        ? `<p class="wb-waarschuwing">Nog niet vastgelegd: ${stand.ontbreekt
+            .map((id) => ontsnap((DOSSIER_VELDEN.find((v) => v.id === id) || {}).naam || id))
+            .join(', ')}.</p>`
+        : '');
+  }
+
+  /** Begin een dossier voor de auto die nu op de offerte staat. */
+  function nieuwDossierVoorHuidigeAuto() {
+    const { sleutel, naam } = huidigDossier();
+    bewerktDossier = null;
+    /**
+     * De bouwjaren blijven leeg, met opzet. Het bouwjaar van déze auto is
+     * niet het begin van de generatie: vul je 2018 in bij een Golf 7, dan
+     * vindt de app het dossier niet meer terug bij een Golf 7 uit 2015.
+     * Justus weet welke jaren een generatie loopt; de app niet.
+     */
+    vulDossierFormulier(leegDossier(sleutel, naam));
+    $$('.wb-tab').forEach((k) => k.classList.toggle('aan', k.dataset.tab === 'autos'));
+    $$('.wb-paneel').forEach((paneel) => { paneel.hidden = paneel.dataset.paneel !== 'autos'; });
+    window.scrollTo({ top: 0 });
+  }
+
+  function vulDossierFormulier(dossier) {
+    $('#wb-a-naam').value = dossier.naam || '';
+    $('#wb-a-van').value = dossier.vanJaar || '';
+    $('#wb-a-tot').value = dossier.totJaar || '';
+    $('#wb-a-sleutel').textContent = dossier.sleutel
+      ? `Herkend als: ${dossier.sleutel}`
+      : 'Nog geen auto gekozen — vul hierboven een modelnaam in.';
+    $('#wb-a-sleutel').dataset.sleutel = dossier.sleutel || '';
+    for (const veld of DOSSIER_VELDEN) {
+      const invoer = $(`[data-dossier="${veld.id}"]`);
+      if (invoer) invoer.value = dossier[veld.id] || '';
+    }
+    $('#wb-a-kop').textContent = bewerktDossier != null ? 'Model aanpassen' : 'Model vastleggen';
+    $('#wb-a-annuleer').hidden = bewerktDossier == null;
+  }
+
+  function leesDossierFormulier() {
+    const dossier = {
+      /* Zonder sleutel wordt het dossier nooit teruggevonden bij een kenteken.
+         Is er geen, dan maken we er een van de modelnaam. */
+      sleutel: $('#wb-a-sleutel').dataset.sleutel
+        || $('#wb-a-naam').value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+        || 'onbekend',
+      naam: $('#wb-a-naam').value.trim(),
+      vanJaar: $('#wb-a-van').value.trim(),
+      totJaar: $('#wb-a-tot').value.trim(),
+    };
+    for (const veld of DOSSIER_VELDEN) {
+      const invoer = $(`[data-dossier="${veld.id}"]`);
+      dossier[veld.id] = invoer ? invoer.value.trim() : '';
+    }
+    return dossier;
+  }
+
+  $('#wb-a-bewaar').addEventListener('click', () => {
+    const dossier = leesDossierFormulier();
+    if (!dossier.naam) {
+      alert('Geef het model eerst een naam, bijvoorbeeld "Volkswagen Golf".');
+      return;
+    }
+    if (bewerktDossier != null) staat.dossiers[bewerktDossier] = dossier;
+    else staat.dossiers.push(dossier);
+    opslaan();
+    bewerktDossier = null;
+    vulDossierFormulier(leegDossier());
+    tekenDossiers();
+    tekenDossierMelding();
+  });
+
+  $('#wb-a-annuleer').addEventListener('click', () => {
+    bewerktDossier = null;
+    vulDossierFormulier(leegDossier());
+  });
+
+  function tekenDossiers() {
+    const vak = $('#wb-a-lijst');
+    vak.innerHTML = '';
+    if (!staat.dossiers.length) {
+      vak.innerHTML = '<p class="wb-leeg">Nog geen modellen vastgelegd.</p>';
+      return;
+    }
+    staat.dossiers.forEach((dossier, i) => {
+      const stand = dossierStand(dossier);
+      const rij = document.createElement('div');
+      rij.className = 'wb-regel';
+      rij.innerHTML = `
+        <div class="wb-regel-kop">
+          <span>${ontsnap(dossierNaam(dossier))}
+            <small>${stand.ingevuld} van de ${stand.totaal} gegevens</small>
+          </span>
+        </div>
+        <div class="wb-regel-rij">
+          <button type="button" class="wb-link wb-bewerk">Aanpassen</button>
+          <button type="button" class="wb-link wb-weg">Weghalen</button>
+        </div>`;
+      rij.querySelector('.wb-bewerk').addEventListener('click', () => {
+        bewerktDossier = i;
+        vulDossierFormulier(dossier);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      rij.querySelector('.wb-weg').addEventListener('click', () => {
+        staat.dossiers.splice(i, 1);
+        opslaan();
+        tekenDossiers();
+        tekenDossierMelding();
+      });
+      vak.appendChild(rij);
+    });
+  }
+
+  /* ================= INSTELLINGEN ================= */
+  const instellingVelden = [
+    ['#wb-i-uurtarief', 'uurtariefCent', (v) => naarCent(v), (w) => (w / 100).toFixed(2).replace('.', ',')],
+    ['#wb-i-marge', 'margePct', (v) => Number(v.replace(',', '.')) || 0, (w) => w],
+    ['#wb-i-btw', 'btwPct', (v) => Number(v.replace(',', '.')) || 0, (w) => w],
+    ['#wb-i-geldig', 'geldigDagen', (v) => Number(v) || 0, (w) => w],
+    ['#wb-i-volgnummer', 'volgnummer', (v) => Number(v) || 1, (w) => w],
+  ];
+
+  function tekenInstellingen() {
+    for (const [kies, sleutel, , naarTekst] of instellingVelden) {
+      $(kies).value = naarTekst(staat.instellingen[sleutel]);
+    }
+  }
+
+  for (const [kies, sleutel, naarWaarde] of instellingVelden) {
+    $(kies).addEventListener('change', (e) => {
+      staat.instellingen[sleutel] = naarWaarde(e.target.value);
+      opslaan();
+      tekenInstellingen();
+      tekenCatalogus();
+      tekenAlles();
+    });
+  }
+
+  /* ================= RESERVEKOPIE ================= */
+  $('#wb-export').addEventListener('click', () => {
+    /* Het merkje 'reservekopie' is belangrijk: daaraan ziet het inlezen dat
+       dit bestand ALLES vervangt. Een bestand zonder dat merkje — een
+       prijslijst bijvoorbeeld — wordt juist toegevoegd aan wat er al staat. */
+    const blob = new Blob([JSON.stringify({ soort: 'reservekopie', ...staat }, null, 2)], {
+      type: 'application/json',
+    });
+    const adres = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = adres;
+    link.download = `werkbak-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    URL.revokeObjectURL(adres);
+  });
+
+  /**
+   * EEN BESTAND INLEZEN — en twee heel verschillende gevallen.
+   *
+   *   Een reservekopie      alles erin: instellingen, onderdelen, auto's,
+   *                         offertes. Die zet je terug: hij vervangt.
+   *   Een prijslijst        alleen onderdelen. Die wil je erbíj, niet in
+   *                         plaats van. Anders ben je met één tik je hele
+   *                         autodossier kwijt omdat je een lijst speakers
+   *                         inlas.
+   *
+   * Het verschil zit hem erin of er meer in het bestand staat dan alleen de
+   * onderdelen. Wat er gaat gebeuren staat in de vraag, zodat je nooit per
+   * ongeluk het verkeerde doet.
+   */
+  $('#wb-import').addEventListener('change', async (e) => {
+    const bestand = e.target.files?.[0];
+    if (!bestand) return;
+    try {
+      const gelezen = JSON.parse(await bestand.text());
+      if (!Array.isArray(gelezen.catalogus)) throw new Error('geen werkbak-bestand');
+
+      /**
+       * Alleen een bestand dat zichzelf een reservekopie noemt vervangt
+       * alles. Hier stond eerst "heeft het meer velden dan alleen de
+       * onderdelen?" — en dat was fout: een aangeleverde prijslijst mét
+       * autodossiers erin had daarmee alle instellingen gewist.
+       */
+      const isReservekopie = gelezen.soort === 'reservekopie';
+      const aantal = gelezen.catalogus.length;
+
+      if (isReservekopie) {
+        const zeker = confirm(
+          `Dit is een volledige reservekopie (${aantal} onderdelen, ` +
+          `${(gelezen.dossiers || []).length} auto's).\n\n` +
+          'Alles wat nu in deze werkbak staat wordt vervangen. Doorgaan?'
+        );
+        if (!zeker) { e.target.value = ''; return; }
+        staat = {
+          instellingen: { ...STANDAARD_INSTELLINGEN, ...(gelezen.instellingen || {}) },
+          catalogus: gelezen.catalogus,
+          offertes: Array.isArray(gelezen.offertes) ? gelezen.offertes : [],
+          dossiers: Array.isArray(gelezen.dossiers) ? gelezen.dossiers : [],
+        };
+        alert(`Teruggezet: ${staat.catalogus.length} onderdelen, ${staat.dossiers.length} auto's.`);
+      } else {
+        /* Toevoegen, en wat er al staat overslaan. Zonder die controle staat
+           na twee keer inlezen alles dubbel in je lijst. */
+        const bekend = new Set(
+          staat.catalogus.map((o) => `${o.leverancier}|${o.artikelnummer}`.toLowerCase())
+        );
+        const nieuw = gelezen.catalogus.filter((o) => {
+          const sleutel = `${o.leverancier || ''}|${o.artikelnummer || ''}`.toLowerCase();
+          if (!o.artikelnummer || bekend.has(sleutel)) return !o.artikelnummer;
+          bekend.add(sleutel);
+          return true;
+        });
+        staat.catalogus = [...staat.catalogus, ...nieuw];
+
+        const dossiers = Array.isArray(gelezen.dossiers) ? gelezen.dossiers : [];
+        const bekendeAutos = new Set(
+          staat.dossiers.map((d) => `${d.sleutel}|${d.vanJaar}|${d.totJaar}|${d.chassis || ''}`)
+        );
+        const nieuweAutos = dossiers.filter((d) => {
+          const sleutel = `${d.sleutel}|${d.vanJaar}|${d.totJaar}|${d.chassis || ''}`;
+          if (bekendeAutos.has(sleutel)) return false;
+          bekendeAutos.add(sleutel);
+          return true;
+        });
+        staat.dossiers = [...staat.dossiers, ...nieuweAutos];
+
+        const overgeslagen = aantal - nieuw.length;
+        alert(
+          `${nieuw.length} onderdelen toegevoegd` +
+          (nieuweAutos.length ? ` en ${nieuweAutos.length} auto's` : '') + '.' +
+          (overgeslagen ? `\n${overgeslagen} stond er al in en is overgeslagen.` : '')
+        );
+      }
+
+      opslaan();
+      tekenInstellingen();
+      tekenCatalogus();
+      tekenDossiers();
+      tekenAlles();
+    } catch (err) {
+      alert('Dit bestand kon ik niet lezen. Is het een werkbak-bestand?');
+    }
+    e.target.value = '';
+  });
+
+  /* ================= BEWAREN EN OPNIEUW ================= */
+  $('#wb-bewaar').addEventListener('click', () => {
+    staat.offertes.unshift({ ...offerte, datum: offerte.datum.toISOString() });
+    staat.offertes = staat.offertes.slice(0, 50);
+    opslaan();
+    tekenBewaard();
+  });
+
+  $('#wb-nieuw').addEventListener('click', () => {
+    offerte = nieuweOfferte();
+    voorkeuren = new Set();
+    $$('#wb-voorkeuren .wb-chip').forEach((c) => c.classList.remove('aan'));
+    ['#wb-kenteken', '#wb-naam', '#wb-telefoon', '#wb-email', '#wb-bedrijf', '#wb-opmerking',
+     '#wb-merk', '#wb-model', '#wb-bouwjaar'].forEach((kies) => { $(kies).value = ''; });
+    toonAutoVelden(false);
+    melden('');
+    tekenAlles();
+    window.scrollTo({ top: 0 });
+  });
+
+  function tekenBewaard() {
+    const vak = $('#wb-bewaard');
+    vak.innerHTML = '';
+    if (!staat.offertes.length) return;
+    const kop = document.createElement('p');
+    kop.className = 'wb-uitleg';
+    kop.textContent = 'Eerder bewaard:';
+    vak.appendChild(kop);
+    staat.offertes.slice(0, 8).forEach((eerder) => {
+      const knop = document.createElement('button');
+      knop.type = 'button';
+      knop.className = 'wb-toevoeg';
+      const wie = eerder.klant?.naam || eerder.klant?.bedrijf || 'zonder naam';
+      const t = totalen(eerder.regels || [], staat.instellingen);
+      knop.innerHTML = `<span>${ontsnap(eerder.nummer)} · ${ontsnap(wie)}</span>` +
+        `<em>${euro(eerder.zakelijk ? t.exclCent : t.inclCent)}</em>`;
+      knop.addEventListener('click', () => {
+        offerte = { ...eerder, datum: new Date(eerder.datum) };
+        vulFormulierUitOfferte();
+        tekenAlles();
+        window.scrollTo({ top: 0 });
+      });
+      vak.appendChild(knop);
+    });
+  }
+
+  function vulFormulierUitOfferte() {
+    $('#wb-kenteken').value = offerte.auto?.kenteken || '';
+    $('#wb-naam').value = offerte.klant?.naam || '';
+    $('#wb-telefoon').value = offerte.klant?.telefoon || '';
+    $('#wb-email').value = offerte.klant?.email || '';
+    $('#wb-bedrijf').value = offerte.klant?.bedrijf || '';
+    $('#wb-opmerking').value = offerte.opmerking || '';
+    vulAutoVelden();
+    toonAutoVelden(!!offerte.auto?.merk);
+    $('#wb-bedrijf-veld').hidden = !offerte.zakelijk;
+    $$('.wb-keuze').forEach((k) => {
+      k.classList.toggle('aan', (k.dataset.klant === 'zakelijk') === !!offerte.zakelijk);
+    });
+  }
+
+  /* ================= PDF EN VERSTUREN ================= */
+  $('#wb-pdf').addEventListener('click', async () => {
+    if (!offerte.regels.length) {
+      alert('Zet er eerst iets op de offerte.');
+      return;
+    }
+    const compleet = {
+      ...offerte,
+      geldigTot: geldigTot(offerte.datum, staat.instellingen.geldigDagen),
+    };
+    const doc = offertePdf(compleet, staat.instellingen);
+    const blob = doc.naarBlob();
+    const naam = pdfBestandsnaam(compleet);
+    const bestand = new File([blob], naam, { type: 'application/pdf' });
+
+    const auto = [offerte.auto?.merk, offerte.auto?.model].filter(Boolean).join(' ');
+    const bericht = `Hoi${offerte.klant?.naam ? ` ${offerte.klant.naam.split(' ')[0]}` : ''}, ` +
+      `hierbij de offerte${auto ? ` voor je ${auto}` : ''}. ` +
+      `Vragen? App gerust terug. Groet, Justus — ${SITE.name}`;
+
+    /* Op de telefoon opent dit het deelvenster: daar staat WhatsApp tussen
+       en gaat de pdf als bijlage mee. Dat is de kortste weg van werkbank
+       naar klant. */
+    if (navigator.canShare?.({ files: [bestand] })) {
+      try {
+        await navigator.share({ files: [bestand], text: bericht });
+        bewaarNaVersturen();
+        return;
+      } catch (err) {
+        /* Afgebroken door de gebruiker: dan gewoon downloaden. */
+      }
+    }
+
+    const adres = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = adres;
+    link.download = naam;
+    link.click();
+    URL.revokeObjectURL(adres);
+    bewaarNaVersturen();
+
+    const nummer = String(offerte.klant?.telefoon || '').replace(/[^0-9]/g, '');
+    /* 0612... wordt 31612...: wa.me wil het landnummer en geen nul vooraan. */
+    const internationaal = nummer.startsWith('0') ? `31${nummer.slice(1)}` : nummer;
+    if (internationaal.length >= 11) {
+      window.open(`https://wa.me/${internationaal}?text=${encodeURIComponent(bericht)}`, '_blank');
+    }
+  });
+
+  /* ================= DE WERKBON ================= */
+  $('#wb-werkbon').addEventListener('click', async () => {
+    if (!offerte.regels.length) {
+      alert('Zet er eerst iets op de offerte.');
+      return;
+    }
+    const { dossier } = huidigDossier();
+    const doc = werkbonPdf(offerte, dossier);
+    const blob = doc.naarBlob();
+    const naam = werkbonBestandsnaam(offerte);
+    const bestand = new File([blob], naam, { type: 'application/pdf' });
+
+    /* Delen mag hier ook: naar de printer, naar je eigen telefoon, naar een
+       monteur. Alleen niet naar de klant — dat staat op de bon zelf. */
+    if (navigator.canShare?.({ files: [bestand] })) {
+      try {
+        await navigator.share({ files: [bestand] });
+        return;
+      } catch (err) {
+        /* Afgebroken: dan gewoon downloaden. */
+      }
+    }
+    const adres = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = adres;
+    link.download = naam;
+    link.click();
+    URL.revokeObjectURL(adres);
+  });
+
+  /**
+   * Na het versturen schuift het offertenummer op. Zo krijgt de volgende
+   * klant een eigen nummer en kun je een offerte altijd terugvinden.
+   */
+  function bewaarNaVersturen() {
+    staat.offertes.unshift({ ...offerte, datum: offerte.datum.toISOString() });
+    staat.offertes = staat.offertes.slice(0, 50);
+    staat.instellingen.volgnummer = (Number(staat.instellingen.volgnummer) || 1) + 1;
+    opslaan();
+    tekenBewaard();
+    tekenInstellingen();
+  }
+
+  /* ================= STARTEN ================= */
+  tekenPakketknoppen();
+  tekenCatalogus();
+  tekenToebehoren();
+  tekenDossiers();
+  vulDossierFormulier(leegDossier());
+  tekenInstellingen();
+  tekenBewaard();
+  tekenAlles();
+</script>
+
+<style is:global>
+  /* De werkbak is een app, geen pagina: alles binnen duimbereik, niets dat
+     opzij schuift, en knoppen die je met een handschoen nog raakt.
+
+     WAAROM is:global
+     Astro merkt opmaak standaard af op de elementen die in dit bestand
+     staan. De helft van deze app wordt pas tijdens het gebruik aangemaakt —
+     de regels van de offerte, de knoppen van je onderdelen — en die vielen
+     daardoor buiten de boot: knoppen zonder vorm, bedragen tegen de tekst
+     aan geplakt. Met is:global geldt de opmaak ook voor die elementen.
+     Dat kan hier veilig: deze pagina staat op zichzelf. */
+  body.werkbak { padding-bottom: 96px; }
+
+  .wb-kop {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px calc(14px + env(safe-area-inset-top, 0px));
+    background: var(--bg-alt);
+    border-bottom: 1px solid var(--line);
+  }
+  .wb-kop strong {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .2em;
+    font-size: .95rem;
+  }
+  .wb-kop span { color: var(--text-dim); font-size: .8rem; }
+
+  .wb-tabs {
+    display: flex;
+    gap: 2px;
+    padding: 10px 12px 0;
+    background: var(--bg-alt);
+    overflow-x: auto;
+  }
+  .wb-tab {
+    flex: 1 1 auto;
+    min-height: 44px;
+    padding: 10px 14px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    font-size: .78rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .wb-tab.aan { color: var(--text); border-bottom-color: var(--accent); }
+
+  main { padding: 18px 14px 0; }
+
+  .wb-h { font-size: 1.5rem; margin-bottom: 14px; }
+  .wb-h3 {
+    font-size: .8rem;
+    letter-spacing: .16em;
+    color: var(--text-dim);
+    margin: 18px 0 8px;
+  }
+  .wb-h3:first-of-type { margin-top: 6px; }
+
+  .wb-kaart {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px 14px;
+    margin-bottom: 14px;
+  }
+  .wb-kaart .eyebrow { margin-bottom: .7em; }
+
+  .wb-uitleg { font-size: .82rem; color: var(--text-dim); margin-top: 8px; }
+  .wb-leeg { font-size: .85rem; color: var(--text-dim); }
+  .wb-melding { font-size: .85rem; color: var(--text-dim); min-height: 1.2em; margin-top: 10px; }
+
+  /* ---- formuliervelden ---- */
+  .wb-veldrij {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .wb-veldrij .wb-breed { grid-column: 1 / -1; }
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  /* :not(.plate) is geen detail: zonder dat wint deze regel van de
+     kentekenplaat uit global.css en verdwijnt de oranje band. */
+  input[type="text"]:not(.plate), input[type="tel"], input[type="email"], select, textarea {
+    width: 100%;
+    min-height: 46px;
+    padding: 11px 12px;
+    background: var(--bg);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    /* 16px of groter, anders zoomt iPhone bij het tikken in op het veld en
+       staat de app daarna scheef. */
+    font-size: 16px;
+    text-transform: none;
+    letter-spacing: normal;
+  }
+  textarea { min-height: 62px; resize: vertical; }
+  .wb-opmerking { margin-top: 14px; }
+
+  /* ---- kenteken ---- */
+  .wb-kenteken { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+  .wb-kenteken .plate { max-width: 100%; }
+  .wb-kenteken .btn { width: 100%; }
+
+  /* ---- keuzeknoppen en chips ---- */
+  .wb-schakel { display: flex; gap: 8px; }
+  .wb-keuze {
+    flex: 1;
+    min-height: 46px;
+    padding: 10px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--text-dim);
+    font-size: .85rem;
+    cursor: pointer;
+  }
+  .wb-keuze.aan { border-color: var(--accent); color: var(--text); background: var(--bg); }
+
+  .wb-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .wb-chip {
+    min-height: 40px;
+    padding: 8px 14px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: .82rem;
+    cursor: pointer;
+  }
+  .wb-chip.aan { border-color: var(--accent); color: var(--accent-text); }
+
+  /* ---- toevoegknoppen ---- */
+  .wb-knoprij { display: flex; flex-direction: column; gap: 8px; }
+  .wb-toevoeg {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-height: 52px;
+    padding: 10px 14px;
+    text-align: left;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: .92rem;
+    cursor: pointer;
+  }
+  .wb-toevoeg small { display: block; font-size: .72rem; color: var(--text-dim); }
+  .wb-toevoeg em {
+    font-style: normal;
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: .04em;
+    color: var(--accent-text);
+    white-space: nowrap;
+  }
+
+  /* ---- regels ---- */
+  .wb-regel { border-bottom: 1px solid var(--line); padding: 12px 0; }
+  .wb-regel:last-of-type { border-bottom: 0; }
+  .wb-regel-kop { display: flex; align-items: center; gap: 10px; justify-content: space-between; }
+  .wb-regel-kop small { display: block; font-size: .72rem; color: var(--text-dim); }
+  .wb-regel-kop strong {
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: .04em;
+    white-space: nowrap;
+  }
+  .wb-regel-naam { min-height: 42px; }
+  .wb-regel-rij {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .wb-aantal { display: flex; align-items: center; gap: 4px; }
+  .wb-aantal button {
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--text);
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+  .wb-aantal span { min-width: 28px; text-align: center; }
+  .wb-regel-detail { margin-top: 10px; }
+
+  /* Ook een tekstknop moet je met een duim kunnen raken. Vandaar de
+     minimumhoogte: met alleen padding werd hij 35 pixels en dat is te klein
+     voor iemand die naast een auto staat. */
+  .wb-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    border: 0;
+    background: transparent;
+    color: var(--accent-text);
+    font-size: .82rem;
+    padding: 10px 0;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  /* ---- cijfers ---- */
+  .wb-marge { background: var(--bg-alt); }
+  .wb-cijfers { display: grid; gap: 6px; }
+  .wb-cijfers div { display: flex; justify-content: space-between; gap: 12px; font-size: .9rem; }
+  .wb-cijfers span { color: var(--text-dim); }
+  .wb-cijfers strong { font-family: 'Oswald', sans-serif; letter-spacing: .04em; }
+
+  /* Een waarschuwing die je niet over het hoofd ziet, maar die ook niet
+     schreeuwt: de oranje streep links doet het werk. */
+  .wb-waarschuwing {
+    margin-top: 10px;
+    padding-left: 12px;
+    border-left: 2px solid var(--accent);
+    font-size: .82rem;
+    color: var(--text-dim);
+  }
+  .wb-waarschuwing strong { color: var(--text); }
+
+  .wb-voorbeeld {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
+    font-size: .85rem;
+    color: var(--text-dim);
+  }
+  .wb-voorbeeld strong {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.15rem;
+    color: var(--accent-text);
+  }
+  .wb-voorbeeld em { font-style: normal; font-size: .78rem; }
+
+  /* ---- toebehoren: een rij velden per bijartikel ----
+     Op een telefoon past dit niet naast elkaar, dus de omschrijving krijgt een
+     eigen regel en de rest verdeelt zich over de breedte. */
+  .wb-toebehoren {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+    gap: 8px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .wb-toebehoren .wb-breed { grid-column: 1 / -1; }
+  .wb-toebehoren input { min-height: 44px; }
+
+  /* ---- knoppen ---- */
+  .wb-vol { display: block; width: 100%; margin-top: 10px; text-align: center; }
+  .wb-bestand { cursor: pointer; }
+
+  /* ---- de balk onderin ---- */
+  .wb-balk {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: var(--bg-alt);
+    border-top: 1px solid var(--line);
+  }
+  .wb-balk-som { flex: 1; display: flex; flex-direction: column; line-height: 1.2; }
+  .wb-balk-som span {
+    font-size: .68rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .wb-balk-som strong { font-family: 'Oswald', sans-serif; font-size: 1.3rem; letter-spacing: .04em; }
+  .wb-balk .btn { padding: 14px 20px; white-space: nowrap; }
+
+  /* Hover alleen waar er echt een muis is. Op een telefoon blijft hover na
+     een tik plakken en lijkt de knop daarna uitgeschakeld. */
+  @media (hover: hover) {
+    .wb-toevoeg:hover, .wb-keuze:hover, .wb-chip:hover { border-color: var(--accent); }
+    .wb-tab:hover { color: var(--text); }
+  }
+
+  /* Vanaf een tablet mag het wat ruimer, maar de telefoon blijft de maat. */
+  @media (min-width: 720px) {
+    main { max-width: 640px; margin: 0 auto; }
+    .wb-kenteken { flex-direction: row; justify-content: center; }
+    .wb-kenteken .btn { width: auto; }
+  }
+</style>
+</body>
+</html>
