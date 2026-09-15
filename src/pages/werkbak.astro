@@ -1104,7 +1104,12 @@ import { pad } from '../lib/pad.js';
 
   /* ================= RESERVEKOPIE ================= */
   $('#wb-export').addEventListener('click', () => {
-    const blob = new Blob([JSON.stringify(staat, null, 2)], { type: 'application/json' });
+    /* Het merkje 'reservekopie' is belangrijk: daaraan ziet het inlezen dat
+       dit bestand ALLES vervangt. Een bestand zonder dat merkje — een
+       prijslijst bijvoorbeeld — wordt juist toegevoegd aan wat er al staat. */
+    const blob = new Blob([JSON.stringify({ soort: 'reservekopie', ...staat }, null, 2)], {
+      type: 'application/json',
+    });
     const adres = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = adres;
@@ -1134,9 +1139,13 @@ import { pad } from '../lib/pad.js';
       const gelezen = JSON.parse(await bestand.text());
       if (!Array.isArray(gelezen.catalogus)) throw new Error('geen werkbak-bestand');
 
-      const isReservekopie = !!gelezen.instellingen
-        || Array.isArray(gelezen.dossiers)
-        || Array.isArray(gelezen.offertes);
+      /**
+       * Alleen een bestand dat zichzelf een reservekopie noemt vervangt
+       * alles. Hier stond eerst "heeft het meer velden dan alleen de
+       * onderdelen?" — en dat was fout: een aangeleverde prijslijst mét
+       * autodossiers erin had daarmee alle instellingen gewist.
+       */
+      const isReservekopie = gelezen.soort === 'reservekopie';
       const aantal = gelezen.catalogus.length;
 
       if (isReservekopie) {
@@ -1154,8 +1163,37 @@ import { pad } from '../lib/pad.js';
         };
         alert(`Teruggezet: ${staat.catalogus.length} onderdelen, ${staat.dossiers.length} auto's.`);
       } else {
-        staat.catalogus = [...staat.catalogus, ...gelezen.catalogus];
-        alert(`${aantal} onderdelen toegevoegd. Je had er al ${staat.catalogus.length - aantal}.`);
+        /* Toevoegen, en wat er al staat overslaan. Zonder die controle staat
+           na twee keer inlezen alles dubbel in je lijst. */
+        const bekend = new Set(
+          staat.catalogus.map((o) => `${o.leverancier}|${o.artikelnummer}`.toLowerCase())
+        );
+        const nieuw = gelezen.catalogus.filter((o) => {
+          const sleutel = `${o.leverancier || ''}|${o.artikelnummer || ''}`.toLowerCase();
+          if (!o.artikelnummer || bekend.has(sleutel)) return !o.artikelnummer;
+          bekend.add(sleutel);
+          return true;
+        });
+        staat.catalogus = [...staat.catalogus, ...nieuw];
+
+        const dossiers = Array.isArray(gelezen.dossiers) ? gelezen.dossiers : [];
+        const bekendeAutos = new Set(
+          staat.dossiers.map((d) => `${d.sleutel}|${d.vanJaar}|${d.totJaar}|${d.chassis || ''}`)
+        );
+        const nieuweAutos = dossiers.filter((d) => {
+          const sleutel = `${d.sleutel}|${d.vanJaar}|${d.totJaar}|${d.chassis || ''}`;
+          if (bekendeAutos.has(sleutel)) return false;
+          bekendeAutos.add(sleutel);
+          return true;
+        });
+        staat.dossiers = [...staat.dossiers, ...nieuweAutos];
+
+        const overgeslagen = aantal - nieuw.length;
+        alert(
+          `${nieuw.length} onderdelen toegevoegd` +
+          (nieuweAutos.length ? ` en ${nieuweAutos.length} auto's` : '') + '.' +
+          (overgeslagen ? `\n${overgeslagen} stond er al in en is overgeslagen.` : '')
+        );
       }
 
       opslaan();

@@ -53,6 +53,22 @@ export const DOSSIER_VELDEN = [
   { id: 'stroom', naam: 'Doorvoer naar de accu', hint: 'waar de plus doorheen kan' },
   { id: 'massa', naam: 'Massapunt' },
   { id: 'let', naam: 'Let op bij deze auto', hint: 'wat je de vorige keer tegenkwam' },
+  /**
+   * WAT ER VOLGENS DE FABRIKANT IN PAST.
+   *
+   * De velden hierboven zijn wat Justus zelf heeft nagemeten. Deze drie zijn
+   * iets anders: wat de leverancier zegt dat erin past. Dat komt uit hun
+   * compatibiliteitslijsten en is dus niet gemeten maar opgegeven.
+   *
+   * Die twee door elkaar halen is gevaarlijk, vandaar aparte velden én het
+   * bronveld eronder: op de werkbon staat erbij waar het vandaan komt en van
+   * wanneer. Een lijst van vijf jaar oud kent de auto van vorig jaar niet.
+   */
+  { id: 'pastVoor', naam: 'Past voorin (opgave leverancier)' },
+  { id: 'pastAchter', naam: 'Past achterin (opgave leverancier)' },
+  { id: 'pastCenter', naam: 'Center / overig (opgave leverancier)' },
+  { id: 'chassis', naam: 'Chassiscode', hint: 'bijv. E90, F30, 8V' },
+  { id: 'bron', naam: 'Bron van deze gegevens', hint: 'zelf nagemeten, of welke lijst' },
 ];
 
 /** De velden die zwaar genoeg wegen om een dossier "ingevuld" te noemen. */

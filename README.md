@@ -220,6 +220,17 @@ dat zo'n auto op de brug staat, herkent de app hem aan het kenteken en staat
 alles al ingevuld. Vul bij de bouwjaren de jaren van de **generatie** in (een
 Golf 7 liep van 2013 tot 2020), niet het bouwjaar van de auto die er nu staat.
 
+### Prijslijsten inlezen
+
+Leveranciersprijzen komen als bestand binnen, dat je bij **Onderdelen** inleest
+met "Lees bestand in". Zo'n lijst wordt **toegevoegd** aan wat je al hebt: je
+instellingen, je eigen onderdelen en je auto's blijven staan. Lees je hem per
+ongeluk twee keer in, dan komt er niets dubbel bij.
+
+Alleen een bestand dat je zelf met **Bewaar als bestand** hebt gemaakt vervangt
+alles — dat is je reservekopie, en daar vraagt hij eerst nog bij of je het zeker
+weet.
+
 **Waar je gegevens staan.** In de browser van je telefoon, nergens anders.
 Geen server, geen database, geen inlog. Dat betekent ook: raakt je telefoon
 kwijt, dan is je lijst weg. Druk daarom af en toe op **Bewaar als bestand**

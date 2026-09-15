@@ -577,6 +577,27 @@ describe('het autodossier', () => {
     assert.deepEqual(half.ontbreekt, ['stekker']);
   });
 
+  test('opgave van de leverancier staat los van wat je zelf nameet', () => {
+    /**
+     * "Past volgens de leverancier" en "zelf nagemeten" zijn twee
+     * verschillende dingen. Een compatibiliteitslijst van vijf jaar oud kent
+     * de auto van vorig jaar niet, en een opgave is geen maat. Daarom eigen
+     * velden, plus een bronveld zodat op de werkbon staat waar het vandaan
+     * komt.
+     */
+    const ids = DOSSIER_VELDEN.map((v) => v.id);
+    for (const veld of ['pastVoor', 'pastAchter', 'pastCenter', 'chassis', 'bron']) {
+      assert.ok(ids.includes(veld), `${veld} ontbreekt`);
+    }
+    // De opgave van de leverancier telt niet mee als "zelf nagemeten": een
+    // dossier met alleen die velden mag niet compleet lijken.
+    const alleenOpgave = {
+      ...leegDossier('bmw-3-serie'),
+      pastVoor: 'ONE 202 BMW', chassis: 'E90', bron: 'lijst 2020',
+    };
+    assert.deepEqual(dossierStand(alleenOpgave).ontbreekt, ['speakerVoor', 'radio', 'stekker']);
+  });
+
   test('de naam laat de bouwjaren zien', () => {
     assert.equal(
       dossierNaam({ sleutel: 'volkswagen-golf', naam: 'Volkswagen Golf', vanJaar: 2013, totJaar: 2020 }),
@@ -642,6 +663,13 @@ describe('de werkbon', () => {
       assert.doesNotMatch(pdf, new RegExp(verboden, 'i'), `"${verboden}" staat op de werkbon`);
     }
     assert.doesNotMatch(pdf, /€/, 'er staat een bedrag op de werkbon');
+  });
+
+  test('de bron van de gegevens staat erbij', () => {
+    // Zelf nagemeten weegt zwaarder dan een lijst van vijf jaar oud. Dat
+    // verschil moet je op de bon kunnen zien.
+    const metBron = { ...dossier, bron: 'Gladen compatibiliteitslijst BMW, december 2020' };
+    assert.match(tekst(metBron), /Bron: Gladen compatibiliteitslijst BMW, december 2020/);
   });
 
   test('hij zegt zelf dat hij niet naar de klant mag', () => {

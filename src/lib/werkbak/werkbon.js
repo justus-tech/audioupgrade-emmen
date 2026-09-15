@@ -182,6 +182,18 @@ export function werkbonPdf(offerte, dossier = null, eigenBlokken = []) {
       });
       y += regels.length * 12 + 1;
     }
+    y += 4;
+
+    /* De bron hoort erbij. Zelf nagemeten weegt zwaarder dan een lijst van
+       vijf jaar oud, en dat verschil moet je zien zonder ernaar te zoeken. */
+    if (String(dossier.bron || '').trim()) {
+      const regels = breekAf(`Bron: ${dossier.bron}`, RECHTS - LINKS, 8);
+      ruimte(regels.length * 11 + 6);
+      regels.forEach((regel, i) => {
+        doc.tekst(regel, LINKS, y + i * 11, { grootte: 8, kleur: KLEUR.zacht });
+      });
+      y += regels.length * 11;
+    }
     y += 10;
   }
 

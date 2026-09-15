@@ -1067,3 +1067,152 @@ describe('de werkbon en het autodossier', alsGebouwd, () => {
     }
   });
 });
+
+/**
+ * EEN PRIJSLIJST INLEZEN.
+ *
+ * Zo komen de leveranciersprijzen in de werkbak: als bestand dat Justus zelf
+ * inleest. Twee dingen mogen daarbij nooit gebeuren — zijn instellingen en
+ * zijn eigen werk wissen, en alles dubbel in de lijst zetten.
+ */
+describe('een prijslijst inlezen', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+
+  /** Een aangeleverde lijst: alleen onderdelen en auto's, geen instellingen. */
+  const PRIJSLIJST = {
+    catalogus: [
+      { omschrijving: '13W7AE-D1.5', soort: 'subwoofer', merk: 'JL Audio',
+        leverancier: 'JL Audio', artikelnummer: '010-03032-00', inkoopCent: 98926, uren: 0, toebehoren: [] },
+      { omschrijving: 'MSS 6', soort: 'speakers-voor', merk: 'STEG',
+        leverancier: 'STEG', artikelnummer: 'MSS6', inkoopCent: 32182, uren: 0, toebehoren: [] },
+    ],
+    dossiers: [
+      { sleutel: 'bmw-3-serie', naam: 'BMW 3er (E90)', vanJaar: '2005', totJaar: '2011',
+        chassis: 'E90', pastVoor: 'ONE 202 BMW', bron: 'Gladen compatibiliteitslijst BMW, december 2020' },
+    ],
+  };
+
+  async function lees(pagina, bestand) {
+    await pagina.setInputFiles('#wb-import', {
+      name: 'lijst.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify(bestand)),
+    });
+    await pagina.waitForTimeout(300);
+  }
+
+  const opslag = (pagina) =>
+    pagina.evaluate(() => JSON.parse(localStorage.getItem('aue-werkbak-v1') || '{}'));
+
+  async function open() {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    pagina.on('dialog', (venster) => venster.accept());
+    await pagina.goto(paginaUrl('werkbak'));
+    await pagina.evaluate(() => document.fonts.ready);
+    return { pagina, fouten };
+  }
+
+  test('een prijslijst komt erbij en wist niets', async () => {
+    const { pagina, fouten } = await open();
+    // Eerst iets eigens neerzetten: een uurtarief en een eigen onderdeel.
+    await pagina.click('[data-tab="instellingen"]');
+    await pagina.fill('#wb-i-uurtarief', '82,50');
+    await pagina.locator('#wb-i-uurtarief').blur();
+    await pagina.click('[data-tab="catalogus"]');
+    await pagina.fill('#wb-o-naam', 'Eigen rol butyl');
+    await pagina.fill('#wb-o-inkoop', '39,00');
+    await pagina.click('#wb-o-bewaar');
+
+    await lees(pagina, PRIJSLIJST);
+
+    const na = await opslag(pagina);
+    assert.equal(na.catalogus.length, 3, 'de lijst is niet toegevoegd maar vervangen');
+    assert.equal(na.dossiers.length, 1);
+    assert.equal(na.instellingen.uurtariefCent, 8250, 'het uurtarief is gewist');
+    assert.ok(
+      na.catalogus.some((o) => o.omschrijving === 'Eigen rol butyl'),
+      'het eigen onderdeel is verdwenen'
+    );
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('twee keer inlezen zet niets dubbel in de lijst', async () => {
+    const { pagina } = await open();
+    await pagina.click('[data-tab="catalogus"]');
+    await lees(pagina, PRIJSLIJST);
+    await lees(pagina, PRIJSLIJST);
+    const na = await opslag(pagina);
+    assert.equal(na.catalogus.length, 2, 'de artikelen staan dubbel');
+    assert.equal(na.dossiers.length, 1, 'de auto\'s staan dubbel');
+    await pagina.close();
+  });
+
+  test('een reservekopie vervangt wél — dat is waar hij voor is', async () => {
+    const { pagina } = await open();
+    await pagina.click('[data-tab="instellingen"]');
+    await pagina.fill('#wb-i-uurtarief', '82,50');
+    await pagina.locator('#wb-i-uurtarief').blur();
+    await pagina.click('[data-tab="catalogus"]');
+    await lees(pagina, {
+      soort: 'reservekopie',
+      instellingen: { uurtariefCent: 6000, margePct: 45, btwPct: 21, geldigDagen: 14, volgnummer: 7 },
+      catalogus: [PRIJSLIJST.catalogus[0]],
+      dossiers: [],
+      offertes: [],
+    });
+    const na = await opslag(pagina);
+    assert.equal(na.catalogus.length, 1);
+    assert.equal(na.instellingen.uurtariefCent, 6000, 'de reservekopie heeft de instellingen niet teruggezet');
+    await pagina.close();
+  });
+
+  test('de ingelezen auto wordt bij het kenteken teruggevonden', async () => {
+    // Een BMW 320i uit 2009 hoort het E90-dossier te vinden (2005-2011).
+    const pagina = await browser.newPage(telefoon);
+    pagina.on('dialog', (venster) => venster.accept());
+    await pagina.route(RDW_VOERTUIG, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([{
+          kenteken: 'XX99XX', merk: 'BMW', handelsbenaming: '320I',
+          voertuigsoort: 'Personenauto', datum_eerste_toelating: '20090417',
+        }]),
+      })
+    );
+    await pagina.goto(paginaUrl('werkbak'));
+    await pagina.click('[data-tab="catalogus"]');
+    await lees(pagina, PRIJSLIJST);
+    await pagina.click('[data-tab="offerte"]');
+    await pagina.fill('#wb-kenteken', 'XX99XX');
+    await pagina.click('#wb-kenteken-form button[type=submit]');
+    await pagina.waitForFunction(() =>
+      document.querySelector('#wb-auto-melding').textContent.includes('Gevonden')
+    );
+    await pagina.waitForTimeout(200);
+    const melding = await pagina.textContent('#wb-dossier-melding');
+    assert.match(melding, /BMW 3er \(E90\)/);
+    // En hij blijft eerlijk over wat er nog niet is nagemeten.
+    assert.match(melding, /Speakermaat voor/);
+    await pagina.close();
+  });
+
+  test('een bestand dat geen werkbak-bestand is wordt geweigerd', async () => {
+    const pagina = await browser.newPage(telefoon);
+    let gemeld = '';
+    pagina.on('dialog', (venster) => { gemeld = venster.message(); venster.accept(); });
+    await pagina.goto(paginaUrl('werkbak'));
+    await pagina.click('[data-tab="catalogus"]');
+    await pagina.setInputFiles('#wb-import', {
+      name: 'iets-anders.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify({ zomaar: 'iets' })),
+    });
+    await pagina.waitForTimeout(300);
+    assert.match(gemeld, /kon ik niet lezen/);
+    await pagina.close();
+  });
+});
