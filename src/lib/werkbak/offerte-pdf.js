@@ -158,12 +158,27 @@ export function offertePdf(offerte, inst = STANDAARD_INSTELLINGEN) {
   }
 
   /* ---- de totalen ----------------------------------------------------- */
-  const t = totalen(regels, inst);
+  const t = totalen(regels, inst, offerte.kortingExclCent || 0);
   const totaalHoogte = zakelijk ? 78 : 62;
   if (y + totaalHoogte > ONDERGRENS) nieuweBladzijde();
 
   y += 8;
   const labelX = RECHTS - 132;
+
+  /**
+   * De korting staat er als eigen regel op, en met het bedrag dat de klant
+   * herkent: inclusief btw bij een particulier, exclusief bij een bedrijf —
+   * dezelfde maat als de regels erboven. Een korting die alleen in het totaal
+   * verdwijnt ziet niemand, en dan heb je hem voor niets gegeven.
+   */
+  if (t.kortingExclCent) {
+    doc.tekst('Korting', labelX, y, { grootte: 9.5, kleur: KLEUR.zacht, uitlijnen: 'rechts' });
+    doc.tekst(
+      `-${euro(zakelijk ? t.kortingExclCent : t.kortingInclCent)}`,
+      RECHTS, y, { grootte: 9.5, vet: true, kleur: KLEUR.accentInkt, uitlijnen: 'rechts' }
+    );
+    y += 15;
+  }
 
   if (zakelijk) {
     doc.tekst('Subtotaal excl. btw', labelX, y, { grootte: 9.5, kleur: KLEUR.zacht, uitlijnen: 'rechts' });

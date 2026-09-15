@@ -42,6 +42,12 @@ import { pad } from '../lib/pad.js';
   <meta name="theme-color" content={BRAND.bg} />
   {/* pad() zet de mapnaam ervoor op de voorbeeldsite; zonder dat zoekt de
       browser het icoon op de verkeerde plek. */}
+  {/* Hiermee gedraagt hij zich als een app op het beginscherm: eigen naam,
+      eigen icoon, en openen zonder adresbalk. Zie werkbak-manifest.json.js. */}
+  <link rel="manifest" href={pad("/werkbak-manifest.json")} />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Werkbak" />
   <link rel="icon" href={pad("/favicon.svg")} type="image/svg+xml" />
   <link rel="apple-touch-icon" href={pad("/apple-touch-icon.png")} />
 </head>
@@ -138,6 +144,13 @@ import { pad } from '../lib/pad.js';
       <div id="wb-regels"></div>
       <p class="wb-leeg" id="wb-regels-leeg">Nog niets toegevoegd.</p>
 
+      <div class="wb-veldrij">
+        <label>Korting
+          <input type="text" id="wb-korting" placeholder="50 of 10%" />
+        </label>
+        <div class="wb-voorbeeld" id="wb-korting-uitleg"></div>
+      </div>
+
       <label class="wb-breed wb-opmerking">Opmerking op de offerte (optioneel)
         <textarea id="wb-opmerking" rows="2" placeholder="Bijvoorbeeld: inbouw in overleg te plannen."></textarea>
       </label>
@@ -150,20 +163,25 @@ import { pad } from '../lib/pad.js';
       <p class="wb-uitleg">Deze cijfers staan <strong>niet</strong> op de pdf.</p>
     </div>
 
-    <!-- ---- aanbetaling ---- -->
+    <!-- ---- factuur ---- -->
     <div class="wb-kaart">
-      <span class="eyebrow">Aanbetaling</span>
+      <span class="eyebrow">Factuur</span>
       <p class="wb-uitleg">
         Een nette factuur in plaats van een kaal betaalverzoek. Hij ziet eruit als
         de offerte en heeft alles erop wat er volgens de Belastingdienst op moet.
       </p>
-      <div class="wb-veldrij">
+      <div class="wb-schakel wb-drie" role="group" aria-label="Soort factuur">
+        <button type="button" class="wb-keuze aan" data-factuur="aanbetaling">Aanbetaling</button>
+        <button type="button" class="wb-keuze" data-factuur="eind">Eindfactuur</button>
+        <button type="button" class="wb-keuze" data-factuur="volledig">Alles ineens</button>
+      </div>
+      <div class="wb-veldrij" id="wb-pct-veld">
         <label>Percentage
           <input type="text" id="wb-aanbetaling-pct" inputmode="decimal" placeholder="30" />
         </label>
       </div>
       <div class="wb-cijfers" id="wb-aanbetaling"></div>
-      <button type="button" class="btn solid wb-vol" id="wb-factuur">Aanbetalingsfactuur maken</button>
+      <button type="button" class="btn solid wb-vol" id="wb-factuur">Factuur maken</button>
     </div>
 
     <div class="wb-kaart">
@@ -179,6 +197,9 @@ import { pad } from '../lib/pad.js';
     <div class="wb-kaart">
       <button type="button" class="btn wb-vol" id="wb-bewaar">Offerte bewaren</button>
       <button type="button" class="btn wb-vol" id="wb-nieuw">Nieuwe offerte beginnen</button>
+      <label class="wb-breed wb-zoeken">Zoeken in je offertes
+        <input type="search" id="wb-zoek" placeholder="naam, kenteken of nummer" />
+      </label>
       <div id="wb-bewaard"></div>
     </div>
   </section>
@@ -373,7 +394,8 @@ import { pad } from '../lib/pad.js';
   import { PACKAGES, SITE } from '../data/site.js';
   import {
     SOORTEN, STANDAARD_INSTELLINGEN, euro, naarCent, regelPrijs, totalen, marge,
-    offertenummer, geldigTot, stuklijst, aanbetaling, factuurnummer,
+    offertenummer, geldigTot, stuklijst, aanbetaling, eindafrekening,
+    factuurnummer, kortingNaarExcl,
   } from '../lib/werkbak/rekenen.js';
   import { offertePdf, pdfBestandsnaam } from '../lib/werkbak/offerte-pdf.js';
   import { werkbonPdf, werkbonBestandsnaam } from '../lib/werkbak/werkbon.js';
@@ -528,7 +550,11 @@ import { pad } from '../lib/pad.js';
   $$('.wb-keuze').forEach((knop) => {
     knop.addEventListener('click', () => {
       offerte.zakelijk = knop.dataset.klant === 'zakelijk';
-      $$('.wb-keuze').forEach((k) => k.classList.toggle('aan', k === knop));
+      $$('[data-klant]').forEach((k) => k.classList.toggle('aan', k === knop));
+      /* De korting is ingetikt in de maat van de klant. Wissel je van
+         particulier naar zakelijk, dan verandert die maat en moet hij
+         opnieuw gelezen worden. */
+      leesKorting();
       $('#wb-bedrijf-veld').hidden = !offerte.zakelijk;
       tekenAlles();
     });
@@ -753,11 +779,12 @@ import { pad } from '../lib/pad.js';
 
   /* ================= TOTALEN EN MARGE ================= */
   function werkTotalenBij() {
-    const t = totalen(offerte.regels, staat.instellingen);
+    const korting = offerte.kortingExclCent || 0;
+    const t = totalen(offerte.regels, staat.instellingen, korting);
     $('#wb-totaal').textContent = euro(offerte.zakelijk ? t.exclCent : t.inclCent);
     $('#wb-nummer').textContent = `nr. ${offerte.nummer}`;
 
-    const m = marge(offerte.regels, staat.instellingen);
+    const m = marge(offerte.regels, staat.instellingen, korting);
     /* Een regel zonder inkoopprijs telt als gratis ingekocht en maakt de
        marge mooier dan hij is. Dat gebeurt vanzelf bij de pakketten van de
        site: die hebben wel een verkoopprijs, maar wat er aan onderdelen in
@@ -779,6 +806,40 @@ import { pad } from '../lib/pad.js';
   }
 
   /**
+   * DE KORTING.
+   *
+   * Wat Justus intikt staat in de maat die de klant ziet — bij een particulier
+   * inclusief btw. Binnen de app rekent alles exclusief, dus we bewaren de
+   * omgerekende waarde op de offerte. Zo klopt de btw, de marge én de
+   * aanbetaling meteen mee.
+   */
+  function leesKorting() {
+    const kaal = totalen(offerte.regels, staat.instellingen);
+    offerte.kortingExclCent = kortingNaarExcl(
+      $('#wb-korting').value, kaal.exclCent, offerte.zakelijk, staat.instellingen.btwPct
+    );
+  }
+
+  function tekenKorting() {
+    const t = totalen(offerte.regels, staat.instellingen, offerte.kortingExclCent || 0);
+    const vak = $('#wb-korting-uitleg');
+    if (!t.kortingExclCent) {
+      vak.innerHTML = '';
+      return;
+    }
+    vak.innerHTML =
+      `<span>De klant ziet</span><strong>-${euro(offerte.zakelijk ? t.kortingExclCent : t.kortingInclCent)}</strong>` +
+      `<em>nieuw totaal ${euro(offerte.zakelijk ? t.exclCent : t.inclCent)}</em>`;
+  }
+
+  $('#wb-korting').addEventListener('input', () => {
+    leesKorting();
+    tekenKorting();
+    werkTotalenBij();
+    tekenAanbetaling();
+  });
+
+  /**
    * Het percentage dat nu in het veld staat. Leeg betekent: de standaard uit
    * de instellingen. Zo hoeft Justus het niet elke keer in te tikken, maar kan
    * hij er per klant van afwijken.
@@ -789,27 +850,66 @@ import { pad } from '../lib/pad.js';
     return Number(ingetypt.replace(',', '.')) || 0;
   }
 
+  /** Welke factuur je wilt maken: aanbetaling, eindfactuur of alles ineens. */
+  let factuurSoort = 'aanbetaling';
+
+  $$('[data-factuur]').forEach((knop) => {
+    knop.addEventListener('click', () => {
+      factuurSoort = knop.dataset.factuur;
+      $$('[data-factuur]').forEach((k) => k.classList.toggle('aan', k === knop));
+      /* Het percentage hoort alleen bij een aanbetaling. */
+      $('#wb-pct-veld').hidden = factuurSoort !== 'aanbetaling';
+      tekenAanbetaling();
+    });
+  });
+
   function tekenAanbetaling() {
-    const pct = huidigPercentage();
-    const a = aanbetaling(offerte.regels, staat.instellingen, pct);
     const vak = $('#wb-aanbetaling');
     if (!offerte.regels.length) {
       vak.innerHTML = '<p class="wb-leeg">Zet er eerst iets op de offerte.</p>';
       return;
     }
-    vak.innerHTML = `
-      <div><span>Klant betaalt nu</span><strong>${euro(a.inclCent)}</strong></div>
-      <div><span>Restant bij oplevering</span><strong>${euro(a.restInclCent)}</strong></div>
-      <div><span>Waarvan btw ${staat.instellingen.btwPct}%</span><strong>${euro(a.btwCent)}</strong></div>` +
+    const korting = offerte.kortingExclCent || 0;
+    let rijen;
+
+    if (factuurSoort === 'aanbetaling') {
+      const a = aanbetaling(offerte.regels, staat.instellingen, huidigPercentage(), korting);
+      rijen = [
+        ['Klant betaalt nu', euro(a.inclCent)],
+        ['Restant bij oplevering', euro(a.restInclCent)],
+        [`Waarvan btw ${staat.instellingen.btwPct}%`, euro(a.btwCent)],
+      ];
+    } else {
+      const e = eindafrekening(
+        offerte.regels, staat.instellingen, korting,
+        factuurSoort === 'eind' ? (offerte.factuur?.inclCent || 0) : 0
+      );
+      rijen = [];
+      if (e.reedsBetaaldInclCent) {
+        rijen.push(['Offertetotaal', euro(e.totaalInclCent)]);
+        rijen.push(['Al aanbetaald', `-${euro(e.reedsBetaaldInclCent)}`]);
+      }
+      rijen.push(['Klant betaalt nu', euro(e.teBetalenInclCent)]);
+      rijen.push([`Waarvan btw ${staat.instellingen.btwPct}%`, euro(e.teBetalenBtwCent)]);
+    }
+
+    vak.innerHTML = rijen
+      .map(([label, bedrag]) => `<div><span>${label}</span><strong>${bedrag}</strong></div>`)
+      .join('') +
       (staat.instellingen.iban
         ? ''
         : `<p class="wb-waarschuwing">Je rekeningnummer staat nog niet ingevuld. Zonder dat
-           kan de klant niet betalen — zet hem bij <strong>Instellingen</strong>.</p>`);
+           kan de klant niet betalen — zet hem bij <strong>Instellingen</strong>.</p>`) +
+      (factuurSoort === 'eind' && !offerte.factuur
+        ? `<p class="wb-waarschuwing">Er is nog geen aanbetaling gefactureerd bij deze offerte.
+           De eindfactuur is dan het hele bedrag — bedoelde je <strong>Alles ineens</strong>?</p>`
+        : '');
   }
 
   $('#wb-aanbetaling-pct').addEventListener('input', tekenAanbetaling);
 
   function tekenAlles() {
+    tekenKorting();
     tekenRegels();
     tekenOnderdeelknoppen();
     werkTotalenBij();
@@ -1277,10 +1377,29 @@ import { pad } from '../lib/pad.js';
         });
         staat.dossiers = [...staat.dossiers, ...nieuweAutos];
 
+        /**
+         * Instellingen uit een aangeleverd bestand vullen alleen LEGE velden.
+         *
+         * Zo kan er een rekeningnummer meekomen zonder dat een bestand ooit
+         * iets overschrijft wat Justus zelf heeft ingesteld. Een uurtarief dat
+         * hij gisteren goed heeft gezet blijft dus staan, ook als er in het
+         * bestand een ander getal staat.
+         */
+        let aangevuld = 0;
+        for (const [sleutel, waarde] of Object.entries(gelezen.instellingen || {})) {
+          const nu = staat.instellingen[sleutel];
+          const leeg = nu === undefined || nu === null || nu === '';
+          if (leeg && waarde !== '' && waarde != null) {
+            staat.instellingen[sleutel] = waarde;
+            aangevuld += 1;
+          }
+        }
+
         const overgeslagen = aantal - nieuw.length;
         alert(
           `${nieuw.length} onderdelen toegevoegd` +
           (nieuweAutos.length ? ` en ${nieuweAutos.length} auto's` : '') + '.' +
+          (aangevuld ? `\n${aangevuld} lege instelling${aangevuld === 1 ? '' : 'en'} ingevuld.` : '') +
           (overgeslagen ? `\n${overgeslagen} stond er al in en is overgeslagen.` : '')
         );
       }
@@ -1297,19 +1416,46 @@ import { pad } from '../lib/pad.js';
   });
 
   /* ================= BEWAREN EN OPNIEUW ================= */
+  /**
+   * DE STATUS VAN EEN OFFERTE.
+   *
+   * Zo zie je in één oogopslag wat er nog open staat. De app zet hem waar hij
+   * het zeker weet — offerte verstuurd, aanbetaling gefactureerd, eindfactuur
+   * eruit — en de rest zet Justus zelf door erop te tikken.
+   */
+  const STATUSSEN = ['concept', 'verstuurd', 'aanbetaald', 'gefactureerd', 'betaald'];
+
+  /**
+   * De offerte bewaren, of bijwerken als hij er al staat.
+   *
+   * Op nummer, niet er gewoon bovenop: zonder die controle stond dezelfde
+   * offerte vier keer in je lijst nadat je hem had bewaard, verstuurd,
+   * aanbetaald en afgerekend.
+   */
+  function bewaarOfferte() {
+    const plat = { ...offerte, datum: offerte.datum.toISOString() };
+    const i = staat.offertes.findIndex((o) => o.nummer === offerte.nummer);
+    if (i >= 0) staat.offertes[i] = plat;
+    else staat.offertes.unshift(plat);
+    staat.offertes = staat.offertes.slice(0, 200);
+  }
+
   $('#wb-bewaar').addEventListener('click', () => {
-    staat.offertes.unshift({ ...offerte, datum: offerte.datum.toISOString() });
-    staat.offertes = staat.offertes.slice(0, 50);
+    if (!offerte.status) offerte.status = 'concept';
+    bewaarOfferte();
     opslaan();
     tekenBewaard();
   });
+
+  $('#wb-zoek').addEventListener('input', tekenBewaard);
 
   $('#wb-nieuw').addEventListener('click', () => {
     offerte = nieuweOfferte();
     voorkeuren = new Set();
     $$('#wb-voorkeuren .wb-chip').forEach((c) => c.classList.remove('aan'));
     ['#wb-kenteken', '#wb-naam', '#wb-adres', '#wb-telefoon', '#wb-email', '#wb-bedrijf', '#wb-opmerking',
-     '#wb-merk', '#wb-model', '#wb-bouwjaar', '#wb-aanbetaling-pct'].forEach((kies) => { $(kies).value = ''; });
+     '#wb-merk', '#wb-model', '#wb-bouwjaar', '#wb-aanbetaling-pct', '#wb-korting']
+      .forEach((kies) => { $(kies).value = ''; });
     toonAutoVelden(false);
     melden('');
     tekenAlles();
@@ -1320,26 +1466,64 @@ import { pad } from '../lib/pad.js';
     const vak = $('#wb-bewaard');
     vak.innerHTML = '';
     if (!staat.offertes.length) return;
+
+    const zoek = $('#wb-zoek').value.trim().toLowerCase();
+    const gevonden = staat.offertes.filter((eerder) => {
+      if (!zoek) return true;
+      const hooiberg = [
+        eerder.nummer,
+        eerder.klant?.naam, eerder.klant?.bedrijf,
+        eerder.auto?.kenteken, eerder.auto?.merk, eerder.auto?.model,
+      ].filter(Boolean).join(' ').toLowerCase();
+      return hooiberg.includes(zoek);
+    });
+
     const kop = document.createElement('p');
     kop.className = 'wb-uitleg';
-    kop.textContent = 'Eerder bewaard:';
+    kop.textContent = zoek
+      ? `${gevonden.length} van de ${staat.offertes.length} offertes`
+      : `Eerder bewaard (${staat.offertes.length}):`;
     vak.appendChild(kop);
-    staat.offertes.slice(0, 8).forEach((eerder) => {
-      const knop = document.createElement('button');
-      knop.type = 'button';
-      knop.className = 'wb-toevoeg';
+
+    /* Zonder zoekopdracht de laatste tien; zoek je, dan alles wat past. */
+    for (const eerder of zoek ? gevonden : gevonden.slice(0, 10)) {
       const wie = eerder.klant?.naam || eerder.klant?.bedrijf || 'zonder naam';
-      const t = totalen(eerder.regels || [], staat.instellingen);
-      knop.innerHTML = `<span>${ontsnap(eerder.nummer)} · ${ontsnap(wie)}</span>` +
-        `<em>${euro(eerder.zakelijk ? t.exclCent : t.inclCent)}</em>`;
-      knop.addEventListener('click', () => {
+      const t = totalen(eerder.regels || [], staat.instellingen, eerder.kortingExclCent || 0);
+      const status = eerder.status || 'concept';
+      const af = status === 'betaald' || status === 'gefactureerd';
+
+      const rij = document.createElement('div');
+      rij.className = 'wb-regel';
+      rij.innerHTML = `
+        <div class="wb-regel-kop">
+          <span>${ontsnap(eerder.nummer)} · ${ontsnap(wie)}
+            <small>${ontsnap(eerder.auto?.kenteken || '')} ${ontsnap(
+        [eerder.auto?.merk, eerder.auto?.model].filter(Boolean).join(' ')
+      )}</small>
+          </span>
+          <strong>${euro(eerder.zakelijk ? t.exclCent : t.inclCent)}</strong>
+        </div>
+        <div class="wb-regel-rij">
+          <button type="button" class="wb-status${af ? ' af' : ''}">${status}</button>
+          <button type="button" class="wb-link wb-open-offerte">Openen</button>
+        </div>`;
+
+      /* Op de status tikken zet hem een stap verder. Zo hoef je geen menu
+         open te klappen met olie aan je handen. */
+      rij.querySelector('.wb-status').addEventListener('click', () => {
+        const nu = STATUSSEN.indexOf(status);
+        eerder.status = STATUSSEN[(nu + 1) % STATUSSEN.length];
+        opslaan();
+        tekenBewaard();
+      });
+      rij.querySelector('.wb-open-offerte').addEventListener('click', () => {
         offerte = { ...eerder, datum: new Date(eerder.datum) };
         vulFormulierUitOfferte();
         tekenAlles();
         window.scrollTo({ top: 0 });
       });
-      vak.appendChild(knop);
-    });
+      vak.appendChild(rij);
+    }
   }
 
   function vulFormulierUitOfferte() {
@@ -1350,6 +1534,13 @@ import { pad } from '../lib/pad.js';
     $('#wb-email').value = offerte.klant?.email || '';
     $('#wb-bedrijf').value = offerte.klant?.bedrijf || '';
     $('#wb-opmerking').value = offerte.opmerking || '';
+    /* De korting terugzetten in de maat die de klant ziet. */
+    $('#wb-korting').value = offerte.kortingExclCent
+      ? (offerte.zakelijk
+        ? offerte.kortingExclCent / 100
+        : Math.round(offerte.kortingExclCent * (1 + staat.instellingen.btwPct / 100)) / 100
+      ).toFixed(2).replace('.', ',')
+      : '';
     vulAutoVelden();
     toonAutoVelden(!!offerte.auto?.merk);
     $('#wb-bedrijf-veld').hidden = !offerte.zakelijk;
@@ -1424,16 +1615,27 @@ import { pad } from '../lib/pad.js';
       return;
     }
     const pct = huidigPercentage();
-    const deel = aanbetaling(offerte.regels, staat.instellingen, pct);
+    const korting = offerte.kortingExclCent || 0;
+    const deel = factuurSoort === 'aanbetaling'
+      ? aanbetaling(offerte.regels, staat.instellingen, pct, korting)
+      : eindafrekening(
+        offerte.regels, staat.instellingen, korting,
+        factuurSoort === 'eind' ? (offerte.factuur?.inclCent || 0) : 0
+      );
+    const teBetalenCent = factuurSoort === 'aanbetaling' ? deel.inclCent : deel.teBetalenInclCent;
+    if (teBetalenCent <= 0) {
+      alert('Er staat niets open om te factureren.');
+      return;
+    }
     /**
      * Het adres is boven de honderd euro wettelijk verplicht op een factuur.
      * Daaronder mag een vereenvoudigde factuur. We blokkeren niet — Justus
      * kent zijn klant — maar we zeggen het wel, één keer, met het bedrag erbij.
      */
-    if (!offerte.klant?.adres && deel.inclCent > 10000) {
+    if (!offerte.klant?.adres && teBetalenCent > 10000) {
       const toch = confirm(
         `Er staat geen adres bij de klant. Boven de honderd euro — en dit is ` +
-        `${euro(deel.inclCent)} — is een factuur zonder adres van de klant niet geldig.\n\n` +
+        `${euro(teBetalenCent)} — is een factuur zonder adres van de klant niet geldig.\n\n` +
         'Toch doorgaan?'
       );
       if (!toch) return;
@@ -1441,20 +1643,26 @@ import { pad } from '../lib/pad.js';
 
     const datum = new Date();
     const nummer = factuurnummer(staat.instellingen.factuurVolgnummer, datum);
-    const doc = factuurPdf(offerte, staat.instellingen, { nummer, datum, percentage: pct });
+    const doc = factuurPdf(offerte, staat.instellingen, {
+      soort: factuurSoort, nummer, datum, percentage: pct,
+    });
     const blob = doc.naarBlob();
     const naam = factuurBestandsnaam(nummer, offerte);
     const bestand = new File([blob], naam, { type: 'application/pdf' });
 
     const auto = [offerte.auto?.merk, offerte.auto?.model].filter(Boolean).join(' ');
-    const bericht = `Hoi${offerte.klant?.naam ? ` ${offerte.klant.naam.split(' ')[0]}` : ''}, ` +
-      `hierbij de aanbetalingsfactuur${auto ? ` voor je ${auto}` : ''}: ${euro(deel.inclCent)}. ` +
-      `Zodra die binnen is plan ik je in. Groet, Justus — ${SITE.name}`;
+    const bericht = factuurSoort === 'aanbetaling'
+      ? `Hoi${offerte.klant?.naam ? ` ${offerte.klant.naam.split(' ')[0]}` : ''}, ` +
+        `hierbij de aanbetalingsfactuur${auto ? ` voor je ${auto}` : ''}: ${euro(teBetalenCent)}. ` +
+        `Zodra die binnen is plan ik je in. Groet, Justus — ${SITE.name}`
+      : `Hoi${offerte.klant?.naam ? ` ${offerte.klant.naam.split(' ')[0]}` : ''}, ` +
+        `${auto ? `je ${auto} is klaar. ` : ''}Hierbij de factuur: ${euro(teBetalenCent)}. ` +
+        `Bedankt en veel luisterplezier. Groet, Justus — ${SITE.name}`;
 
     if (navigator.canShare?.({ files: [bestand] })) {
       try {
         await navigator.share({ files: [bestand], text: bericht });
-        naFactuur(nummer, deel);
+        naFactuur(nummer, teBetalenCent);
         return;
       } catch (err) {
         /* Afgebroken: dan gewoon downloaden. */
@@ -1466,7 +1674,7 @@ import { pad } from '../lib/pad.js';
     link.download = naam;
     link.click();
     URL.revokeObjectURL(adres);
-    naFactuur(nummer, deel);
+    naFactuur(nummer, teBetalenCent);
   });
 
   /**
@@ -1476,19 +1684,23 @@ import { pad } from '../lib/pad.js';
    * keer bestaan. Het nummer en het bedrag blijven bij de offerte staan, zodat
    * je bij de eindfactuur weet wat er al betaald is.
    */
-  function naFactuur(nummer, deel) {
-    offerte.factuur = {
-      nummer,
-      pct: deel.pct,
-      inclCent: deel.inclCent,
-      restInclCent: deel.restInclCent,
-      datum: new Date().toISOString(),
-    };
+  function naFactuur(nummer, bedragCent) {
+    /**
+     * Alleen een AANBETALING wordt onthouden als "al betaald". Een eindfactuur
+     * of een factuur ineens sluit de klus af; zou die ook in offerte.factuur
+     * komen, dan trekt een volgende eindfactuur hem er nog eens vanaf.
+     */
+    if (factuurSoort === 'aanbetaling') {
+      offerte.factuur = { nummer, inclCent: bedragCent, datum: new Date().toISOString() };
+    }
+    offerte.status = factuurSoort === 'aanbetaling' ? 'aanbetaald' : 'gefactureerd';
     staat.instellingen.factuurVolgnummer =
       (Number(staat.instellingen.factuurVolgnummer) || 1) + 1;
+    bewaarOfferte();
     opslaan();
     tekenInstellingen();
     tekenAanbetaling();
+    tekenBewaard();
   }
 
   /* ================= DE WERKBON ================= */
@@ -1526,8 +1738,8 @@ import { pad } from '../lib/pad.js';
    * klant een eigen nummer en kun je een offerte altijd terugvinden.
    */
   function bewaarNaVersturen() {
-    staat.offertes.unshift({ ...offerte, datum: offerte.datum.toISOString() });
-    staat.offertes = staat.offertes.slice(0, 50);
+    if (!offerte.status || offerte.status === 'concept') offerte.status = 'verstuurd';
+    bewaarOfferte();
     staat.instellingen.volgnummer = (Number(staat.instellingen.volgnummer) || 1) + 1;
     opslaan();
     tekenBewaard();
@@ -1645,7 +1857,8 @@ import { pad } from '../lib/pad.js';
   }
   /* :not(.plate) is geen detail: zonder dat wint deze regel van de
      kentekenplaat uit global.css en verdwijnt de oranje band. */
-  input[type="text"]:not(.plate), input[type="tel"], input[type="email"], select, textarea {
+  input[type="text"]:not(.plate), input[type="tel"], input[type="email"],
+  input[type="search"], select, textarea {
     width: 100%;
     min-height: 46px;
     padding: 11px 12px;
@@ -1682,6 +1895,25 @@ import { pad } from '../lib/pad.js';
     cursor: pointer;
   }
   .wb-keuze.aan { border-color: var(--accent); color: var(--text); background: var(--bg); }
+
+  /* Drie keuzes naast elkaar passen op 320 pixels alleen met kleinere tekst. */
+  .wb-schakel.wb-drie .wb-keuze { font-size: .78rem; padding: 10px 4px; }
+
+  .wb-zoeken { margin-top: 16px; }
+
+  /* Het statuslabel bij een bewaarde offerte. */
+  .wb-status {
+    display: inline-block;
+    padding: 3px 9px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    font-size: .68rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .wb-status.af { border-color: var(--accent); color: var(--accent-text); }
 
   .wb-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
   .wb-chip {

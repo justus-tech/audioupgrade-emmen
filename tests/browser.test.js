@@ -1358,3 +1358,252 @@ describe('de aanbetaling', alsGebouwd, () => {
     await pagina.close();
   });
 });
+
+/**
+ * KORTING, DE DRIE SOORTEN FACTUUR, EN JE OFFERTES TERUGVINDEN.
+ */
+describe('korting en eindfactuur', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+
+  async function open() {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    pagina.on('dialog', (venster) => venster.accept());
+    await pagina.route(RDW_VOERTUIG, (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(SAAB) })
+    );
+    await pagina.goto(paginaUrl('werkbak'));
+    await pagina.evaluate(() => document.fonts.ready);
+    await pagina.click('[data-tab="instellingen"]');
+    await pagina.fill('#wb-i-iban', 'NL84KNAB0776239147');
+    await pagina.locator('#wb-i-iban').blur();
+    await pagina.click('[data-tab="offerte"]');
+    await pagina.fill('#wb-kenteken', '92DJHG');
+    await pagina.click('#wb-kenteken-form button[type=submit]');
+    await pagina.waitForFunction(() =>
+      document.querySelector('#wb-auto-melding').textContent.includes('Gevonden')
+    );
+    await pagina.fill('#wb-naam', 'Mark de Vries');
+    await pagina.fill('#wb-adres', 'Hoofdstraat 12, 7811 AA Emmen');
+    // Het CarPlay-pakket: € 695,00.
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+    await pagina.waitForTimeout(150);
+    return { pagina, fouten };
+  }
+
+  test('een korting in euro gaat er meteen af', async () => {
+    const { pagina, fouten } = await open();
+    assert.equal(await pagina.textContent('#wb-totaal'), '€ 695,00');
+    await pagina.fill('#wb-korting', '50');
+    await pagina.waitForTimeout(200);
+    assert.equal(await pagina.textContent('#wb-totaal'), '€ 645,00');
+    assert.match(await pagina.textContent('#wb-korting-uitleg'), /-€ 50,00/);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een korting in procenten ook', async () => {
+    const { pagina } = await open();
+    await pagina.fill('#wb-korting', '10%');
+    await pagina.waitForTimeout(200);
+    // Tien procent van € 695,00 is € 69,50.
+    assert.equal(await pagina.textContent('#wb-totaal'), '€ 625,50');
+    await pagina.close();
+  });
+
+  test('de korting gaat ook van je marge af', async () => {
+    const { pagina } = await open();
+    const voor = await pagina.textContent('#wb-marge');
+    await pagina.fill('#wb-korting', '50');
+    await pagina.waitForTimeout(200);
+    const na = await pagina.textContent('#wb-marge');
+    assert.notEqual(voor, na, 'de marge is niet meeveranderd');
+    await pagina.close();
+  });
+
+  test('en de aanbetaling rekent over het bedrag ná korting', async () => {
+    const { pagina } = await open();
+    await pagina.fill('#wb-korting', '50');
+    await pagina.fill('#wb-aanbetaling-pct', '50');
+    await pagina.waitForTimeout(200);
+    // Vijftig procent van € 645,00 is € 322,50.
+    assert.match(await pagina.textContent('#wb-aanbetaling'), /€ 322,50/);
+    await pagina.close();
+  });
+
+  test('de eindfactuur trekt de aanbetaling eraf', async () => {
+    const { pagina, fouten } = await open();
+    await pagina.fill('#wb-aanbetaling-pct', '30');
+    await pagina.waitForTimeout(150);
+
+    const eerste = pagina.waitForEvent('download');
+    await pagina.click('#wb-factuur');
+    await eerste;
+
+    await pagina.click('[data-factuur="eind"]');
+    await pagina.waitForTimeout(200);
+    const tekst = await pagina.textContent('#wb-aanbetaling');
+    // € 695,00 min 30% (€ 208,50) is € 486,50.
+    assert.match(tekst, /Al aanbetaald/);
+    assert.match(tekst, /€ 208,50/);
+    assert.match(tekst, /€ 486,50/);
+
+    const tweede = pagina.waitForEvent('download');
+    await pagina.click('#wb-factuur');
+    assert.match((await tweede).suggestedFilename(), /^factuur-\d{4}-F002-92DJHG\.pdf$/);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('het percentage verdwijnt als je geen aanbetaling maakt', async () => {
+    const { pagina } = await open();
+    assert.equal(await pagina.isVisible('#wb-pct-veld'), true);
+    await pagina.click('[data-factuur="volledig"]');
+    await pagina.waitForTimeout(150);
+    assert.equal(await pagina.isVisible('#wb-pct-veld'), false);
+    await pagina.close();
+  });
+
+  test('een eindfactuur zonder aanbetaling waarschuwt', async () => {
+    // Anders stuur je per ongeluk het hele bedrag als "eindfactuur".
+    const { pagina } = await open();
+    await pagina.click('[data-factuur="eind"]');
+    await pagina.waitForTimeout(200);
+    assert.match(await pagina.textContent('#wb-aanbetaling'), /nog geen aanbetaling/i);
+    await pagina.close();
+  });
+
+  test('een offerte staat één keer in je lijst, niet vier keer', async () => {
+    /**
+     * Bewaren, factureren en afrekenen zetten allemaal dezelfde offerte weg.
+     * Zonder bijwerken-op-nummer stond hij daarna vier keer in de lijst.
+     */
+    const { pagina } = await open();
+    await pagina.click('#wb-bewaar');
+    await pagina.waitForTimeout(150);
+    const eerste = pagina.waitForEvent('download');
+    await pagina.click('#wb-factuur');
+    await eerste;
+    await pagina.click('#wb-bewaar');
+    await pagina.waitForTimeout(200);
+    const aantal = await pagina.evaluate(
+      () => JSON.parse(localStorage.getItem('aue-werkbak-v1')).offertes.length
+    );
+    assert.equal(aantal, 1);
+    await pagina.close();
+  });
+
+  test('de status schuift mee en je kunt hem zelf verzetten', async () => {
+    const { pagina } = await open();
+    const eerste = pagina.waitForEvent('download');
+    await pagina.click('#wb-factuur');
+    await eerste;
+    await pagina.waitForTimeout(200);
+    assert.match(await pagina.textContent('#wb-bewaard'), /aanbetaald/);
+    await pagina.click('.wb-status');
+    await pagina.waitForTimeout(150);
+    assert.match(await pagina.textContent('#wb-bewaard'), /gefactureerd/);
+    await pagina.close();
+  });
+
+  test('je vindt een offerte terug op kenteken of naam', async () => {
+    const { pagina } = await open();
+    await pagina.click('#wb-bewaar');
+    await pagina.waitForTimeout(150);
+    await pagina.fill('#wb-zoek', '92DJHG');
+    await pagina.waitForTimeout(150);
+    assert.match(await pagina.textContent('#wb-bewaard'), /Mark de Vries/);
+    await pagina.fill('#wb-zoek', 'Vries');
+    await pagina.waitForTimeout(150);
+    assert.match(await pagina.textContent('#wb-bewaard'), /Mark de Vries/);
+    await pagina.fill('#wb-zoek', 'bestaatniet');
+    await pagina.waitForTimeout(150);
+    assert.match(await pagina.textContent('#wb-bewaard'), /0 van de 1/);
+    await pagina.close();
+  });
+
+  test('de werkbak gedraagt zich als een app op je beginscherm', async () => {
+    const pagina = await browser.newPage(telefoon);
+    await pagina.goto(paginaUrl('werkbak'));
+    const manifest = await pagina.evaluate(async () => {
+      const link = document.querySelector('link[rel=manifest]');
+      if (!link) return null;
+      return (await fetch(link.href)).json();
+    });
+    assert.ok(manifest, 'er hangt geen app-bestand aan de pagina');
+    assert.equal(manifest.short_name, 'Werkbak');
+    assert.equal(manifest.display, 'standalone', 'hij opent met een adresbalk');
+    assert.ok(manifest.start_url.endsWith('/werkbak'), 'hij start op de verkeerde pagina');
+    assert.ok(manifest.icons.length >= 2, 'te weinig iconen');
+    await pagina.close();
+  });
+
+  test('alles past nog op 320 pixels', async () => {
+    const pagina = await browser.newPage({ ...telefoon, viewport: { width: 320, height: 844 } });
+    await pagina.goto(paginaUrl('werkbak'));
+    await pagina.evaluate(() => document.fonts.ready);
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+    await pagina.fill('#wb-korting', '10%');
+    await pagina.click('[data-factuur="eind"]');
+    await pagina.click('#wb-bewaar');
+    await pagina.waitForTimeout(200);
+    const overloop = await pagina.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+    );
+    assert.equal(overloop, 0);
+    await pagina.close();
+  });
+});
+
+describe('instellingen uit een aangeleverd bestand', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+
+  /** Een bestand zoals ik het aanlever: onderdelen plus een paar instellingen. */
+  const LIJST = {
+    catalogus: [{
+      omschrijving: 'Testonderdeel', soort: 'overig', merk: 'Test',
+      leverancier: 'Test', artikelnummer: 'T-1', inkoopCent: 1000, uren: 0, toebehoren: [],
+    }],
+    instellingen: { iban: 'NL84KNAB0776239147', tenaamstelling: 'Audio Upgrade Emmen' },
+  };
+
+  async function lees(pagina, bestand) {
+    await pagina.setInputFiles('#wb-import', {
+      name: 'lijst.json', mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify(bestand)),
+    });
+    await pagina.waitForTimeout(300);
+  }
+
+  test('een leeg rekeningnummer wordt ingevuld', async () => {
+    const pagina = await browser.newPage(telefoon);
+    pagina.on('dialog', (v) => v.accept());
+    await pagina.goto(paginaUrl('werkbak'));
+    await pagina.click('[data-tab="catalogus"]');
+    await lees(pagina, LIJST);
+    await pagina.click('[data-tab="instellingen"]');
+    assert.equal(await pagina.inputValue('#wb-i-iban'), 'NL84KNAB0776239147');
+    assert.equal(await pagina.inputValue('#wb-i-tenaamstelling'), 'Audio Upgrade Emmen');
+    await pagina.close();
+  });
+
+  test('maar wat je zelf hebt ingevuld blijft staan', async () => {
+    /**
+     * Dit is de hele reden dat het alleen lege velden vult. Een prijslijst die
+     * je rekeningnummer of je uurtarief overschrijft is een stille fout die je
+     * pas ziet als er een factuur de deur uit is.
+     */
+    const pagina = await browser.newPage(telefoon);
+    pagina.on('dialog', (v) => v.accept());
+    await pagina.goto(paginaUrl('werkbak'));
+    await pagina.click('[data-tab="instellingen"]');
+    await pagina.fill('#wb-i-iban', 'NL00 EIGEN 0000 0000 00');
+    await pagina.locator('#wb-i-iban').blur();
+    await pagina.click('[data-tab="catalogus"]');
+    await lees(pagina, LIJST);
+    await pagina.click('[data-tab="instellingen"]');
+    assert.equal(await pagina.inputValue('#wb-i-iban'), 'NL00 EIGEN 0000 0000 00');
+    await pagina.close();
+  });
+});

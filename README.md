@@ -243,6 +243,36 @@ zonder adres niet geldig.** Staat het er niet, dan vraagt de app het je eerst.
 je één teller delen, dan zitten er gaten in je factuurreeks zodra een offerte niet
 doorgaat — en dat wil je niet uitleggen aan de Belastingdienst.
 
+### Korting geven
+
+Onder de regels staat een veld **Korting**. Tik `50` voor vijftig euro, of
+`10%` voor tien procent. Bij een particulier is dat bedrag inclusief btw —
+dezelfde maat die hij op de offerte ziet.
+
+De korting gaat overal doorheen: de btw, je marge, de aanbetaling en beide
+facturen rekenen er meteen mee.
+
+### Drie soorten factuur
+
+In het blok Factuur kies je wat je stuurt:
+
+| | |
+|---|---|
+| **Aanbetaling** | een deel vooraf, met een percentage dat je zelf invult |
+| **Eindfactuur** | wat er na die aanbetaling nog open staat |
+| **Alles ineens** | de hele klus in één keer, zonder aanbetaling |
+
+Op de eindfactuur staat het offertetotaal, met de aanbetaling eraf en het
+factuurnummer erbij. Zo kan de klant beide papieren naast elkaar leggen en
+zien dat het sluit — tot de cent.
+
+### Je offertes terugvinden
+
+Onderaan staat een zoekveld: typ een naam, een kenteken of een offertenummer.
+Elke offerte heeft een status die je ziet staan en die je verzet door erop te
+tikken: concept → verstuurd → aanbetaald → gefactureerd → betaald. De app zet
+hem zelf waar hij het zeker weet.
+
 ### Prijslijsten inlezen
 
 Leveranciersprijzen komen als bestand binnen, dat je bij **Onderdelen** inleest
@@ -253,6 +283,10 @@ ongeluk twee keer in, dan komt er niets dubbel bij.
 Alleen een bestand dat je zelf met **Bewaar als bestand** hebt gemaakt vervangt
 alles — dat is je reservekopie, en daar vraagt hij eerst nog bij of je het zeker
 weet.
+
+Zo'n aangeleverd bestand kan ook instellingen meebrengen, bijvoorbeeld je
+rekeningnummer. Die vullen alleen velden die nog **leeg** zijn: wat je zelf hebt
+ingesteld wordt nooit overschreven.
 
 **Waar je gegevens staan.** In de browser van je telefoon, nergens anders.
 Geen server, geen database, geen inlog. Dat betekent ook: raakt je telefoon

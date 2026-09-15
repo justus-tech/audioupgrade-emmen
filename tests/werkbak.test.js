@@ -16,7 +16,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import {
   euro, naarCent, regelPrijs, totalen, marge, offertenummer, datumNl, geldigTot,
-  stuklijst, soortenIn, aanbetaling, factuurnummer,
+  stuklijst, soortenIn, aanbetaling, eindafrekening, kortingNaarExcl, factuurnummer,
   STANDAARD_INSTELLINGEN, SOORTEN, BTW_PCT,
 } from '../src/lib/werkbak/rekenen.js';
 import { nieuwPdf, naarPdfTekens, breedteVan, breekAf } from '../src/lib/werkbak/pdf.js';
@@ -882,5 +882,163 @@ describe('de aanbetalingsfactuur', () => {
     assert.ok(doc.paginas >= 1);
     const pdf = Buffer.from(doc.naarBytes()).toString('latin1');
     assert.match(pdf, /Kenmerk/, 'het betaalblok is van het blad gevallen');
+  });
+});
+
+/* ======================================================================
+   KORTING, EINDFACTUUR EN DE HELE KLUS IN ÉÉN KEER
+   ====================================================================== */
+describe('korting geven', () => {
+  const regels = [{ vastExclCent: 57438, inkoopCent: 22000 }, { inkoopCent: 24000, margePct: 60, uren: 3 }];
+  const kaal = totalen(regels, INST);
+
+  test('een bedrag bij een particulier is inclusief btw', () => {
+    /**
+     * Typt Justus "50", dan bedoelt hij vijftig euro van het bedrag dat de
+     * klant ziet. Zou de app die vijftig van het bedrag zónder btw aftrekken,
+     * dan geeft hij € 60,50 weg en loopt hij 21% mis op elke korting.
+     */
+    const korting = kortingNaarExcl('50', kaal.exclCent, false, 21);
+    const t = totalen(regels, INST, korting);
+    assert.equal(t.kortingInclCent, 5000, 'de klant ziet geen vijftig euro korting');
+    assert.equal(t.inclCent, kaal.inclCent - 5000);
+  });
+
+  test('bij een bedrijf is hetzelfde bedrag exclusief btw', () => {
+    const korting = kortingNaarExcl('50', kaal.exclCent, true, 21);
+    assert.equal(korting, 5000);
+    assert.equal(totalen(regels, INST, korting).exclCent, kaal.exclCent - 5000);
+  });
+
+  test('een percentage kan ook', () => {
+    const korting = kortingNaarExcl('10%', kaal.exclCent, false, 21);
+    assert.equal(korting, Math.round(kaal.exclCent * 0.1));
+    assert.equal(kortingNaarExcl('10 %', kaal.exclCent, false, 21), korting, 'spatie maakt niet uit');
+  });
+
+  test('onzin levert geen korting op', () => {
+    for (const invoer of ['', '   ', 'abc', '0', '-20', null, undefined]) {
+      assert.equal(kortingNaarExcl(invoer, kaal.exclCent, false, 21), 0, `bij ${JSON.stringify(invoer)}`);
+    }
+  });
+
+  test('de korting wordt nooit groter dan de offerte zelf', () => {
+    // Een typefout mag geen offerte met een negatief totaal opleveren.
+    const veel = kortingNaarExcl('99999', kaal.exclCent, false, 21);
+    const t = totalen(regels, INST, veel);
+    assert.equal(t.exclCent, 0);
+    assert.equal(t.inclCent, 0);
+    assert.equal(kortingNaarExcl('500%', kaal.exclCent, false, 21), kaal.exclCent);
+  });
+
+  test('na korting klopt bedrag zonder btw plus btw nog steeds met het totaal', () => {
+    for (const invoer of ['50', '10%', '1,23', '33,33%', '999']) {
+      const korting = kortingNaarExcl(invoer, kaal.exclCent, false, 21);
+      const t = totalen(regels, INST, korting);
+      assert.equal(t.exclCent + t.btwCent, t.inclCent, `bij korting ${invoer}`);
+    }
+  });
+
+  test('de korting gaat van je marge af, niet van je inkoop', () => {
+    // Anders lijkt een klus met korting even winstgevend als een zonder.
+    const zonder = marge(regels, INST, 0);
+    const met = marge(regels, INST, 5000);
+    assert.equal(met.kostprijsCent, zonder.kostprijsCent, 'de inkoop is veranderd');
+    assert.equal(met.margeCent, zonder.margeCent - 5000, 'de korting komt niet van de marge af');
+  });
+});
+
+describe('de eindafrekening', () => {
+  const regels = [{ vastExclCent: 57438 }, { inkoopCent: 24000, margePct: 63, uren: 3 }];
+
+  test('aanbetaling plus eindfactuur is exact het offertetotaal', () => {
+    /**
+     * De klant legt straks twee facturen naast elkaar. Schelen ze samen één
+     * cent met de offerte, dan belt hij. Getest met en zonder korting.
+     */
+    for (const korting of [0, 5000, 12345]) {
+      for (const pct of [0, 25, 30, 50, 66.67, 100]) {
+        const a = aanbetaling(regels, INST, pct, korting);
+        const e = eindafrekening(regels, INST, korting, a.inclCent);
+        assert.equal(
+          a.inclCent + e.teBetalenInclCent, e.totaalInclCent,
+          `bij ${pct}% en korting ${korting}`
+        );
+        assert.equal(e.teBetalenExclCent + e.teBetalenBtwCent, e.teBetalenInclCent);
+        assert.equal(e.reedsBetaaldBtwCent + e.teBetalenBtwCent, e.totaalBtwCent);
+      }
+    }
+  });
+
+  test('zonder aanbetaling is de eindfactuur de hele klus', () => {
+    const e = eindafrekening(regels, INST, 0, 0);
+    const t = totalen(regels, INST);
+    assert.equal(e.teBetalenInclCent, t.inclCent);
+    assert.equal(e.reedsBetaaldInclCent, 0);
+  });
+
+  test('er kan nooit meer af dan er staat', () => {
+    // Een negatieve factuur bestaat niet, ook niet na een tikfout.
+    const e = eindafrekening(regels, INST, 0, 99999999);
+    assert.equal(e.teBetalenInclCent, 0);
+    assert.equal(e.reedsBetaaldInclCent, e.totaalInclCent);
+  });
+});
+
+describe('de drie soorten factuur', () => {
+  const datum = new Date('2026-09-20');
+  const inst = { ...INST, iban: 'NL84KNAB0776239147', tenaamstelling: 'Audio Upgrade Emmen' };
+  const basis = {
+    nummer: '2026-014', datum, kortingExclCent: 5000,
+    klant: { naam: 'Mark de Vries', adres: 'Hoofdstraat 12, 7811 AA Emmen' },
+    auto: { kenteken: 'XX99XX', merk: 'Volkswagen', model: 'Golf VII' },
+    regels: [{ omschrijving: 'CarPlay', aantal: 1, vastExclCent: 57438, inkoopCent: 22222 }],
+  };
+  const deel = aanbetaling(basis.regels, inst, 30, basis.kortingExclCent);
+  const metAanbetaling = { ...basis, factuur: { nummer: '2026-F014', inclCent: deel.inclCent } };
+  const tekst = (soort, offerte = basis) => Buffer.from(
+    factuurPdf(offerte, inst, { soort, nummer: '2026-F015', datum, percentage: 30 }).naarBytes()
+  ).toString('latin1');
+
+  test('de eindfactuur laat zien wat er al betaald is', () => {
+    const pdf = tekst('eind', metAanbetaling);
+    assert.match(pdf, /Eindafrekening offerte 2026-014/);
+    // De haakjes staan in een pdf met een schuine streep ervoor, dus daar
+    // zoeken we niet op.
+    assert.match(pdf, /Al betaald/, 'de aanbetaling wordt niet verantwoord');
+    assert.match(pdf, /2026-F014/, 'het nummer van de aanbetalingsfactuur ontbreekt');
+    assert.ok(pdf.includes(euro(deel.inclCent).replace('€ ', '')), 'het betaalde bedrag ontbreekt');
+    const e = eindafrekening(basis.regels, inst, basis.kortingExclCent, deel.inclCent);
+    assert.ok(pdf.includes(euro(e.teBetalenInclCent).replace('€ ', '')), 'het restbedrag ontbreekt');
+  });
+
+  test('en dat de klus daarmee is afgerekend', () => {
+    assert.match(tekst('eind', metAanbetaling), /volledig afgerekend/i);
+    assert.match(tekst('eind', metAanbetaling), /uitgevoerd en de auto is opgeleverd/i);
+  });
+
+  test('alles ineens rekent geen aanbetaling af', () => {
+    const pdf = tekst('volledig');
+    assert.doesNotMatch(pdf, /Al betaald/);
+    const e = eindafrekening(basis.regels, inst, basis.kortingExclCent, 0);
+    assert.ok(pdf.includes(euro(e.teBetalenInclCent).replace('€ ', '')));
+  });
+
+  test('de korting staat op elke soort factuur', () => {
+    for (const soort of ['eind', 'volledig']) {
+      assert.match(tekst(soort, metAanbetaling), /Korting/, `ontbreekt bij ${soort}`);
+    }
+  });
+
+  test('een onbekende soort valt terug op de aanbetaling', () => {
+    // Liever een aanbetalingsfactuur dan een lege pagina.
+    assert.match(tekst('zomaariets'), /Aanbetaling 30%/);
+  });
+
+  test('ook een eindfactuur verklapt geen inkoop of marge', () => {
+    const pdf = tekst('eind', metAanbetaling);
+    for (const verboden of ['222,22', 'marge', 'uurtarief', '75,00']) {
+      assert.doesNotMatch(pdf, new RegExp(verboden, 'i'), `"${verboden}" staat erop`);
+    }
   });
 });

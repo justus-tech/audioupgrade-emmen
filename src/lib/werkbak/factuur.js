@@ -34,30 +34,71 @@ import {
   KLEUR, LINKS, RECHTS, ONDERGRENS,
   kopbalk, voetregel, blokkop, kentekenplaat,
 } from './opmaak.js';
-import { euro, aanbetaling, datumNl, geldigTot, STANDAARD_INSTELLINGEN } from './rekenen.js';
+import {
+  euro, aanbetaling, eindafrekening, datumNl, geldigTot, STANDAARD_INSTELLINGEN,
+} from './rekenen.js';
 
 /** Waar de bedragen rechts uitgelijnd staan. */
 const KOLOM_BEDRAG = RECHTS;
 
 /**
+ * DRIE SOORTEN FACTUUR, ÉÉN OPMAAK.
+ *
+ *   aanbetaling   een deel vooraf, de rest bij oplevering
+ *   eind          wat er na de aanbetaling nog open staat
+ *   volledig      de hele klus in één keer, zonder aanbetaling
+ *
+ * De laatste twee zijn dezelfde factuur; bij "volledig" is er alleen niets
+ * vooruitbetaald. Daarom delen ze hun rekenwerk en hun opmaak — dan kan er
+ * ook geen verschil in sluipen.
+ */
+export const SOORTEN_FACTUUR = {
+  aanbetaling: { kop: 'Aanbetaling' },
+  eind: { kop: 'Eindfactuur' },
+  volledig: { kop: 'Factuur' },
+};
+
+/**
  * De factuur tekenen.
  *
- * @param {object} offerte   de offerte waar deze aanbetaling bij hoort
+ * @param {object} offerte   de offerte waar deze factuur bij hoort
  * @param {object} inst      de instellingen (btw, iban, betaaltermijn)
- * @param {object} opties    { nummer, datum, percentage }
+ * @param {object} opties    { soort, nummer, datum, percentage }
  */
 export function factuurPdf(offerte, inst = STANDAARD_INSTELLINGEN, opties = {}) {
   const datum = opties.datum || new Date();
   const nummer = opties.nummer || '2026-F001';
-  const deel = aanbetaling(offerte.regels || [], inst, opties.percentage);
+  const soort = SOORTEN_FACTUUR[opties.soort] ? opties.soort : 'aanbetaling';
+  const korting = offerte.kortingExclCent || 0;
   const vervalt = geldigTot(datum, inst.betaaltermijnDagen ?? 14);
 
+  /**
+   * Wat er te betalen is.
+   *
+   * Bij een aanbetaling staat er één bedrag; bij een eindfactuur staat het
+   * hele offertebedrag erboven met de aanbetaling eraf. Die tweede vorm is de
+   * enige manier waarop een klant kan nazien dat het sluit.
+   */
+  const deel = soort === 'aanbetaling'
+    ? aanbetaling(offerte.regels || [], inst, opties.percentage, korting)
+    : null;
+  const eind = soort === 'aanbetaling'
+    ? null
+    : eindafrekening(
+      offerte.regels || [], inst, korting,
+      soort === 'eind' ? (offerte.factuur?.inclCent || 0) : 0
+    );
+
+  const teBetalenInclCent = deel ? deel.inclCent : eind.teBetalenInclCent;
+  const teBetalenExclCent = deel ? deel.exclCent : eind.teBetalenExclCent;
+  const teBetalenBtwCent = deel ? deel.btwCent : eind.teBetalenBtwCent;
+
   const doc = nieuwPdf({
-    titel: `Factuur ${nummer} - ${SITE.name}`,
+    titel: `${SOORTEN_FACTUUR[soort].kop} ${nummer} - ${SITE.name}`,
     maker: SITE.name,
   });
 
-  const kop = { soort: 'Factuur', nummer, datum };
+  const kop = { soort: SOORTEN_FACTUUR[soort].kop, nummer, datum };
   let paginaNr = 1;
   let y = kopbalk(doc, kop) + 30;
 
@@ -129,10 +170,13 @@ export function factuurPdf(offerte, inst = STANDAARD_INSTELLINGEN, opties = {}) 
   doc.lijn(LINKS, y, RECHTS, y, KLEUR.lijn, 0.9);
   y += 18;
 
-  doc.tekst(`Aanbetaling ${deel.pct}% op offerte ${offerte.nummer}`, LINKS, y, {
-    grootte: 10, vet: true, kleur: KLEUR.inkt,
-  });
-  doc.tekst(euro(deel.exclCent), KOLOM_BEDRAG, y, {
+  const omschrijving = soort === 'aanbetaling'
+    ? `Aanbetaling ${deel.pct}% op offerte ${offerte.nummer}`
+    : soort === 'eind'
+      ? `Eindafrekening offerte ${offerte.nummer}`
+      : `Werkzaamheden volgens offerte ${offerte.nummer}`;
+  doc.tekst(omschrijving, LINKS, y, { grootte: 10, vet: true, kleur: KLEUR.inkt });
+  doc.tekst(euro(teBetalenExclCent), KOLOM_BEDRAG, y, {
     grootte: 10, vet: true, kleur: KLEUR.inkt, uitlijnen: 'rechts',
   });
   y += 14;
@@ -162,32 +206,48 @@ export function factuurPdf(offerte, inst = STANDAARD_INSTELLINGEN, opties = {}) 
   ruimte(90);
   const labelX = RECHTS - 132;
 
-  doc.tekst('Bedrag zonder btw', labelX, y, {
-    grootte: 9.5, kleur: KLEUR.zacht, uitlijnen: 'rechts',
-  });
-  doc.tekst(euro(deel.exclCent), KOLOM_BEDRAG, y, {
-    grootte: 9.5, kleur: KLEUR.inkt, uitlijnen: 'rechts',
-  });
-  y += 15;
-  doc.tekst(`Btw ${inst.btwPct ?? 21}%`, labelX, y, {
-    grootte: 9.5, kleur: KLEUR.zacht, uitlijnen: 'rechts',
-  });
-  doc.tekst(euro(deel.btwCent), KOLOM_BEDRAG, y, {
-    grootte: 9.5, kleur: KLEUR.inkt, uitlijnen: 'rechts',
-  });
-  y += 12;
+  /**
+   * De opsomming boven de streep. Bij een eindfactuur staat het hele bedrag
+   * erboven en gaat de aanbetaling eraf, met het factuurnummer erbij: zo kan
+   * de klant het naast zijn eerste factuur leggen en zien dat het sluit.
+   */
+  const totaalregels = [];
+  if (eind && eind.kortingExclCent) {
+    totaalregels.push(['Korting', `-${euro(eind.kortingInclCent)}`]);
+  }
+  if (eind && eind.reedsBetaaldInclCent) {
+    totaalregels.push(['Offertetotaal incl. btw', euro(eind.totaalInclCent)]);
+    totaalregels.push([
+      `Al betaald${offerte.factuur?.nummer ? ` (factuur ${offerte.factuur.nummer})` : ''}`,
+      `-${euro(eind.reedsBetaaldInclCent)}`,
+    ]);
+  }
+  totaalregels.push(['Bedrag zonder btw', euro(teBetalenExclCent)]);
+  totaalregels.push([`Btw ${inst.btwPct ?? 21}%`, euro(teBetalenBtwCent)]);
+
+  for (const [label, bedrag] of totaalregels) {
+    ruimte(18);
+    doc.tekst(label, labelX, y, { grootte: 9.5, kleur: KLEUR.zacht, uitlijnen: 'rechts' });
+    doc.tekst(bedrag, KOLOM_BEDRAG, y, { grootte: 9.5, kleur: KLEUR.inkt, uitlijnen: 'rechts' });
+    y += 15;
+  }
+  y -= 3;
 
   doc.lijn(labelX - 40, y, RECHTS, y, KLEUR.accent, 1.4);
   y += 17;
   doc.tekst('Nu te betalen', labelX, y, {
     grootte: 11, vet: true, kleur: KLEUR.inkt, uitlijnen: 'rechts',
   });
-  doc.tekst(euro(deel.inclCent), KOLOM_BEDRAG, y, {
+  doc.tekst(euro(teBetalenInclCent), KOLOM_BEDRAG, y, {
     grootte: 15, vet: true, kleur: KLEUR.accentInkt, uitlijnen: 'rechts',
   });
   y += 14;
   doc.tekst(
-    `Restant na oplevering: ${euro(deel.restInclCent)} — offertetotaal ${euro(deel.totaalInclCent)}.`,
+    soort === 'aanbetaling'
+      ? `Restant na oplevering: ${euro(deel.restInclCent)} — offertetotaal ${euro(deel.totaalInclCent)}.`
+      : eind.reedsBetaaldInclCent
+        ? 'Hiermee is de offerte volledig afgerekend.'
+        : 'Inclusief montage en btw.',
     RECHTS, y, { grootte: 8, kleur: KLEUR.zacht, uitlijnen: 'rechts' }
   );
   y += 28;
@@ -213,12 +273,18 @@ export function factuurPdf(offerte, inst = STANDAARD_INSTELLINGEN, opties = {}) 
   y += 18;
 
   /* ---- de afspraken ---------------------------------------------------- */
-  const afspraken = [
-    'Deze factuur is een vooruitbetaling. De werkzaamheden worden ingepland zodra het bedrag binnen is.',
-    'Het restant wordt gefactureerd bij oplevering van de auto.',
-    'Alle prijzen zijn all-in: inclusief montage en btw.',
-    'Je fabrieksgarantie blijft 100% behouden.',
-  ];
+  const afspraken = soort === 'aanbetaling'
+    ? [
+      'Deze factuur is een vooruitbetaling. De werkzaamheden worden ingepland zodra het bedrag binnen is.',
+      'Het restant wordt gefactureerd bij oplevering van de auto.',
+      'Alle prijzen zijn all-in: inclusief montage en btw.',
+      'Je fabrieksgarantie blijft 100% behouden.',
+    ]
+    : [
+      'De werkzaamheden zijn uitgevoerd en de auto is opgeleverd.',
+      'Alle prijzen zijn all-in: inclusief montage en btw.',
+      'Je fabrieksgarantie blijft 100% behouden.',
+    ];
   if (offerte.opmerking) afspraken.push(offerte.opmerking);
 
   const regels = afspraken.flatMap((zin) => breekAf(`·  ${zin}`, RECHTS - LINKS, 8.5));

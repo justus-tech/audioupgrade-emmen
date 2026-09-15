@@ -176,21 +176,55 @@ export function regelPrijs(regel, inst = STANDAARD_INSTELLINGEN) {
   };
 }
 
-/** Alle regels bij elkaar: wat er onder de offerte komt te staan. */
-export function totalen(regels = [], inst = STANDAARD_INSTELLINGEN) {
+/**
+ * Alle regels bij elkaar: wat er onder de offerte komt te staan.
+ *
+ * `kortingExclCent` is een korting op het bedrag exclusief btw. Die komt er
+ * hier af en niet ergens later, want alles wat hierna komt — de btw, de
+ * marge, de aanbetaling, de facturen — rekent met deze uitkomst. Zou je de
+ * korting pas op de offerte aftrekken, dan klopt je marge niet meer en vraag
+ * je een aanbetaling over een bedrag dat de klant nooit gaat betalen.
+ *
+ * De korting wordt nooit groter dan het bedrag zelf: een offerte met een
+ * negatief totaal bestaat niet.
+ */
+export function totalen(regels = [], inst = STANDAARD_INSTELLINGEN, kortingExclCent = 0) {
   const uit = {
     exclCent: 0, btwCent: 0, inclCent: 0,
     kostprijsCent: 0, arbeidCent: 0, urenTotaal: 0,
+    kortingExclCent: 0, kortingInclCent: 0,
   };
   for (const regel of regels) {
     const p = regelPrijs(regel, inst);
     uit.exclCent += p.exclCent;
     uit.btwCent += p.btwCent;
-    uit.inclCent += p.inclCent;
     uit.kostprijsCent += p.kostprijsCent;
     uit.arbeidCent += p.arbeidCent;
     uit.urenTotaal += p.urenTotaal;
   }
+
+  /**
+   * De btw is de som van de btw per regel, en niet de btw over het totaal.
+   *
+   * Dat is geen detail. Op de offerte staat per regel een bedrag inclusief
+   * btw, en de klant telt die op. Rondt de app de btw over het totaal af, dan
+   * scheelt dat bij een stuk of tien regels zomaar een paar cent met wat er
+   * onderaan staat — en dan zit je die aan de telefoon uit te leggen.
+   *
+   * De korting krijgt om dezelfde reden zijn eigen btw. Zo blijft gelden:
+   * regels bij elkaar, min de korting, is precies het totaal.
+   */
+  const btwPct = Number(inst.btwPct) ?? BTW_PCT;
+  const korting = Math.min(uit.exclCent, Math.max(0, Math.round(Number(kortingExclCent) || 0)));
+  if (korting) {
+    const kortingBtw = Math.round((korting * btwPct) / 100);
+    uit.kortingExclCent = korting;
+    uit.kortingInclCent = korting + kortingBtw;
+    uit.exclCent -= korting;
+    uit.btwCent -= kortingBtw;
+  }
+
+  uit.inclCent = uit.exclCent + uit.btwCent;
   return uit;
 }
 
@@ -202,8 +236,8 @@ export function totalen(regels = [], inst = STANDAARD_INSTELLINGEN) {
  * en verkoop je voor 200, dan is de opslag 100% maar de marge 50%. De bank
  * en de boekhouder rekenen met dat tweede getal, dus dat tonen we.
  */
-export function marge(regels = [], inst = STANDAARD_INSTELLINGEN) {
-  const t = totalen(regels, inst);
+export function marge(regels = [], inst = STANDAARD_INSTELLINGEN, kortingExclCent = 0) {
+  const t = totalen(regels, inst, kortingExclCent);
   const margeCent = t.exclCent - t.kostprijsCent;
   return {
     omzetCent: t.exclCent,
@@ -303,8 +337,8 @@ export function offertenummer(volgnummer, datum = new Date()) {
  * moment dat het geld binnenkomt. De aanbetalingsfactuur vermeldt hem dus,
  * en de eindfactuur rekent alleen nog over het restant.
  */
-export function aanbetaling(regels = [], inst = STANDAARD_INSTELLINGEN, percentage) {
-  const t = totalen(regels, inst);
+export function aanbetaling(regels = [], inst = STANDAARD_INSTELLINGEN, percentage, kortingExclCent = 0) {
+  const t = totalen(regels, inst, kortingExclCent);
   const pct = Math.min(100, Math.max(0, Number(
     percentage ?? inst.aanbetalingPct ?? STANDAARD_INSTELLINGEN.aanbetalingPct
   ) || 0));
@@ -321,6 +355,81 @@ export function aanbetaling(regels = [], inst = STANDAARD_INSTELLINGEN, percenta
     restInclCent: t.inclCent - inclCent,
     totaalInclCent: t.inclCent,
     totaalExclCent: t.exclCent,
+  };
+}
+
+/**
+ * EEN KORTING LEZEN ZOALS JUSTUS HEM INTIKT.
+ *
+ *   "50"     vijftig euro korting
+ *   "50,-"   ook vijftig euro
+ *   "10%"    tien procent van het offertebedrag
+ *
+ * Een bedrag typt hij in de maat die de klant op de offerte ziet: inclusief
+ * btw bij een particulier, exclusief bij een bedrijf. Binnen de app rekent
+ * alles exclusief btw, dus daar zetten we het hier naartoe om. Zou je dat
+ * niet doen, dan geeft "50 euro korting" een particulier € 60,50 korting en
+ * loop je 21% mis op elke korting die je geeft.
+ *
+ * Een percentage gaat altijd over het bedrag zonder btw — dat maakt niet uit,
+ * want een percentage van het geheel is hetzelfde percentage van elk deel.
+ */
+export function kortingNaarExcl(invoer, exclCent, zakelijk = false, btwPct = BTW_PCT) {
+  const tekst = String(invoer ?? '').trim();
+  if (!tekst) return 0;
+
+  if (tekst.includes('%')) {
+    const pct = Number(tekst.replace('%', '').replace(',', '.').trim());
+    if (!Number.isFinite(pct) || pct <= 0) return 0;
+    return Math.min(exclCent, Math.round((exclCent * Math.min(100, pct)) / 100));
+  }
+
+  const bedrag = naarCent(tekst);
+  if (bedrag <= 0) return 0;
+  const excl = zakelijk ? bedrag : Math.round((bedrag * 100) / (100 + btwPct));
+  return Math.min(exclCent, excl);
+}
+
+/**
+ * DE EINDAFREKENING — wat er na de aanbetaling nog open staat.
+ *
+ * Op de aanbetalingsfactuur staat met zoveel woorden: "het restant wordt
+ * gefactureerd bij oplevering". Dat restant moet dan wel kloppen met wat er
+ * al betaald is, tot de cent, anders krijg je een klant aan de lijn met twee
+ * papieren naast elkaar.
+ *
+ * Daarom trekken we ook hier af in plaats van opnieuw uit te rekenen: het
+ * reeds betaalde bedrag gaat er in zijn geheel af, en de btw over het restant
+ * is de totale btw min de btw die al op de aanbetalingsfactuur stond.
+ *
+ * `reedsBetaaldInclCent` is nul bij een klus zonder aanbetaling. Dan is dit
+ * gewoon de hele factuur.
+ */
+export function eindafrekening(
+  regels = [], inst = STANDAARD_INSTELLINGEN, kortingExclCent = 0, reedsBetaaldInclCent = 0
+) {
+  const t = totalen(regels, inst, kortingExclCent);
+  const btwPct = Number(inst.btwPct) ?? BTW_PCT;
+
+  /* Nooit meer aftrekken dan er staat: een negatieve eindfactuur bestaat niet. */
+  const betaaldIncl = Math.min(t.inclCent, Math.max(0, Math.round(Number(reedsBetaaldInclCent) || 0)));
+  const betaaldExcl = Math.round((betaaldIncl * 100) / (100 + btwPct));
+
+  const teBetalenIncl = t.inclCent - betaaldIncl;
+  const teBetalenExcl = t.exclCent - betaaldExcl;
+
+  return {
+    totaalExclCent: t.exclCent,
+    totaalBtwCent: t.btwCent,
+    totaalInclCent: t.inclCent,
+    kortingExclCent: t.kortingExclCent,
+    kortingInclCent: t.kortingInclCent,
+    reedsBetaaldInclCent: betaaldIncl,
+    reedsBetaaldExclCent: betaaldExcl,
+    reedsBetaaldBtwCent: betaaldIncl - betaaldExcl,
+    teBetalenExclCent: teBetalenExcl,
+    teBetalenBtwCent: teBetalenIncl - teBetalenExcl,
+    teBetalenInclCent: teBetalenIncl,
   };
 }
 
