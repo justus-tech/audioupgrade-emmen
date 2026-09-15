@@ -162,6 +162,39 @@ test op die controleert dat ze elkaar niet tegenspreken.
 
 ---
 
+## De werkbak — je offerte-app
+
+Op `/werkbak` staat een app voor jezelf, niet voor klanten. Je vult een
+kenteken in, vinkt aan wat de klant wil, en er rolt een pdf-offerte uit die
+je meteen via WhatsApp kunt versturen.
+
+**Je zet hem één keer klaar:**
+
+1. Open `audioupgradeemmen.nl/werkbak` op je telefoon.
+2. Ga naar **Instellingen** en vul je uurtarief en je standaard marge in.
+3. Ga naar **Onderdelen** en zet erin wat je bij je leveranciers koopt:
+   naam, inkoopprijs, marge en hoeveel uur montage het kost.
+4. Zet de pagina op je beginscherm (in Safari: delen → "Zet op beginscherm").
+
+Daarna is een offerte maken: kenteken, naam, aantikken wat erin gaat,
+**Pdf & versturen**.
+
+**Wat de klant wél en niet ziet.** Op de pdf staat één bedrag per regel, met
+montage en (bij particulieren) btw er al in. Je inkoopprijzen, je marge en je
+uurtarief staan er nooit op — daar staat een test op in
+`tests/werkbak.test.js`.
+
+**Waar je gegevens staan.** In de browser van je telefoon, nergens anders.
+Geen server, geen database, geen inlog. Dat betekent ook: raakt je telefoon
+kwijt, dan is je lijst weg. Druk daarom af en toe op **Bewaar als bestand**
+bij Onderdelen en mail dat bestand naar jezelf.
+
+> **Belangrijk:** zet je inkoopprijzen nooit in de code van dit project. Deze
+> map staat openbaar op GitHub — iedereen kan hem lezen. In de app zelf is
+> veilig, in een bestand hier niet.
+
+---
+
 ## Publiceren
 
 De site staat nog **niet** live. Het domein `audioupgradeemmen.nl` wijst nog

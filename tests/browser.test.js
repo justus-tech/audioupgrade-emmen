@@ -708,3 +708,194 @@ describe('op een telefoon', alsGebouwd, () => {
     await pagina.close();
   });
 });
+
+/**
+ * DE WERKBAK — de offerte-app van Justus zelf.
+ *
+ * Dit is de enige pagina van dit project waar de gebruiker geen bezoeker is
+ * maar Justus, met olie aan zijn handen, op zijn telefoon, naast de auto.
+ * Het hele nut van deze app is dat een offerte in een paar tikken klaar is;
+ * gaat er onderweg iets stuk, dan pakt hij Word er weer bij en zijn we terug
+ * bij af. Daarom loopt deze test de hele route af: kenteken, klant,
+ * onderdelen, pdf.
+ */
+describe('de werkbak', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+
+  /** De werkbak opent met een nagebootste RDW, net als de rest hierboven. */
+  async function openWerkbak() {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    pagina.on('console', (m) => {
+      if (m.type() === 'error' && !m.text().startsWith('Failed to load resource')) {
+        fouten.push(m.text());
+      }
+    });
+    await pagina.route(RDW_VOERTUIG, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(SAAB),
+      })
+    );
+    await pagina.goto(paginaUrl('werkbak'));
+    await pagina.evaluate(() => document.fonts.ready);
+    return { pagina, fouten };
+  }
+
+  /** Zet één onderdeel in de catalogus, zoals Justus dat één keer doet. */
+  async function vulCatalogus(pagina, { inkoop = '240,00', marge = '60', uren = '3' } = {}) {
+    await pagina.click('[data-tab="catalogus"]');
+    await pagina.fill('#wb-o-naam', 'Premium 2-weg composet voor');
+    await pagina.selectOption('#wb-o-soort', 'speakers-voor');
+    await pagina.fill('#wb-o-inkoop', inkoop);
+    await pagina.fill('#wb-o-marge', marge);
+    await pagina.fill('#wb-o-uren', uren);
+    await pagina.click('#wb-o-bewaar');
+    await pagina.click('[data-tab="offerte"]');
+  }
+
+  test('het kenteken haalt de auto op bij de RDW', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.fill('#wb-kenteken', '92DJHG');
+    await pagina.click('#wb-kenteken-form button[type=submit]');
+    await pagina.waitForFunction(() =>
+      document.querySelector('#wb-auto-melding').textContent.includes('Gevonden')
+    );
+    // De RDW schrijft alles in hoofdletters; op een offerte hoort dat niet.
+    assert.equal(await pagina.inputValue('#wb-merk'), 'Saab');
+    assert.equal(await pagina.inputValue('#wb-bouwjaar'), '1999');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een onbekend kenteken laat je het met de hand invullen', async () => {
+    // Doodlopende weg voorkomen: een oldtimer of een import staat soms niet
+    // in de open gegevens van de RDW, en dan moet de offerte gewoon door.
+    const pagina = await browser.newPage(telefoon);
+    await pagina.route(RDW_VOERTUIG, (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
+    );
+    await pagina.goto(paginaUrl('werkbak'));
+    await pagina.fill('#wb-kenteken', '99ZZ99');
+    await pagina.click('#wb-kenteken-form button[type=submit]');
+    await pagina.waitForFunction(() =>
+      document.querySelector('#wb-auto-melding').textContent.includes('hand')
+    );
+    assert.equal(await pagina.isVisible('#wb-merk'), true, 'de velden blijven verborgen');
+    await pagina.close();
+  });
+
+  test('een pakket van de site komt er voor de juiste prijs op', async () => {
+    const { pagina } = await openWerkbak();
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+    // De site belooft € 695,00 inclusief btw voor het CarPlay-pakket. Rekent
+    // de app daar btw overheen, dan staat er ineens € 840 op de offerte.
+    assert.equal(await pagina.textContent('#wb-totaal'), '€ 695,00');
+    await pagina.close();
+  });
+
+  test('een eigen onderdeel rekent inkoop, marge en montage bij elkaar op', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await vulCatalogus(pagina);
+    await pagina.click('#wb-onderdelen .wb-toevoeg >> nth=0');
+    // 240 + 60% = 384, plus 3 uur à 75 = 225. Samen 609 excl, 736,89 incl.
+    assert.equal(await pagina.textContent('#wb-totaal'), '€ 736,89');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('de schakelaar zakelijk haalt de btw uit de bedragen', async () => {
+    const { pagina } = await openWerkbak();
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+    await pagina.click('[data-klant="zakelijk"]');
+    assert.equal(await pagina.textContent('#wb-totaal'), '€ 574,38');
+    // En het bedrijfsnaamveld hoort er dan bij te staan.
+    assert.equal(await pagina.isVisible('#wb-bedrijf'), true);
+    await pagina.close();
+  });
+
+  test('het marge-overzicht waarschuwt als er geen inkoopprijs staat', async () => {
+    // Zonder die waarschuwing lijkt een pakket volledig winst en gaat Justus
+    // varen op een percentage dat niet klopt.
+    const { pagina } = await openWerkbak();
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+    assert.match(await pagina.textContent('#wb-marge'), /nog geen inkoopprijs/);
+    await pagina.close();
+  });
+
+  test('de catalogus blijft staan als je de app opnieuw opent', async () => {
+    // Anders zou hij zijn hele prijslijst elke ochtend opnieuw moeten typen.
+    const { pagina } = await openWerkbak();
+    await vulCatalogus(pagina);
+    await pagina.reload();
+    await pagina.waitForSelector('#wb-onderdelen .wb-toevoeg');
+    const knoppen = await pagina.$$('#wb-onderdelen .wb-toevoeg');
+    assert.equal(knoppen.length, 1);
+    await pagina.close();
+  });
+
+  test('de knop levert een pdf op met de naam van de offerte erin', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.fill('#wb-kenteken', '92DJHG');
+    await pagina.click('#wb-kenteken-form button[type=submit]');
+    await pagina.waitForFunction(() =>
+      document.querySelector('#wb-auto-melding').textContent.includes('Gevonden')
+    );
+    await pagina.fill('#wb-naam', 'Mark de Vries');
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+
+    const wachten = pagina.waitForEvent('download');
+    await pagina.click('#wb-pdf');
+    const bestand = await wachten;
+    assert.match(bestand.suggestedFilename(), /^offerte-\d{4}-\d{3}-92DJHG\.pdf$/);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een lege offerte levert geen pdf op maar een melding', async () => {
+    const { pagina } = await openWerkbak();
+    let gemeld = '';
+    pagina.on('dialog', (venster) => {
+      gemeld = venster.message();
+      venster.dismiss();
+    });
+    await pagina.click('#wb-pdf');
+    await pagina.waitForTimeout(200);
+    assert.match(gemeld, /eerst iets/);
+    await pagina.close();
+  });
+
+  test('niets loopt over de zijkant heen, ook niet op 320 pixels', async () => {
+    for (const breedte of [320, 390]) {
+      const pagina = await browser.newPage({ ...telefoon, viewport: { width: breedte, height: 844 } });
+      await pagina.goto(paginaUrl('werkbak'));
+      await pagina.evaluate(() => document.fonts.ready);
+      // Ook mét regels erop: dan staan de langste teksten pas op het scherm.
+      await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+      await pagina.click('#wb-eigen-regel');
+      const overloop = await pagina.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+      );
+      assert.equal(overloop, 0, `bij ${breedte} pixels steekt er iets uit`);
+      await pagina.close();
+    }
+  });
+
+  test('alles waar je op tikt is groot genoeg voor een duim', async () => {
+    const pagina = await browser.newPage(telefoon);
+    await pagina.goto(paginaUrl('werkbak'));
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+    const teKlein = await pagina.$$eval('button, input, select, textarea', (elementen) =>
+      elementen
+        .map((e) => ({
+          wat: (e.textContent || e.getAttribute('aria-label') || e.id || '').trim().slice(0, 30),
+          h: e.getBoundingClientRect().height,
+        }))
+        .filter((e) => e.h > 0 && e.h < 38)
+    );
+    assert.deepEqual(teKlein, []);
+    await pagina.close();
+  });
+});

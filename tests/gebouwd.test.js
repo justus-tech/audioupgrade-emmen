@@ -46,10 +46,25 @@ const webpad = (bestand) => {
 let paginas = [];
 let inhoud = new Map();
 
+/**
+ * Pagina's die wél gebouwd worden maar geen bezoekerspagina zijn.
+ *
+ * /werkbak is de offerte-app van Justus zelf: geen menu, geen voettekst,
+ * geen bedrijfsgegevens voor Google, en met opzet nergens een link naartoe.
+ * De eisen hieronder gaan allemaal over pagina's die klanten zien, dus die
+ * slaan we hier over. Wat er voor de werkbak wél moet gelden staat in
+ * tests/werkbak.test.js — onder andere dat hij buiten Google blijft.
+ */
+const GEEN_BEZOEKERSPAGINA = ['/werkbak'];
+
 before(() => {
   if (!erIsGebouwd) return;
   paginas = allePaginas();
-  for (const p of paginas) inhoud.set(webpad(p), readFileSync(p, 'utf8'));
+  for (const p of paginas) {
+    const adres = webpad(p);
+    if (GEEN_BEZOEKERSPAGINA.includes(adres)) continue;
+    inhoud.set(adres, readFileSync(p, 'utf8'));
+  }
 });
 
 const alsGebouwd = { skip: erIsGebouwd ? false : 'nog niet gebouwd — draai npm run build' };
