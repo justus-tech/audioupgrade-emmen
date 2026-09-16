@@ -96,7 +96,7 @@ export const VRAGEN = [
   {
     vraag: 'Kan ik mijn afspraak nog verzetten?',
     antwoord:
-      'Kosteloos tot zeven dagen voor de inbouwdatum. Daarbinnen brengen we een deel van het offertebedrag in rekening, omdat de tijd is gereserveerd en de onderdelen al besteld zijn. Laat het dus vooral weten als er iets tussenkomt — er valt altijd te praten.',
+      'Kosteloos tot veertien dagen voor de inbouwdatum. Daarbinnen brengen we een deel van het offertebedrag in rekening, omdat de tijd is gereserveerd en de onderdelen al besteld zijn. Laat het dus vooral weten als er iets tussenkomt — er valt altijd te praten.',
   },
   {
     vraag: 'Waar zitten jullie?',

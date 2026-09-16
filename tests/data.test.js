@@ -674,6 +674,31 @@ describe('de algemene voorwaarden', () => {
     assert.match(tekst, /uitdrukkelijk/, 'het uitdrukkelijke verzoek om eerder te beginnen ontbreekt');
   });
 
+  test('de FAQ noemt dezelfde afzegtermijn als artikel 9', () => {
+    /**
+     * De voorwaarden schrijven het als "14 dagen", de FAQ als "veertien
+     * dagen". Twee plekken, twee schrijfwijzen — dus precies het soort
+     * verschil dat er ongemerkt in sluipt als er ooit een ander aantal dagen
+     * wordt afgesproken. Een klant die de FAQ leest en een klant die de
+     * voorwaarden leest moeten hetzelfde te horen krijgen.
+     */
+    const WOORD = {
+      1: 'een', 2: 'twee', 3: 'drie', 4: 'vier', 5: 'vijf', 6: 'zes', 7: 'zeven',
+      8: 'acht', 9: 'negen', 10: 'tien', 14: 'veertien', 21: 'eenentwintig', 30: 'dertig',
+    };
+    const artikel = ALGEMENE_VOORWAARDEN.artikelen.find((a) => /Annulering/i.test(a.kop));
+    const dagen = Number((artikel.lijst.join(' ').match(/tot uiterlijk (\d+) dagen/) || [])[1]);
+    assert.ok(dagen > 0, 'geen afzegtermijn gevonden in artikel 9');
+
+    const vraag = VRAGEN.find((v) => /verzetten/i.test(v.vraag));
+    assert.ok(vraag, 'de vraag over het verzetten van een afspraak is weg');
+    assert.ok(
+      vraag.antwoord.includes(`${WOORD[dagen] || dagen} dagen`) ||
+      vraag.antwoord.includes(`${dagen} dagen`),
+      `de FAQ zegt iets anders dan de ${dagen} dagen uit artikel 9: ${vraag.antwoord}`
+    );
+  });
+
   test('er staat nergens nog een stukje code in de tekst', () => {
     // Een ontsnapte ${...} kwam als code op de pagina én op de pdf te staan.
     const alles = [

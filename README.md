@@ -287,11 +287,12 @@ Er staan drie schakelaars bij:
 | **Klant wil dat je binnen die 14 dagen begint** | Staat uit. Zet hem aan als de afspraak eerder staat dan 14 dagen na vandaag. Zonder die zin moet je bij afzeggen álles terugbetalen, ook het werk dat er al in zit; mét die zin alleen wat er nog niet gedaan is. |
 | **Volledige voorwaarden achterin meesturen** | Staat aan. Twee extra pagina's. Voorwaarden gelden pas als de klant ze ook echt gekregen heeft, dus laat dit gewoon aan staan. |
 
-> **Let op:** in je eigen voorwaarden staat dat afzeggen kosteloos kan tot
-> **7 dagen** voor de afgesproken dag. Dat is iets anders dan de wettelijke
-> 14 dagen bedenktijd, en allebei staan ze op de offerte. Wil je daar één
-> termijn van maken, pas dan artikel 9 in `src/data/juridisch.js` aan — de app
-> leest het aantal dagen daar vandaan en past het papier vanzelf aan.
+**De afzegtermijn staat op één plek.** Artikel 9 in `src/data/juridisch.js`
+zegt dat kosteloos afzeggen kan tot **14 dagen** voor de afgesproken dag. Dat
+is bewust hetzelfde getal als de wettelijke bedenktijd: twee verschillende
+termijnen op één stuk papier leest als een addertje. Zet je er ooit een ander
+aantal dagen neer, dan schuiven de offerte, de factuur en de FAQ vanzelf mee —
+de app leest het getal daar vandaan en typt het nergens zelf.
 
 ### Je offertes terugvinden
 

@@ -114,8 +114,8 @@ export const ALGEMENE_VOORWAARDEN = {
     {
       kop: 'Artikel 9 — Annulering en no-show',
       lijst: [
-        'Het kosteloos annuleren of verzetten van een inbouwafspraak is mogelijk tot uiterlijk 7 dagen voor de afgesproken inbouwdatum.',
-        'Bij annulering of verplaatsing binnen 7 dagen voor de inbouwdatum is Audio Upgrade Emmen gerechtigd om 25% van het totale offertebedrag in rekening te brengen ter dekking van gereserveerde tijd en speciaal voor de Klant bestelde materialen.',
+        'Het kosteloos annuleren of verzetten van een inbouwafspraak is mogelijk tot uiterlijk 14 dagen voor de afgesproken inbouwdatum.',
+        'Bij annulering of verplaatsing binnen 14 dagen voor de inbouwdatum is Audio Upgrade Emmen gerechtigd om 25% van het totale offertebedrag in rekening te brengen ter dekking van gereserveerde tijd en speciaal voor de Klant bestelde materialen.',
         'Indien de Klant zonder voorafgaande schriftelijke afmelding niet verschijnt op de afgesproken inbouwdatum (no-show), wordt 50% van het totale offertebedrag in rekening gebracht.',
       ],
     },
