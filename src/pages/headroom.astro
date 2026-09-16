@@ -61,6 +61,7 @@ import { APP } from '../data/app.js';
 
 <nav class="wb-tabs" aria-label="Onderdelen">
   <button type="button" class="wb-tab aan" data-tab="offerte">Offerte</button>
+  <button type="button" class="wb-tab" data-tab="agenda">Agenda<span class="wb-bel" id="wb-agenda-bel" hidden></span></button>
   <button type="button" class="wb-tab" data-tab="catalogus">Onderdelen</button>
   <button type="button" class="wb-tab" data-tab="autos">Auto's</button>
   <button type="button" class="wb-tab" data-tab="instellingen">Instellingen</button>
@@ -110,6 +111,21 @@ import { APP } from '../data/app.js';
           euro is een factuur zonder adres van de klant niet geldig.
         </p>
       </div>
+    </div>
+
+    <!-- ---- de afspraak ---- -->
+    <div class="wb-kaart">
+      <span class="eyebrow">De afspraak</span>
+      <div class="wb-veldrij">
+        <label>Inbouwdatum<input type="date" id="wb-inbouwdatum" /></label>
+        <label>Hoe laat<input type="time" id="wb-inbouwtijd" step="900" /></label>
+      </div>
+      <div id="wb-afspraak-uitleg"></div>
+      <p class="wb-uitleg">
+        Zet hier de dag waarop de auto komt. Daarmee rekent de app uit wanneer de
+        onderdelen uiterlijk besteld moeten zijn, en komt de klus in je Agenda te
+        staan met een herinnering een week en een dag van tevoren.
+      </p>
     </div>
 
     <!-- ---- wat wil de klant ---- -->
@@ -244,6 +260,28 @@ import { APP } from '../data/app.js';
   </section>
 
   <!-- ================= CATALOGUS ================= -->
+  <!-- ================= AGENDA ================= -->
+  <section class="wb-paneel" data-paneel="agenda" hidden>
+    <h1 class="wb-h">Agenda</h1>
+    <div id="wb-agenda-nu"></div>
+    <div id="wb-agenda-lijst"></div>
+    <p class="wb-leeg" id="wb-agenda-leeg">
+      Nog geen klus met een datum. Zet bij een offerte een inbouwdatum, dan staat
+      hij hier.
+    </p>
+    <div class="wb-kaart">
+      <span class="eyebrow">Over de meldingen</span>
+      <p class="wb-uitleg">
+        Deze app kan je geen melding sturen als hij dichtstaat — daar is een server
+        voor nodig en die is er niet. Wat wél werkt: tik bij een klus op
+        <strong>Zet in je agenda</strong>. Dan komt de afspraak in de agenda van je
+        telefoon te staan, mét een wekker een week en een dag van tevoren, en een
+        aparte afspraak op de dag dat je uiterlijk moet bestellen. Die piept ook als
+        Headroom dicht staat en zonder internet.
+      </p>
+    </div>
+  </section>
+
   <section class="wb-paneel" data-paneel="catalogus" hidden>
     <h1 class="wb-h">Je onderdelen</h1>
     <p class="wb-uitleg">
@@ -386,6 +424,9 @@ import { APP } from '../data/app.js';
         <label>Volgend offertenummer
           <input type="text" id="wb-i-volgnummer" inputmode="numeric" />
         </label>
+        <label>Bestellen uiterlijk (dagen vooraf)
+          <input type="text" id="wb-i-besteldagen" inputmode="numeric" />
+        </label>
       </div>
       <p class="wb-uitleg">
         Het uurtarief en de marge gebruikt de app om uit te rekenen wat de klant betaalt.
@@ -435,7 +476,7 @@ import { APP } from '../data/app.js';
   import {
     SOORTEN, STANDAARD_INSTELLINGEN, euro, naarCent, regelPrijs, totalen, marge,
     offertenummer, geldigTot, stuklijst, aanbetaling, eindafrekening,
-    factuurnummer, kortingNaarExcl,
+    factuurnummer, kortingNaarExcl, datumNl,
   } from '../lib/headroom/rekenen.js';
   import { offertePdf, pdfBestandsnaam } from '../lib/headroom/offerte-pdf.js';
   import { werkbonPdf, werkbonBestandsnaam } from '../lib/headroom/werkbon.js';
@@ -443,6 +484,10 @@ import { APP } from '../data/app.js';
   import {
     DOSSIER_VELDEN, autoSleutel, zoekDossier, dossierNaam, dossierStand, leegDossier,
   } from '../lib/headroom/autos.js';
+  import {
+    agenda, agendaItem, icsVoorKlus, icsBestandsnaam, hoeLangNog,
+  } from '../lib/headroom/agenda.js';
+  import { voorbereidingMetWaarom, voorbereiding } from '../lib/headroom/voorbereiding.js';
   import { MODELS } from '../data/models.js';
   /* Dezelfde schrijfwijze als de site: de RDW levert "GOLF VII 1.4 TSI" en dat
      moet "Golf VII 1.4 TSI" worden, niet "Golf Vii 1.4 Tsi". */
@@ -509,6 +554,14 @@ import { APP } from '../data/app.js';
     opAfstand: true,
     startDirect: false,
     voorwaardenBijlage: true,
+    /* De afspraak. Leeg tot Justus een dag prikt; dan komt de klus in de
+       Agenda te staan en rekent de app de besteldatum uit. */
+    inbouwdatum: '',
+    inbouwtijd: '09:00',
+    besteld: false,
+    /* Welke voorbereidingsstappen al afgevinkt zijn, op tekst en niet op
+       nummer: pas ik de lijst ooit aan, dan blijven de vinkjes kloppen. */
+    afgevinkt: [],
   });
 
   let offerte = nieuweOfferte();
@@ -619,6 +672,187 @@ import { APP } from '../data/app.js';
     $(`#wb-${id}`).addEventListener('input', (e) => { offerte.klant[sleutel] = e.target.value; });
   });
   $('#wb-opmerking').addEventListener('input', (e) => { offerte.opmerking = e.target.value; });
+
+  /* ================= DE AFSPRAAK EN DE AGENDA ================= */
+  ['inbouwdatum', 'inbouwtijd'].forEach((veld) => {
+    $(`#wb-${veld}`).addEventListener('change', (e) => {
+      offerte[veld] = e.target.value;
+      /* Staat deze offerte al in de lijst, werk hem dan meteen bij: anders
+         zie je je eigen datum niet terug in de agenda. */
+      if (staat.offertes.some((o) => o.nummer === offerte.nummer)) {
+        bewaarOfferte();
+        opslaan();
+      }
+      tekenAfspraak();
+      tekenOpgeslagen();
+    });
+  });
+
+  /** De regel onder de datum: wanneer moet er besteld zijn, en mag dat al. */
+  function tekenAfspraak() {
+    const vak = $('#wb-afspraak-uitleg');
+    const item = agendaItem(offerte, staat.instellingen);
+    if (!item) { vak.innerHTML = ''; return; }
+
+    const bewaard = staat.offertes.some((o) => o.nummer === offerte.nummer);
+    vak.innerHTML =
+      `<div class="wb-cijfers">` +
+      `<div><span>Inbouw</span><strong>${datumNl(item.datum)}</strong>` +
+      `<em>${item.hoeLang}</em></div>` +
+      `<div><span>Uiterlijk bestellen</span><strong>${datumNl(item.besteldag)}</strong>` +
+      `<em>${hoeLangNog(item.bestelDagenTot)}</em></div>` +
+      `</div>` +
+      (item.aanbetaald
+        ? ''
+        : `<p class="wb-uitleg">Bestel pas als de aanbetaling binnen is. Zet de status
+           van deze offerte op <strong>aanbetaald</strong> zodra het geld er is.</p>`) +
+      (bewaard
+        ? ''
+        : `<p class="wb-waarschuwing">Deze offerte staat nog niet in je Agenda.
+           Tik onderaan op <strong>Offerte bewaren</strong>.</p>`);
+  }
+
+  /** De offerte in de lijst, of de offerte die nu open staat. */
+  const offerteVan = (nummer) =>
+    staat.offertes.find((o) => o.nummer === nummer) ||
+    (offerte.nummer === nummer ? offerte : null);
+
+  /**
+   * Iets wijzigen aan een bewaarde offerte — op BEIDE plekken.
+   *
+   * Een offerte staat op twee plekken zolang hij openstaat: in de lijst en in
+   * het formulier. Werk je er maar één bij, dan overschrijft de volgende
+   * bewaaractie hem met de oude waarde. Zo raakte de status "aanbetaald"
+   * kwijt zodra je daarna de inbouwdatum verzette.
+   */
+  function werkBij(nummer, veranderingen) {
+    const bewaard = staat.offertes.find((o) => o.nummer === nummer);
+    if (bewaard) Object.assign(bewaard, veranderingen);
+    if (offerte.nummer === nummer) Object.assign(offerte, veranderingen);
+    opslaan();
+  }
+
+  const LABELS = {
+    wacht: 'wacht op aanbetaling',
+    nu: 'nu bestellen',
+    straks: 'nog even tijd',
+    'te-laat': 'te laat — geen aanbetaling',
+    gedaan: 'geregeld',
+  };
+
+  function tekenAgenda() {
+    const items = agenda(staat.offertes, staat.instellingen);
+    const komend = items.filter((i) => i.dagen >= 0);
+    $('#wb-agenda-leeg').hidden = items.length > 0;
+
+    /* Bovenaan alleen wat vandaag aandacht vraagt. Staat er niets, dan staat
+       er ook niets — een leeg vak met "niets te doen" is ruis. */
+    const dringend = komend.filter((i) => i.bestellen === 'nu' || i.bestellen === 'te-laat');
+    const bel = $('#wb-agenda-bel');
+    bel.hidden = dringend.length === 0;
+    bel.textContent = dringend.length || '';
+
+    $('#wb-agenda-nu').innerHTML = dringend.length
+      ? `<div class="wb-kaart wb-dringend"><span class="eyebrow">Nu doen</span>` +
+        dringend.map((i) =>
+          `<p>${i.bestellen === 'nu'
+            ? `<strong>Bestellen voor ${ontsnap(i.wie)}</strong> — inbouw ${datumNl(i.datum)}, ${i.hoeLang}.`
+            : `<strong>${ontsnap(i.wie)}</strong>: de besteldag is ${hoeLangNog(i.bestelDagenTot)}
+               en de aanbetaling is nog niet binnen. Bel of app de klant.`}</p>`).join('') +
+        `</div>`
+      : '';
+
+    const vak = $('#wb-agenda-lijst');
+    vak.innerHTML = '';
+    /* Wat geweest is onderaan en ingeklapt: je kijkt vooruit, niet terug. */
+    for (const item of [...komend, ...items.filter((i) => i.dagen < 0).reverse()]) {
+      vak.appendChild(agendaKaart(item));
+    }
+  }
+
+  /** Eén klus in de agenda, met de twee lijstjes eronder. */
+  function agendaKaart(item) {
+    const bron = offerteVan(item.nummer);
+    const v = voorbereidingMetWaarom(bron || {});
+    const afgevinkt = new Set(bron?.afgevinkt || []);
+
+    const kaart = document.createElement('div');
+    kaart.className = `wb-kaart wb-klus${item.dagen < 0 ? ' wb-geweest' : ''}`;
+    kaart.innerHTML = `
+      <div class="wb-regel-kop">
+        <span><strong>${datumNl(item.datum)} · ${ontsnap(item.tijd)}</strong>
+          <small>${ontsnap(item.wie)} — ${ontsnap(item.auto || 'auto onbekend')}</small>
+        </span>
+        <em class="wb-wanneer">${item.hoeLang}</em>
+      </div>
+      <div class="wb-bestel wb-${item.bestellen}">
+        <span>Uiterlijk bestellen</span>
+        <strong>${datumNl(item.besteldag)}</strong>
+        <em>${LABELS[item.bestellen]}</em>
+      </div>
+      <div class="wb-regel-rij">
+        <button type="button" class="btn wb-ics">Zet in je agenda</button>
+        <button type="button" class="wb-link wb-open">Offerte openen</button>
+      </div>
+      <label class="wb-vink wb-besteld">
+        <input type="checkbox"${bron?.besteld ? ' checked' : ''} />
+        <span>De onderdelen zijn besteld
+          <em>Daarna houdt deze klus op je eraan te herinneren.</em>
+        </span>
+      </label>`;
+
+    for (const [wanneer, titel] of [['week', 'Een week van tevoren'], ['dag', 'De dag ervoor']]) {
+      const blok = document.createElement('div');
+      blok.className = 'wb-voorbereiding';
+      blok.innerHTML = `<span class="eyebrow">${titel}</span>`;
+      for (const stap of v[wanneer]) {
+        const regel = document.createElement('label');
+        regel.className = 'wb-vink';
+        regel.innerHTML =
+          `<input type="checkbox"${afgevinkt.has(stap.tekst) ? ' checked' : ''} />` +
+          `<span>${ontsnap(stap.tekst)}` +
+          (stap.waarom ? `<em>${ontsnap(stap.waarom)}</em>` : '') +
+          `</span>`;
+        regel.querySelector('input').addEventListener('change', (e) => {
+          const lijst = new Set(offerteVan(item.nummer)?.afgevinkt || []);
+          if (e.target.checked) lijst.add(stap.tekst);
+          else lijst.delete(stap.tekst);
+          werkBij(item.nummer, { afgevinkt: [...lijst] });
+        });
+        blok.appendChild(regel);
+      }
+      kaart.appendChild(blok);
+    }
+
+    kaart.querySelector('.wb-besteld input').addEventListener('change', (e) => {
+      werkBij(item.nummer, { besteld: e.target.checked });
+      tekenOpgeslagen();
+    });
+
+    kaart.querySelector('.wb-ics').addEventListener('click', () => {
+      const ics = icsVoorKlus(item, { voorbereiding: voorbereiding(bron || {}) });
+      const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+      const adres = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = adres;
+      link.download = icsBestandsnaam(item);
+      link.click();
+      URL.revokeObjectURL(adres);
+    });
+
+    kaart.querySelector('.wb-open').addEventListener('click', () => {
+      const eerder = staat.offertes.find((o) => o.nummer === item.nummer);
+      if (!eerder) return;
+      offerte = { ...eerder, datum: new Date(eerder.datum) };
+      vulFormulierUitOfferte();
+      tekenAlles();
+      $$('.wb-tab').forEach((k) => k.classList.toggle('aan', k.dataset.tab === 'offerte'));
+      $$('.wb-paneel').forEach((p) => { p.hidden = p.dataset.paneel !== 'offerte'; });
+      window.scrollTo({ top: 0 });
+    });
+
+    return kaart;
+  }
 
   /* ================= AFSPRAKEN OP PAPIER ================= */
   const AFSPRAKEN = {
@@ -996,6 +1230,7 @@ import { APP } from '../data/app.js';
   $('#wb-aanbetaling-pct').addEventListener('input', tekenAanbetaling);
 
   function tekenAlles() {
+    tekenAfspraak();
     tekenKorting();
     tekenRegels();
     tekenOnderdeelknoppen();
@@ -1355,6 +1590,7 @@ import { APP } from '../data/app.js';
     ['#wb-i-btw', 'btwPct', (v) => Number(v.replace(',', '.')) || 0, (w) => w],
     ['#wb-i-geldig', 'geldigDagen', (v) => Number(v) || 0, (w) => w],
     ['#wb-i-volgnummer', 'volgnummer', (v) => Number(v) || 1, (w) => w],
+    ['#wb-i-besteldagen', 'bestelDagen', (v) => Number(v) || 14, (w) => w],
     ['#wb-i-iban', 'iban', (v) => v.trim(), (w) => w || ''],
     ['#wb-i-tenaamstelling', 'tenaamstelling', (v) => v.trim(), (w) => w || ''],
     ['#wb-i-aanbetaling', 'aanbetalingPct', (v) => Number(v.replace(',', '.')) || 0, (w) => w],
@@ -1531,7 +1767,7 @@ import { APP } from '../data/app.js';
     if (!offerte.status) offerte.status = 'concept';
     bewaarOfferte();
     opslaan();
-    tekenBewaard();
+    tekenOpgeslagen();
   });
 
   $('#wb-zoek').addEventListener('input', tekenBewaard);
@@ -1541,14 +1777,28 @@ import { APP } from '../data/app.js';
     voorkeuren = new Set();
     $$('#wb-voorkeuren .wb-chip').forEach((c) => c.classList.remove('aan'));
     ['#wb-kenteken', '#wb-naam', '#wb-adres', '#wb-telefoon', '#wb-email', '#wb-bedrijf', '#wb-opmerking',
-     '#wb-merk', '#wb-model', '#wb-bouwjaar', '#wb-aanbetaling-pct', '#wb-korting']
+     '#wb-merk', '#wb-model', '#wb-bouwjaar', '#wb-aanbetaling-pct', '#wb-korting',
+     '#wb-inbouwdatum']
       .forEach((kies) => { $(kies).value = ''; });
+    $('#wb-inbouwtijd').value = '09:00';
     toonAutoVelden(false);
     melden('');
     tekenAfspraken();
     tekenAlles();
     window.scrollTo({ top: 0 });
   });
+
+  /**
+   * Alles wat uit je bewaarde offertes wordt getekend.
+   *
+   * De lijst onderaan de offerte en de agenda lezen dezelfde gegevens. Werk je
+   * er maar één bij, dan staat de agenda een tik achter en denk je dat er geen
+   * klus in staat.
+   */
+  function tekenOpgeslagen() {
+    tekenBewaard();
+    tekenAgenda();
+  }
 
   function tekenBewaard() {
     const vak = $('#wb-bewaard');
@@ -1600,9 +1850,8 @@ import { APP } from '../data/app.js';
          open te klappen met olie aan je handen. */
       rij.querySelector('.wb-status').addEventListener('click', () => {
         const nu = STATUSSEN.indexOf(status);
-        eerder.status = STATUSSEN[(nu + 1) % STATUSSEN.length];
-        opslaan();
-        tekenBewaard();
+        werkBij(eerder.nummer, { status: STATUSSEN[(nu + 1) % STATUSSEN.length] });
+        tekenOpgeslagen();
       });
       rij.querySelector('.wb-open-offerte').addEventListener('click', () => {
         offerte = { ...eerder, datum: new Date(eerder.datum) };
@@ -1622,6 +1871,8 @@ import { APP } from '../data/app.js';
     $('#wb-email').value = offerte.klant?.email || '';
     $('#wb-bedrijf').value = offerte.klant?.bedrijf || '';
     $('#wb-opmerking').value = offerte.opmerking || '';
+    $('#wb-inbouwdatum').value = offerte.inbouwdatum || '';
+    $('#wb-inbouwtijd').value = offerte.inbouwtijd || '09:00';
     /* De korting terugzetten in de maat die de klant ziet. */
     $('#wb-korting').value = offerte.kortingExclCent
       ? (offerte.zakelijk
@@ -1789,7 +2040,7 @@ import { APP } from '../data/app.js';
     opslaan();
     tekenInstellingen();
     tekenAanbetaling();
-    tekenBewaard();
+    tekenOpgeslagen();
   }
 
   /* ================= DE WERKBON ================= */
@@ -1831,7 +2082,7 @@ import { APP } from '../data/app.js';
     bewaarOfferte();
     staat.instellingen.volgnummer = (Number(staat.instellingen.volgnummer) || 1) + 1;
     opslaan();
-    tekenBewaard();
+    tekenOpgeslagen();
     tekenInstellingen();
   }
 
@@ -1842,7 +2093,7 @@ import { APP } from '../data/app.js';
   tekenDossiers();
   vulDossierFormulier(leegDossier());
   tekenInstellingen();
-  tekenBewaard();
+  tekenOpgeslagen();
   tekenAfspraken();
   tekenAlles();
 </script>
@@ -1948,7 +2199,7 @@ import { APP } from '../data/app.js';
   /* :not(.plate) is geen detail: zonder dat wint deze regel van de
      kentekenplaat uit global.css en verdwijnt de oranje band. */
   input[type="text"]:not(.plate), input[type="tel"], input[type="email"],
-  input[type="search"], select, textarea {
+  input[type="search"], input[type="date"], input[type="time"], select, textarea {
     width: 100%;
     min-height: 46px;
     padding: 11px 12px;
@@ -2028,6 +2279,51 @@ import { APP } from '../data/app.js';
     font-size: .78rem;
     color: var(--text-dim);
   }
+
+  /* ---- agenda ----
+     Geen nieuwe kleuren: wat aandacht vraagt krijgt het oranje van het merk,
+     de rest blijft grijs. Zo springt er per scherm maar één ding uit. */
+  .wb-bel {
+    display: inline-block;
+    min-width: 17px;
+    margin-left: 5px;
+    padding: 1px 4px;
+    border-radius: 9px;
+    background: var(--accent);
+    color: var(--bg);
+    font-size: .62rem;
+    line-height: 15px;
+    text-align: center;
+  }
+  .wb-dringend { border-color: var(--accent); }
+  .wb-dringend p { margin: 8px 0 0; font-size: .88rem; line-height: 1.4; }
+
+  .wb-klus .wb-regel-kop { align-items: flex-start; }
+  .wb-wanneer { font-style: normal; font-size: .8rem; color: var(--text-dim); white-space: nowrap; }
+  /* Wat geweest is mag op de achtergrond verdwijnen, maar niet verdwijnen. */
+  .wb-geweest { opacity: .55; }
+
+  .wb-bestel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+    margin-top: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    font-size: .8rem;
+    color: var(--text-dim);
+  }
+  .wb-bestel strong { font-family: 'Oswald', sans-serif; font-size: 1rem; color: var(--text); }
+  .wb-bestel em { font-style: normal; }
+  /* Alleen deze twee vragen iets van je vandaag. */
+  .wb-bestel.wb-nu, .wb-bestel.wb-te-laat { border-color: var(--accent); }
+  .wb-bestel.wb-nu em, .wb-bestel.wb-te-laat em { color: var(--accent-text); }
+  .wb-bestel.wb-gedaan strong { color: var(--text-dim); }
+
+  .wb-voorbereiding { margin-top: 16px; padding-top: 4px; border-top: 1px solid var(--line); }
+  .wb-voorbereiding .wb-vink { padding: 10px 0; }
 
   .wb-zoeken { margin-top: 16px; }
 

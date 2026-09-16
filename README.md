@@ -300,6 +300,52 @@ termijnen op één stuk papier leest als een addertje. Zet je er ooit een ander
 aantal dagen neer, dan schuiven de offerte, de factuur en de FAQ vanzelf mee —
 de app leest het getal daar vandaan en typt het nergens zelf.
 
+### De agenda
+
+Zet bij een offerte een **inbouwdatum**, dan komt de klus in het tabblad
+**Agenda** te staan. Je ziet per klus drie dingen:
+
+| | |
+|---|---|
+| **Wanneer** | de dag en het tijdstip, met "over 12 dagen" erachter |
+| **Uiterlijk bestellen** | de laatste dag dat je de onderdelen nog kunt bestellen |
+| **De voorbereiding** | twee lijstjes om af te vinken: een week vooraf en de dag ervoor |
+
+De besteldag is de inbouwdatum min het aantal dagen dat je bij **Instellingen**
+hebt staan (standaard veertien). Daar zit de levertijd in én de speling voor
+als er iets verkeerd geleverd is en opnieuw moet.
+
+**Er staat pas "bestellen" als de aanbetaling binnen is.** Dat is met opzet:
+bestel je op eigen kosten voor een klant die niet aanbetaalt, dan lig jij met
+die onderdelen. Zet de status van de offerte op *aanbetaald* zodra het geld
+er is, dan gaat de Agenda pas duwen. Is de besteldag gepasseerd en is er nog
+niet betaald, dan zegt hij dat ook — dan is het tijd om te bellen.
+
+Heb je besteld, tik dan **De onderdelen zijn besteld** aan. Daarna houdt die
+klus op je eraan te herinneren.
+
+### De meldingen
+
+**De app kan je geen melding sturen als hij dichtstaat.** Daar is een server
+voor nodig en die is er niet: dit is een website zonder achterkant. Wat wél
+werkt, en beter werkt, is de agenda die al op je telefoon staat.
+
+Tik bij een klus op **Zet in je agenda**. Je krijgt een bestand dat je één
+keer opent; daarna staat het in je eigen agenda-app. Daar zitten twee
+afspraken in:
+
+1. **De inbouw zelf**, met een wekker **een week** en **een dag** van tevoren.
+   In de afspraak staat het lijstje van wat je die dag klaar moet hebben.
+2. **De dag dat je uiterlijk moet bestellen**, met een wekker een dag van
+   tevoren.
+
+Die wekkers gaan af ook als Headroom dichtstaat en ook zonder internet — dat
+is precies waarom het zo werkt en niet met een melding uit de app zelf.
+
+De tijden staan er zonder tijdzone in. Dat heet een *zwevende tijd*: negen uur
+is negen uur op de klok waar je bent. Voor een werkplaats die altijd in
+Nederland staat is dat precies goed, en het scheelt gedoe met de zomertijd.
+
 ### Je offertes terugvinden
 
 Onderaan staat een zoekveld: typ een naam, een kenteken of een offertenummer.

@@ -28,6 +28,11 @@ import {
   kernpunten, volledigeVoorwaarden, annuleertermijn, zonderOpmaak,
 } from '../src/lib/headroom/voorwaarden.js';
 import {
+  agenda, agendaItem, bestelUiterlijk, dagenTussen, opMiddernacht, hoeLangNog,
+  icsVoorKlus, icsBestandsnaam, icsTekst, vouwOp, ontvouw,
+} from '../src/lib/headroom/agenda.js';
+import { voorbereiding, voorbereidingMetWaarom } from '../src/lib/headroom/voorbereiding.js';
+import {
   DOSSIER_VELDEN, autoSleutel, zoekDossier, dossierStand, leegDossier, dossierNaam,
 } from '../src/lib/headroom/autos.js';
 import { MODELS } from '../src/data/models.js';
@@ -1235,5 +1240,215 @@ describe('de voorwaarden op de pdf', () => {
     assert.match(pdf, /14 dagen bedenktijd/);
     assert.match(pdf, /eigendom totdat/i);
     assert.match(pdf, /Artikel 1/);
+  });
+});
+
+/**
+ * DE AGENDA.
+ *
+ * Een inbouw gaat niet mis op de dag zelf, maar twee weken eerder toen de
+ * onderdelen nog niet besteld waren. Daarom moeten deze datums kloppen — en
+ * moet er nooit "bestellen" staan bij een klant die nog niet aanbetaald heeft.
+ */
+describe('de agenda', () => {
+  const inst = { bestelDagen: 14 };
+  const vandaag = new Date(2026, 8, 16);   // 16 september 2026
+  const klus = (extra = {}) => ({
+    nummer: '2026-014',
+    klant: { naam: 'Mark de Vries', telefoon: '0612345678' },
+    auto: { merk: 'Volkswagen', model: 'Golf VII', kenteken: 'XX99XX' },
+    regels: [{ omschrijving: 'CarPlay', soort: 'carplay', aantal: 1, vastExclCent: 57438 }],
+    inbouwdatum: '2026-10-07',
+    inbouwtijd: '09:00',
+    status: 'verstuurd',
+    ...extra,
+  });
+
+  test('een datum schuift niet op door de tijdzone', () => {
+    // new Date('2026-10-07') is middernacht in Greenwich. Links van ons is dat
+    // 6 oktober, en dan staat de klant een dag te vroeg voor de deur.
+    const d = opMiddernacht('2026-10-07');
+    assert.equal(d.getDate(), 7);
+    assert.equal(d.getMonth(), 9);
+    assert.equal(d.getFullYear(), 2026);
+  });
+
+  test('dagen tellen gaat over de zomertijd heen goed', () => {
+    // In de nacht van 25 oktober 2026 gaat de klok een uur terug. Reken je in
+    // uren, dan kom je er een dag naast te zitten.
+    assert.equal(dagenTussen('2026-10-20', '2026-11-03'), 14);
+    assert.equal(dagenTussen('2026-03-25', '2026-04-08'), 14);
+  });
+
+  test('de besteldag ligt het ingestelde aantal dagen ervoor', () => {
+    assert.equal(datumNl(bestelUiterlijk('2026-10-07', 14)), '23-09-2026');
+    assert.equal(datumNl(bestelUiterlijk('2026-10-07', 21)), '16-09-2026');
+    // Ook over een maandgrens heen.
+    assert.equal(datumNl(bestelUiterlijk('2026-01-05', 14)), '22-12-2025');
+  });
+
+  test('hoe lang nog staat er in gewone taal', () => {
+    assert.equal(hoeLangNog(0), 'vandaag');
+    assert.equal(hoeLangNog(1), 'morgen');
+    assert.equal(hoeLangNog(-1), 'gisteren');
+    assert.equal(hoeLangNog(9), 'over 9 dagen');
+    assert.equal(hoeLangNog(-4), '4 dagen geleden');
+  });
+
+  test('zonder aanbetaling zegt de app: nog niet bestellen', () => {
+    // De belangrijkste regel van dit hele scherm. Bestel je op eigen kosten
+    // voor een klant die niet aanbetaalt, dan lig jij met de onderdelen.
+    const i = agendaItem(klus({ status: 'verstuurd' }), inst, vandaag);
+    assert.equal(i.aanbetaald, false);
+    assert.equal(i.bestellen, 'wacht');
+  });
+
+  test('met aanbetaling en de besteldag bereikt: nu bestellen', () => {
+    const i = agendaItem(klus({ status: 'aanbetaald' }), inst, new Date(2026, 8, 23));
+    assert.equal(i.bestellen, 'nu');
+    assert.equal(i.bestelDagenTot, 0);
+  });
+
+  test('met aanbetaling en nog tijd zeurt hij niet', () => {
+    const i = agendaItem(klus({ status: 'aanbetaald' }), inst, vandaag);
+    assert.equal(i.bestellen, 'straks');
+  });
+
+  test('besteldag voorbij zonder aanbetaling is te laat', () => {
+    const i = agendaItem(klus({ status: 'verstuurd' }), inst, new Date(2026, 8, 30));
+    assert.equal(i.bestellen, 'te-laat');
+  });
+
+  test('is er besteld, dan houdt hij erover op', () => {
+    const i = agendaItem(klus({ status: 'aanbetaald', besteld: true }), inst, new Date(2026, 8, 30));
+    assert.equal(i.bestellen, 'gedaan');
+  });
+
+  test('een klus zonder datum staat niet in de agenda', () => {
+    assert.equal(agendaItem(klus({ inbouwdatum: '' }), inst, vandaag), null);
+    assert.equal(agenda([klus({ inbouwdatum: '' }), klus()], inst, vandaag).length, 1);
+  });
+
+  test('de eerstvolgende klus staat bovenaan', () => {
+    const lijst = agenda([
+      klus({ nummer: 'a', inbouwdatum: '2026-11-02' }),
+      klus({ nummer: 'b', inbouwdatum: '2026-09-20' }),
+      klus({ nummer: 'c', inbouwdatum: '2026-10-07' }),
+    ], inst, vandaag);
+    assert.deepEqual(lijst.map((i) => i.nummer), ['b', 'c', 'a']);
+  });
+});
+
+/**
+ * HET AGENDABESTAND.
+ *
+ * Dit is wat de melding daadwerkelijk geeft: de app kan dat zelf niet, de
+ * agenda op de telefoon wel. Gaat hier iets mis, dan piept er niets en staat
+ * Justus op een dinsdag zonder onderdelen.
+ */
+describe('het agendabestand', () => {
+  const item = agendaItem({
+    nummer: '2026-014',
+    klant: { naam: 'Mark, de Vries; en zoon', telefoon: '0612345678' },
+    auto: { merk: 'Volkswagen', model: 'Golf VII', kenteken: 'XX99XX' },
+    inbouwdatum: '2026-10-07',
+    inbouwtijd: '09:00',
+    status: 'aanbetaald',
+  }, { bestelDagen: 14 }, new Date(2026, 8, 16));
+  const ics = () => icsVoorKlus(item, { voorbereiding: voorbereiding({ regels: [] }) });
+  /* Een lange regel staat in stukken in het bestand. Een agenda plakt hem bij
+     het inlezen weer aan elkaar; om te controleren wat er staat doen wij dat
+     hier ook. */
+  const gelezen = (t = ics()) => ontvouw(t);
+
+  test('het is een geldig agendabestand', () => {
+    const t = ics();
+    assert.match(t, /^BEGIN:VCALENDAR\r\n/);
+    assert.match(t, /END:VCALENDAR\r\n$/);
+    assert.match(t, /VERSION:2\.0/);
+    // Regeleindes met een wagenretour: zonder dat weigeren sommige agenda's hem.
+    assert.ok(!/[^\r]\n/.test(t), 'er staat een regeleinde zonder wagenretour in');
+  });
+
+  test('er staan twee afspraken in: de inbouw en het bestellen', () => {
+    const t = ics();
+    assert.equal(t.match(/BEGIN:VEVENT/g).length, 2);
+    assert.match(t, /DTSTART:20261007T090000/, 'de inbouwdag klopt niet');
+    assert.match(t, /DTSTART:20260923T080000/, 'de besteldag klopt niet');
+  });
+
+  test('de wekkers staan een week en een dag van tevoren', () => {
+    const t = ics();
+    assert.match(t, /TRIGGER:-P7D/, 'de wekker van een week vooraf ontbreekt');
+    assert.match(t, /TRIGGER:-P1D/, 'de wekker van een dag vooraf ontbreekt');
+    assert.equal(t.match(/BEGIN:VALARM/g).length, 3);
+  });
+
+  test('een komma in een klantnaam breekt het bestand niet', () => {
+    // Zonder ontsnappen houdt de agenda de helft van de regel over.
+    assert.match(gelezen(), /Mark\\, de Vries\\; en zoon/);
+    assert.equal(icsTekst('a,b;c\\d\ne'), 'a\\,b\\;c\\\\d\\ne');
+  });
+
+  test('geen regel langer dan 75 tekens', () => {
+    // Dat is de grens die de norm stelt; erboven weigeren agenda's het bestand.
+    for (const regel of ics().split('\r\n')) {
+      assert.ok(regel.length <= 75, `te lang (${regel.length}): ${regel.slice(0, 40)}...`);
+    }
+    // En wat opgevouwen is moet met een spatie beginnen, anders is het een
+    // nieuwe regel in plaats van een vervolg.
+    assert.deepEqual(vouwOp('x'.repeat(150)).slice(1).map((r) => r[0]), [' ', ' ']);
+    // En na het weer aan elkaar plakken moet er hetzelfde staan als ervoor.
+    assert.equal(ontvouw(vouwOp('x'.repeat(150)).join('\r\n')), 'x'.repeat(150));
+  });
+
+  test('de voorbereiding gaat mee in de afspraak', () => {
+    const t = gelezen(icsVoorKlus(item, { voorbereiding: voorbereiding({ regels: [{ soort: 'dsp' }] }) }));
+    assert.match(t, /Werkbon uitgedraaid/);
+    assert.match(t, /tuningsoftware/, 'de dsp-stap ontbreekt');
+  });
+
+  test('de bestandsnaam zegt om welke auto het gaat', () => {
+    assert.equal(icsBestandsnaam(item), 'inbouw-2026-014-XX99XX.ics');
+  });
+});
+
+/**
+ * DE VOORBEREIDING.
+ *
+ * Twee lijstjes: een week vooraf en de dag ervoor. Ze moeten meebewegen met
+ * wat er op de offerte staat — een dsp-stap bij een klus zonder dsp is ruis,
+ * en ruis is hoe je stopt met lezen.
+ */
+describe('de voorbereiding', () => {
+  test('altijd-stappen staan er bij elke klus op', () => {
+    const v = voorbereiding({ regels: [] });
+    assert.ok(v.week.some((t) => /Onderdelen besteld/.test(t)));
+    assert.ok(v.dag.some((t) => /uitgepakt en gecontroleerd/.test(t)));
+    assert.ok(v.dag.some((t) => /Werkbon/.test(t)));
+  });
+
+  test('stappen die er niet bij horen blijven weg', () => {
+    const zonder = voorbereiding({ regels: [{ soort: 'carplay' }] });
+    assert.ok(!zonder.dag.some((t) => /tuningsoftware/.test(t)), 'dsp-stap bij een klus zonder dsp');
+    const met = voorbereiding({ regels: [{ soort: 'dsp' }] });
+    assert.ok(met.dag.some((t) => /tuningsoftware/.test(t)));
+  });
+
+  test('bij carplay wordt naar het fabrieksscherm gevraagd', () => {
+    const v = voorbereiding({ regels: [{ soort: 'carplay' }] });
+    assert.ok(v.week.some((t) => /fabrieksscherm/i.test(t)));
+  });
+
+  test('het blijven lijstjes die je nog leest', () => {
+    const v = voorbereiding({ regels: [{ soort: 'carplay' }, { soort: 'dsp' }, { soort: 'demping' }] });
+    assert.ok(v.week.length <= 9, `te lang: ${v.week.length}`);
+    assert.ok(v.dag.length <= 10, `te lang: ${v.dag.length}`);
+  });
+
+  test('op het scherm staat er uitleg bij waar dat helpt', () => {
+    const v = voorbereidingMetWaarom({ regels: [] });
+    assert.ok(v.dag.every((s) => typeof s.tekst === 'string'));
+    assert.ok(v.dag.some((s) => s.waarom), 'nergens uitleg');
   });
 });

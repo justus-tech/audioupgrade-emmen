@@ -883,6 +883,99 @@ describe('Headroom', alsGebouwd, () => {
     }
   });
 
+  test('een klus met een datum komt in de agenda te staan', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    const overDagen = (n) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
+
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+    await pagina.fill('#wb-naam', 'Mark de Vries');
+    await pagina.fill('#wb-inbouwdatum', overDagen(30));
+    await pagina.click('#wb-bewaar');
+    await pagina.click('[data-tab="agenda"]');
+
+    // Zolang er niet is aanbetaald mag er nergens "bestellen" staan. Bestel je
+    // op eigen kosten voor een klant die niet aanbetaalt, dan lig jij ermee.
+    assert.match(await pagina.textContent('.wb-bestel'), /wacht op aanbetaling/);
+    assert.equal(await pagina.isVisible('#wb-agenda-bel'), false, 'hij belt zonder reden');
+
+    // Status doortikken naar aanbetaald: concept » verstuurd » aanbetaald.
+    await pagina.click('[data-tab="offerte"]');
+    await pagina.click('#wb-bewaard .wb-status >> nth=0');
+    await pagina.click('#wb-bewaard .wb-status >> nth=0');
+    await pagina.click('[data-tab="agenda"]');
+
+    // Het geld is binnen, maar de besteldag is nog ver weg: dan zeurt hij niet.
+    assert.match(await pagina.textContent('.wb-bestel'), /nog even tijd/);
+    assert.equal(await pagina.isVisible('#wb-agenda-bel'), false);
+
+    // De klus naar voren halen: nu is de besteldag wél gepasseerd.
+    await pagina.click('[data-tab="offerte"]');
+    await pagina.fill('#wb-inbouwdatum', overDagen(10));
+    await pagina.click('[data-tab="agenda"]');
+    assert.match(await pagina.textContent('.wb-bestel'), /nu bestellen/);
+    assert.equal(await pagina.textContent('#wb-agenda-bel'), '1');
+    assert.match(await pagina.textContent('#wb-agenda-nu'), /Bestellen voor Mark de Vries/);
+
+    // De twee voorbereidingslijstjes staan eronder.
+    assert.equal(await pagina.locator('.wb-voorbereiding').count(), 2);
+    assert.ok(await pagina.locator('.wb-voorbereiding .wb-vink').count() >= 8);
+
+    // Afvinken dat er besteld is haalt hem van de lijst met dringende dingen.
+    await pagina.check('.wb-besteld input');
+    assert.equal(await pagina.isVisible('#wb-agenda-bel'), false);
+    assert.match(await pagina.textContent('.wb-bestel'), /geregeld/);
+
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een afgevinkte voorbereidingsstap blijft staan', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+    await pagina.fill('#wb-naam', 'Mark de Vries');
+    await pagina.fill('#wb-inbouwdatum', new Date(Date.now() + 20 * 86400000).toISOString().slice(0, 10));
+    await pagina.click('#wb-bewaar');
+    await pagina.click('[data-tab="agenda"]');
+    await pagina.locator('.wb-voorbereiding .wb-vink input').first().check();
+
+    // Herladen: in de werkplaats gaat de telefoon uit en weer aan.
+    await pagina.reload();
+    await pagina.click('[data-tab="agenda"]');
+    assert.equal(
+      await pagina.locator('.wb-voorbereiding .wb-vink input').first().isChecked(),
+      true,
+      'het vinkje is weg na het herladen'
+    );
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('de agenda levert een bestand dat je telefoon snapt', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+    await pagina.fill('#wb-naam', 'Mark de Vries');
+    await pagina.fill('#wb-kenteken', 'XX99XX');
+    await pagina.fill('#wb-inbouwdatum', new Date(Date.now() + 20 * 86400000).toISOString().slice(0, 10));
+    await pagina.click('#wb-bewaar');
+    await pagina.click('[data-tab="agenda"]');
+
+    const [download] = await Promise.all([
+      pagina.waitForEvent('download'),
+      pagina.click('.wb-ics'),
+    ]);
+    assert.match(download.suggestedFilename(), /^inbouw-.*\.ics$/);
+    const tekst = readFileSync(await download.path(), 'utf8');
+    assert.match(tekst, /BEGIN:VCALENDAR/);
+    // De twee wekkers waar het Justus om te doen is.
+    assert.match(tekst, /TRIGGER:-P7D/);
+    assert.match(tekst, /TRIGGER:-P1D/);
+    // En de tweede afspraak: de dag dat er besteld moet zijn.
+    assert.equal(tekst.match(/BEGIN:VEVENT/g).length, 2);
+
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
   test('de afspraken staan standaard goed en onthouden zich', async () => {
     const { pagina, fouten } = await openWerkbak();
 

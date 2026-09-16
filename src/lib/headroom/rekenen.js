@@ -107,6 +107,17 @@ export const STANDAARD_INSTELLINGEN = {
   aanbetalingPct: 30,
   /** Binnen hoeveel dagen de factuur betaald moet zijn. */
   betaaltermijnDagen: 14,
+
+  /* ---- voor de agenda ---- */
+  /**
+   * Hoeveel dagen voor de inbouwdag de onderdelen besteld moeten zijn.
+   *
+   * Hier zit de levertijd van de leverancier in én de speling voor als er
+   * iets verkeerd is geleverd en opnieuw moet. Twee weken is een veilig
+   * begin; loopt een leverancier structureel sneller of trager, dan zet
+   * Justus het zelf bij Instellingen om.
+   */
+  bestelDagen: 14,
   /**
    * Rekeningnummer en tenaamstelling.
    *
