@@ -1,5 +1,5 @@
 /**
- * DECK — de offerte-app.
+ * HEADROOM — de offerte-app.
  *
  * Twee dingen moeten hier altijd kloppen, en allebei om geld.
  *
@@ -18,18 +18,18 @@ import {
   euro, naarCent, regelPrijs, totalen, marge, offertenummer, datumNl, geldigTot,
   stuklijst, soortenIn, aanbetaling, eindafrekening, kortingNaarExcl, factuurnummer,
   STANDAARD_INSTELLINGEN, SOORTEN, BTW_PCT,
-} from '../src/lib/deck/rekenen.js';
-import { nieuwPdf, naarPdfTekens, breedteVan, breekAf } from '../src/lib/deck/pdf.js';
-import { offertePdf, pdfBestandsnaam } from '../src/lib/deck/offerte-pdf.js';
-import { werkbonPdf, werkbonBestandsnaam } from '../src/lib/deck/werkbon.js';
-import { factuurPdf, factuurBestandsnaam } from '../src/lib/deck/factuur.js';
-import { blokkenVoor, stappenlijst, WERKBLOKKEN } from '../src/lib/deck/stappen.js';
+} from '../src/lib/headroom/rekenen.js';
+import { nieuwPdf, naarPdfTekens, breedteVan, breekAf } from '../src/lib/headroom/pdf.js';
+import { offertePdf, pdfBestandsnaam } from '../src/lib/headroom/offerte-pdf.js';
+import { werkbonPdf, werkbonBestandsnaam } from '../src/lib/headroom/werkbon.js';
+import { factuurPdf, factuurBestandsnaam } from '../src/lib/headroom/factuur.js';
+import { blokkenVoor, stappenlijst, WERKBLOKKEN } from '../src/lib/headroom/stappen.js';
 import {
   kernpunten, volledigeVoorwaarden, annuleertermijn, zonderOpmaak,
-} from '../src/lib/deck/voorwaarden.js';
+} from '../src/lib/headroom/voorwaarden.js';
 import {
   DOSSIER_VELDEN, autoSleutel, zoekDossier, dossierStand, leegDossier, dossierNaam,
-} from '../src/lib/deck/autos.js';
+} from '../src/lib/headroom/autos.js';
 import { MODELS } from '../src/data/models.js';
 
 const INST = { ...STANDAARD_INSTELLINGEN, uurtariefCent: 7500, margePct: 60, btwPct: 21 };
@@ -360,21 +360,21 @@ const DIST = fileURLToPath(new URL('../dist/', import.meta.url));
 const erIsGebouwd = existsSync(DIST);
 const alsGebouwd = { skip: erIsGebouwd ? false : 'nog niet gebouwd — draai npm run build' };
 
-describe('Deck blijft buiten de zoekresultaten', alsGebouwd, () => {
-  const deckPagina = () => readFileSync(`${DIST}deck.html`, 'utf8');
+describe('Headroom blijft buiten de zoekresultaten', alsGebouwd, () => {
+  const headroomPagina = () => readFileSync(`${DIST}headroom.html`, 'utf8');
 
   test('de pagina is gebouwd', () => {
-    assert.ok(existsSync(`${DIST}deck.html`));
+    assert.ok(existsSync(`${DIST}headroom.html`));
   });
 
   test('hij zegt tegen Google dat hij niet opgenomen mag worden', () => {
-    assert.match(deckPagina(), /<meta name="robots" content="noindex, nofollow"/);
+    assert.match(headroomPagina(), /<meta name="robots" content="noindex, nofollow"/);
   });
 
   test('hij staat niet in de sitemap', () => {
     // De sitemap is de lijst die je zelf bij Google aanmeldt. Wat daar in
     // staat, wordt gevonden — en dit is geen pagina voor klanten.
-    assert.doesNotMatch(readFileSync(`${DIST}sitemap.xml`, 'utf8'), /deck/);
+    assert.doesNotMatch(readFileSync(`${DIST}sitemap.xml`, 'utf8'), /headroom/);
   });
 
   test('geen enkele pagina van de site linkt ernaartoe', () => {
@@ -383,7 +383,7 @@ describe('Deck blijft buiten de zoekresultaten', alsGebouwd, () => {
     for (const naam of paginas) {
       const bestand = `${DIST}${naam}.html`;
       if (!existsSync(bestand)) continue;
-      assert.doesNotMatch(readFileSync(bestand, 'utf8'), /href="[^"]*deck/, `${naam} linkt ernaartoe`);
+      assert.doesNotMatch(readFileSync(bestand, 'utf8'), /href="[^"]*headroom/, `${naam} linkt ernaartoe`);
     }
   });
 
@@ -394,7 +394,7 @@ describe('Deck blijft buiten de zoekresultaten', alsGebouwd, () => {
      * hier. Deze test let erop dat er nooit "even" een prijslijst in de
      * code wordt gezet.
      */
-    const html = deckPagina();
+    const html = headroomPagina();
     assert.doesNotMatch(html, /inkoopCent\s*:\s*[1-9]/, 'er staat een inkoopbedrag in de pagina');
   });
 });

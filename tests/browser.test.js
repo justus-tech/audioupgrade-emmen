@@ -719,10 +719,10 @@ describe('op een telefoon', alsGebouwd, () => {
  * bij af. Daarom loopt deze test de hele route af: kenteken, klant,
  * onderdelen, pdf.
  */
-describe('Deck', alsGebouwd, () => {
+describe('Headroom', alsGebouwd, () => {
   const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 
-  /** Deck opent met een nagebootste RDW, net als de rest hierboven. */
+  /** Headroom opent met een nagebootste RDW, net als de rest hierboven. */
   async function openWerkbak() {
     const pagina = await browser.newPage(telefoon);
     const fouten = [];
@@ -739,7 +739,7 @@ describe('Deck', alsGebouwd, () => {
         body: JSON.stringify(SAAB),
       })
     );
-    await pagina.goto(paginaUrl('deck'));
+    await pagina.goto(paginaUrl('headroom'));
     await pagina.evaluate(() => document.fonts.ready);
     return { pagina, fouten };
   }
@@ -777,7 +777,7 @@ describe('Deck', alsGebouwd, () => {
     await pagina.route(RDW_VOERTUIG, (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
     );
-    await pagina.goto(paginaUrl('deck'));
+    await pagina.goto(paginaUrl('headroom'));
     await pagina.fill('#wb-kenteken', '99ZZ99');
     await pagina.click('#wb-kenteken-form button[type=submit]');
     await pagina.waitForFunction(() =>
@@ -870,7 +870,7 @@ describe('Deck', alsGebouwd, () => {
   test('niets loopt over de zijkant heen, ook niet op 320 pixels', async () => {
     for (const breedte of [320, 390]) {
       const pagina = await browser.newPage({ ...telefoon, viewport: { width: breedte, height: 844 } });
-      await pagina.goto(paginaUrl('deck'));
+      await pagina.goto(paginaUrl('headroom'));
       await pagina.evaluate(() => document.fonts.ready);
       // Ook mét regels erop: dan staan de langste teksten pas op het scherm.
       await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
@@ -914,7 +914,7 @@ describe('Deck', alsGebouwd, () => {
 
   test('alles waar je op tikt is groot genoeg voor een duim', async () => {
     const pagina = await browser.newPage(telefoon);
-    await pagina.goto(paginaUrl('deck'));
+    await pagina.goto(paginaUrl('headroom'));
     await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
     const teKlein = await pagina.$$eval('button, input, select, textarea', (elementen) =>
       elementen
@@ -961,7 +961,7 @@ describe('de werkbon en het autodossier', alsGebouwd, () => {
     await pagina.route(RDW_VOERTUIG, (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(voertuig) })
     );
-    await pagina.goto(paginaUrl('deck'));
+    await pagina.goto(paginaUrl('headroom'));
     await pagina.evaluate(() => document.fonts.ready);
     return { pagina, fouten };
   }
@@ -1088,7 +1088,7 @@ describe('de werkbon en het autodossier', alsGebouwd, () => {
   test('het tabblad Auto\'s past ook op een smal scherm', async () => {
     for (const breedte of [320, 390]) {
       const pagina = await browser.newPage({ ...telefoon, viewport: { width: breedte, height: 844 } });
-      await pagina.goto(paginaUrl('deck'));
+      await pagina.goto(paginaUrl('headroom'));
       await pagina.evaluate(() => document.fonts.ready);
       for (const tab of ['autos', 'catalogus']) {
         await pagina.click(`[data-tab="${tab}"]`);
@@ -1106,7 +1106,7 @@ describe('de werkbon en het autodossier', alsGebouwd, () => {
 /**
  * EEN PRIJSLIJST INLEZEN.
  *
- * Zo komen de leveranciersprijzen in Deck: als bestand dat Justus zelf
+ * Zo komen de leveranciersprijzen in Headroom: als bestand dat Justus zelf
  * inleest. Twee dingen mogen daarbij nooit gebeuren — zijn instellingen en
  * zijn eigen werk wissen, en alles dubbel in de lijst zetten.
  */
@@ -1144,7 +1144,7 @@ describe('een prijslijst inlezen', alsGebouwd, () => {
     const fouten = [];
     pagina.on('pageerror', (e) => fouten.push(e.message));
     pagina.on('dialog', (venster) => venster.accept());
-    await pagina.goto(paginaUrl('deck'));
+    await pagina.goto(paginaUrl('headroom'));
     await pagina.evaluate(() => document.fonts.ready);
     return { pagina, fouten };
   }
@@ -1218,7 +1218,7 @@ describe('een prijslijst inlezen', alsGebouwd, () => {
         }]),
       })
     );
-    await pagina.goto(paginaUrl('deck'));
+    await pagina.goto(paginaUrl('headroom'));
     await pagina.click('[data-tab="catalogus"]');
     await lees(pagina, PRIJSLIJST);
     await pagina.click('[data-tab="offerte"]');
@@ -1235,11 +1235,11 @@ describe('een prijslijst inlezen', alsGebouwd, () => {
     await pagina.close();
   });
 
-  test('een bestand dat niet uit Deck komt wordt geweigerd', async () => {
+  test('een bestand dat niet uit Headroom komt wordt geweigerd', async () => {
     const pagina = await browser.newPage(telefoon);
     let gemeld = '';
     pagina.on('dialog', (venster) => { gemeld = venster.message(); venster.accept(); });
-    await pagina.goto(paginaUrl('deck'));
+    await pagina.goto(paginaUrl('headroom'));
     await pagina.click('[data-tab="catalogus"]');
     await pagina.setInputFiles('#wb-import', {
       name: 'iets-anders.json',
@@ -1271,7 +1271,7 @@ describe('de aanbetaling', alsGebouwd, () => {
     await pagina.route(RDW_VOERTUIG, (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(SAAB) })
     );
-    await pagina.goto(paginaUrl('deck'));
+    await pagina.goto(paginaUrl('headroom'));
     await pagina.evaluate(() => document.fonts.ready);
 
     await pagina.click('[data-tab="instellingen"]');
@@ -1352,7 +1352,7 @@ describe('de aanbetaling', alsGebouwd, () => {
     const pagina = await browser.newPage(telefoon);
     const meldingen = [];
     pagina.on('dialog', (venster) => { meldingen.push(venster.message()); venster.dismiss(); });
-    await pagina.goto(paginaUrl('deck'));
+    await pagina.goto(paginaUrl('headroom'));
     await pagina.click('[data-tab="instellingen"]');
     await pagina.fill('#wb-i-iban', 'NL91 KNAB 0417 1643 00');
     await pagina.locator('#wb-i-iban').blur();
@@ -1381,7 +1381,7 @@ describe('de aanbetaling', alsGebouwd, () => {
 
   test('de aanbetalingskaart past ook op een smal scherm', async () => {
     const pagina = await browser.newPage({ ...telefoon, viewport: { width: 320, height: 844 } });
-    await pagina.goto(paginaUrl('deck'));
+    await pagina.goto(paginaUrl('headroom'));
     await pagina.evaluate(() => document.fonts.ready);
     await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
     await pagina.fill('#wb-aanbetaling-pct', '33,5');
@@ -1408,7 +1408,7 @@ describe('korting en eindfactuur', alsGebouwd, () => {
     await pagina.route(RDW_VOERTUIG, (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(SAAB) })
     );
-    await pagina.goto(paginaUrl('deck'));
+    await pagina.goto(paginaUrl('headroom'));
     await pagina.evaluate(() => document.fonts.ready);
     await pagina.click('[data-tab="instellingen"]');
     await pagina.fill('#wb-i-iban', 'NL84KNAB0776239147');
@@ -1558,9 +1558,9 @@ describe('korting en eindfactuur', alsGebouwd, () => {
     await pagina.close();
   });
 
-  test('Deck gedraagt zich als een app op je beginscherm', async () => {
+  test('Headroom gedraagt zich als een app op je beginscherm', async () => {
     const pagina = await browser.newPage(telefoon);
-    await pagina.goto(paginaUrl('deck'));
+    await pagina.goto(paginaUrl('headroom'));
     const manifest = await pagina.evaluate(async () => {
       const link = document.querySelector('link[rel=manifest]');
       if (!link) return null;
@@ -1568,27 +1568,29 @@ describe('korting en eindfactuur', alsGebouwd, () => {
     });
     assert.ok(manifest, 'er hangt geen app-bestand aan de pagina');
     // Twaalf tekens is het maximum dat Android onder een icoon toont.
-    assert.equal(manifest.short_name, 'Deck');
+    assert.equal(manifest.short_name, 'Headroom');
     assert.ok(manifest.short_name.length <= 12, 'Android kapt de naam af');
     assert.equal(manifest.display, 'standalone', 'hij opent met een adresbalk');
-    assert.ok(manifest.start_url.endsWith('/deck'), 'hij start op de verkeerde pagina');
+    assert.ok(manifest.start_url.endsWith('/headroom'), 'hij start op de verkeerde pagina');
     assert.ok(manifest.icons.length >= 2, 'te weinig iconen');
     await pagina.close();
   });
 
-  test('het oude adres /werkbak komt op Deck uit', async () => {
-    // Het icoon op Justus zijn beginscherm wijst nog naar /werkbak. Dat mag
-    // niet op een foutmelding uitkomen.
-    const pagina = await browser.newPage(telefoon);
-    await pagina.goto(paginaUrl('werkbak'));
-    await pagina.waitForURL(/\/deck$/, { timeout: 5000 });
-    assert.ok(await pagina.isVisible('#wb-kenteken'), 'de app is niet geopend');
-    await pagina.close();
+  test('de oude adressen komen allebei op Headroom uit', async () => {
+    // Het icoon op Justus zijn beginscherm wijst nog naar een oud adres. Dat
+    // mag niet op een foutmelding uitkomen. De app heeft er twee gehad.
+    for (const oud of ['werkbak', 'deck']) {
+      const pagina = await browser.newPage(telefoon);
+      await pagina.goto(paginaUrl(oud));
+      await pagina.waitForURL(/\/headroom$/, { timeout: 5000 });
+      assert.ok(await pagina.isVisible('#wb-kenteken'), `/${oud} opent de app niet`);
+      await pagina.close();
+    }
   });
 
   test('alles past nog op 320 pixels', async () => {
     const pagina = await browser.newPage({ ...telefoon, viewport: { width: 320, height: 844 } });
-    await pagina.goto(paginaUrl('deck'));
+    await pagina.goto(paginaUrl('headroom'));
     await pagina.evaluate(() => document.fonts.ready);
     await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
     await pagina.fill('#wb-korting', '10%');
@@ -1626,7 +1628,7 @@ describe('instellingen uit een aangeleverd bestand', alsGebouwd, () => {
   test('een leeg rekeningnummer wordt ingevuld', async () => {
     const pagina = await browser.newPage(telefoon);
     pagina.on('dialog', (v) => v.accept());
-    await pagina.goto(paginaUrl('deck'));
+    await pagina.goto(paginaUrl('headroom'));
     await pagina.click('[data-tab="catalogus"]');
     await lees(pagina, LIJST);
     await pagina.click('[data-tab="instellingen"]');
@@ -1643,7 +1645,7 @@ describe('instellingen uit een aangeleverd bestand', alsGebouwd, () => {
      */
     const pagina = await browser.newPage(telefoon);
     pagina.on('dialog', (v) => v.accept());
-    await pagina.goto(paginaUrl('deck'));
+    await pagina.goto(paginaUrl('headroom'));
     await pagina.click('[data-tab="instellingen"]');
     await pagina.fill('#wb-i-iban', 'NL00 EIGEN 0000 0000 00');
     await pagina.locator('#wb-i-iban').blur();

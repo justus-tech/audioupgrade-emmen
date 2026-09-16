@@ -1,0 +1,67 @@
+---
+/**
+ * EEN OUD ADRES VAN DE APP.
+ *
+ * De app heeft onderweg twee keer een andere naam gekregen: eerst Werkbak,
+ * toen Deck, nu Headroom. Elke naam had zijn eigen adres. Het icoon dat op
+ * Justus zijn beginscherm staat wijst nog naar het oude adres, en dat mag
+ * niet op een foutmelding uitkomen.
+ *
+ * Er staat geen server achter deze site, dus een echte 301 kan niet. Een
+ * meta-refresh doet voor een bezoeker hetzelfde, en de canonical vertelt een
+ * zoekmachine welk adres het echte is. Er staat ook noindex op: net als de
+ * app zelf hoort dit niet in Google.
+ *
+ * Deze pagina's mogen weg zodra de app opnieuw op het beginscherm staat —
+ * maar ze kosten niets, dus laat ze gerust staan.
+ */
+import { BRAND, cssThema } from '../data/brand.js';
+import { pad } from '../lib/pad.js';
+import { APP } from '../data/app.js';
+
+/** Hoe de app hiervóór heette, puur om de zin eronder kloppend te houden. */
+const { oudeNaam } = Astro.props;
+const naar = pad(APP.pad);
+---
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{APP.naam} — offertes | Audio Upgrade Emmen</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <meta http-equiv="refresh" content={`0; url=${naar}`} />
+  <link rel="canonical" href={naar} />
+  <style is:global set:html={cssThema}></style>
+  <meta name="theme-color" content={BRAND.bg} />
+  <link rel="icon" href={pad("/favicon.svg")} type="image/svg+xml" />
+</head>
+<body class="omleiding">
+  <main class="wb-omleiding">
+    <p>{oudeNaam} heet nu <strong>{APP.naam}</strong>.</p>
+    <p><a href={naar}>Ga verder naar {APP.naam}</a></p>
+    <p class="wb-klein">
+      Zet hem opnieuw op je beginscherm, dan opent het icoon meteen op het
+      nieuwe adres.
+    </p>
+  </main>
+</body>
+</html>
+
+<style is:global>
+  /* Eén schermpje tekst, midden in beeld. Meer heeft deze pagina niet nodig. */
+  body.omleiding {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  .wb-omleiding { max-width: 22rem; text-align: center; line-height: 1.5; }
+  .wb-omleiding a { color: var(--accent-text); }
+  .wb-klein { font-size: .82rem; color: var(--text-dim); }
+</style>

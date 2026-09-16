@@ -49,16 +49,17 @@ let inhoud = new Map();
 /**
  * Pagina's die wél gebouwd worden maar geen bezoekerspagina zijn.
  *
- * /deck is de app van Justus zelf (vroeger /werkbak): geen menu, geen
+ * /headroom is de app van Justus zelf (vroeger /werkbak): geen menu, geen
  * voettekst,
  * geen bedrijfsgegevens voor Google, en met opzet nergens een link naartoe.
  * De eisen hieronder gaan allemaal over pagina's die klanten zien, dus die
- * slaan we hier over. Wat er voor Deck wél moet gelden staat in
- * tests/deck.test.js — onder andere dat hij buiten Google blijft.
+ * slaan we hier over. Wat er voor Headroom wél moet gelden staat in
+ * tests/headroom.test.js — onder andere dat hij buiten Google blijft.
  */
-/* /werkbak staat er ook in: dat is het oude adres, dat nu doorstuurt naar
-   /deck zodat het icoon op Justus zijn telefoon blijft werken. */
-const GEEN_BEZOEKERSPAGINA = ['/deck', '/werkbak'];
+/* /werkbak en /deck staan er ook in: dat zijn de oude adressen van de app,
+   die nu doorsturen naar /headroom zodat het icoon op Justus zijn telefoon
+   blijft werken. */
+const GEEN_BEZOEKERSPAGINA = ['/headroom', '/werkbak', '/deck'];
 
 before(() => {
   if (!erIsGebouwd) return;

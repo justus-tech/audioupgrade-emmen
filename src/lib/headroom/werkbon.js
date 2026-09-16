@@ -130,7 +130,7 @@ export function werkbonPdf(offerte, dossier = null, eigenBlokken = []) {
     const uitleg = [
       'Van dit model is nog niets vastgelegd. Meet ter plekke na: speakermaat,',
       'adapterring, type fabrieksscherm, stekker achter de radio en de doorvoer',
-      'naar de accu. Zet het daarna in Deck onder Auto\'s — dan staat het',
+      'naar de accu. Zet het daarna in Headroom onder Auto\'s — dan staat het',
       'de volgende keer al ingevuld.',
     ];
     uitleg.forEach((regel, i) => {
@@ -334,7 +334,7 @@ export function werkbonPdf(offerte, dossier = null, eigenBlokken = []) {
   }
   y += 34;
 
-  doc.tekst('Nieuw voor het autodossier (neem dit over in Deck)', LINKS, y, {
+  doc.tekst('Nieuw voor het autodossier (neem dit over in Headroom)', LINKS, y, {
     grootte: 8, vet: true, kleur: KLEUR.accentInkt,
   });
   for (let i = 0; i < 3; i++) invulregel(doc, LINKS, y + 16 + i * 15, RECHTS - LINKS);
