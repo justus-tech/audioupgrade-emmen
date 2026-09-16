@@ -18,7 +18,7 @@
 import { BRAND } from '../data/brand.js';
 import { SITE } from '../data/site.js';
 import { pad } from '../lib/pad.js';
-import { APP } from '../data/app.js';
+import { APP, TABBLADEN } from '../data/app.js';
 
 export async function GET() {
   const manifest = {
@@ -34,6 +34,25 @@ export async function GET() {
     background_color: BRAND.bg,
     lang: 'nl',
     dir: 'ltr',
+    /**
+     * De snelkoppelingen onder het icoon.
+     *
+     * Houd je op Android het icoon ingedrukt, dan klapt dit lijstje open.
+     * Samsung toont er een stuk of vier; de belangrijkste staat daarom
+     * bovenaan. Agenda eerst: dat is wat je 's ochtends wilt zien.
+     */
+    shortcuts: [
+      { id: 'agenda', naam: 'Agenda' },
+      { id: 'offerte', naam: 'Nieuwe offerte' },
+      { id: 'autos', naam: "Auto's" },
+      { id: 'catalogus', naam: 'Onderdelen' },
+    ].map(({ id, naam }) => ({
+      name: naam,
+      short_name: naam,
+      description: TABBLADEN.find((t) => t.id === id)?.wat || naam,
+      url: `${pad(APP.pad)}?tab=${id}`,
+      icons: [{ src: pad('/icon-192.png'), sizes: '192x192', type: 'image/png' }],
+    })),
     icons: [
       {
         src: pad('/favicon.svg'),

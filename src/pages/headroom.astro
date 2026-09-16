@@ -458,6 +458,32 @@ import { APP } from '../data/app.js';
         Facturen krijgen een eigen doorlopende reeks: offerte 2026-014, factuur 2026-F014.
       </p>
     </div>
+
+    <div class="wb-kaart">
+      <span class="eyebrow">Op je beginscherm</span>
+      <p class="wb-uitleg">
+        Elk tabblad heeft een eigen adres. Zet je zo'n adres op je beginscherm, dan
+        opent dat icoon meteen op dat tabblad — de Agenda vult dan je hele scherm,
+        zonder eerst langs de offerte te gaan.
+      </p>
+      <p class="wb-uitleg">
+        <strong>Zo doe je dat op je Samsung:</strong> tik hieronder op een tabblad,
+        open dan het menu van Chrome (de drie puntjes rechtsboven) en kies
+        <strong>Toevoegen aan startscherm</strong>. Herhaal dat voor elk tabblad dat
+        je apart wilt hebben. Heb je Headroom al op je beginscherm staan, dan kun je
+        het icoon ook even ingedrukt houden: dan klapt er een lijstje open met
+        Agenda, Nieuwe offerte, Auto's en Onderdelen.
+      </p>
+      <div class="wb-knoprij" id="wb-tabkoppelingen"></div>
+      <p class="wb-uitleg">
+        <strong>Wat niet kan:</strong> een echte Android-widget — zo'n vakje op je
+        beginscherm dat de eerstvolgende klus laat zien zonder dat je de app opent.
+        Daar is een app uit de Play Store voor nodig, en dit is een website. Wat wel
+        op je beginscherm kan meekijken is je agenda-app: zet een klus erin via
+        <strong>Zet in je agenda</strong>, dan staat hij in de agenda-widget die je
+        telefoon zelf heeft.
+      </p>
+    </div>
   </section>
 </main>
 
@@ -472,7 +498,7 @@ import { APP } from '../data/app.js';
 
 <script>
   import { PACKAGES, SITE } from '../data/site.js';
-  import { APP } from '../data/app.js';
+  import { APP, TABBLADEN } from '../data/app.js';
   import {
     SOORTEN, STANDAARD_INSTELLINGEN, euro, naarCent, regelPrijs, totalen, marge,
     offertenummer, geldigTot, stuklijst, aanbetaling, eindafrekening,
@@ -572,12 +598,32 @@ import { APP } from '../data/app.js';
   const eigenId = () => `r${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
   /* ================= TABBLADEN ================= */
+  /**
+   * Eén tabblad tonen.
+   *
+   * Het adres verandert mee: /headroom?tab=agenda. Daarmee kun je vanaf je
+   * beginscherm rechtstreeks in de agenda springen, en doet de terugknop van
+   * je telefoon wat je verwacht in plaats van de app af te sluiten.
+   */
+  function toonTab(naam, { inGeschiedenis = false } = {}) {
+    const bestaat = $$('.wb-tab').some((k) => k.dataset.tab === naam);
+    const doel = bestaat ? naam : 'offerte';
+    $$('.wb-tab').forEach((k) => k.classList.toggle('aan', k.dataset.tab === doel));
+    $$('.wb-paneel').forEach((p) => { p.hidden = p.dataset.paneel !== doel; });
+    window.scrollTo({ top: 0 });
+
+    const adres = `${location.pathname}?tab=${doel}`;
+    if (inGeschiedenis) history.pushState({ tab: doel }, '', adres);
+    else history.replaceState({ tab: doel }, '', adres);
+  }
+
   $$('.wb-tab').forEach((knop) => {
-    knop.addEventListener('click', () => {
-      $$('.wb-tab').forEach((k) => k.classList.toggle('aan', k === knop));
-      $$('.wb-paneel').forEach((p) => { p.hidden = p.dataset.paneel !== knop.dataset.tab; });
-      window.scrollTo({ top: 0 });
-    });
+    knop.addEventListener('click', () => toonTab(knop.dataset.tab, { inGeschiedenis: true }));
+  });
+
+  /* De terugknop van de telefoon zet je een tabblad terug. */
+  window.addEventListener('popstate', (e) => {
+    toonTab(e.state?.tab || new URLSearchParams(location.search).get('tab') || 'offerte');
   });
 
   /* ================= KENTEKEN ================= */
@@ -846,9 +892,7 @@ import { APP } from '../data/app.js';
       offerte = { ...eerder, datum: new Date(eerder.datum) };
       vulFormulierUitOfferte();
       tekenAlles();
-      $$('.wb-tab').forEach((k) => k.classList.toggle('aan', k.dataset.tab === 'offerte'));
-      $$('.wb-paneel').forEach((p) => { p.hidden = p.dataset.paneel !== 'offerte'; });
-      window.scrollTo({ top: 0 });
+      toonTab('offerte', { inGeschiedenis: true });
     });
 
     return kaart;
@@ -1488,9 +1532,7 @@ import { APP } from '../data/app.js';
      * Justus weet welke jaren een generatie loopt; de app niet.
      */
     vulDossierFormulier(leegDossier(sleutel, naam));
-    $$('.wb-tab').forEach((k) => k.classList.toggle('aan', k.dataset.tab === 'autos'));
-    $$('.wb-paneel').forEach((paneel) => { paneel.hidden = paneel.dataset.paneel !== 'autos'; });
-    window.scrollTo({ top: 0 });
+    toonTab('autos', { inGeschiedenis: true });
   }
 
   function vulDossierFormulier(dossier) {
@@ -1613,6 +1655,17 @@ import { APP } from '../data/app.js';
       tekenAlles();
     });
   }
+
+  /**
+   * De snelkoppelingen naar elk tabblad.
+   *
+   * Gewone links en geen knoppen: alleen een echte link kan Chrome op je
+   * beginscherm zetten. Ze staan hier in de app zodat je niet zelf een adres
+   * hoeft over te typen.
+   */
+  $('#wb-tabkoppelingen').innerHTML = TABBLADEN
+    .map((t) => `<a class="btn wb-tabkoppeling" href="?tab=${t.id}">${ontsnap(t.naam)}</a>`)
+    .join('');
 
   /* ================= RESERVEKOPIE ================= */
   $('#wb-export').addEventListener('click', () => {
@@ -2096,6 +2149,9 @@ import { APP } from '../data/app.js';
   tekenOpgeslagen();
   tekenAfspraken();
   tekenAlles();
+  /* Kom je binnen via een snelkoppeling van je beginscherm, dan sta je meteen
+     op het goede tabblad. */
+  toonTab(new URLSearchParams(location.search).get('tab') || 'offerte');
 </script>
 
 <style is:global>
@@ -2356,6 +2412,15 @@ import { APP } from '../data/app.js';
 
   /* ---- toevoegknoppen ---- */
   .wb-knoprij { display: flex; flex-direction: column; gap: 8px; }
+  /* Een link die eruitziet als een knop: Chrome kan alleen een echte link op
+     je beginscherm zetten, en een knop van 46 pixels raak je met een duim. */
+  .wb-tabkoppeling {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    text-decoration: none;
+  }
   .wb-toevoeg {
     display: flex;
     align-items: center;

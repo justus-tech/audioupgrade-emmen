@@ -29,4 +29,23 @@ export const APP = {
   opslagSleutel: 'aue-werkbak-v1',
 };
 
+/**
+ * DE TABBLADEN.
+ *
+ * Elk tabblad heeft een eigen adres: /headroom?tab=agenda. Daarmee kun je er
+ * vanaf je beginscherm rechtstreeks in springen, en werkt de terugknop van je
+ * telefoon zoals je verwacht.
+ *
+ * Ze staan ook in het app-bestand als snelkoppeling. Houd je op Android het
+ * icoon van Headroom even ingedrukt, dan klapt dit lijstje open en tik je
+ * meteen op Agenda.
+ */
+export const TABBLADEN = [
+  { id: 'offerte', naam: 'Offerte', wat: 'Een nieuwe offerte maken' },
+  { id: 'agenda', naam: 'Agenda', wat: 'Wat er aankomt en wanneer je moet bestellen' },
+  { id: 'catalogus', naam: 'Onderdelen', wat: 'Je leveranciersprijzen' },
+  { id: 'autos', naam: "Auto's", wat: 'Wat je per model hebt nagemeten' },
+  { id: 'instellingen', naam: 'Instellingen', wat: 'Uurtarief, marge en rekeningnummer' },
+];
+
 export default APP;

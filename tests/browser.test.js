@@ -976,6 +976,54 @@ describe('Headroom', alsGebouwd, () => {
     await pagina.close();
   });
 
+  test('je kunt rechtstreeks in een tabblad binnenkomen', async () => {
+    // Dit is wat een snelkoppeling op het beginscherm doet: meteen de agenda,
+    // zonder eerst langs de offerte.
+    const pagina = await browser.newPage(telefoon);
+    await pagina.goto(`${paginaUrl('headroom')}?tab=agenda`);
+    assert.equal(await pagina.isVisible('[data-paneel="agenda"]'), true);
+    assert.equal(await pagina.isHidden('[data-paneel="offerte"]'), true);
+    await pagina.close();
+  });
+
+  test('een onbekend tabblad valt terug op de offerte', async () => {
+    // Liever de offerte dan een leeg scherm als er ooit een oud adres rondzwerft.
+    const pagina = await browser.newPage(telefoon);
+    await pagina.goto(`${paginaUrl('headroom')}?tab=bestaatniet`);
+    assert.equal(await pagina.isVisible('[data-paneel="offerte"]'), true);
+    await pagina.close();
+  });
+
+  test('de terugknop van je telefoon gaat een tabblad terug', async () => {
+    // Zonder dit sluit de terugknop de app af, en dat is precies wat je niet
+    // wilt als je even in Onderdelen hebt gekeken.
+    const pagina = await browser.newPage(telefoon);
+    await pagina.goto(`${paginaUrl('headroom')}?tab=agenda`);
+    await pagina.click('[data-tab="autos"]');
+    assert.match(pagina.url(), /\?tab=autos$/);
+    await pagina.goBack();
+    assert.match(pagina.url(), /\?tab=agenda$/);
+    assert.equal(await pagina.isVisible('[data-paneel="agenda"]'), true);
+    await pagina.close();
+  });
+
+  test('bij Instellingen staat een link naar elk tabblad', async () => {
+    // Die links zet Justus op zijn beginscherm. Chrome kan alleen een echte
+    // link op het startscherm zetten, geen knop met javascript eronder.
+    const pagina = await browser.newPage(telefoon);
+    await pagina.goto(paginaUrl('headroom'));
+    await pagina.click('[data-tab="instellingen"]');
+    const links = await pagina.$$eval('#wb-tabkoppelingen a', (as) =>
+      as.map((a) => ({ href: a.getAttribute('href'), h: a.getBoundingClientRect().height }))
+    );
+    assert.ok(links.length >= 4, 'er staan geen koppelingen');
+    for (const l of links) {
+      assert.match(l.href, /^\?tab=[a-z]+$/, `raar adres: ${l.href}`);
+      assert.ok(l.h >= 38, `te klein voor een duim: ${l.h}`);
+    }
+    await pagina.close();
+  });
+
   test('de afspraken staan standaard goed en onthouden zich', async () => {
     const { pagina, fouten } = await openWerkbak();
 

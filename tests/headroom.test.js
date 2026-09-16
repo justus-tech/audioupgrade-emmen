@@ -36,6 +36,7 @@ import {
   DOSSIER_VELDEN, autoSleutel, zoekDossier, dossierStand, leegDossier, dossierNaam,
 } from '../src/lib/headroom/autos.js';
 import { MODELS } from '../src/data/models.js';
+import { TABBLADEN } from '../src/data/app.js';
 
 const INST = { ...STANDAARD_INSTELLINGEN, uurtariefCent: 7500, margePct: 60, btwPct: 21 };
 
@@ -1450,5 +1451,44 @@ describe('de voorbereiding', () => {
     const v = voorbereidingMetWaarom({ regels: [] });
     assert.ok(v.dag.every((s) => typeof s.tekst === 'string'));
     assert.ok(v.dag.some((s) => s.waarom), 'nergens uitleg');
+  });
+});
+
+/**
+ * DE SNELKOPPELINGEN NAAR ELK TABBLAD.
+ *
+ * Justus wil de agenda rechtstreeks vanaf zijn beginscherm kunnen openen.
+ * Daarvoor moet elk tabblad een eigen adres hebben, en moeten die adressen in
+ * het app-bestand staan. Klopt er één niet, dan kom je op de offerte uit.
+ */
+describe('elk tabblad heeft een eigen adres', alsGebouwd, () => {
+  const manifest = () => JSON.parse(readFileSync(`${DIST}headroom-manifest.json`, 'utf8'));
+
+  test('de snelkoppelingen staan in het app-bestand', () => {
+    const kort = manifest().shortcuts;
+    assert.ok(Array.isArray(kort) && kort.length >= 4, 'er staan geen snelkoppelingen in');
+    // Agenda bovenaan: Samsung toont er maar een paar, en dit is wat je
+    // 's ochtends wilt zien.
+    assert.equal(kort[0].name, 'Agenda');
+  });
+
+  test('elke snelkoppeling wijst naar een bestaand tabblad', () => {
+    const html = readFileSync(`${DIST}headroom.html`, 'utf8');
+    for (const kort of manifest().shortcuts) {
+      const tab = new URL(kort.url, 'https://audioupgradeemmen.nl').searchParams.get('tab');
+      assert.ok(tab, `geen tabblad in ${kort.url}`);
+      assert.ok(TABBLADEN.some((t) => t.id === tab), `onbekend tabblad: ${tab}`);
+      assert.match(html, new RegExp(`data-paneel="${tab}"`), `het paneel ${tab} bestaat niet`);
+      assert.ok(kort.icons?.length, `${kort.name} heeft geen icoon`);
+    }
+  });
+
+  test('elke snelkoppeling begint binnen de app', () => {
+    // Valt een adres buiten het bereik van de app, dan opent hij in een
+    // browservenster met adresbalk in plaats van als app.
+    const m = manifest();
+    for (const kort of m.shortcuts) {
+      assert.ok(kort.url.startsWith(m.scope), `${kort.url} valt buiten ${m.scope}`);
+    }
   });
 });

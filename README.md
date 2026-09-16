@@ -300,6 +300,26 @@ termijnen op één stuk papier leest als een addertje. Zet je er ooit een ander
 aantal dagen neer, dan schuiven de offerte, de factuur en de FAQ vanzelf mee —
 de app leest het getal daar vandaan en typt het nergens zelf.
 
+### Elk tabblad op je beginscherm
+
+Elk tabblad heeft een eigen adres: `/headroom?tab=agenda`, `?tab=autos`,
+enzovoort. Bij **Instellingen** staat een knop naar elk tabblad. Tik erop, open
+het menu van Chrome en kies *Toevoegen aan startscherm* — dan opent dat icoon
+meteen op dat tabblad.
+
+Staat Headroom al op je beginscherm, dan kun je het icoon ook ingedrukt houden:
+dan klapt er een lijstje open met Agenda, Nieuwe offerte, Auto's en Onderdelen.
+Dat lijstje komt uit het app-bestand (`shortcuts`).
+
+De terugknop van je telefoon gaat een tabblad terug in plaats van de app af te
+sluiten.
+
+> **Een echte Android-widget kan niet.** Zo'n vakje op je beginscherm dat de
+> eerstvolgende klus toont zonder dat je iets opent, vraagt een app uit de Play
+> Store — een Android-app is iets heel anders dan een website en kan niet uit
+> deze code komen. Wat wél op het beginscherm meekijkt is de agenda-widget die
+> je telefoon zelf heeft: zet een klus erin met **Zet in je agenda**.
+
 ### De agenda
 
 Zet bij een offerte een **inbouwdatum**, dan komt de klus in het tabblad
