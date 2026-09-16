@@ -14,6 +14,8 @@ import { A4 } from './pdf.js';
 import { PALETTE, LICHT } from '../../data/brand.js';
 import { SITE, ADRES } from '../../data/site.js';
 import { datumNl } from './rekenen.js';
+import { breekAf } from './pdf.js';
+import { volledigeVoorwaarden } from './voorwaarden.js';
 
 /**
  * Een kleur met doorzichtigheid bestaat in een pdf niet zomaar. Lijnen op
@@ -150,4 +152,79 @@ export function vakje(doc, x, y, zijde = 9) {
 /** Een stippellijn om met de hand op te schrijven. */
 export function invulregel(doc, x, y, breedte) {
   doc.lijn(x, y, x + breedte, y, KLEUR.lijn, 0.6);
+}
+
+/**
+ * DE VOLLEDIGE VOORWAARDEN ALS BIJLAGE ACHTERIN.
+ *
+ * Waarom ze meegaan en niet alleen op de site staan: algemene voorwaarden
+ * gelden pas als ze vóór of bij het sluiten van de overeenkomst aan de klant
+ * ter hand zijn gesteld. Een verwijzing naar een webadres is zwakker dan ze
+ * gewoon meesturen — en meesturen kost hier niets.
+ *
+ * Twee kolommen, kleine letter. Niemand leest dit van A tot Z, maar wie iets
+ * opzoekt moet het snel kunnen vinden, en het mag de offerte niet drie
+ * pagina's langer maken dan nodig.
+ *
+ * Levert het aantal pagina's op dat erbij is gekomen.
+ */
+export function voorwaardenBijlage(doc, kop, beginPagina) {
+  const v = volledigeVoorwaarden();
+  const kolomBreedte = (RECHTS - LINKS - 22) / 2;
+  const kolomX = [LINKS, LINKS + kolomBreedte + 22];
+
+  let paginaNr = beginPagina;
+  let kolom = 0;
+  let y = 0;
+
+  const nieuweBladzijde = () => {
+    doc.nieuwePagina();
+    paginaNr += 1;
+    y = kopbalk(doc, { ...kop, vervolg: true }) + 24;
+    kolom = 0;
+    blokkop(doc, `${v.kop} — bijgewerkt in ${v.bijgewerkt}`, LINKS, y);
+    y += 16;
+  };
+
+  nieuweBladzijde();
+  const bovenkant = y;
+
+  /** Ruimte maken: eerst de tweede kolom, dan pas een nieuwe bladzijde. */
+  const ruimte = (hoogte) => {
+    if (y + hoogte <= ONDERGRENS) return;
+    if (kolom === 0) {
+      kolom = 1;
+      y = bovenkant;
+      return;
+    }
+    voetregel(doc, paginaNr);
+    nieuweBladzijde();
+    y = bovenkant;
+  };
+
+  for (const art of v.artikelen) {
+    const kopRegels = breekAf(art.kop, kolomBreedte, 7.5, true);
+    ruimte(kopRegels.length * 10 + 18);
+    kopRegels.forEach((regel, i) => {
+      doc.tekst(regel, kolomX[kolom], y + i * 10, {
+        grootte: 7.5, vet: true, kleur: KLEUR.inkt,
+      });
+    });
+    y += kopRegels.length * 10 + 3;
+
+    for (const punt of art.punten) {
+      const regels = breekAf(punt, kolomBreedte - 6, 6.5);
+      ruimte(regels.length * 8 + 4);
+      regels.forEach((regel, i) => {
+        doc.tekst(regel, kolomX[kolom] + (i === 0 ? 0 : 6), y + i * 8, {
+          grootte: 6.5, kleur: KLEUR.zacht,
+        });
+      });
+      y += regels.length * 8 + 3;
+    }
+    y += 5;
+  }
+
+  voetregel(doc, paginaNr);
+  return paginaNr - beginPagina;
 }

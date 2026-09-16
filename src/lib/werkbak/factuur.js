@@ -32,8 +32,9 @@ import { SITE, ADRES } from '../../data/site.js';
 import { formatteerKenteken } from '../match.js';
 import {
   KLEUR, LINKS, RECHTS, ONDERGRENS,
-  kopbalk, voetregel, blokkop, kentekenplaat,
+  kopbalk, voetregel, blokkop, kentekenplaat, voorwaardenBijlage,
 } from './opmaak.js';
+import { kernpunten, annuleertermijn } from './voorwaarden.js';
 import {
   euro, aanbetaling, eindafrekening, datumNl, geldigTot, STANDAARD_INSTELLINGEN,
 } from './rekenen.js';
@@ -273,18 +274,29 @@ export function factuurPdf(offerte, inst = STANDAARD_INSTELLINGEN, opties = {}) 
   y += 18;
 
   /* ---- de afspraken ---------------------------------------------------- */
-  const afspraken = soort === 'aanbetaling'
-    ? [
-      'Deze factuur is een vooruitbetaling. De werkzaamheden worden ingepland zodra het bedrag binnen is.',
-      'Het restant wordt gefactureerd bij oplevering van de auto.',
-      'Alle prijzen zijn all-in: inclusief montage en btw.',
-      'Je fabrieksgarantie blijft 100% behouden.',
-    ]
-    : [
-      'De werkzaamheden zijn uitgevoerd en de auto is opgeleverd.',
-      'Alle prijzen zijn all-in: inclusief montage en btw.',
-      'Je fabrieksgarantie blijft 100% behouden.',
-    ];
+  /**
+   * De punten die Justus anders per WhatsApp zou moeten doorgeven. Bij een
+   * aanbetaling staat er wat er nog komt; bij een eindfactuur dat de klus
+   * klaar is. De rest — bedenktijd, afzegtermijn, garantie, eigendom — komt
+   * uit voorwaarden.js en dus uit dezelfde bron als de site.
+   */
+  const afspraken = [
+    soort === 'aanbetaling'
+      ? 'Deze factuur is een vooruitbetaling. De werkzaamheden worden ingepland zodra het bedrag binnen is.'
+      : 'De werkzaamheden zijn uitgevoerd en de auto is opgeleverd.',
+    ...(soort === 'aanbetaling'
+      ? ['Het restant wordt gefactureerd bij oplevering van de auto.']
+      : []),
+    ...kernpunten({
+      soort: 'factuur',
+      vervaldatum: datumNl(vervalt),
+      opAfstand: offerte.opAfstand !== false,
+      startDirect: !!offerte.startDirect,
+      /* Een bedrijf heeft geen bedenktijd, en ziet bedragen zonder btw. */
+      zakelijk: !!offerte.zakelijk,
+      annuleerDagen: annuleertermijn(),
+    }),
+  ];
   if (offerte.opmerking) afspraken.push(offerte.opmerking);
 
   const regels = afspraken.flatMap((zin) => breekAf(`·  ${zin}`, RECHTS - LINKS, 8.5));
@@ -297,6 +309,10 @@ export function factuurPdf(offerte, inst = STANDAARD_INSTELLINGEN, opties = {}) 
   }
 
   voetregel(doc, paginaNr);
+
+  if (offerte.voorwaardenBijlage !== false) {
+    voorwaardenBijlage(doc, kop, paginaNr);
+  }
   return doc;
 }
 

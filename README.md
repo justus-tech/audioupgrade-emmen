@@ -266,6 +266,33 @@ Op de eindfactuur staat het offertetotaal, met de aanbetaling eraf en het
 factuurnummer erbij. Zo kan de klant beide papieren naast elkaar leggen en
 zien dat het sluit — tot de cent.
 
+### De afspraken staan op het papier
+
+Het blok **Afspraken op papier** zorgt dat je die dingen niet meer los hoeft te
+appen. Onder *Goed om te weten* komen ze op de offerte **en** op de factuur: hoe
+lang de offerte geldig is, tot wanneer kosteloos afzeggen kan, de levenslange
+garantie op je montage, en dat de fabrieksgarantie 100% behouden blijft. Achterin
+gaan je volledige algemene voorwaarden als bijlage mee.
+
+Die teksten komen uit dezelfde bron als de pagina
+`/algemene-voorwaarden` op de site, `src/data/juridisch.js`. Pas je daar iets
+aan, dan schuift het papier vanzelf mee. Staan er op papier andere voorwaarden
+dan online, dan mag een klant kiezen welke hem het beste uitkomt.
+
+Er staan drie schakelaars bij:
+
+| | |
+|---|---|
+| **Afspraak op afstand gemaakt** | Staat aan. Spreek je het via WhatsApp, telefoon of mail af, dan heeft een particuliere klant 14 dagen bedenktijd en moet dat erop staan. Komt hij bij jou langs, zet dit dan uit — anders beloof je iets wat de wet niet van je vraagt. |
+| **Klant wil dat je binnen die 14 dagen begint** | Staat uit. Zet hem aan als de afspraak eerder staat dan 14 dagen na vandaag. Zonder die zin moet je bij afzeggen álles terugbetalen, ook het werk dat er al in zit; mét die zin alleen wat er nog niet gedaan is. |
+| **Volledige voorwaarden achterin meesturen** | Staat aan. Twee extra pagina's. Voorwaarden gelden pas als de klant ze ook echt gekregen heeft, dus laat dit gewoon aan staan. |
+
+> **Let op:** in je eigen voorwaarden staat dat afzeggen kosteloos kan tot
+> **7 dagen** voor de afgesproken dag. Dat is iets anders dan de wettelijke
+> 14 dagen bedenktijd, en allebei staan ze op de offerte. Wil je daar één
+> termijn van maken, pas dan artikel 9 in `src/data/juridisch.js` aan — de app
+> leest het aantal dagen daar vandaan en past het papier vanzelf aan.
+
 ### Je offertes terugvinden
 
 Onderaan staat een zoekveld: typ een naam, een kenteken of een offertenummer.

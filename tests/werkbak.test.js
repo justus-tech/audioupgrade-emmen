@@ -25,6 +25,9 @@ import { werkbonPdf, werkbonBestandsnaam } from '../src/lib/werkbak/werkbon.js';
 import { factuurPdf, factuurBestandsnaam } from '../src/lib/werkbak/factuur.js';
 import { blokkenVoor, stappenlijst, WERKBLOKKEN } from '../src/lib/werkbak/stappen.js';
 import {
+  kernpunten, volledigeVoorwaarden, annuleertermijn, zonderOpmaak,
+} from '../src/lib/werkbak/voorwaarden.js';
+import {
   DOSSIER_VELDEN, autoSleutel, zoekDossier, dossierStand, leegDossier, dossierNaam,
 } from '../src/lib/werkbak/autos.js';
 import { MODELS } from '../src/data/models.js';
@@ -159,6 +162,12 @@ describe('nummers en datums', () => {
     assert.equal(datumNl(new Date('2026-09-15')), '15-09-2026');
   });
 
+  test('een kapotte datum levert niets op, geen NaN-NaN-NaN', () => {
+    // Dat stond anders zo op een offerte die naar een klant gaat.
+    assert.equal(datumNl('geen datum'), '');
+    assert.equal(datumNl(undefined) !== '', true, 'zonder datum hoort vandaag te zijn');
+  });
+
   test('de geldigheid telt de dagen er netjes bij op', () => {
     assert.equal(datumNl(geldigTot(new Date('2026-09-15'), 30)), '15-10-2026');
     // Ook over een maandgrens en een jaargrens heen.
@@ -252,6 +261,12 @@ describe('wat er niet op de offerte mag staan', () => {
     ],
   };
   const tekst = () => Buffer.from(offertePdf(offerte, INST).naarBytes()).toString('latin1');
+  /* Dezelfde offerte, maar zonder de bijlage met de algemene voorwaarden.
+     Daarin staat "tegen het geldende uurtarief" — dat is een afspraak, geen
+     bedrag. Het woord mag daar staan, maar niet in de offerte zelf. */
+  const zonderBijlage = () => Buffer.from(
+    offertePdf({ ...offerte, voorwaardenBijlage: false }, INST).naarBytes()
+  ).toString('latin1');
 
   test('geen inkoopprijs', () => {
     const pdf = tekst();
@@ -273,8 +288,8 @@ describe('wat er niet op de offerte mag staan', () => {
   test('geen uurtarief en geen aantal uren', () => {
     const pdf = tekst();
     assert.doesNotMatch(pdf, /75,00/, 'het uurtarief staat erop');
-    assert.doesNotMatch(pdf, /uurtarief/i);
     assert.doesNotMatch(pdf, /\d\s*uur/i, 'de montage-uren staan erop');
+    assert.doesNotMatch(zonderBijlage(), /uurtarief/i);
   });
 
   test('wat er wél op staat: de klant, de auto en het bedrag', () => {
@@ -849,9 +864,15 @@ describe('de aanbetalingsfactuur', () => {
   test('er staat GEEN inkoopprijs, marge of uurtarief op', () => {
     // Dezelfde regel als bij de offerte: dit gaat naar een klant toe.
     const pdf = tekst();
-    for (const verboden of ['222,22', '244,44', '63\\s*%', 'marge', 'uurtarief', '75,00']) {
+    for (const verboden of ['222,22', '244,44', '63\\s*%', 'marge', '75,00']) {
       assert.doesNotMatch(pdf, new RegExp(verboden, 'i'), `"${verboden}" staat op de factuur`);
     }
+    // Het woord "uurtarief" hoort alleen in de voorwaarden achterin thuis.
+    const zonderBijlage = Buffer.from(
+      factuurPdf({ ...offerte, voorwaardenBijlage: false }, inst,
+        { nummer: '2026-F014', datum, percentage: 30 }).naarBytes()
+    ).toString('latin1');
+    assert.doesNotMatch(zonderBijlage, /uurtarief/i);
   });
 
   test('zonder rekeningnummer zegt de factuur dat met zoveel woorden', () => {
@@ -1037,8 +1058,182 @@ describe('de drie soorten factuur', () => {
 
   test('ook een eindfactuur verklapt geen inkoop of marge', () => {
     const pdf = tekst('eind', metAanbetaling);
-    for (const verboden of ['222,22', 'marge', 'uurtarief', '75,00']) {
+    for (const verboden of ['222,22', 'marge', '75,00']) {
       assert.doesNotMatch(pdf, new RegExp(verboden, 'i'), `"${verboden}" staat erop`);
     }
+    // Zonder de voorwaarden achterin komt het woord "uurtarief" er niet op voor.
+    assert.doesNotMatch(
+      tekst('eind', { ...metAanbetaling, voorwaardenBijlage: false }),
+      /uurtarief/i
+    );
+  });
+});
+
+/**
+ * DE AFSPRAKEN OP PAPIER.
+ *
+ * Justus appte deze dingen los na elke offerte: hoe lang hij geldig is,
+ * wanneer je kosteloos kunt afzeggen, wat de garantie inhoudt. Eén vergeten
+ * en het staat nergens zwart op wit. Nu staan ze op de pdf, dus moeten ze er
+ * ook echt op staan — en niet per ongeluk een belofte doen die niet geldt.
+ */
+describe('de afspraken op de offerte en de factuur', () => {
+  test('sterretjes van de site horen niet in een pdf', () => {
+    assert.equal(zonderOpmaak('een **vette** kop'), 'een vette kop');
+    assert.equal(zonderOpmaak(''), '');
+    assert.equal(zonderOpmaak(undefined), '');
+  });
+
+  test('de annuleertermijn komt uit de eigen voorwaarden', () => {
+    // Staat er in artikel 9 ineens een ander aantal dagen, dan schuift dat
+    // hier vanzelf mee. Twee verschillende termijnen op één stuk papier is
+    // precies de ruzie die je niet wilt.
+    const dagen = annuleertermijn();
+    assert.ok(Number.isInteger(dagen) && dagen > 0, `rare termijn: ${dagen}`);
+    const punten = kernpunten({ annuleerDagen: dagen }).join(' ');
+    assert.ok(punten.includes(`${dagen} dagen voor de afgesproken dag`));
+  });
+
+  test('op afstand afgesproken: dan staat de bedenktijd erop', () => {
+    const punten = kernpunten({ opAfstand: true }).join(' ');
+    assert.match(punten, /14 dagen bedenktijd/);
+  });
+
+  test('in de werkplaats afgesproken: dan juist niet', () => {
+    // Er is dan geen wettelijke bedenktijd. Hem toch beloven kost Justus geld.
+    const punten = kernpunten({ opAfstand: false }).join(' ');
+    assert.doesNotMatch(punten, /bedenktijd/i);
+    assert.doesNotMatch(punten, /herroep/i);
+  });
+
+  test('vraagt de klant om direct te beginnen, dan staat dat er ook op', () => {
+    // Zonder die zin moet Justus bij afzeggen álles terugbetalen, ook het
+    // werk dat er al in zit. Mét die zin alleen wat er al gedaan is.
+    const met = kernpunten({ opAfstand: true, startDirect: true }).join(' ');
+    assert.match(met, /uitdrukkelijk/);
+    const zonder = kernpunten({ opAfstand: true, startDirect: false }).join(' ');
+    assert.doesNotMatch(zonder, /uitdrukkelijk/);
+  });
+
+  test('"direct beginnen" kan niet zonder bedenktijd', () => {
+    // Anders staat er een zin over 14 dagen die nergens op slaat.
+    const punten = kernpunten({ opAfstand: false, startDirect: true }).join(' ');
+    assert.doesNotMatch(punten, /uitdrukkelijk/);
+  });
+
+  test('een zakelijke klant krijgt geen bedenktijd en geen btw-belofte', () => {
+    // De bedenktijd is een consumentenrecht, en bij een bedrijf staan de
+    // bedragen exclusief btw. "Inclusief btw" zou er dan pertinent naast zitten.
+    const punten = kernpunten({ opAfstand: true, startDirect: true, zakelijk: true }).join(' ');
+    assert.doesNotMatch(punten, /bedenktijd/i);
+    assert.doesNotMatch(punten, /inclusief montage en btw/i);
+    assert.match(punten, /btw staat er apart bij/i);
+  });
+
+  test('werken op afspraak staat er nog steeds op', () => {
+    // Stond op de oude offerte en hoort er nog steeds op: alles gaat op afspraak.
+    assert.match(kernpunten().join(' '), /uitsluitend op afspraak/i);
+  });
+
+  test('de drie conversietroeven staan er altijd op', () => {
+    for (const opties of [{ opAfstand: true }, { opAfstand: false }]) {
+      const punten = kernpunten(opties).join(' ');
+      assert.match(punten, /all-in/i, 'de all-in prijs ontbreekt');
+      assert.match(punten, /fabrieksgarantie/i, 'de fabrieksgarantie ontbreekt');
+      assert.match(punten, /levenslange garantie/i, 'de garantie op montage ontbreekt');
+    }
+  });
+
+  test('op een factuur staat het eigendomsvoorbehoud, op een offerte niet', () => {
+    assert.match(kernpunten({ soort: 'factuur' }).join(' '), /eigendom totdat/i);
+    assert.doesNotMatch(kernpunten({ soort: 'offerte' }).join(' '), /eigendom totdat/i);
+  });
+
+  test('de geldigheidsdatum en de vervaldatum staan op het juiste stuk', () => {
+    assert.match(kernpunten({ soort: 'offerte', geldigTot: '30-09-2026' }).join(' '), /30-09-2026/);
+    assert.match(kernpunten({ soort: 'factuur', vervaldatum: '14-10-2026' }).join(' '), /14-10-2026/);
+  });
+
+  test('het blijven er weinig genoeg om te lezen', () => {
+    // Wie vijf regels ziet leest ze, wie twintig regels ziet leest er geen een.
+    assert.ok(kernpunten({ opAfstand: true, startDirect: true }).length <= 10);
+  });
+
+  test('de bijlage is één op één de voorwaarden van de site', () => {
+    const v = volledigeVoorwaarden();
+    assert.ok(v.artikelen.length >= 10, 'er ontbreken artikelen');
+    assert.ok(v.kop && v.bijgewerkt, 'kop of datum ontbreekt');
+    // Geen sterretjes meer: die betekenen in een pdf niets.
+    const alles = v.artikelen.flatMap((a) => a.punten).join(' ');
+    assert.doesNotMatch(alles, /\*\*/);
+    // Elk artikel heeft tekst; een lege kop in een bijlage is slordig.
+    for (const a of v.artikelen) {
+      assert.ok(a.punten.length > 0, `${a.kop} is leeg`);
+    }
+  });
+});
+
+/**
+ * DE VOORWAARDEN OP DE PDF ZELF.
+ *
+ * Voorwaarden gelden pas als de klant ze ook echt gekregen heeft. Staan ze
+ * er niet op, dan kun je je er achteraf niet op beroepen.
+ */
+describe('de voorwaarden op de pdf', () => {
+  const offerte = {
+    nummer: '2026-020',
+    datum: new Date('2026-09-16T10:00:00'),
+    geldigTot: '30-09-2026',
+    klant: { naam: 'Mark de Vries', adres: 'Hoofdstraat 12, 7811 AA Emmen' },
+    auto: { kenteken: 'XX99XX', merk: 'Volkswagen', model: 'Golf VII' },
+    regels: [{ omschrijving: 'CarPlay', aantal: 1, vastExclCent: 57438 }],
+  };
+  const lees = (extra = {}) => Buffer.from(
+    offertePdf({ ...offerte, ...extra }, INST).naarBytes()
+  ).toString('latin1');
+
+  test('de korte punten staan op de offerte', () => {
+    const pdf = lees();
+    assert.match(pdf, /14 dagen bedenktijd/);
+    assert.match(pdf, /levenslange garantie/);
+    assert.match(pdf, /fabrieksgarantie/);
+  });
+
+  test('de volledige voorwaarden gaan als bijlage mee', () => {
+    const pdf = lees();
+    assert.match(pdf, /Artikel 1/, 'de bijlage ontbreekt');
+    assert.match(pdf, /Herroeping/, 'het herroepingsrecht ontbreekt in de bijlage');
+    assert.ok(pdf.match(/\/Type \/Page[^s]/g).length >= 2, 'de bijlage past niet op een pagina');
+  });
+
+  test('zet je de bijlage uit, dan is het weer één blaadje', () => {
+    const pdf = lees({ voorwaardenBijlage: false });
+    assert.equal(pdf.match(/\/Type \/Page[^s]/g).length, 1);
+    assert.doesNotMatch(pdf, /Artikel 1/);
+  });
+
+  test('in de werkplaats afgesproken: geen bedenktijd op de offerte', () => {
+    const pdf = lees({ opAfstand: false, voorwaardenBijlage: false });
+    assert.doesNotMatch(pdf, /bedenktijd/i);
+  });
+
+  test('een offerte van voor deze versie krijgt gewoon de voorwaarden', () => {
+    // Zonder de velden: dan gelden de standaarden, en die staan aan.
+    const oud = { ...offerte };
+    delete oud.opAfstand;
+    delete oud.voorwaardenBijlage;
+    const pdf = Buffer.from(offertePdf(oud, INST).naarBytes()).toString('latin1');
+    assert.match(pdf, /14 dagen bedenktijd/);
+    assert.match(pdf, /Artikel 1/);
+  });
+
+  test('de factuur krijgt dezelfde afspraken mee', () => {
+    const pdf = Buffer.from(
+      factuurPdf(offerte, { ...INST, iban: 'NL00BANK0123456789' },
+        { nummer: '2026-F020', datum: offerte.datum, percentage: 30 }).naarBytes()
+    ).toString('latin1');
+    assert.match(pdf, /14 dagen bedenktijd/);
+    assert.match(pdf, /eigendom totdat/i);
+    assert.match(pdf, /Artikel 1/);
   });
 });

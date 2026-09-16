@@ -12,6 +12,7 @@ import assert from 'node:assert/strict';
 import { MODELS, merkSlug, modelPerSlug } from '../src/data/models.js';
 import { MERKEN, merkenPerSlug, MERKEN_MET_MODELLEN } from '../src/data/merken.js';
 import { PACKAGES, SITE, AUDIOMERKEN, AUDIOPAKKETTEN, LOSSE_OPTIES, pakkettenVan } from '../src/data/site.js';
+import { ALGEMENE_VOORWAARDEN } from '../src/data/juridisch.js';
 import { STANDAARD_PAKKETTEN } from '../src/data/generiek.js';
 import { AUTOS, autoTabel } from '../src/data/autos.js';
 import { REVIEWS, reviewsOpDatum } from '../src/data/reviews.js';
@@ -642,5 +643,45 @@ describe('foto\'s van eigen werk', () => {
         `onbekende fase: ${w.fase}`
       );
     }
+  });
+});
+
+
+describe('de algemene voorwaarden', () => {
+  test('de artikelen lopen door van 1 tot en met het laatste', () => {
+    /**
+     * Bij het toevoegen van het herroepingsrecht schoven alle artikelen
+     * daarachter een nummer op, en toen stonden er twee artikelen 6. In een
+     * juridisch stuk is dat geen schoonheidsfoutje: je kunt er niet meer naar
+     * verwijzen.
+     */
+    const nummers = ALGEMENE_VOORWAARDEN.artikelen.map((a) => {
+      const m = a.kop.match(/^Artikel (\d+) — /);
+      assert.ok(m, `geen artikelnummer in: ${a.kop}`);
+      return Number(m[1]);
+    });
+    assert.deepEqual(nummers, nummers.map((_, i) => i + 1));
+  });
+
+  test('het herroepingsrecht staat erin, met de termijn erbij', () => {
+    // Wettelijk verplichte informatie bij verkoop op afstand. Staat hij er
+    // niet in, dan loopt de bedenktijd niet 14 dagen maar twaalf maanden.
+    const artikel = ALGEMENE_VOORWAARDEN.artikelen.find((a) => /Herroeping/i.test(a.kop));
+    assert.ok(artikel, 'er staat geen artikel over het herroepingsrecht in');
+    const tekst = (artikel.lijst || []).join(' ');
+    assert.match(tekst, /14 dagen/);
+    assert.match(tekst, /werkplaats/, 'het verschil met een afspraak in de werkplaats ontbreekt');
+    assert.match(tekst, /uitdrukkelijk/, 'het uitdrukkelijke verzoek om eerder te beginnen ontbreekt');
+  });
+
+  test('er staat nergens nog een stukje code in de tekst', () => {
+    // Een ontsnapte ${...} kwam als code op de pagina én op de pdf te staan.
+    const alles = [
+      ALGEMENE_VOORWAARDEN.intro,
+      ...ALGEMENE_VOORWAARDEN.artikelen.flatMap((a) => [
+        a.kop, ...(a.alineas || []), ...(a.lijst || []),
+      ]),
+    ].join(' ');
+    assert.doesNotMatch(alles, /\$\{/, 'er staat letterlijk ${...} in de voorwaarden');
   });
 });

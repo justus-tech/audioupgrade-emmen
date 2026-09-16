@@ -156,6 +156,44 @@ import { pad } from '../lib/pad.js';
       </label>
     </div>
 
+    <!-- ---- de afspraken ---- -->
+    <div class="wb-kaart">
+      <span class="eyebrow">Afspraken op papier</span>
+      <p class="wb-uitleg">
+        Dit zijn de dingen die je anders los moet appen. Ze komen op de offerte
+        <strong>en</strong> op de factuur te staan.
+      </p>
+
+      <label class="wb-vink">
+        <input type="checkbox" id="wb-op-afstand" checked />
+        <span>
+          Afspraak op afstand gemaakt
+          <em>Via WhatsApp, telefoon of mail. Dan heeft een particuliere klant 14 dagen
+          bedenktijd en moet dat erop staan. Komt de klant bij jou langs en spreken jullie
+          het daar af, zet dit dan uit.</em>
+        </span>
+      </label>
+
+      <label class="wb-vink" id="wb-start-veld">
+        <input type="checkbox" id="wb-start-direct" />
+        <span>
+          Klant wil dat je binnen die 14 dagen begint
+          <em>Zet dit aan als de afspraak eerder staat dan 14 dagen na vandaag. Op het
+          papier komt dan dat de klant er zelf om vraagt — zonder die zin moet je bij
+          afzeggen alles terugbetalen, ook het werk dat je al gedaan hebt.</em>
+        </span>
+      </label>
+
+      <label class="wb-vink">
+        <input type="checkbox" id="wb-bijlage" checked />
+        <span>
+          Volledige voorwaarden achterin meesturen
+          <em>Twee extra pagina's. Voorwaarden gelden pas als de klant ze ook echt
+          gekregen heeft, dus laat dit gewoon aan staan.</em>
+        </span>
+      </label>
+    </div>
+
     <!-- ---- wat houd je eraan over ---- -->
     <div class="wb-kaart wb-marge">
       <span class="eyebrow">Alleen voor jou</span>
@@ -461,6 +499,12 @@ import { pad } from '../lib/pad.js';
     auto: {},
     regels: [],
     opmerking: '',
+    /* De afspraken die anders per WhatsApp gingen. Standaard aan: verreweg de
+       meeste offertes gaan via WhatsApp de deur uit, en dat is een afspraak op
+       afstand. `startDirect` staat uit, want dat moet de klant zelf vragen. */
+    opAfstand: true,
+    startDirect: false,
+    voorwaardenBijlage: true,
   });
 
   let offerte = nieuweOfferte();
@@ -547,7 +591,11 @@ import { pad } from '../lib/pad.js';
   });
 
   /* ================= KLANT ================= */
-  $$('.wb-keuze').forEach((knop) => {
+  /* [data-klant] en niet .wb-keuze: die klasse zit ook op de drie
+     factuurknoppen. Met .wb-keuze sprong de klant terug naar particulier
+     zodra je op 'Eindfactuur' tikte, en verdween het veld voor de
+     bedrijfsnaam. */
+  $$('[data-klant]').forEach((knop) => {
     knop.addEventListener('click', () => {
       offerte.zakelijk = knop.dataset.klant === 'zakelijk';
       $$('[data-klant]').forEach((k) => k.classList.toggle('aan', k === knop));
@@ -567,6 +615,41 @@ import { pad } from '../lib/pad.js';
     $(`#wb-${id}`).addEventListener('input', (e) => { offerte.klant[sleutel] = e.target.value; });
   });
   $('#wb-opmerking').addEventListener('input', (e) => { offerte.opmerking = e.target.value; });
+
+  /* ================= AFSPRAKEN OP PAPIER ================= */
+  const AFSPRAKEN = {
+    opAfstand: 'wb-op-afstand',
+    startDirect: 'wb-start-direct',
+    voorwaardenBijlage: 'wb-bijlage',
+  };
+
+  /**
+   * De vinkjes terugzetten zoals ze bij deze offerte horen.
+   *
+   * Op dezelfde manier gelezen als in de pdf: ontbreekt het veld (een offerte
+   * van voor deze versie), dan staat 'op afstand' en de bijlage aan en 'direct
+   * beginnen' uit.
+   *
+   * Vraagt de klant niet om binnen de bedenktijd te beginnen, dan is dat
+   * vinkje zinloos: er is dan geen bedenktijd om binnen te beginnen. Daarom
+   * verdwijnt hij zodra 'op afstand' uit staat.
+   */
+  function tekenAfspraken() {
+    $('#wb-op-afstand').checked = offerte.opAfstand !== false;
+    $('#wb-start-direct').checked = !!offerte.startDirect;
+    $('#wb-bijlage').checked = offerte.voorwaardenBijlage !== false;
+    $('#wb-start-veld').hidden = offerte.opAfstand === false;
+  }
+
+  Object.entries(AFSPRAKEN).forEach(([sleutel, id]) => {
+    $(`#${id}`).addEventListener('change', (e) => {
+      offerte[sleutel] = e.target.checked;
+      /* Gaat 'op afstand' uit, dan kan 'direct beginnen' niet blijven staan:
+         dat zou een zin op de offerte zetten die nergens op slaat. */
+      if (sleutel === 'opAfstand' && !e.target.checked) offerte.startDirect = false;
+      tekenAfspraken();
+    });
+  });
 
   /* ================= VOORKEUREN ================= */
   $$('#wb-voorkeuren .wb-chip').forEach((chip) => {
@@ -1458,6 +1541,7 @@ import { pad } from '../lib/pad.js';
       .forEach((kies) => { $(kies).value = ''; });
     toonAutoVelden(false);
     melden('');
+    tekenAfspraken();
     tekenAlles();
     window.scrollTo({ top: 0 });
   });
@@ -1544,9 +1628,10 @@ import { pad } from '../lib/pad.js';
     vulAutoVelden();
     toonAutoVelden(!!offerte.auto?.merk);
     $('#wb-bedrijf-veld').hidden = !offerte.zakelijk;
-    $$('.wb-keuze').forEach((k) => {
+    $$('[data-klant]').forEach((k) => {
       k.classList.toggle('aan', (k.dataset.klant === 'zakelijk') === !!offerte.zakelijk);
     });
+    tekenAfspraken();
   }
 
   /* ================= PDF EN VERSTUREN ================= */
@@ -1754,6 +1839,7 @@ import { pad } from '../lib/pad.js';
   vulDossierFormulier(leegDossier());
   tekenInstellingen();
   tekenBewaard();
+  tekenAfspraken();
   tekenAlles();
 </script>
 
@@ -1898,6 +1984,46 @@ import { pad } from '../lib/pad.js';
 
   /* Drie keuzes naast elkaar passen op 320 pixels alleen met kleinere tekst. */
   .wb-schakel.wb-drie .wb-keuze { font-size: .78rem; padding: 10px 4px; }
+
+  /* ---- vinkjes met uitleg ----
+     Het hele blok is het label, dus je kunt met je duim overal op de regel
+     tikken in plaats van precies op het hokje. */
+  .wb-vink {
+    display: flex;
+    /* Niet erven van de gewone label-regel hieronder: die zet velden onder
+       elkaar in kleine hoofdletters. Dat is opmaak voor een veldnaam, niet
+       voor een zin die je moet lezen. */
+    flex-direction: row;
+    gap: 12px;
+    align-items: flex-start;
+    min-height: 46px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+    text-transform: none;
+    letter-spacing: normal;
+    cursor: pointer;
+  }
+  .wb-vink:last-child { border-bottom: 0; padding-bottom: 0; }
+  .wb-vink input[type="checkbox"] {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    margin: 0;
+    accent-color: var(--accent);
+  }
+  .wb-vink > span {
+    display: block;
+    font-size: .88rem;
+    color: var(--text);
+    line-height: 1.35;
+  }
+  .wb-vink em {
+    display: block;
+    margin-top: 4px;
+    font-style: normal;
+    font-size: .78rem;
+    color: var(--text-dim);
+  }
 
   .wb-zoeken { margin-top: 16px; }
 

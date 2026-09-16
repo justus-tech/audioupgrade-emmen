@@ -447,6 +447,9 @@ export function factuurnummer(volgnummer, datum = new Date()) {
 /** Datum als 15-09-2026 — hoe iedereen in Nederland hem leest. */
 export function datumNl(datum = new Date()) {
   const d = new Date(datum);
+  /* Liever niets dan "NaN-NaN-NaN" op een offerte die naar een klant gaat.
+     Dat gebeurt zodra er ergens een datum ontbreekt of verkeerd doorkomt. */
+  if (Number.isNaN(d.getTime())) return '';
   return [
     String(d.getDate()).padStart(2, '0'),
     String(d.getMonth() + 1).padStart(2, '0'),

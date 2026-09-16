@@ -66,7 +66,18 @@ export const ALGEMENE_VOORWAARDEN = {
       ],
     },
     {
-      kop: 'Artikel 4 — Prijzen en betaling',
+      kop: 'Artikel 4 — Herroepingsrecht bij overeenkomsten op afstand',
+      lijst: [
+        'Dit artikel geldt uitsluitend voor Klanten die consument zijn én die de overeenkomst op afstand hebben gesloten (per telefoon, e-mail of WhatsApp) of buiten de verkoopruimte. Komt de overeenkomst tot stand in de werkplaats van Audio Upgrade Emmen zelf, dan bestaat er geen wettelijk herroepingsrecht.',
+        'De consument heeft het recht de overeenkomst binnen **14 dagen** zonder opgave van redenen te ontbinden. Deze termijn begint voor diensten op de dag na het sluiten van de overeenkomst, en voor losse producten op de dag na ontvangst daarvan.',
+        'Wenst de Klant dat de Werkzaamheden al binnen die 14 dagen beginnen, dan verzoekt hij daar uitdrukkelijk om. Ontbindt de Klant de overeenkomst daarna alsnog, dan is hij een bedrag verschuldigd dat evenredig is aan hetgeen op dat moment al is geleverd: het reeds verrichte werk tegen het geldende uurtarief, en de speciaal voor het Voertuig bestelde onderdelen.',
+        'Het herroepingsrecht vervalt zodra de dienst volledig is uitgevoerd, mits met de uitvoering is begonnen op uitdrukkelijk verzoek van de Klant en de Klant heeft erkend dat hij zijn herroepingsrecht verliest zodra de Werkzaamheden zijn afgerond.',
+        'Het herroepingsrecht geldt niet voor producten die volgens specificaties van de Klant zijn vervaardigd of duidelijk voor een specifiek persoon zijn bestemd, zoals op maat gebouwde subwooferbehuizingen en showbouw.',
+        `Herroepen kan door dit binnen de termijn te melden via ${SITE.email} of WhatsApp. Reeds betaalde bedragen worden binnen 14 dagen na de melding terugbetaald, onder aftrek van het in dit artikel bedoelde evenredige bedrag.`,
+      ],
+    },
+    {
+      kop: 'Artikel 5 — Prijzen en betaling',
       lijst: [
         'Voor consumenten worden prijzen inclusief btw vermeld. Voor zakelijke klanten (B2B) worden prijzen exclusief btw vermeld.',
         'Betaling dient te geschieden direct bij de oplevering en overdracht van het Voertuig via pin of betaalverzoek, tenzij vooraf uitdrukkelijk en schriftelijk een betalingstermijn op factuur is overeengekomen.',
@@ -74,7 +85,7 @@ export const ALGEMENE_VOORWAARDEN = {
       ],
     },
     {
-      kop: 'Artikel 5 — Uitvoering van de werkzaamheden en demontage',
+      kop: 'Artikel 6 — Uitvoering van de werkzaamheden en demontage',
       lijst: [
         'Audio Upgrade Emmen voert de Werkzaamheden uit naar beste inzicht, vakmanschap en conform de geldende normen van de branche.',
         'De Klant is verplicht het Voertuig bezemvrij, schoon (interieur en exterieur) en volledig vrij van losse, waardevolle eigendommen aan te leveren. Audio Upgrade Emmen is nimmer aansprakelijk voor het verlies of diefstal van losse eigendommen die in het Voertuig zijn achtergelaten.',
@@ -83,7 +94,7 @@ export const ALGEMENE_VOORWAARDEN = {
       ],
     },
     {
-      kop: 'Artikel 6 — Aansprakelijkheid en risicobeperking',
+      kop: 'Artikel 7 — Aansprakelijkheid en risicobeperking',
       lijst: [
         'De totale aansprakelijkheid van Audio Upgrade Emmen wegens een toerekenbare tekortkoming in de nakoming van de overeenkomst of uit enige andere hoofde, is te allen tijde beperkt tot het bedrag dat de bedrijfsaansprakelijkheidsverzekering (AVB) in het desbetreffende geval uitkeert, vermeerderd met het eigen risico van Audio Upgrade Emmen, en bedraagt in geen enkel geval meer dan een absoluut maximum van € 50.000,-.',
         'Audio Upgrade Emmen is uitsluitend aansprakelijk voor directe schade aan het Voertuig die het rechtstreekse en aantoonbare gevolg is van de Werkzaamheden. Aansprakelijkheid voor indirecte schade, gevolgschade, gederfde winst, gemiste besparingen of schade door bedrijfsstagnatie van de Klant is uitdrukkelijk uitgesloten.',
@@ -92,7 +103,7 @@ export const ALGEMENE_VOORWAARDEN = {
       ],
     },
     {
-      kop: 'Artikel 7 — Garantie',
+      kop: 'Artikel 8 — Garantie',
       lijst: [
         "Op alle geleverde hardware (luidsprekers, versterkers, subwoofers, DSP's) is de wettelijke fabrieksgarantie van de desbetreffende fabrikant of importeur van toepassing (veelal 1 of 2 jaar).",
         'Op de door Audio Upgrade Emmen uitgevoerde installatiewerkzaamheden en aangelegde bekabeling wordt een **levenslange garantie** verleend. Deze garantie is strikt persoonsgebonden en vervalt onmiddellijk zodra het Voertuig van eigenaar wisselt.',
@@ -101,7 +112,7 @@ export const ALGEMENE_VOORWAARDEN = {
       ],
     },
     {
-      kop: 'Artikel 8 — Annulering en no-show',
+      kop: 'Artikel 9 — Annulering en no-show',
       lijst: [
         'Het kosteloos annuleren of verzetten van een inbouwafspraak is mogelijk tot uiterlijk 7 dagen voor de afgesproken inbouwdatum.',
         'Bij annulering of verplaatsing binnen 7 dagen voor de inbouwdatum is Audio Upgrade Emmen gerechtigd om 25% van het totale offertebedrag in rekening te brengen ter dekking van gereserveerde tijd en speciaal voor de Klant bestelde materialen.',
@@ -109,21 +120,21 @@ export const ALGEMENE_VOORWAARDEN = {
       ],
     },
     {
-      kop: 'Artikel 9 — Eigendomsvoorbehoud en retentierecht',
+      kop: 'Artikel 10 — Eigendomsvoorbehoud en retentierecht',
       lijst: [
         'Alle door Audio Upgrade Emmen geleverde, gemonteerde en ingebouwde componenten blijven het volledige eigendom van Audio Upgrade Emmen totdat de Klant aan alle betalingsverplichtingen uit de overeenkomst heeft voldaan.',
         'Audio Upgrade Emmen heeft het recht om het retentierecht uit te oefenen op het Voertuig indien de Klant tekortschiet in de betaling van de Werkzaamheden. Audio Upgrade Emmen mag het Voertuig onder zich houden (op risico en stallingskosten van de Klant) totdat de volledige betaling, inclusief eventuele bijkomende stallingskosten, is voldaan.',
       ],
     },
     {
-      kop: 'Artikel 10 — Overmacht',
+      kop: 'Artikel 11 — Overmacht',
       lijst: [
         'Audio Upgrade Emmen is niet gehouden tot het nakomen van enige verplichting indien zij daartoe gehinderd wordt als gevolg van overmacht. Onder overmacht wordt in elk geval verstaan: ziekte van de sleutelfiguur binnen de eenmanszaak, extreme weersomstandigheden, stroomstoringen, acute leveringsproblemen bij toeleveranciers en overheidsmaatregelen.',
         'In geval van overmacht worden de verplichtingen opgeschort en zal Audio Upgrade Emmen in overleg met de Klant zo spoedig mogelijk een nieuwe inbouwdatum inplannen.',
       ],
     },
     {
-      kop: 'Artikel 11 — Toepasselijk recht en geschillen',
+      kop: 'Artikel 12 — Toepasselijk recht en geschillen',
       lijst: [
         'Op alle rechtsbetrekkingen waarbij Audio Upgrade Emmen partij is, is uitsluitend het Nederlands recht van toepassing.',
         'Partijen zullen pas een beroep op de rechter doen nadat zij zich tot het uiterste hebben ingespannen om het geschil in onderling overleg op te lossen.',

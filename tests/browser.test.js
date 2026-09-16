@@ -883,16 +883,51 @@ describe('de werkbak', alsGebouwd, () => {
     }
   });
 
+  test('de afspraken staan standaard goed en onthouden zich', async () => {
+    const { pagina, fouten } = await openWerkbak();
+
+    // Standaard: op afstand afgesproken en de voorwaarden gaan mee. Dat is
+    // wat er gebeurt als een offerte via WhatsApp de deur uit gaat.
+    assert.equal(await pagina.isChecked('#wb-op-afstand'), true);
+    assert.equal(await pagina.isChecked('#wb-bijlage'), true);
+    assert.equal(await pagina.isChecked('#wb-start-direct'), false);
+
+    // Zet je 'op afstand' uit, dan verdwijnt 'direct beginnen': zonder
+    // bedenktijd valt er niets binnen die bedenktijd te beginnen.
+    await pagina.check('#wb-start-direct');
+    await pagina.uncheck('#wb-op-afstand');
+    assert.equal(await pagina.isHidden('#wb-start-veld'), true);
+    assert.equal(await pagina.isChecked('#wb-start-direct'), false);
+
+    // Bewaren en terughalen: de vinkjes moeten staan zoals je ze liet staan.
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+    await pagina.fill('#wb-naam', 'Mark de Vries');
+    await pagina.click('#wb-bewaar');
+    await pagina.click('#wb-nieuw');
+    assert.equal(await pagina.isChecked('#wb-op-afstand'), true, 'een nieuwe offerte begint schoon');
+    await pagina.click('#wb-bewaard .wb-open-offerte >> nth=0');
+    assert.equal(await pagina.isChecked('#wb-op-afstand'), false);
+
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
   test('alles waar je op tikt is groot genoeg voor een duim', async () => {
     const pagina = await browser.newPage(telefoon);
     await pagina.goto(paginaUrl('werkbak'));
     await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
     const teKlein = await pagina.$$eval('button, input, select, textarea', (elementen) =>
       elementen
-        .map((e) => ({
-          wat: (e.textContent || e.getAttribute('aria-label') || e.id || '').trim().slice(0, 30),
-          h: e.getBoundingClientRect().height,
-        }))
+        .map((e) => {
+          /* Zit het veld in een label, dan is dat hele label het tikvlak: je
+             raakt een vinkje van 22 pixels net zo goed door naast de tekst te
+             tikken. Meet dus waar je echt op kunt tikken. */
+          const vlak = e.closest('label') || e;
+          return {
+            wat: (e.textContent || e.getAttribute('aria-label') || e.id || '').trim().slice(0, 30),
+            h: vlak.getBoundingClientRect().height,
+          };
+        })
         .filter((e) => e.h > 0 && e.h < 38)
     );
     assert.deepEqual(teKlein, []);

@@ -19,7 +19,9 @@ import { nieuwPdf, breekAf, breedteVan } from './pdf.js';
 import { SITE } from '../../data/site.js';
 import {
   KLEUR, LINKS, RECHTS, ONDERGRENS, kopbalk, voetregel, blokkop, kentekenplaat,
+  voorwaardenBijlage,
 } from './opmaak.js';
+import { kernpunten, annuleertermijn } from './voorwaarden.js';
 /* De streepjes in een kenteken zitten al in de site: dezelfde functie die de
    kenteken-check gebruikt. Twee keer dezelfde tabel onderhouden gaat een keer
    mis, en dan staat er op een werkbon een ander kenteken dan op de site. */
@@ -207,13 +209,22 @@ export function offertePdf(offerte, inst = STANDAARD_INSTELLINGEN) {
   y += 30;
 
   /* ---- de afspraken --------------------------------------------------- */
-  const afspraken = [
-    `Deze offerte is geldig tot en met ${datumNl(offerte.geldigTot)}.`,
-    'Alle genoemde prijzen zijn all-in: inclusief montage' +
-      (zakelijk ? '.' : ' en btw.'),
-    'Je fabrieksgarantie blijft 100% behouden; er wordt niet in de originele bedrading geknipt.',
-    'Werk gebeurt uitsluitend op afspraak. Levertijd van onderdelen in overleg.',
-  ];
+  /**
+   * De korte punten die Justus anders per WhatsApp zou doorgeven. Ze komen
+   * uit voorwaarden.js, dat op zijn beurt de voorwaarden van de site leest —
+   * dus wat hier staat en wat online staat kan niet uiteenlopen.
+   */
+  const afspraken = kernpunten({
+    soort: 'offerte',
+    geldigTot: datumNl(offerte.geldigTot),
+    /* Een offerte via WhatsApp is een overeenkomst op afstand; dan geldt de
+       bedenktijd. Spreek je het in de werkplaats af, dan niet. */
+    opAfstand: offerte.opAfstand !== false,
+    startDirect: !!offerte.startDirect,
+    /* Een bedrijf heeft geen bedenktijd, en ziet bedragen zonder btw. */
+    zakelijk,
+    annuleerDagen: annuleertermijn(),
+  });
   if (offerte.opmerking) afspraken.push(offerte.opmerking);
 
   const afsprakenRegels = afspraken.flatMap((zin) => breekAf(`·  ${zin}`, RECHTS - LINKS, 8.5));
@@ -227,6 +238,12 @@ export function offertePdf(offerte, inst = STANDAARD_INSTELLINGEN) {
   }
 
   voetregel(doc, paginaNr);
+
+  /* De volledige voorwaarden erachter. Uit te zetten per offerte, voor het
+     geval de klant ze al heeft of het om een kleine klus gaat. */
+  if (offerte.voorwaardenBijlage !== false) {
+    voorwaardenBijlage(doc, kop, paginaNr);
+  }
   return doc;
 }
 
