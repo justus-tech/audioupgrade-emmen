@@ -176,7 +176,7 @@ const AFKORTINGEN = new Set([
  * Maakt van een RDW-schrijfwijze een leesbare naam.
  * "VOLKSWAGEN GOLF PLUS" -> "Volkswagen Golf Plus"
  *
- * Ook gebruikt door de werkbak: daar komen merk en model apart op een
+ * Ook gebruikt door Deck: daar komen merk en model apart op een
  * offerte te staan, dus die hebben deze functie los nodig.
  *
  * Woorden met een cijfer erin blijven ongemoeid ("ID.3", "150", "4S"),

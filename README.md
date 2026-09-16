@@ -162,15 +162,21 @@ test op die controleert dat ze elkaar niet tegenspreken.
 
 ---
 
-## De werkbak — je offerte-app
+## Deck — je offerte-app
 
-Op `/werkbak` staat een app voor jezelf, niet voor klanten. Je vult een
+Op `/deck` staat een app voor jezelf, niet voor klanten. Je vult een
 kenteken in, vinkt aan wat de klant wil, en er rolt een pdf-offerte uit die
 je meteen via WhatsApp kunt versturen.
 
+> De app heette eerst **Werkbak** en stond op `/werkbak`. Dat oude adres
+> stuurt je door naar `/deck`, dus een oud icoon op je beginscherm blijft
+> werken. Wat je er al in hebt gezet — je onderdelen, je auto's, je
+> offertes — blijft gewoon staan; die worden onder de oude naam bewaard en
+> daar is met opzet niets aan veranderd.
+
 **Je zet hem één keer klaar:**
 
-1. Open `audioupgradeemmen.nl/werkbak` op je telefoon.
+1. Open `audioupgradeemmen.nl/deck` op je telefoon.
 2. Ga naar **Instellingen** en vul je uurtarief en je standaard marge in.
 3. Ga naar **Onderdelen** en zet erin wat je bij je leveranciers koopt:
    naam, inkoopprijs, marge en hoeveel uur montage het kost.
@@ -182,7 +188,7 @@ Daarna is een offerte maken: kenteken, naam, aantikken wat erin gaat,
 **Wat de klant wél en niet ziet.** Op de pdf staat één bedrag per regel, met
 montage en (bij particulieren) btw er al in. Je inkoopprijzen, je marge en je
 uurtarief staan er nooit op — daar staat een test op in
-`tests/werkbak.test.js`.
+`tests/deck.test.js`.
 
 ### Elk kabeltje klopt
 

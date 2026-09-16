@@ -1,12 +1,12 @@
 /**
- * HET APP-BESTAND VAN DE WERKBAK.
+ * HET APP-BESTAND VAN DECK.
  *
- * Dit vertelt de telefoon hoe de werkbak zich moet gedragen als hij op het
+ * Dit vertelt de telefoon hoe Deck zich moet gedragen als hij op het
  * beginscherm staat: welke naam eronder komt, welk icoon, en dat hij zonder
  * adresbalk opent. Zonder dit bestand krijg je een bladwijzer die de browser
  * opent; mét dit bestand voelt het als een app.
  *
- * ALLEEN VOOR DE WERKBAK
+ * ALLEEN VOOR DECK
  * Dit bestand hangt aan die ene pagina en niet aan de site. Bezoekers merken
  * er dus niets van — die krijgen gewoon de website.
  *
@@ -21,13 +21,13 @@ import { pad } from '../lib/pad.js';
 
 export async function GET() {
   const manifest = {
-    name: `Werkbak — ${SITE.name}`,
+    name: `Deck — ${SITE.name}`,
     /* Wat er onder het icoon past. Twaalf tekens is het maximum voordat
        Android hem afkapt met drie puntjes. */
-    short_name: 'Werkbak',
+    short_name: 'Deck',
     description: 'Offertes, werkbonnen en facturen vanaf het kenteken.',
-    start_url: pad('/werkbak'),
-    scope: pad('/werkbak'),
+    start_url: pad('/deck'),
+    scope: pad('/deck'),
     display: 'standalone',
     orientation: 'portrait',
     /* De kleuren van het merk: de balk bovenin en het opstartscherm. */
