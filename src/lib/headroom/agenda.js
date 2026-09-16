@@ -157,6 +157,34 @@ export function icsTekst(tekst) {
 }
 
 /**
+ * Het moment waarop de afspraak is gemaakt, in de tijd van Greenwich.
+ * Elk agendabestand moet dat veld hebben.
+ */
+export function icsNu(nu = new Date()) {
+  const twee = (n) => String(n).padStart(2, '0');
+  return (
+    `${nu.getUTCFullYear()}${twee(nu.getUTCMonth() + 1)}${twee(nu.getUTCDate())}` +
+    `T${twee(nu.getUTCHours())}${twee(nu.getUTCMinutes())}${twee(nu.getUTCSeconds())}Z`
+  );
+}
+
+/**
+ * Afspraken tot één agendabestand maken: met de omslag eromheen die elke
+ * agenda verwacht, opgevouwen, en met wagenretouren aan het eind van de regel.
+ */
+export function icsBestand(afspraken) {
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Audio Upgrade Emmen//Headroom//NL',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    ...afspraken,
+    'END:VCALENDAR',
+  ].flatMap(vouwOp).join('\r\n') + '\r\n';
+}
+
+/**
  * Lange regels opvouwen.
  *
  * Een regel in een agendabestand mag niet langer zijn dan 75 tekens. Wat
@@ -186,7 +214,7 @@ export function ontvouw(tekst) {
 }
 
 /** 20260920T090000 — de tijd zoals hij op de klok staat, zonder tijdzone. */
-function stempel(datum, tijd = '09:00') {
+export function icsStempel(datum, tijd = '09:00') {
   const [uur, min] = String(tijd).split(':');
   const d = opMiddernacht(datum);
   const twee = (n) => String(n).padStart(2, '0');
@@ -219,30 +247,20 @@ function plusUren(tijd, uren) {
 export function icsVoorKlus(item, { duurUren = 8, voorbereiding = {} } = {}) {
   const wat = [item.auto, item.kenteken].filter(Boolean).join(' · ');
   const titel = `Inbouw ${item.wie}${wat ? ` — ${wat}` : ''}`;
-  const nu = new Date();
-  const gestempeld =
-    `${nu.getUTCFullYear()}${String(nu.getUTCMonth() + 1).padStart(2, '0')}` +
-    `${String(nu.getUTCDate()).padStart(2, '0')}T${String(nu.getUTCHours()).padStart(2, '0')}` +
-    `${String(nu.getUTCMinutes()).padStart(2, '0')}${String(nu.getUTCSeconds()).padStart(2, '0')}Z`;
+  const gestempeld = icsNu();
 
   const omschrijving = (lijst) =>
     icsTekst([`Offerte ${item.nummer}`, item.telefoon && `Tel. ${item.telefoon}`, '', ...lijst]
       .filter((r) => r !== false && r !== undefined)
       .join('\n'));
 
-  const regels = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//Audio Upgrade Emmen//Headroom//NL',
-    'CALSCALE:GREGORIAN',
-    'METHOD:PUBLISH',
-
+  return icsBestand([
     /* ---- de inbouw ---- */
     'BEGIN:VEVENT',
     `UID:inbouw-${item.nummer}@audioupgradeemmen.nl`,
     `DTSTAMP:${gestempeld}`,
-    `DTSTART:${stempel(item.datum, item.tijd)}`,
-    `DTEND:${stempel(item.datum, plusUren(item.tijd, duurUren))}`,
+    `DTSTART:${icsStempel(item.datum, item.tijd)}`,
+    `DTEND:${icsStempel(item.datum, plusUren(item.tijd, duurUren))}`,
     `SUMMARY:${icsTekst(titel)}`,
     `DESCRIPTION:${omschrijving(voorbereiding.dag || [])}`,
     'LOCATION:Charles Darwinstraat 35\\, 7825 AB Emmen',
@@ -262,8 +280,8 @@ export function icsVoorKlus(item, { duurUren = 8, voorbereiding = {} } = {}) {
     'BEGIN:VEVENT',
     `UID:bestellen-${item.nummer}@audioupgradeemmen.nl`,
     `DTSTAMP:${gestempeld}`,
-    `DTSTART:${stempel(item.besteldag, '08:00')}`,
-    `DTEND:${stempel(item.besteldag, '08:30')}`,
+    `DTSTART:${icsStempel(item.besteldag, '08:00')}`,
+    `DTEND:${icsStempel(item.besteldag, '08:30')}`,
     `SUMMARY:${icsTekst(`Onderdelen bestellen — ${item.wie}`)}`,
     `DESCRIPTION:${omschrijving([
       `Uiterlijk vandaag bestellen voor de inbouw op ${datumNl(item.datum)}.`,
@@ -275,12 +293,7 @@ export function icsVoorKlus(item, { duurUren = 8, voorbereiding = {} } = {}) {
     `DESCRIPTION:${icsTekst(`Morgen uiterlijk bestellen voor ${item.wie}`)}`,
     'END:VALARM',
     'END:VEVENT',
-
-    'END:VCALENDAR',
-  ];
-
-  /* Een agendabestand wil regeleindes met een wagenretour ervoor. */
-  return regels.flatMap(vouwOp).join('\r\n') + '\r\n';
+  ]);
 }
 
 /** inbouw-2026-014-XX99XX.ics */

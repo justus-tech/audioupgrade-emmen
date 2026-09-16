@@ -33,6 +33,11 @@ import {
 } from '../src/lib/headroom/agenda.js';
 import { voorbereiding, voorbereidingMetWaarom } from '../src/lib/headroom/voorbereiding.js';
 import {
+  bevestiging, datumVoluit, icsLuistersessie, luistersessieBestandsnaam,
+  luistersessieItems, whatsappBericht,
+} from '../src/lib/headroom/luistersessie.js';
+import { SITE, ADRES } from '../src/data/site.js';
+import {
   DOSSIER_VELDEN, autoSleutel, zoekDossier, dossierStand, leegDossier, dossierNaam,
 } from '../src/lib/headroom/autos.js';
 import { MODELS } from '../src/data/models.js';
@@ -1490,5 +1495,165 @@ describe('elk tabblad heeft een eigen adres', alsGebouwd, () => {
     for (const kort of m.shortcuts) {
       assert.ok(kort.url.startsWith(m.scope), `${kort.url} valt buiten ${m.scope}`);
     }
+  });
+});
+
+/**
+ * DE LUISTERSESSIE.
+ *
+ * Dit bericht gaat rechtstreeks naar een klant. Ontbreekt de instructie over
+ * het hek, dan staat er iemand voor niets te wachten voor een dicht hek — en
+ * dat is precies de afspraak die je niet goed begint.
+ */
+describe('de afspraak voor een luistersessie', () => {
+  const sessie = {
+    id: 'a1',
+    voornaam: 'Mark',
+    kenteken: 'XX99XX',
+    datum: '2026-10-07',
+    tijd: '14:00',
+    duurMinuten: 45,
+  };
+  const tekst = (extra = {}) => bevestiging({ ...sessie, ...extra });
+
+  test('de datum staat voluit met de dag erbij', () => {
+    // "07-10" leest de een als 7 oktober en de ander als juli. Met de dagnaam
+    // erbij kan dat niet meer misgaan, en zie je meteen of het je uitkomt.
+    assert.equal(datumVoluit('2026-10-07'), 'woensdag 7 oktober 2026');
+    assert.match(tekst(), /woensdag 7 oktober 2026/);
+  });
+
+  test('alles wat Justus gevraagd heeft staat erin', () => {
+    const t = tekst();
+    assert.match(t, /^Hoi Mark,/, 'de voornaam ontbreekt');
+    assert.match(t, /14:00/, 'het tijdstip ontbreekt');
+    assert.match(t, /XX-99-XX/, 'het kenteken ontbreekt');
+    assert.match(t, /Charles Darwinstraat 35/, 'het adres ontbreekt');
+    assert.match(t, /hek/, 'de instructie over het hek ontbreekt');
+    assert.match(t, new RegExp(SITE.phoneDisplay.replace(/\+/g, '\\+')), 'het telefoonnummer ontbreekt');
+  });
+
+  test('het kenteken staat er met streepjes in', () => {
+    // Zoals het op zijn kentekenbewijs staat, niet als een rij tekens.
+    assert.match(tekst({ kenteken: 'xx99xx' }), /XX-99-XX/);
+  });
+
+  test('alleen de voornaam, ook als je de achternaam intikt', () => {
+    assert.match(tekst({ voornaam: 'Mark de Vries' }), /^Hoi Mark,/);
+  });
+
+  test('zonder naam blijft het een net bericht', () => {
+    // Geen "Hoi ," met een losse komma erin.
+    assert.match(tekst({ voornaam: '' }), /^Hoi,/);
+  });
+
+  test('zonder duur geen verzonnen eindtijd', () => {
+    // De app weet niet hoe lang het duurt; dan zegt hij er ook niets over.
+    const t = tekst({ duurMinuten: 0 });
+    assert.match(t, /Hoe laat: 14:00/);
+    assert.doesNotMatch(t, /tot ongeveer/);
+  });
+
+  test('de eindtijd klopt en loopt niet over middernacht heen', () => {
+    assert.match(tekst({ tijd: '14:00', duurMinuten: 45 }), /14:00 tot ongeveer 14:45/);
+    assert.match(tekst({ tijd: '09:30', duurMinuten: 90 }), /09:30 tot ongeveer 11:00/);
+    assert.match(tekst({ tijd: '23:30', duurMinuten: 90 }), /23:30 tot ongeveer 23:59/);
+  });
+
+  test('er staat niets in wat we niet kunnen waarmaken', () => {
+    const t = tekst();
+    assert.doesNotMatch(t, /garanti/i, 'een belofte die hier niet hoort');
+    assert.doesNotMatch(t, /\bu\b/, 'op de hele site is het "je", niet "u"');
+  });
+});
+
+describe('het agendabestand van een luistersessie', () => {
+  const sessie = {
+    id: 'a1', voornaam: 'Mark', kenteken: 'XX99XX',
+    datum: '2026-10-07', tijd: '14:00', duurMinuten: 45,
+  };
+  const ics = () => icsLuistersessie(sessie);
+
+  test('het is een geldig agendabestand met één afspraak', () => {
+    const t = ics();
+    assert.match(t, /^BEGIN:VCALENDAR\r\n/);
+    assert.match(t, /END:VCALENDAR\r\n$/);
+    assert.equal(t.match(/BEGIN:VEVENT/g).length, 1);
+    assert.ok(!/[^\r]\n/.test(t), 'een regeleinde zonder wagenretour');
+  });
+
+  test('begin- en eindtijd kloppen', () => {
+    const t = ics();
+    assert.match(t, /DTSTART:20261007T140000/);
+    assert.match(t, /DTEND:20261007T144500/);
+  });
+
+  test('het adres en het hek staan ook in de afspraak zelf', () => {
+    // Een klant die op de dag zelf zijn agenda opent moet daar alles vinden
+    // zonder terug te scrollen in WhatsApp.
+    const t = ontvouw(ics());
+    assert.match(t, /LOCATION:Charles Darwinstraat 35/);
+    assert.match(t, /hek/);
+  });
+
+  test('er zit een wekker een dag en een uur van tevoren in', () => {
+    const t = ics();
+    assert.match(t, /TRIGGER:-P1D/);
+    assert.match(t, /TRIGGER:-PT1H/);
+  });
+
+  test('geen regel langer dan 75 tekens', () => {
+    for (const regel of ics().split('\r\n')) {
+      assert.ok(regel.length <= 75, `te lang (${regel.length})`);
+    }
+  });
+
+  test('de bestandsnaam zegt wanneer en welke auto', () => {
+    assert.equal(luistersessieBestandsnaam(sessie), 'luistersessie-2026-10-07-XX99XX.ics');
+  });
+});
+
+describe('de luistersessie in de agenda', () => {
+  const vandaag = new Date(2026, 8, 16);
+  const sessies = [
+    { id: 'a', voornaam: 'Mark', kenteken: 'XX99XX', datum: '2026-10-07', tijd: '14:00' },
+    { id: 'b', voornaam: 'Sanne', kenteken: 'YY11YY', datum: '2026-09-20', tijd: '10:00' },
+    { id: 'c', voornaam: 'Zonder datum' },
+  ];
+
+  test('alleen sessies met een datum, de eerstvolgende bovenaan', () => {
+    const lijst = luistersessieItems(sessies, vandaag);
+    assert.deepEqual(lijst.map((i) => i.id), ['b', 'a']);
+  });
+
+  test('ze hebben dezelfde vorm als een inbouw', () => {
+    // Zo kunnen ze in één lijst door elkaar staan: je agenda is één agenda.
+    const [eerste] = luistersessieItems(sessies, vandaag);
+    assert.equal(eerste.soort, 'luistersessie');
+    assert.equal(eerste.hoeLang, 'over 4 dagen');
+    assert.equal(eerste.kenteken, 'YY-11-YY');
+    assert.ok(eerste.datum instanceof Date);
+  });
+
+  test('de voornaam blijft eraan hangen om opnieuw te kunnen sturen', () => {
+    const [eerste] = luistersessieItems(sessies, vandaag);
+    assert.match(bevestiging(eerste), /^Hoi Sanne,/);
+  });
+});
+
+describe('de WhatsApp-link', () => {
+  test('een 06-nummer wordt een nummer waar WhatsApp mee overweg kan', () => {
+    assert.match(whatsappBericht('hoi', '06 12 34 56 78'), /^https:\/\/wa\.me\/31612345678\?/);
+    assert.match(whatsappBericht('hoi', '+31612345678'), /^https:\/\/wa\.me\/31612345678\?/);
+  });
+
+  test('zonder nummer kies je zelf de contactpersoon', () => {
+    assert.match(whatsappBericht('hoi'), /^https:\/\/wa\.me\/\?text=/);
+  });
+
+  test('het bericht gaat er onverminkt in mee', () => {
+    const tekst = bevestiging({ voornaam: 'Mark', datum: '2026-10-07', tijd: '14:00' });
+    const link = whatsappBericht(tekst);
+    assert.equal(decodeURIComponent(link.split('text=')[1]), tekst);
   });
 });

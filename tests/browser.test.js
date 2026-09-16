@@ -883,6 +883,71 @@ describe('Headroom', alsGebouwd, () => {
     }
   });
 
+  test('een luistersessie plannen en versturen', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.click('[data-tab="agenda"]');
+    await pagina.fill('#wb-ls-voornaam', 'Mark de Vries');
+    await pagina.fill('#wb-ls-kenteken', 'XX99XX');
+    await pagina.fill('#wb-ls-datum', '2026-10-07');
+    await pagina.fill('#wb-ls-tijd', '14:00');
+
+    // Het bericht stelt zichzelf op terwijl je typt.
+    const bericht = await pagina.inputValue('#wb-ls-bericht');
+    assert.match(bericht, /^Hoi Mark,/, 'alleen de voornaam hoort erin');
+    assert.match(bericht, /woensdag 7 oktober 2026/);
+    assert.match(bericht, /14:00/);
+    assert.match(bericht, /XX-99-XX/);
+    assert.match(bericht, /Charles Darwinstraat 35/);
+    assert.match(bericht, /hek/);
+    assert.match(bericht, /44 37 98 44/);
+
+    // Zonder datum wil hij niet versturen: dat is een half bericht.
+    await pagina.fill('#wb-ls-datum', '');
+    await pagina.click('#wb-ls-whatsapp');
+    assert.match(await pagina.textContent('#wb-ls-melding'), /datum/i);
+
+    await pagina.fill('#wb-ls-datum', '2026-10-07');
+    await pagina.click('#wb-ls-bewaar');
+    assert.match(await pagina.textContent('#wb-agenda-lijst'), /Luistersessie — Mark de Vries/);
+    assert.match(await pagina.textContent('#wb-agenda-lijst'), /XX-99-XX/);
+
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een luistersessie levert een agendabestand voor de klant', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.click('[data-tab="agenda"]');
+    await pagina.fill('#wb-ls-voornaam', 'Mark');
+    await pagina.fill('#wb-ls-datum', '2026-10-07');
+    await pagina.fill('#wb-ls-tijd', '14:00');
+    const [download] = await Promise.all([
+      pagina.waitForEvent('download'),
+      pagina.click('#wb-ls-ics'),
+    ]);
+    assert.match(download.suggestedFilename(), /^luistersessie-2026-10-07/);
+    const tekst = readFileSync(await download.path(), 'utf8').replace(/\r\n /g, '');
+    assert.match(tekst, /DTSTART:20261007T140000/);
+    assert.match(tekst, /LOCATION:Charles Darwinstraat 35/);
+    assert.match(tekst, /hek/);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een bewaarde luistersessie kun je weghalen', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    pagina.on('dialog', (d) => d.accept());
+    await pagina.click('[data-tab="agenda"]');
+    await pagina.fill('#wb-ls-voornaam', 'Mark');
+    await pagina.fill('#wb-ls-datum', '2026-10-07');
+    await pagina.click('#wb-ls-bewaar');
+    assert.equal(await pagina.locator('.wb-ls-weg').count(), 1);
+    await pagina.click('.wb-ls-weg');
+    assert.equal(await pagina.locator('.wb-ls-weg').count(), 0);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
   test('een klus met een datum komt in de agenda te staan', async () => {
     const { pagina, fouten } = await openWerkbak();
     const overDagen = (n) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);

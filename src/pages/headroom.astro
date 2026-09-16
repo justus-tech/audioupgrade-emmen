@@ -263,6 +263,38 @@ import { APP } from '../data/app.js';
   <!-- ================= AGENDA ================= -->
   <section class="wb-paneel" data-paneel="agenda" hidden>
     <h1 class="wb-h">Agenda</h1>
+
+    <!-- ---- luistersessie ---- -->
+    <div class="wb-kaart">
+      <span class="eyebrow">Luistersessie plannen</span>
+      <p class="wb-uitleg">
+        De afspraak waarin de klant komt luisteren. Vul in wat je hebt afgesproken;
+        hieronder staat het bericht dat je hem stuurt, met het adres en de
+        instructie over het hek er al in.
+      </p>
+      <div class="wb-veldrij">
+        <label>Voornaam<input type="text" id="wb-ls-voornaam" autocomplete="given-name" /></label>
+        <label>Kenteken<input type="text" id="wb-ls-kenteken" /></label>
+        <label>Datum<input type="date" id="wb-ls-datum" /></label>
+        <label>Hoe laat<input type="time" id="wb-ls-tijd" step="900" /></label>
+        <label>Duurt ongeveer (min)<input type="text" id="wb-ls-duur" inputmode="numeric" /></label>
+        <label>Telefoon (optioneel)<input type="tel" id="wb-ls-telefoon" inputmode="tel" /></label>
+      </div>
+      <label class="wb-breed wb-opmerking">Het bericht dat je stuurt
+        <textarea id="wb-ls-bericht" rows="12"></textarea>
+      </label>
+      <p class="wb-uitleg">
+        Je kunt dit aanpassen voordat je het verstuurt. Vul je hierboven iets in,
+        dan wordt het opnieuw opgesteld.
+      </p>
+      <div class="wb-knoprij">
+        <button type="button" class="btn solid wb-vol" id="wb-ls-whatsapp">Versturen via WhatsApp</button>
+        <button type="button" class="btn wb-vol" id="wb-ls-ics">Agendabestand voor de klant</button>
+        <button type="button" class="btn wb-vol" id="wb-ls-bewaar">In mijn agenda zetten</button>
+      </div>
+      <div id="wb-ls-melding"></div>
+    </div>
+
     <div id="wb-agenda-nu"></div>
     <div id="wb-agenda-lijst"></div>
     <p class="wb-leeg" id="wb-agenda-leeg">
@@ -514,6 +546,10 @@ import { APP } from '../data/app.js';
     agenda, agendaItem, icsVoorKlus, icsBestandsnaam, hoeLangNog,
   } from '../lib/headroom/agenda.js';
   import { voorbereidingMetWaarom, voorbereiding } from '../lib/headroom/voorbereiding.js';
+  import {
+    bevestiging, icsLuistersessie, luistersessieBestandsnaam, luistersessieItems,
+    whatsappBericht, datumVoluit,
+  } from '../lib/headroom/luistersessie.js';
   import { MODELS } from '../data/models.js';
   /* Dezelfde schrijfwijze als de site: de RDW levert "GOLF VII 1.4 TSI" en dat
      moet "Golf VII 1.4 TSI" worden, niet "Golf Vii 1.4 Tsi". */
@@ -535,6 +571,8 @@ import { APP } from '../data/app.js';
     offertes: [],
     /* Wat er per automodel is nagemeten. Zie src/lib/headroom/autos.js. */
     dossiers: [],
+    /* Luistersessies: afspraken die aan een offerte voorafgaan. */
+    sessies: [],
   });
 
   function laden() {
@@ -548,6 +586,8 @@ import { APP } from '../data/app.js';
         offertes: Array.isArray(gelezen.offertes) ? gelezen.offertes : [],
         /* Opslag van vóór de autodossiers heeft dit veld nog niet. */
         dossiers: Array.isArray(gelezen.dossiers) ? gelezen.dossiers : [],
+        /* En van vóór de luistersessies dit veld niet. */
+        sessies: Array.isArray(gelezen.sessies) ? gelezen.sessies : [],
       };
     } catch (e) {
       /* Kapotte of geblokkeerde opslag mag de app niet stilzetten. */
@@ -787,7 +827,11 @@ import { APP } from '../data/app.js';
   };
 
   function tekenAgenda() {
-    const items = agenda(staat.offertes, staat.instellingen);
+    const klussen = agenda(staat.offertes, staat.instellingen);
+    const sessies = luistersessieItems(staat.sessies);
+    /* Eén agenda, niet twee: een inbouw en een luistersessie staan door
+       elkaar op datum, want zo staan ze ook in je dag. */
+    const items = [...klussen, ...sessies].sort((a, b) => a.datum - b.datum);
     const komend = items.filter((i) => i.dagen >= 0);
     $('#wb-agenda-leeg').hidden = items.length > 0;
 
@@ -812,7 +856,7 @@ import { APP } from '../data/app.js';
     vak.innerHTML = '';
     /* Wat geweest is onderaan en ingeklapt: je kijkt vooruit, niet terug. */
     for (const item of [...komend, ...items.filter((i) => i.dagen < 0).reverse()]) {
-      vak.appendChild(agendaKaart(item));
+      vak.appendChild(item.soort === 'luistersessie' ? sessieKaart(item) : agendaKaart(item));
     }
   }
 
@@ -895,6 +939,112 @@ import { APP } from '../data/app.js';
       toonTab('offerte', { inGeschiedenis: true });
     });
 
+    return kaart;
+  }
+
+  /* ================= LUISTERSESSIE ================= */
+  const LS_VELDEN = ['voornaam', 'kenteken', 'datum', 'tijd', 'duur', 'telefoon'];
+
+  /** Wat er nu in het formulier staat. */
+  function sessieUitFormulier() {
+    return {
+      voornaam: $('#wb-ls-voornaam').value.trim(),
+      kenteken: $('#wb-ls-kenteken').value.trim(),
+      datum: $('#wb-ls-datum').value,
+      tijd: $('#wb-ls-tijd').value || '10:00',
+      duurMinuten: Number($('#wb-ls-duur').value) || 45,
+      telefoon: $('#wb-ls-telefoon').value.trim(),
+    };
+  }
+
+  /* Het bericht opnieuw opstellen zodra er iets verandert. Dat overschrijft
+     wat Justus zelf heeft bijgetypt — daarom staat dat er ook bij. */
+  function tekenBericht() {
+    $('#wb-ls-bericht').value = bevestiging(sessieUitFormulier());
+  }
+
+  LS_VELDEN.forEach((veld) => {
+    $(`#wb-ls-${veld}`).addEventListener('input', tekenBericht);
+    $(`#wb-ls-${veld}`).addEventListener('change', tekenBericht);
+  });
+
+  const lsMelden = (tekst, waarschuwing = false) => {
+    $('#wb-ls-melding').innerHTML = tekst
+      ? `<p class="${waarschuwing ? 'wb-waarschuwing' : 'wb-uitleg'}">${ontsnap(tekst)}</p>`
+      : '';
+  };
+
+  /** Ontbreekt er iets waardoor het bericht onaf is? */
+  function sessieCompleet(sessie) {
+    if (!sessie.datum) return 'Zet er eerst een datum bij.';
+    if (!sessie.voornaam) return 'Zonder voornaam is het een bericht aan niemand.';
+    return '';
+  }
+
+  $('#wb-ls-whatsapp').addEventListener('click', () => {
+    const sessie = sessieUitFormulier();
+    const mis = sessieCompleet(sessie);
+    if (mis) { lsMelden(mis, true); return; }
+    lsMelden('');
+    /* De tekst uit het veld en niet opnieuw opgesteld: heeft Justus er iets
+       bij getypt, dan gaat dát mee. */
+    window.open(whatsappBericht($('#wb-ls-bericht').value, sessie.telefoon), '_blank');
+  });
+
+  const bewaarBestand = (inhoud, naam, soort) => {
+    const adres = URL.createObjectURL(new Blob([inhoud], { type: soort }));
+    const link = document.createElement('a');
+    link.href = adres;
+    link.download = naam;
+    link.click();
+    URL.revokeObjectURL(adres);
+  };
+
+  $('#wb-ls-ics').addEventListener('click', () => {
+    const sessie = sessieUitFormulier();
+    const mis = sessieCompleet(sessie);
+    if (mis) { lsMelden(mis, true); return; }
+    lsMelden('Stuur dit bestand mee met je bericht, dan zet de klant de afspraak in één tik in zijn agenda.');
+    bewaarBestand(icsLuistersessie(sessie), luistersessieBestandsnaam(sessie), 'text/calendar;charset=utf-8');
+  });
+
+  $('#wb-ls-bewaar').addEventListener('click', () => {
+    const sessie = sessieUitFormulier();
+    const mis = sessieCompleet(sessie);
+    if (mis) { lsMelden(mis, true); return; }
+    staat.sessies.unshift({ id: eigenId(), ...sessie });
+    staat.sessies = staat.sessies.slice(0, 200);
+    opslaan();
+    lsMelden(`Genoteerd: ${sessie.voornaam} op ${datumVoluit(sessie.datum)}.`);
+    tekenOpgeslagen();
+  });
+
+  /** Een bewaarde luistersessie in de agenda. */
+  function sessieKaart(item) {
+    const kaart = document.createElement('div');
+    kaart.className = `wb-kaart wb-klus${item.dagen < 0 ? ' wb-geweest' : ''}`;
+    kaart.innerHTML = `
+      <div class="wb-regel-kop">
+        <span><strong>${datumNl(item.datum)} · ${ontsnap(item.tijd)}</strong>
+          <small>Luistersessie — ${ontsnap(item.wie)}${
+            item.kenteken ? ` · ${ontsnap(item.kenteken)}` : ''}</small>
+        </span>
+        <em class="wb-wanneer">${item.hoeLang}</em>
+      </div>
+      <div class="wb-regel-rij">
+        <button type="button" class="btn wb-ls-opnieuw">Bericht opnieuw sturen</button>
+        <button type="button" class="wb-link wb-ls-weg">Weghalen</button>
+      </div>`;
+
+    kaart.querySelector('.wb-ls-opnieuw').addEventListener('click', () => {
+      window.open(whatsappBericht(bevestiging(item), item.telefoon), '_blank');
+    });
+    kaart.querySelector('.wb-ls-weg').addEventListener('click', () => {
+      if (!confirm(`Luistersessie van ${item.wie} weghalen?`)) return;
+      staat.sessies = staat.sessies.filter((x) => x.id !== item.id);
+      opslaan();
+      tekenOpgeslagen();
+    });
     return kaart;
   }
 
@@ -2151,6 +2301,7 @@ import { APP } from '../data/app.js';
   tekenAlles();
   /* Kom je binnen via een snelkoppeling van je beginscherm, dan sta je meteen
      op het goede tabblad. */
+  tekenBericht();
   toonTab(new URLSearchParams(location.search).get('tab') || 'offerte');
 </script>
 

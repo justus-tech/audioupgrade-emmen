@@ -344,6 +344,34 @@ niet betaald, dan zegt hij dat ook — dan is het tijd om te bellen.
 Heb je besteld, tik dan **De onderdelen zijn besteld** aan. Daarna houdt die
 klus op je eraan te herinneren.
 
+### Een luistersessie plannen
+
+Bovenaan de **Agenda** staat een blok om een luistersessie af te spreken — de
+afspraak waarin de klant komt luisteren, vóór er een offerte is. Vul voornaam,
+kenteken, datum en tijd in, en het bericht voor de klant stelt zichzelf op:
+
+- de dag **voluit** met de dagnaam erbij, want "07-10" leest niet iedereen
+  hetzelfde;
+- het tijdstip, en met een duur erbij ook een eindtijd;
+- zijn kenteken met streepjes, zoals het op zijn kentekenbewijs staat;
+- het adres Charles Darwinstraat 35;
+- **de instructie over het hek**: bellen op jouw nummer, dan doe jij open.
+
+Dat laatste is de reden dat dit blok bestaat. Vergeet je die zin, dan staat er
+iemand voor een dicht hek te wachten.
+
+Drie knoppen eronder:
+
+| | |
+|---|---|
+| **Versturen via WhatsApp** | opent WhatsApp met het bericht er al in. Vul je een telefoonnummer in, dan gaat hij rechtstreeks naar dat gesprek; laat je het leeg, dan kies je zelf de contactpersoon. |
+| **Agendabestand voor de klant** | een bestand dat hij één keer opent en dan staat de afspraak in zijn agenda — met het adres, het hek en jouw nummer erin, en een wekker een dag en een uur van tevoren. |
+| **In mijn agenda zetten** | zet de sessie in de lijst eronder, tussen de inbouwklussen. |
+
+Het bericht staat in een veld dat je kunt aanpassen voordat je het verstuurt.
+Verander je daarna nog iets aan de datum of de naam, dan wordt het opnieuw
+opgesteld — dan ben je je aanpassing kwijt.
+
 ### De meldingen
 
 **De app kan je geen melding sturen als hij dichtstaat.** Daar is een server
