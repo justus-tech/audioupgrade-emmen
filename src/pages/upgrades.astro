@@ -19,6 +19,7 @@ import Merken from '../components/Merken.astro';
 import Fotoband from '../components/Fotoband.astro';
 import ModelKiezer from '../components/ModelKiezer.astro';
 import NogGeenAuto from '../components/NogGeenAuto.astro';
+import KomLuisteren from '../components/KomLuisteren.astro';
 /* Foto: Unsplash — vrij te gebruiken. Zie src/components/Fotoband.astro. */
 import speakerconus from '../assets/foto/speakerconus.jpg';
 import { SITE, AUDIOPAKKETTEN, LOSSE_OPTIES, pakkettenVan } from '../data/site.js';
@@ -90,12 +91,14 @@ const los = pakkettenVan(LOSSE_OPTIES);
       <div class="losse-opties">
         <h2 class="center">Los te bestellen</h2>
         <p class="center" style="margin:0 auto 2.2em;">
-          Zoek je alleen een scherm dat wél werkt, of juist alleen rust in de auto?
+          Zoek je alleen een scherm dat wél werkt, stroom die niet inzakt, of juist rust in de auto?
         </p>
-        <div class="grid cols-2 gelijk">
+        <div class="grid cols-3 gelijk">
           {los.map((pkg) => <PackageCard pkg={pkg} uitgebreid={true} showScores={false} />)}
         </div>
       </div>
+
+      <KomLuisteren />
 
       <div style="margin-top:4rem"><Merken /></div>
     </div>

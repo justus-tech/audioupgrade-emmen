@@ -14,137 +14,11 @@
  * extraatje op desktop. De punten zijn ook met het toetsenbord te bereiken.
  */
 import { PACKAGES } from '../data/site.js';
+/* De tekening zelf staat in een gegevensbestand, want de posters voor aan de
+   muur gebruiken precies dezelfde auto. Zie src/data/schets.js. */
+import { AUTO, ONDERDELEN, ZONES, VOLGORDE } from '../data/schets.js';
 
 const { start = 'akoestische-basis' } = Astro.props;
-
-/**
- * Alle onderdelen met hun plek in de tekening en een uitleg van een paar
- * regels. Auto met de neus omhoog, midden op x=220.
- *
- * `spiegel` betekent: teken ook een punt op deze plek aan de andere kant,
- * zonder eigen nummer. Links en rechts horen bij hetzelfde onderdeel.
- */
-const ONDERDELEN = [
-  {
-    id: 'carplay',
-    naam: 'Draadloos CarPlay',
-    plek: 'In je originele scherm',
-    uitleg:
-      'Apple CarPlay en Android Auto draadloos in het scherm dat er al zit. Je stuurknoppen, navigatie en parkeersensoren blijven precies zoals ze waren — er verandert niets zichtbaars aan je dashboard.',
-    x: 220, y: 138,
-    pakketten: ['carplay-upgrade', 'oem-plus-executive', 'reference-edition'],
-  },
-  {
-    id: 'tweeters',
-    naam: 'Tweeters',
-    plek: 'In de spiegeldriehoek',
-    uitleg:
-      'De hoge tonen komen los van de deur en gaan naar de spiegeldriehoek. Daardoor zit het geluidsbeeld ineens vóór je op het dashboard in plaats van bij je knieën. Dit is het verschil dat mensen het eerst horen.',
-    x: 152, y: 176, spiegel: 288,
-    pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition'],
-  },
-  {
-    id: 'front',
-    naam: 'Speakers voorin',
-    plek: 'In beide voordeuren',
-    uitleg:
-      'Een echte componentenset vervangt de papieren fabrieksspeakers. Wij monteren ze op CNC-gefreesde ringen op de originele bevestigingspunten, dus er wordt niet geboord of gezaagd.',
-    x: 140, y: 240, spiegel: 300,
-    pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition'],
-  },
-  {
-    id: 'rear',
-    naam: 'Speakers achterin',
-    plek: 'In beide achterdeuren',
-    uitleg:
-      'Voor wie ook achterin passagiers heeft. Wij stemmen ze bewust terughoudend af, zodat ze het beeld vóór je aanvullen in plaats van het naar achteren trekken.',
-    x: 140, y: 370, spiegel: 300,
-    pakketten: ['reference-edition'],
-  },
-  {
-    id: 'dsp',
-    naam: 'DSP-versterker',
-    plek: 'Onder de stoel of in de zijwand',
-    uitleg:
-      'Het hart van de installatie. Geeft de speakers het vermogen waarvoor ze gemaakt zijn en corrigeert met tijdcorrectie het feit dat je dichter bij de linkerdeur zit dan bij de rechter. Onzichtbaar weggewerkt.',
-    x: 286, y: 318,
-    pakketten: ['oem-plus-executive', 'reference-edition'],
-  },
-  {
-    id: 'sub',
-    naam: 'Subwoofer',
-    plek: 'Onder de stoel of in de reservewielbak',
-    uitleg:
-      'Het fundament dat de fabriek weglaat. Compact uitgevoerd, zodat je laadvloer vlak blijft en je bagageruimte volledig bruikbaar. Waar hij precies komt hangt van je auto af.',
-    x: 220, y: 528,
-    pakketten: ['oem-plus-executive', 'reference-edition'],
-  },
-];
-
-/**
- * Dempingszones. Die tonen we als opgelicht paneel in plaats van als punt,
- * want demping zit óp een vlak en niet op één plek.
- */
-const ZONES = [
-  {
-    id: 'demp-voor',
-    naam: 'Demping voordeuren',
-    plek: 'Buiten- en binnenblik',
-    uitleg:
-      'Je deur is een holle bak met open gaten. De achterkant van de speaker straalt daarin en heft de bas grotendeels op. Dichtmaken en dempen levert direct hoorbaar meer bas op, zonder dat er één watt bij komt.',
-    x: 120, y: 292,
-    vlak: 'M 110,200 L 130,200 L 130,312 L 112,312 Z',
-    spiegelVlak: 'M 330,200 L 310,200 L 310,312 L 328,312 Z',
-    pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition', 'akoestische-isolatie'],
-  },
-  {
-    id: 'demp-achter',
-    naam: 'Demping achterdeuren',
-    plek: 'Buiten- en binnenblik',
-    uitleg:
-      'Dezelfde behandeling als voorin. Naast betere bas maakt dit de auto merkbaar stiller op de snelweg, ook als je de muziek uit laat.',
-    x: 120, y: 422,
-    vlak: 'M 112,332 L 130,332 L 130,442 L 114,442 Z',
-    spiegelVlak: 'M 328,332 L 310,332 L 310,442 L 326,442 Z',
-    pakketten: ['oem-plus-executive', 'reference-edition', 'akoestische-isolatie'],
-  },
-  {
-    id: 'demp-kap',
-    naam: 'Demping motorkap',
-    plek: 'Tegen motorgeluid',
-    uitleg:
-      'Houdt motorgeluid buiten de cabine. Vooral merkbaar bij een dieselmotor of als je veel stad rijdt met veel optrekken.',
-    x: 220, y: 74,
-    vlak: 'M 150,64 L 290,64 L 290,86 L 150,86 Z',
-    pakketten: ['akoestische-isolatie'],
-  },
-  {
-    id: 'demp-vloer',
-    naam: 'Demping vloer',
-    plek: 'Tegen rolgeluid van de banden',
-    uitleg:
-      'De grootste bron van herrie op de snelweg komt van onderen. Vloerdemping haalt daar hoorbaar wat vanaf, waardoor je zachter kunt luisteren en toch alles hoort.',
-    x: 178, y: 446,
-    vlak: 'M 140,430 L 300,430 L 300,462 L 140,462 Z',
-    pakketten: ['akoestische-isolatie', 'reference-edition'],
-  },
-  {
-    id: 'demp-klep',
-    naam: 'Demping achterklep',
-    plek: 'Tegen resonantie en rammel',
-    uitleg:
-      'De achterklep werkt als een trommelvel: hij dreunt mee op elke basnoot. Dat klinkt als bas maar het is resonantie, en het maskeert juist de echte lage tonen.',
-    x: 220, y: 574,
-    vlak: 'M 150,562 L 290,562 L 290,586 L 150,586 Z',
-    pakketten: ['reference-edition', 'akoestische-isolatie'],
-  },
-];
-
-/** Nummering loopt van voor naar achter door de auto. */
-const VOLGORDE = [
-  'demp-kap', 'carplay', 'tweeters', 'front', 'demp-voor',
-  'rear', 'demp-achter', 'dsp', 'demp-vloer', 'sub', 'demp-klep',
-];
 
 const info = Object.fromEntries(
   [...ONDERDELEN, ...ZONES].map((o) => [o.id, { naam: o.naam, plek: o.plek, uitleg: o.uitleg }])
@@ -160,22 +34,16 @@ const info = Object.fromEntries(
 
   <div class="ds-inhoud">
     <figure class="ds-figuur">
-      <svg class="ds-svg" viewBox="0 0 440 640" role="img"
+      <svg class="ds-svg" viewBox={AUTO.viewBox} role="img"
            aria-label="Bovenaanzicht van een auto met de plek van de onderdelen">
         {/* --- carrosserie --- */}
         <g class="ds-lijn">
-          <path d="M 220,28 C 152,32 118,64 114,118 L 108,320 L 112,532
-                   C 116,574 150,596 200,600 L 240,600
-                   C 290,596 324,574 328,532 L 332,320 L 326,118
-                   C 322,64 288,32 220,28 Z" />
-          <path d="M 152,120 L 288,120 L 272,166 L 168,166 Z" class="ds-ruit" />
-          <path d="M 168,470 L 272,470 L 292,516 L 148,516 Z" class="ds-ruit" />
-          <path d="M 138,104 L 302,104" class="ds-dun" />
-          <path d="M 108,196 L 128,196 M 108,306 L 128,306 M 110,436 L 130,436" class="ds-dun" />
-          <path d="M 332,196 L 312,196 M 332,306 L 312,306 M 330,436 L 310,436" class="ds-dun" />
-          <rect x="152" y="212" width="56" height="72" rx="16" class="ds-stoel" />
-          <rect x="232" y="212" width="56" height="72" rx="16" class="ds-stoel" />
-          <rect x="152" y="346" width="136" height="72" rx="16" class="ds-stoel" />
+          <path d={AUTO.omtrek} />
+          {AUTO.ruiten.map((d) => <path d={d} class="ds-ruit" />)}
+          {AUTO.dun.map((d) => <path d={d} class="ds-dun" />)}
+          {AUTO.stoelen.map((s) => (
+            <rect x={s.x} y={s.y} width={s.breedte} height={s.hoogte} rx={s.rond} class="ds-stoel" />
+          ))}
         </g>
 
         {/* --- dempingsvlakken --- */}

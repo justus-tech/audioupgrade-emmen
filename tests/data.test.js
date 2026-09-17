@@ -225,8 +225,8 @@ describe('merken', () => {
 });
 
 describe('pakketten en prijzen', () => {
-  test('alle zes pakketten staan er', () => {
-    assert.equal(PACKAGES.length, 6);
+  test('alle zeven pakketten staan er', () => {
+    assert.equal(PACKAGES.length, 7);
   });
 
   // De site toont de pakketten in twee groepen: vier audiopakketten in één
@@ -352,6 +352,9 @@ describe('pakketten en prijzen', () => {
       // Het startbedrag staat in de kleine regel eronder — dat is het anker
       // dat 3.695 ernaast leesbaar houdt.
       'competitie-show': 'Prijs op aanvraag',
+      // Losse optie, met een vaste prijs: 'prijs op aanvraag' kost Justus werk
+      // en klanten haken erop af.
+      'accu-voeding': '€ 395,00',
       'akoestische-isolatie': 'Prijs op aanvraag',
     };
     for (const p of PACKAGES) {

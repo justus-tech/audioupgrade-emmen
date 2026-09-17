@@ -140,7 +140,7 @@ export const TEKSTEN = {
       /* CarPlay en isolatie staan apart, net als op de Nederlandse homepage.
          Zie de uitleg bij AUDIOPAKKETTEN in site.js. */
       losKop: 'Einzeln bestellbar',
-      losLead: 'Suchen Sie nur ein Display, das funktioniert — oder einfach Ruhe?',
+      losLead: 'Suchen Sie nur ein Display, das funktioniert, Strom der nicht einbricht — oder einfach Ruhe?',
       duurLabel: 'Dauer',
       garantieKop: 'Lebenslange Garantie auf unsere Arbeit',
       garantieStrip: 'Lebenslange Garantie auf unsere Einbauarbeit und die von uns verlegten Kabel.',
@@ -294,7 +294,7 @@ export const TEKSTEN = {
       lead:
         'They build on one another: every package includes what sits to the left of it. The price you see is the price you pay — parts and fitting included, no call-out charge, nothing extra when you come to collect it.',
       losKop: 'Available on its own',
-      losLead: 'After a screen that simply works — or just after quiet?',
+      losLead: 'After a screen that simply works, power that does not sag — or just quiet?',
       duurLabel: 'Time needed',
       garantieKop: 'Lifetime guarantee on our work',
       garantieStrip: 'Lifetime guarantee on our installation work and the wiring we lay.',

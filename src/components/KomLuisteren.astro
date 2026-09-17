@@ -1,0 +1,26 @@
+---
+/**
+ * "Kom eerst luisteren bij een klant die het al heeft."
+ *
+ * Staat direct onder de prijzen, want dat is precies waar iemand vastloopt:
+ * hij ziet 995 naast 3.695 en kan het verschil nergens horen. De tekst staat
+ * in src/data/generiek.js; zie daar ook waarom er "we vragen het" staat en
+ * niet "er staat een auto klaar".
+ */
+import { LUISTEREN } from '../data/generiek.js';
+import { whatsappLink } from '../lib/whatsapp.js';
+---
+<div class="luisteren troef troef-breed">
+  <span class="eyebrow">{LUISTEREN.eyebrow}</span>
+  <h3>{LUISTEREN.kop}</h3>
+  <p>{LUISTEREN.tekst}</p>
+  <a class="btn wa" href={whatsappLink(LUISTEREN.bericht)}>{LUISTEREN.knop}</a>
+</div>
+
+<style>
+  /* .troef geeft de streep in de merkkleur; hier alleen de kop nog op de
+     maat van de omliggende koppen zetten, want dit is een h3 en geen h2. */
+  .luisteren { margin: 3.4rem auto 0; }
+  .luisteren h3 { font-size: clamp(1.3rem, 3.4vw, 1.75rem); margin-top: .5em; }
+  .luisteren p { margin-top: 1em; }
+</style>
