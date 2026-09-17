@@ -915,6 +915,57 @@ describe('Headroom', alsGebouwd, () => {
     await pagina.close();
   });
 
+  test('een luistersessie van morgen komt bovenaan bij Nu doen', async () => {
+    // Een luistersessie duurt zo kort dat je hem vergeet. Juist daarom moet
+    // hij de dag ervoor bovenaan staan.
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.click('[data-tab="agenda"]');
+    await pagina.fill('#wb-ls-voornaam', 'Mark');
+    await pagina.fill('#wb-ls-datum', new Date(Date.now() + 86400000).toISOString().slice(0, 10));
+    await pagina.fill('#wb-ls-tijd', '14:00');
+    await pagina.click('#wb-ls-bewaar');
+
+    const nu = await pagina.textContent('#wb-agenda-nu');
+    assert.match(nu, /Luistersessie met Mark/);
+    assert.match(nu, /morgen om 14:00/);
+    assert.match(nu, /hek/i, 'de instructie over het hek ontbreekt');
+    assert.equal(await pagina.textContent('#wb-agenda-bel'), '1');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een sessie ver weg zeurt nog niet', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.click('[data-tab="agenda"]');
+    await pagina.fill('#wb-ls-voornaam', 'Sanne');
+    await pagina.fill('#wb-ls-datum', new Date(Date.now() + 9 * 86400000).toISOString().slice(0, 10));
+    await pagina.click('#wb-ls-bewaar');
+    assert.equal(await pagina.isVisible('#wb-agenda-bel'), false);
+    assert.equal((await pagina.textContent('#wb-agenda-nu')).trim(), '');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een bewaarde sessie kun je in je eigen agenda zetten', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.click('[data-tab="agenda"]');
+    await pagina.fill('#wb-ls-voornaam', 'Mark');
+    await pagina.fill('#wb-ls-datum', '2026-10-07');
+    await pagina.fill('#wb-ls-tijd', '14:00');
+    await pagina.click('#wb-ls-bewaar');
+
+    const [download] = await Promise.all([
+      pagina.waitForEvent('download'),
+      pagina.click('.wb-ls-ics2'),
+    ]);
+    const tekst = readFileSync(await download.path(), 'utf8');
+    assert.match(tekst, /DTSTART:20261007T140000/);
+    // De wekker een dag van tevoren: dat is waar het om gaat.
+    assert.match(tekst, /TRIGGER:-P1D/);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
   test('een luistersessie levert een agendabestand voor de klant', async () => {
     const { pagina, fouten } = await openWerkbak();
     await pagina.click('[data-tab="agenda"]');
@@ -1792,6 +1843,31 @@ describe('korting en eindfactuur', alsGebouwd, () => {
       assert.ok(await pagina.isVisible('#wb-kenteken'), `/${oud} opent de app niet`);
       await pagina.close();
     }
+  });
+
+  test('op een laptop wordt het scherm gebruikt in plaats van verspild', async () => {
+    // Justus werkt ook op de computer. Een kolom van 640 pixels midden op een
+    // breed scherm is zonde van de ruimte.
+    const pagina = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await pagina.goto(`${paginaUrl('headroom')}?tab=agenda`);
+    await pagina.evaluate(() => document.fonts.ready);
+
+    const kolommen = await pagina.evaluate(
+      () => getComputedStyle(document.querySelector('.wb-veldrij')).gridTemplateColumns.split(' ').length
+    );
+    assert.equal(kolommen, 3, 'de velden staan niet met drie naast elkaar');
+
+    const breed = await pagina.evaluate(
+      () => document.querySelector('main').getBoundingClientRect().width
+    );
+    assert.ok(breed > 800, `de kolom is nog maar ${Math.round(breed)} pixels breed`);
+
+    // En nog steeds niets dat opzij uitsteekt.
+    const overloop = await pagina.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+    );
+    assert.equal(overloop, 0);
+    await pagina.close();
   });
 
   test('alles past nog op 320 pixels', async () => {

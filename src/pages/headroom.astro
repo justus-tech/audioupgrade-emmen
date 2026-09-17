@@ -507,6 +507,35 @@ import { APP } from '../data/app.js';
         Agenda, Nieuwe offerte, Auto's en Onderdelen.
       </p>
       <div class="wb-knoprij" id="wb-tabkoppelingen"></div>
+    </div>
+
+    <div class="wb-kaart">
+      <span class="eyebrow">Op je computer</span>
+      <p class="wb-uitleg">
+        Headroom is een website, dus hij werkt net zo goed op je laptop. Open
+        <strong id="wb-adres-app"></strong> in Chrome of Edge. Op een breed scherm
+        staan de velden naast elkaar en zie je meer klussen tegelijk.
+      </p>
+      <p class="wb-uitleg">
+        <strong>Als echte app op je bureaublad:</strong> open het adres in Chrome en
+        klik op het installatie-icoontje rechts in de adresbalk (of zoek in het menu
+        naar <em>Installeren</em>). Je krijgt dan een eigen venster met een eigen
+        icoon in je taakbalk, zonder adresbalk eromheen — precies zoals op je
+        telefoon.
+      </p>
+      <p class="wb-waarschuwing">
+        <strong>Let op: elk apparaat heeft zijn eigen gegevens.</strong> Je onderdelen,
+        auto's en offertes staan in de telefoon of computer waar je ze hebt ingevoerd,
+        en gaan niet vanzelf mee. Wil je ze op allebei hebben: druk hierboven op
+        <strong>Bewaar als bestand</strong>, stuur dat bestand naar jezelf, en lees het
+        op het andere apparaat in met <strong>Lees bestand in</strong>.
+      </p>
+      <p class="wb-uitleg">
+        Automatisch gelijk houden kan niet zonder een server, en dan zouden je
+        inkoopprijzen op internet komen te staan in plaats van alleen in je eigen
+        apparaten. Dat is een keuze die jij maakt, niet de app. Zeg het als je dat
+        wilt, dan zoeken we het uit.
+      </p>
       <p class="wb-uitleg">
         <strong>Wat niet kan:</strong> een echte Android-widget — zo'n vakje op je
         beginscherm dat de eerstvolgende klus laat zien zonder dat je de app opent.
@@ -837,18 +866,42 @@ import { APP } from '../data/app.js';
 
     /* Bovenaan alleen wat vandaag aandacht vraagt. Staat er niets, dan staat
        er ook niets — een leeg vak met "niets te doen" is ruis. */
-    const dringend = komend.filter((i) => i.bestellen === 'nu' || i.bestellen === 'te-laat');
+    const bestellen = komend.filter((i) => i.bestellen === 'nu' || i.bestellen === 'te-laat');
+    /* Alles wat vandaag of morgen op de stoep staat, inbouw én luistersessie.
+       Een luistersessie is zo gebeurd dat je hem vergeet; juist daarom. */
+    const opKorteTermijn = komend.filter((i) => i.dagen <= 1);
+    const dringend = [...bestellen, ...opKorteTermijn.filter((i) => !bestellen.includes(i))];
+
     const bel = $('#wb-agenda-bel');
     bel.hidden = dringend.length === 0;
     bel.textContent = dringend.length || '';
 
+    /* De zinnen aan elkaar geplakt en niet over meerdere regels uitgesmeerd:
+       een regeleinde midden in een zin blijft in de tekst staan, en dan staat
+       er bij het kopiëren "morgen om" met een enter erachter. */
+    const zin = (i) => {
+      if (i.soort === 'luistersessie') {
+        return `<strong>Luistersessie met ${ontsnap(i.wie)}</strong>` +
+          ` — ${i.hoeLang} om ${ontsnap(i.tijd)}.` +
+          ' Hek openzetten of bij de telefoon blijven.';
+      }
+      if (i.dagen <= 1 && i.bestellen !== 'nu' && i.bestellen !== 'te-laat') {
+        return `<strong>Inbouw ${ontsnap(i.wie)}</strong>` +
+          ` — ${i.hoeLang} om ${ontsnap(i.tijd)}.` +
+          ' Loop het lijstje van vandaag na.';
+      }
+      if (i.bestellen === 'nu') {
+        return `<strong>Bestellen voor ${ontsnap(i.wie)}</strong>` +
+          ` — inbouw ${datumNl(i.datum)}, ${i.hoeLang}.`;
+      }
+      return `<strong>${ontsnap(i.wie)}</strong>` +
+        `: de besteldag is ${hoeLangNog(i.bestelDagenTot)} en de aanbetaling is nog niet binnen.` +
+        ' Bel of app de klant.';
+    };
+
     $('#wb-agenda-nu').innerHTML = dringend.length
       ? `<div class="wb-kaart wb-dringend"><span class="eyebrow">Nu doen</span>` +
-        dringend.map((i) =>
-          `<p>${i.bestellen === 'nu'
-            ? `<strong>Bestellen voor ${ontsnap(i.wie)}</strong> — inbouw ${datumNl(i.datum)}, ${i.hoeLang}.`
-            : `<strong>${ontsnap(i.wie)}</strong>: de besteldag is ${hoeLangNog(i.bestelDagenTot)}
-               en de aanbetaling is nog niet binnen. Bel of app de klant.`}</p>`).join('') +
+        dringend.map((i) => `<p>${zin(i)}</p>`).join('') +
         `</div>`
       : '';
 
@@ -1032,10 +1085,18 @@ import { APP } from '../data/app.js';
         <em class="wb-wanneer">${item.hoeLang}</em>
       </div>
       <div class="wb-regel-rij">
-        <button type="button" class="btn wb-ls-opnieuw">Bericht opnieuw sturen</button>
+        <button type="button" class="btn wb-ls-ics2">Zet in je agenda</button>
         <button type="button" class="wb-link wb-ls-weg">Weghalen</button>
+      </div>
+      <div class="wb-regel-rij">
+        <button type="button" class="wb-link wb-ls-opnieuw">Bericht opnieuw sturen</button>
       </div>`;
 
+    kaart.querySelector('.wb-ls-ics2').addEventListener('click', () => {
+      bewaarBestand(
+        icsLuistersessie(item), luistersessieBestandsnaam(item), 'text/calendar;charset=utf-8'
+      );
+    });
     kaart.querySelector('.wb-ls-opnieuw').addEventListener('click', () => {
       window.open(whatsappBericht(bevestiging(item), item.telefoon), '_blank');
     });
@@ -1813,6 +1874,7 @@ import { APP } from '../data/app.js';
    * beginscherm zetten. Ze staan hier in de app zodat je niet zelf een adres
    * hoeft over te typen.
    */
+  $('#wb-adres-app').textContent = `${SITE.url.replace(/^https?:\/\//, '')}${APP.pad}`;
   $('#wb-tabkoppelingen').innerHTML = TABBLADEN
     .map((t) => `<a class="btn wb-tabkoppeling" href="?tab=${t.id}">${ontsnap(t.naam)}</a>`)
     .join('');
@@ -2732,6 +2794,23 @@ import { APP } from '../data/app.js';
     main { max-width: 640px; margin: 0 auto; }
     .wb-kenteken { flex-direction: row; justify-content: center; }
     .wb-kenteken .btn { width: auto; }
+  }
+
+  /* Op een laptop: meer velden naast elkaar en twee klussen naast elkaar in de
+     agenda. De kaarten blijven onder elkaar staan — dan leest de offerte van
+     boven naar beneden, net als op de telefoon, en hoef je niet te wennen. */
+  @media (min-width: 1000px) {
+    main { max-width: 920px; padding-bottom: 24px; }
+    .wb-veldrij { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    #wb-agenda-lijst {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      align-items: start;
+    }
+    #wb-agenda-lijst .wb-kaart { margin-top: 0; }
+    .wb-knoprij { flex-direction: row; flex-wrap: wrap; }
+    .wb-knoprij .btn, .wb-knoprij .wb-tabkoppeling { flex: 1 1 200px; }
   }
 </style>
 </body>

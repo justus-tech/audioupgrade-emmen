@@ -368,6 +368,11 @@ Drie knoppen eronder:
 | **Agendabestand voor de klant** | een bestand dat hij één keer opent en dan staat de afspraak in zijn agenda — met het adres, het hek en jouw nummer erin, en een wekker een dag en een uur van tevoren. |
 | **In mijn agenda zetten** | zet de sessie in de lijst eronder, tussen de inbouwklussen. |
 
+Bij een bewaarde sessie staat ook **Zet in je agenda**: hetzelfde bestand, maar
+dan voor jezelf, met een wekker een dag en een uur van tevoren. En staat er
+morgen een luistersessie, dan staat hij bovenaan de Agenda onder **Nu doen** —
+een sessie is zo kort dat je hem vergeet.
+
 Het bericht staat in een veld dat je kunt aanpassen voordat je het verstuurt.
 Verander je daarna nog iets aan de datum of de naam, dan wordt het opnieuw
 opgesteld — dan ben je je aanpassing kwijt.
@@ -393,6 +398,27 @@ is precies waarom het zo werkt en niet met een melding uit de app zelf.
 De tijden staan er zonder tijdzone in. Dat heet een *zwevende tijd*: negen uur
 is negen uur op de klok waar je bent. Voor een werkplaats die altijd in
 Nederland staat is dat precies goed, en het scheelt gedoe met de zomertijd.
+
+### Headroom op je computer
+
+Het is een website, dus hij werkt ook op je laptop: open
+`audioupgradeemmen.nl/headroom` in Chrome of Edge. Vanaf ongeveer duizend
+pixels breed staan de velden met drie naast elkaar en staat de agenda in twee
+kolommen.
+
+**Als app op je bureaublad:** open het adres in Chrome en klik op het
+installatie-icoontje rechts in de adresbalk (of zoek in het menu naar
+*Installeren*). Je krijgt een eigen venster met een eigen icoon in de taakbalk,
+zonder adresbalk — hetzelfde als op de telefoon.
+
+> **Elk apparaat heeft zijn eigen gegevens.** Onderdelen, auto's en offertes
+> staan in het apparaat waar je ze hebt ingevoerd. Ze gaan niet vanzelf mee.
+> Wil je ze op allebei: **Bewaar als bestand** op het ene apparaat, dat bestand
+> naar jezelf sturen, en **Lees bestand in** op het andere.
+>
+> Automatisch gelijk houden kan niet zonder server — en dan zouden de
+> inkoopprijzen op internet staan in plaats van alleen in de apparaten van
+> Justus. Dat is een keuze die hij maakt, niet de app.
 
 ### Je offertes terugvinden
 
