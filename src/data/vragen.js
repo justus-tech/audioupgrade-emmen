@@ -91,7 +91,7 @@ export const VRAGEN = [
   {
     vraag: 'Hoe en wanneer betaal ik?',
     antwoord:
-      'Bij oplevering, per pin of betaalverzoek. Moeten we voertuigspecifieke onderdelen bestellen, dan kunnen we vooraf een aanbetaling vragen tot de helft van de materiaalkosten.',
+      'Bij oplevering, per pin of betaalverzoek. Moeten we voertuigspecifieke onderdelen bestellen, dan kunnen we vooraf een aanbetaling vragen tot de helft van het offertebedrag.',
   },
   {
     vraag: 'Kan ik mijn afspraak nog verzetten?',
