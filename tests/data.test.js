@@ -773,7 +773,7 @@ describe('de doorkijktekening van de auto', () => {
   });
 
   test('elke dempingszone heeft een vlak en elk onderdeel een uitleg', () => {
-    for (const z of ZONES) assert.ok(z.vlak, `${z.id} heeft geen vlak om op te lichten`);
+    for (const z of ZONES) assert.ok(z.vlakken && z.vlakken.length, `${z.id} heeft geen vlak om op te lichten`);
     for (const o of ALLES) {
       assert.ok(o.naam && o.plek && o.uitleg, `${o.id} mist een naam, plek of uitleg`);
       assert.ok(o.uitleg.length > 80, `de uitleg bij ${o.id} is wel erg kort`);

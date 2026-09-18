@@ -36,25 +36,16 @@ const info = Object.fromEntries(
     <figure class="ds-figuur">
       <svg class="ds-svg" viewBox={AUTO.viewBox} role="img"
            aria-label="Bovenaanzicht van een auto met de plek van de onderdelen">
+        {/* --- dempingsvlakken, onder de auto door --- */}
+        {ZONES.map((z) => z.vlakken.map((vlak) => (
+          <path class:list={['ds-vlak', z.zacht && 'zacht']} d={vlak} data-id={z.id}
+                data-pakketten={z.pakketten.join(' ')} />
+        )))}
+
         {/* --- carrosserie --- */}
         <g class="ds-lijn">
-          {AUTO.vormen.map((v) => <path d={v.d} class={`ds-${v.klasse}`} />)}
-          {AUTO.blokken.map((b) => (
-            <rect x={b.x} y={b.y} width={b.breedte} height={b.hoogte} rx={b.rond} class={`ds-${b.klasse}`} />
-          ))}
+          {AUTO.paden.map((v) => <path d={v.d} class={`ds-${v.klasse}`} />)}
         </g>
-
-        {/* --- dempingsvlakken --- */}
-        {ZONES.map((z) => (
-          <>
-            <path class="ds-vlak" d={z.vlak} data-id={z.id}
-                  data-pakketten={z.pakketten.join(' ')} />
-            {z.spiegelVlak && (
-              <path class="ds-vlak" d={z.spiegelVlak} data-id={z.id}
-                    data-pakketten={z.pakketten.join(' ')} />
-            )}
-          </>
-        ))}
 
         {/* --- gespiegelde punten zonder eigen nummer --- */}
         {ONDERDELEN.filter((o) => o.spiegel).map((o) => (
@@ -197,27 +188,35 @@ const info = Object.fromEntries(
   /* De auto. De carrosserie krijgt de stevigste lijn; alles daarbinnen is
      lichter, zodat je door het dak heen kijkt zonder dat het rommelig wordt.
      Zie src/data/schets.js voor de vormen zelf. */
-  .ds-lijn { fill: none; stroke: var(--text-dim); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .ds-lijn { fill: none; stroke: var(--text-dim); stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
   .ds-omtrek { stroke-width: 2.6; opacity: .95; }
+  .ds-paneel { opacity: .5; stroke-width: 1.5; }
+  .ds-detail { opacity: .3; stroke-width: 1.1; }
   .ds-ruit { opacity: .4; fill: color-mix(in srgb, var(--text) 4%, transparent); }
   .ds-dak { opacity: .18; }
-  .ds-dun { opacity: .34; stroke-width: 1.6; }
-  .ds-spiegelkap { opacity: .7; fill: color-mix(in srgb, var(--text-dim) 22%, transparent); }
-  .ds-stuur { opacity: .55; stroke-width: 1.8; }
-  .ds-wiel { fill: color-mix(in srgb, var(--text-dim) 26%, transparent); stroke: none; }
-  .ds-stoel { fill: none; stroke: var(--text-dim); opacity: .34; }
-  .ds-hoofdsteun { fill: color-mix(in srgb, var(--text-dim) 20%, transparent); stroke: none; }
-  .ds-console { fill: none; stroke: var(--text-dim); opacity: .22; stroke-width: 1.6; }
+  .ds-lamp { opacity: .5; stroke-width: 1.2; fill: color-mix(in srgb, var(--text-dim) 14%, transparent); }
+  .ds-spiegelkap { opacity: .7; fill: color-mix(in srgb, var(--text-dim) 22%, transparent); stroke-width: 1.4; }
+  .ds-wiel { fill: color-mix(in srgb, var(--text-dim) 24%, transparent); stroke: none; }
+  .ds-stuur { opacity: .5; stroke-width: 1.5; }
+  .ds-console { opacity: .26; stroke-width: 1.4; }
+  .ds-stoel { opacity: .36; stroke-width: 1.5; }
+  .ds-vulling { fill: color-mix(in srgb, var(--text-dim) 18%, transparent); stroke: none; }
+  .ds-kussen { fill: color-mix(in srgb, var(--text-dim) 12%, transparent); opacity: .5; stroke-width: 1.3; }
 
   /* ---- dempingsvlakken ---- */
   .ds-vlak {
-    /* Uit = onzichtbaar. Grijze blokken van zones die niet bij het pakket
-       horen maakten de tekening onrustig. */
+    /* Uit = onzichtbaar. Grijze vlakken van zones die niet bij het pakket
+       horen maakten de tekening onrustig. Ze liggen onder de auto, dus de
+       lijnen van de deur en de stoelen lopen er dwars overheen. */
     fill: transparent; stroke: none;
     transition: fill .3s ease;
   }
-  .ds-vlak.aan { fill: color-mix(in srgb, var(--accent) 40%, transparent); }
-  .ds-vlak.gekozen { fill: var(--accent); }
+  .ds-vlak.aan { fill: color-mix(in srgb, var(--accent) 28%, transparent); }
+  .ds-vlak.gekozen { fill: color-mix(in srgb, var(--accent) 55%, transparent); }
+  /* De motorkap en de vloer beslaan een halve auto: die krijgen een waas
+     in plaats van een vlak, anders verdwijnt de tekening eronder. */
+  .ds-vlak.zacht.aan { fill: color-mix(in srgb, var(--accent) 13%, transparent); }
+  .ds-vlak.zacht.gekozen { fill: color-mix(in srgb, var(--accent) 26%, transparent); }
 
   /* ---- punten ---- */
   .ds-punt { cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .3s ease; }

@@ -117,8 +117,8 @@ function tekening(slug) {
   const labels = [...linksLabels, ...rechtsLabels];
 
   const vlakken = genummerd
-    .filter((d) => d.vlak)
-    .map((d) => `<path d="${d.vlak}" class="zone"/>${d.spiegelVlak ? `<path d="${d.spiegelVlak}" class="zone"/>` : ''}`)
+    .filter((d) => d.vlakken)
+    .flatMap((d) => d.vlakken.map((vlak) => `<path d="${vlak}" class="zone${d.zacht ? ' zacht' : ''}"/>`))
     .join('');
 
   const spiegels = labels
@@ -185,11 +185,11 @@ function tekening(slug) {
       </pattern>
     </defs>
     <rect x="${vakX}" y="0" width="${vakB}" height="${AUTO.hoogte}" fill="url(#ruit)"/>
+    ${vlakken}
     <g class="carrosserie">
-      ${AUTO.vormen.map((v) => `<path d="${v.d}" class="${v.klasse}"/>`).join('')}
-      ${AUTO.blokken.map((b) => `<rect x="${b.x}" y="${b.y}" width="${b.breedte}" height="${b.hoogte}" rx="${b.rond}" class="${b.klasse}"/>`).join('')}
+      ${AUTO.paden.map((v) => `<path d="${v.d}" class="${v.klasse}"/>`).join('')}
     </g>
-    ${vlakken}${spiegels}${lijnen}${punten}${bijschriften}
+    ${spiegels}${lijnen}${punten}${bijschriften}
   </svg>`;
 }
 
@@ -329,16 +329,22 @@ const stijl = `
     stroke-linejoin: round; stroke-linecap: round;
   }
   .carrosserie .omtrek { stroke-width: 2.4; stroke: rgba(135,135,135,.75) }
+  .carrosserie .paneel { stroke-width: 1.4; opacity: .75 }
+  .carrosserie .detail { stroke-width: 1; opacity: .5 }
   .carrosserie .ruit { fill: rgba(245,245,245,.04) }
   .carrosserie .dak { opacity: .4 }
-  .carrosserie .dun { stroke-width: 1.3; opacity: .75 }
-  .carrosserie .spiegelkap { fill: rgba(135,135,135,.28) }
-  .carrosserie .stuur { stroke-width: 1.5; opacity: .8 }
+  .carrosserie .lamp { fill: rgba(135,135,135,.16); stroke-width: 1.1; opacity: .85 }
+  .carrosserie .spiegelkap { fill: rgba(135,135,135,.28); stroke-width: 1.3 }
   .carrosserie .wiel { fill: rgba(135,135,135,.3); stroke: none }
-  .carrosserie .stoel { fill: rgba(135,135,135,.1) }
-  .carrosserie .hoofdsteun { fill: rgba(135,135,135,.26); stroke: none }
-  .carrosserie .console { opacity: .5; stroke-width: 1.3 }
-  .zone { fill: rgba(255,94,31,.30); stroke: ${BRAND.accent}; stroke-width: 1.3 }
+  .carrosserie .stuur { stroke-width: 1.3; opacity: .8 }
+  .carrosserie .console { opacity: .55; stroke-width: 1.2 }
+  .carrosserie .stoel { stroke-width: 1.3; opacity: .9 }
+  .carrosserie .vulling { fill: rgba(135,135,135,.26); stroke: none }
+  .carrosserie .kussen { fill: rgba(135,135,135,.16); stroke-width: 1.2; opacity: .9 }
+  /* De vlakken liggen onder de auto: de deurnaden en de stoelen lopen er
+     overheen, zodat je ziet waar de demping tegenaan zit. */
+  .zone { fill: rgba(255,94,31,.26); stroke: rgba(255,94,31,.5); stroke-width: 1.1 }
+  .zone.zacht { fill: rgba(255,94,31,.12); stroke: rgba(255,94,31,.32) }
   .aanwijs { fill: none; stroke: rgba(255,94,31,.5); stroke-width: 1.2 }
   .halo { fill: rgba(255,94,31,.18) }
   .bol { fill: rgba(135,135,135,.4) }

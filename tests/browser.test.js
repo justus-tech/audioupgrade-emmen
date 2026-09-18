@@ -298,6 +298,17 @@ describe('de upgradepagina', alsGebouwd, () => {
  * Daarom meten we het hier op de pagina zelf.
  */
 describe('de pakketten naast elkaar', alsGebouwd, () => {
+  /* De kaarten komen bij het scrollen omhoog in beeld, en niet alle vier
+     tegelijk: er zit 70 ms tussen. Wie tijdens die animatie meet, ziet
+     verschillen die er een halve seconde later niet meer zijn — dat kostte
+     ons een test die soms wel en soms niet omviel. Dus eerst afwachten.
+     We kijken naar de doorzichtigheid en niet naar de verschuiving, want
+     een kaart waar de muis toevallig op staat blijft verschoven. */
+  const uitgeanimeerd = (p) =>
+    p.waitForFunction(() =>
+      [...document.querySelectorAll('.grid.vier > .card')]
+        .every((kaart) => getComputedStyle(kaart).opacity === '1'));
+
   /* De bovenkant van een onderdeel in elke kaart, afgerond op hele pixels. */
   const hoogtes = (p, kies) =>
     p.$$eval(`.grid.vier > .card ${kies}`, (els) =>
@@ -365,6 +376,7 @@ describe('de pakketten naast elkaar', alsGebouwd, () => {
     await p.setViewportSize({ width: 1280, height: 900 });
     await p.locator('.grid.vier > .card summary').first().click();
     await p.waitForFunction(() => document.querySelectorAll('.grid.vier details[open]').length === 4);
+    await uitgeanimeerd(p);
 
     const rij = await hoogtes(p, '.btn');
     assert.ok(Math.max(...rij) - Math.min(...rij) <= 1, `knoppen staan uit elkaar: ${rij.join(', ')}`);
