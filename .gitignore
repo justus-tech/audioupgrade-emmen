@@ -19,6 +19,9 @@ Thumbs.db
 # Screenshots ter controle (lokaal genereren met: node screenshot.mjs)
 shots/
 
+# De posters voor aan de muur (lokaal maken met: npm run posters)
+posters/
+
 # Het adres van de tijdelijke deellink (npm run deel)
 .tunnel-adres
 

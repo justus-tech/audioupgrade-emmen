@@ -1947,7 +1947,12 @@ import { APP } from '../data/app.js';
     const adres = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = adres;
-    link.download = `${APP.naam.toLowerCase()}-${new Date().toISOString().slice(0, 10)}.json`;
+    /* De lokale datum, niet die van Greenwich: tussen middernacht en twee uur
+       's nachts heette de reservekopie anders een dag ouder dan hij is. */
+    const nu = new Date();
+    const twee = (n) => String(n).padStart(2, '0');
+    const vandaag = `${nu.getFullYear()}-${twee(nu.getMonth() + 1)}-${twee(nu.getDate())}`;
+    link.download = `${APP.naam.toLowerCase()}-${vandaag}.json`;
     link.click();
     URL.revokeObjectURL(adres);
   });

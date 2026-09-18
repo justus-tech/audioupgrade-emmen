@@ -72,6 +72,21 @@ function startServer() {
 
 const paginaUrl = (pad) => `${basis}/${pad}`;
 
+/**
+ * Een datum een aantal dagen vanaf vandaag, als YYYY-MM-DD.
+ *
+ * Bewust niet via toISOString(): dat geeft de datum in Greenwich, en die loopt
+ * hier tussen middernacht en twee uur 's nachts een dag achter. Een test die
+ * "morgen" invulde kreeg dan vandaag, en viel om — maar alleen als je hem 's
+ * nachts draaide. Dat is het soort test dat je een ochtend kost.
+ */
+const overDagen = (n) => {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  const twee = (x) => String(x).padStart(2, '0');
+  return `${d.getFullYear()}-${twee(d.getMonth() + 1)}-${twee(d.getDate())}`;
+};
+
 const RDW_VOERTUIG = 'https://opendata.rdw.nl/resource/m9d7-ebf2.json*';
 const RDW_BRANDSTOF = 'https://opendata.rdw.nl/resource/8ys7-d773.json*';
 
@@ -283,6 +298,17 @@ describe('de upgradepagina', alsGebouwd, () => {
  * Daarom meten we het hier op de pagina zelf.
  */
 describe('de pakketten naast elkaar', alsGebouwd, () => {
+  /* De kaarten komen bij het scrollen omhoog in beeld, en niet alle vier
+     tegelijk: er zit 70 ms tussen. Wie tijdens die animatie meet, ziet
+     verschillen die er een halve seconde later niet meer zijn — dat kostte
+     ons een test die soms wel en soms niet omviel. Dus eerst afwachten.
+     We kijken naar de doorzichtigheid en niet naar de verschuiving, want
+     een kaart waar de muis toevallig op staat blijft verschoven. */
+  const uitgeanimeerd = (p) =>
+    p.waitForFunction(() =>
+      [...document.querySelectorAll('.grid.vier > .card')]
+        .every((kaart) => getComputedStyle(kaart).opacity === '1'));
+
   /* De bovenkant van een onderdeel in elke kaart, afgerond op hele pixels. */
   const hoogtes = (p, kies) =>
     p.$$eval(`.grid.vier > .card ${kies}`, (els) =>
@@ -350,6 +376,7 @@ describe('de pakketten naast elkaar', alsGebouwd, () => {
     await p.setViewportSize({ width: 1280, height: 900 });
     await p.locator('.grid.vier > .card summary').first().click();
     await p.waitForFunction(() => document.querySelectorAll('.grid.vier details[open]').length === 4);
+    await uitgeanimeerd(p);
 
     const rij = await hoogtes(p, '.btn');
     assert.ok(Math.max(...rij) - Math.min(...rij) <= 1, `knoppen staan uit elkaar: ${rij.join(', ')}`);
@@ -921,7 +948,7 @@ describe('Headroom', alsGebouwd, () => {
     const { pagina, fouten } = await openWerkbak();
     await pagina.click('[data-tab="agenda"]');
     await pagina.fill('#wb-ls-voornaam', 'Mark');
-    await pagina.fill('#wb-ls-datum', new Date(Date.now() + 86400000).toISOString().slice(0, 10));
+    await pagina.fill('#wb-ls-datum', overDagen(1));
     await pagina.fill('#wb-ls-tijd', '14:00');
     await pagina.click('#wb-ls-bewaar');
 
@@ -938,7 +965,7 @@ describe('Headroom', alsGebouwd, () => {
     const { pagina, fouten } = await openWerkbak();
     await pagina.click('[data-tab="agenda"]');
     await pagina.fill('#wb-ls-voornaam', 'Sanne');
-    await pagina.fill('#wb-ls-datum', new Date(Date.now() + 9 * 86400000).toISOString().slice(0, 10));
+    await pagina.fill('#wb-ls-datum', overDagen(9));
     await pagina.click('#wb-ls-bewaar');
     assert.equal(await pagina.isVisible('#wb-agenda-bel'), false);
     assert.equal((await pagina.textContent('#wb-agenda-nu')).trim(), '');
@@ -1001,7 +1028,6 @@ describe('Headroom', alsGebouwd, () => {
 
   test('een klus met een datum komt in de agenda te staan', async () => {
     const { pagina, fouten } = await openWerkbak();
-    const overDagen = (n) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
 
     await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
     await pagina.fill('#wb-naam', 'Mark de Vries');
@@ -1049,7 +1075,7 @@ describe('Headroom', alsGebouwd, () => {
     const { pagina, fouten } = await openWerkbak();
     await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
     await pagina.fill('#wb-naam', 'Mark de Vries');
-    await pagina.fill('#wb-inbouwdatum', new Date(Date.now() + 20 * 86400000).toISOString().slice(0, 10));
+    await pagina.fill('#wb-inbouwdatum', overDagen(20));
     await pagina.click('#wb-bewaar');
     await pagina.click('[data-tab="agenda"]');
     await pagina.locator('.wb-voorbereiding .wb-vink input').first().check();
@@ -1071,7 +1097,7 @@ describe('Headroom', alsGebouwd, () => {
     await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
     await pagina.fill('#wb-naam', 'Mark de Vries');
     await pagina.fill('#wb-kenteken', 'XX99XX');
-    await pagina.fill('#wb-inbouwdatum', new Date(Date.now() + 20 * 86400000).toISOString().slice(0, 10));
+    await pagina.fill('#wb-inbouwdatum', overDagen(20));
     await pagina.click('#wb-bewaar');
     await pagina.click('[data-tab="agenda"]');
 

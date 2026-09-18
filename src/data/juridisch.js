@@ -2,8 +2,18 @@
  * DE JURIDISCHE PAGINA'S.
  *
  * De algemene voorwaarden zijn WOORD VOOR WOORD overgenomen van
- * audioupgradeemmen.nl. Daar is één ding in veranderd: de typefout
- * "ingespanned" is "ingespannen" geworden.
+ * audioupgradeemmen.nl. Daar zijn twee dingen in veranderd. De typefout
+ * "ingespanned" is "ingespannen" geworden. En de aanbetaling in artikel 3
+ * rekent nu over het totale offertebedrag in plaats van over de totale
+ * materiaalkosten (Justus, september 2026), omdat hij op zijn offertes 40%
+ * van het totaal vraagt en de voorwaarden daar ruimte voor moeten geven.
+ *
+ * DE GRENS VAN 50% IS EEN WETTELIJKE. Bij een consumentenkoop kan de koper
+ * worden verplicht tot vooruitbetaling van "ten hoogste de helft van de
+ * koopprijs" (artikel 7:26 lid 2 BW), en daarvan mag niet ten nadele van de
+ * consument worden afgeweken (artikel 7:6 lid 1 BW). Zet hier dus nooit een
+ * hoger percentage in en laat het woord "tot" staan: het is een maximum,
+ * geen vast bedrag.
  *
  * Het privacy- en cookiebeleid zijn wél herschreven, en dat moest ook. De
  * oude teksten beschrijven Squarespace en Calendly, en die draaien deze site
@@ -62,7 +72,7 @@ export const ALGEMENE_VOORWAARDEN = {
       lijst: [
         'Alle offertes en prijsopgaven van Audio Upgrade Emmen zijn vrijblijvend en hebben een geldigheidsduur van 30 dagen, tenzij schriftelijk anders aangegeven.',
         'Een overeenkomst komt bindend tot stand zodra de Klant mondeling, schriftelijk of digitaal (per e-mail of WhatsApp) akkoord gaat met de offerte, of wanneer er een definitieve inbouwdatum wordt vastgelegd.',
-        'Audio Upgrade Emmen behoudt zich het recht voor om bij projecten een aanbetaling tot 50% van de totale materiaalkosten te verlangen alvorens voertuigspecifieke onderdelen worden besteld of de Werkzaamheden starten.',
+        'Audio Upgrade Emmen behoudt zich het recht voor om bij projecten een aanbetaling tot 50% van het totale offertebedrag te verlangen alvorens voertuigspecifieke onderdelen worden besteld of de Werkzaamheden starten. Meer dan de helft van het offertebedrag wordt nooit vooruit gevraagd.',
       ],
     },
     {

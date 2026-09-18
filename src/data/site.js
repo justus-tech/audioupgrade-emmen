@@ -183,7 +183,7 @@ export const AUDIOPAKKETTEN = [
 ];
 
 /** De twee losse opties, náást de vier hierboven. */
-export const LOSSE_OPTIES = ['carplay-upgrade', 'akoestische-isolatie'];
+export const LOSSE_OPTIES = ['carplay-upgrade', 'accu-voeding', 'akoestische-isolatie'];
 
 /**
  * ==========================================================================
@@ -358,6 +358,7 @@ export const PACKAGES = [
       'Onzichtbare, ultra-compacte actieve subwoofer.',
       'Extreme drielaags ontdreuning van deuren.',
       'Volledig akoestisch op maat ingemeten.',
+      'Accu en laadspanning gemeten, met de waarden op je werkbon.',
     ],
     cta: 'Kies Executive',
     duur: 'Je auto staat één werkdag bij ons',
@@ -419,6 +420,7 @@ export const PACKAGES = [
       'Op maat gebouwde en beklede subwoofer-behuizing.',
       'Totale ontdreuning (buitenschaal, binnenschaal, paneel).',
       'Urenlange specialistische fase-tuning via laptop.',
+      'Accu en laadspanning gemeten, met de waarden op je werkbon.',
     ],
     /* Stond op 'Bespreek maatwerk'. Dat past niet meer: maatwerk is nu het
        pakket ernaast, en een vaste prijs verdient een knop die kiest in
@@ -484,6 +486,7 @@ export const PACKAGES = [
       'Meerdere versterkers, volledig actief per weg aangestuurd.',
       'Behuizingen met de hand gebouwd, passend bij het interieur.',
       'Afstemming over meerdere sessies, met meetapparatuur.',
+      "Minimaal twee accu's, met een laadvoorziening die dat aankan.",
     ],
     cta: 'Bespreek je project',
     duur: 'Een week of langer — in overleg',
@@ -509,6 +512,49 @@ export const PACKAGES = [
     /* Een open vlaggetje op de plek van "Onze aanrader". Zonder oranje vulling,
        want het is een soort en geen aanbeveling — die hoort bij één pakket. */
     vlag: 'Op maat',
+    scores: [],
+  },
+  {
+    /**
+     * ACCU & VOEDING — EEN LOSSE OPTIE, GEEN VERPLICHT NUMMERTJE.
+     *
+     * Een versterker met subwoofer legt een zwakke accu genadeloos bloot:
+     * dimmende lichten, spanning die inzakt, en een klant die dáár jouw
+     * installatie de schuld van geeft.
+     *
+     * Toch zit dit bewust níét standaard in de Executive en de Reference.
+     * Wat daar wel in zit is de méting. Zodra je bij elk pakket automatisch
+     * een accu meeverkoopt, ben je de man die er altijd iets bij verkoopt —
+     * en dat is precies het tegenovergestelde van waar deze site op drijft.
+     * Meet je het en blijkt de accu goed, dan zeg je dat gewoon.
+     *
+     * En het is geen losse accu maar een voedingspakket. Een accu alleen
+     * googelt de klant binnen een minuut na; de dikkere hoofdkabel, de
+     * zekering en de massaverbinding zijn het vakwerk waar het verschil in
+     * zit — en waar de marge in zit.
+     *
+     * LET OP BIJ DE PRIJS: die gaat uit van een AGM-accu in een normale
+     * personenauto, inclusief aanmelden bij het accubeheer. Klopt de inkoop
+     * niet, dan is dit de enige regel die je hoeft aan te passen.
+     */
+    slug: 'accu-voeding',
+    name: 'Accu & Voeding',
+    tagline: 'Stroom die niet inzakt.',
+    price: '€ 395,00',
+    bedrag: 395,
+    priceNote: 'Inclusief BTW & Montage',
+    priceExcl: '€ 326,- excl. btw',
+    short: 'Een gezonde accu en zware voeding, zodat je installatie krijgt waar hij om vraagt.',
+    body: 'Een DSP-versterker met subwoofer vraagt meer stroom dan de fabrieksbedrading ooit hoefde te leveren. Zakt de spanning in, dan hoor je dat als slappe bas en zie je het als dimmende koplampen. Wij vervangen de accu door een AGM-accu die bij je auto past, melden hem aan bij het accubeheer zodat hij ook goed geladen wordt, trekken een dikkere hoofdkabel met zekering en versterken de massaverbinding. Voor en na meten we de spanning, en die waarden komen op je werkbon te staan.',
+    features: [
+      'AGM-accu, passend bij jouw auto en bij je systeem.',
+      'Aangemeld bij het accubeheer, dus met de juiste laadspanning.',
+      'Dikkere hoofdkabel met zekering direct bij de accu.',
+      'Versterkte massaverbinding naar carrosserie en motorblok.',
+      'Spanning gemeten voor en na, met de waarden op je werkbon.',
+    ],
+    cta: 'Kies Accu & Voeding',
+    duur: 'Klaar in ± 2 uur',
     scores: [],
   },
   {

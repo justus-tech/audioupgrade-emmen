@@ -56,7 +56,7 @@ const los = pakkettenVan(LOSSE_OPTIES);
     <div class="losse-opties">
       <h2 class="center">{t.pakketten.losKop}</h2>
       <p class="center" style="margin:0 auto 2.2em;">{t.pakketten.losLead}</p>
-      <div class="grid cols-2 gelijk">
+      <div class="grid cols-3 gelijk">
         {los.map((pkg) => (
           <PackageCard pkg={pkg} taal={taal} uitgebreid={true} showScores={false}
                        vertaling={p.pakketten[pkg.slug]} labels={t.kaart} />

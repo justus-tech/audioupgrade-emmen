@@ -14,137 +14,15 @@
  * extraatje op desktop. De punten zijn ook met het toetsenbord te bereiken.
  */
 import { PACKAGES } from '../data/site.js';
+/* De tekening zelf staat in een gegevensbestand, want de posters voor aan de
+   muur gebruiken precies dezelfde auto. Zie src/data/schets.js. */
+import { AUTO, ONDERDELEN, ZONES, VOLGORDE, HULPLIJNEN, MATEN, METER } from '../data/schets.js';
 
 const { start = 'akoestische-basis' } = Astro.props;
 
-/**
- * Alle onderdelen met hun plek in de tekening en een uitleg van een paar
- * regels. Auto met de neus omhoog, midden op x=220.
- *
- * `spiegel` betekent: teken ook een punt op deze plek aan de andere kant,
- * zonder eigen nummer. Links en rechts horen bij hetzelfde onderdeel.
- */
-const ONDERDELEN = [
-  {
-    id: 'carplay',
-    naam: 'Draadloos CarPlay',
-    plek: 'In je originele scherm',
-    uitleg:
-      'Apple CarPlay en Android Auto draadloos in het scherm dat er al zit. Je stuurknoppen, navigatie en parkeersensoren blijven precies zoals ze waren — er verandert niets zichtbaars aan je dashboard.',
-    x: 220, y: 138,
-    pakketten: ['carplay-upgrade', 'oem-plus-executive', 'reference-edition'],
-  },
-  {
-    id: 'tweeters',
-    naam: 'Tweeters',
-    plek: 'In de spiegeldriehoek',
-    uitleg:
-      'De hoge tonen komen los van de deur en gaan naar de spiegeldriehoek. Daardoor zit het geluidsbeeld ineens vóór je op het dashboard in plaats van bij je knieën. Dit is het verschil dat mensen het eerst horen.',
-    x: 152, y: 176, spiegel: 288,
-    pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition'],
-  },
-  {
-    id: 'front',
-    naam: 'Speakers voorin',
-    plek: 'In beide voordeuren',
-    uitleg:
-      'Een echte componentenset vervangt de papieren fabrieksspeakers. Wij monteren ze op CNC-gefreesde ringen op de originele bevestigingspunten, dus er wordt niet geboord of gezaagd.',
-    x: 140, y: 240, spiegel: 300,
-    pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition'],
-  },
-  {
-    id: 'rear',
-    naam: 'Speakers achterin',
-    plek: 'In beide achterdeuren',
-    uitleg:
-      'Voor wie ook achterin passagiers heeft. Wij stemmen ze bewust terughoudend af, zodat ze het beeld vóór je aanvullen in plaats van het naar achteren trekken.',
-    x: 140, y: 370, spiegel: 300,
-    pakketten: ['reference-edition'],
-  },
-  {
-    id: 'dsp',
-    naam: 'DSP-versterker',
-    plek: 'Onder de stoel of in de zijwand',
-    uitleg:
-      'Het hart van de installatie. Geeft de speakers het vermogen waarvoor ze gemaakt zijn en corrigeert met tijdcorrectie het feit dat je dichter bij de linkerdeur zit dan bij de rechter. Onzichtbaar weggewerkt.',
-    x: 286, y: 318,
-    pakketten: ['oem-plus-executive', 'reference-edition'],
-  },
-  {
-    id: 'sub',
-    naam: 'Subwoofer',
-    plek: 'Onder de stoel of in de reservewielbak',
-    uitleg:
-      'Het fundament dat de fabriek weglaat. Compact uitgevoerd, zodat je laadvloer vlak blijft en je bagageruimte volledig bruikbaar. Waar hij precies komt hangt van je auto af.',
-    x: 220, y: 528,
-    pakketten: ['oem-plus-executive', 'reference-edition'],
-  },
-];
-
-/**
- * Dempingszones. Die tonen we als opgelicht paneel in plaats van als punt,
- * want demping zit óp een vlak en niet op één plek.
- */
-const ZONES = [
-  {
-    id: 'demp-voor',
-    naam: 'Demping voordeuren',
-    plek: 'Buiten- en binnenblik',
-    uitleg:
-      'Je deur is een holle bak met open gaten. De achterkant van de speaker straalt daarin en heft de bas grotendeels op. Dichtmaken en dempen levert direct hoorbaar meer bas op, zonder dat er één watt bij komt.',
-    x: 120, y: 292,
-    vlak: 'M 110,200 L 130,200 L 130,312 L 112,312 Z',
-    spiegelVlak: 'M 330,200 L 310,200 L 310,312 L 328,312 Z',
-    pakketten: ['akoestische-basis', 'oem-plus-executive', 'reference-edition', 'akoestische-isolatie'],
-  },
-  {
-    id: 'demp-achter',
-    naam: 'Demping achterdeuren',
-    plek: 'Buiten- en binnenblik',
-    uitleg:
-      'Dezelfde behandeling als voorin. Naast betere bas maakt dit de auto merkbaar stiller op de snelweg, ook als je de muziek uit laat.',
-    x: 120, y: 422,
-    vlak: 'M 112,332 L 130,332 L 130,442 L 114,442 Z',
-    spiegelVlak: 'M 328,332 L 310,332 L 310,442 L 326,442 Z',
-    pakketten: ['oem-plus-executive', 'reference-edition', 'akoestische-isolatie'],
-  },
-  {
-    id: 'demp-kap',
-    naam: 'Demping motorkap',
-    plek: 'Tegen motorgeluid',
-    uitleg:
-      'Houdt motorgeluid buiten de cabine. Vooral merkbaar bij een dieselmotor of als je veel stad rijdt met veel optrekken.',
-    x: 220, y: 74,
-    vlak: 'M 150,64 L 290,64 L 290,86 L 150,86 Z',
-    pakketten: ['akoestische-isolatie'],
-  },
-  {
-    id: 'demp-vloer',
-    naam: 'Demping vloer',
-    plek: 'Tegen rolgeluid van de banden',
-    uitleg:
-      'De grootste bron van herrie op de snelweg komt van onderen. Vloerdemping haalt daar hoorbaar wat vanaf, waardoor je zachter kunt luisteren en toch alles hoort.',
-    x: 178, y: 446,
-    vlak: 'M 140,430 L 300,430 L 300,462 L 140,462 Z',
-    pakketten: ['akoestische-isolatie', 'reference-edition'],
-  },
-  {
-    id: 'demp-klep',
-    naam: 'Demping achterklep',
-    plek: 'Tegen resonantie en rammel',
-    uitleg:
-      'De achterklep werkt als een trommelvel: hij dreunt mee op elke basnoot. Dat klinkt als bas maar het is resonantie, en het maskeert juist de echte lage tonen.',
-    x: 220, y: 574,
-    vlak: 'M 150,562 L 290,562 L 290,586 L 150,586 Z',
-    pakketten: ['reference-edition', 'akoestische-isolatie'],
-  },
-];
-
-/** Nummering loopt van voor naar achter door de auto. */
-const VOLGORDE = [
-  'demp-kap', 'carplay', 'tweeters', 'front', 'demp-voor',
-  'rear', 'demp-achter', 'dsp', 'demp-vloer', 'sub', 'demp-klep',
-];
+/* De patronen hebben een eigen naam nodig: staan er twee tekeningen op
+   dezelfde pagina, dan mogen ze elkaars arcering niet oppakken. */
+const uid = Math.random().toString(36).slice(2, 8);
 
 const info = Object.fromEntries(
   [...ONDERDELEN, ...ZONES].map((o) => [o.id, { naam: o.naam, plek: o.plek, uitleg: o.uitleg }])
@@ -160,35 +38,57 @@ const info = Object.fromEntries(
 
   <div class="ds-inhoud">
     <figure class="ds-figuur">
-      <svg class="ds-svg" viewBox="0 0 440 640" role="img"
+      <svg class="ds-svg" viewBox={AUTO.viewBox} role="img"
            aria-label="Bovenaanzicht van een auto met de plek van de onderdelen">
+        <defs>
+          {/* Het raster is een meetraster: grof is een meter, fijn een kwart
+              meter, en de lijnen vallen op de hartlijn en op de vooras. */}
+          <pattern id={`fijn-${uid}`} width={METER / 4} height={METER / 4} patternUnits="userSpaceOnUse"
+                   patternTransform={`translate(220 ${MATEN.wielbasis.van})`}>
+            <path d={`M ${METER / 4} 0 L 0 0 0 ${METER / 4}`} class="ds-raster" />
+          </pattern>
+          <pattern id={`grof-${uid}`} width={METER} height={METER} patternUnits="userSpaceOnUse"
+                   patternTransform={`translate(220 ${MATEN.wielbasis.van})`}>
+            <path d={`M ${METER} 0 L 0 0 0 ${METER}`} class="ds-raster grof" />
+          </pattern>
+          {/* Arcering: zo geef je op een tekening een behandeld oppervlak aan. */}
+          <pattern id={`arcering-${uid}`} width="10" height="10" patternUnits="userSpaceOnUse"
+                   patternTransform="rotate(45)">
+            <rect width="10" height="10" class="ds-arc-vlak" />
+            <path d="M 0 0 L 0 10" class="ds-arc-lijn" />
+          </pattern>
+          <pattern id={`arcering-zacht-${uid}`} width="20" height="20" patternUnits="userSpaceOnUse"
+                   patternTransform="rotate(-45)">
+            <rect width="20" height="20" class="ds-arc-vlak zacht" />
+            <path d="M 0 0 L 0 20" class="ds-arc-lijn zacht" />
+          </pattern>
+        </defs>
+
+        <rect x="0" y="0" width={AUTO.breedte} height={AUTO.hoogte} fill={`url(#fijn-${uid})`} />
+        <rect x="0" y="0" width={AUTO.breedte} height={AUTO.hoogte} fill={`url(#grof-${uid})`} />
+
+        {/* --- dempingsvlakken, onder de auto door --- */}
+        {ZONES.map((z) => z.vlakken.map((vlak) => (
+          <path class="ds-vlak" d={vlak} data-id={z.id}
+                fill={`url(#arcering${z.zacht ? '-zacht' : ''}-${uid})`}
+                data-pakketten={z.pakketten.join(' ')} />
+        )))}
+
         {/* --- carrosserie --- */}
         <g class="ds-lijn">
-          <path d="M 220,28 C 152,32 118,64 114,118 L 108,320 L 112,532
-                   C 116,574 150,596 200,600 L 240,600
-                   C 290,596 324,574 328,532 L 332,320 L 326,118
-                   C 322,64 288,32 220,28 Z" />
-          <path d="M 152,120 L 288,120 L 272,166 L 168,166 Z" class="ds-ruit" />
-          <path d="M 168,470 L 272,470 L 292,516 L 148,516 Z" class="ds-ruit" />
-          <path d="M 138,104 L 302,104" class="ds-dun" />
-          <path d="M 108,196 L 128,196 M 108,306 L 128,306 M 110,436 L 130,436" class="ds-dun" />
-          <path d="M 332,196 L 312,196 M 332,306 L 312,306 M 330,436 L 310,436" class="ds-dun" />
-          <rect x="152" y="212" width="56" height="72" rx="16" class="ds-stoel" />
-          <rect x="232" y="212" width="56" height="72" rx="16" class="ds-stoel" />
-          <rect x="152" y="346" width="136" height="72" rx="16" class="ds-stoel" />
+          {AUTO.paden.map((v) => <path d={v.d} class={`ds-${v.klasse}`} />)}
         </g>
 
-        {/* --- dempingsvlakken --- */}
-        {ZONES.map((z) => (
-          <>
-            <path class="ds-vlak" d={z.vlak} data-id={z.id}
-                  data-pakketten={z.pakketten.join(' ')} />
-            {z.spiegelVlak && (
-              <path class="ds-vlak" d={z.spiegelVlak} data-id={z.id}
-                    data-pakketten={z.pakketten.join(' ')} />
-            )}
-          </>
-        ))}
+        {/* --- hartlijn, assen en de schaalbalk --- */}
+        <g class="ds-hulp">
+          <path d={HULPLIJNEN.hart} class="hart" />
+          {HULPLIJNEN.assen.map((a) => <path d={a} class="as" />)}
+          {HULPLIJNEN.kruizen.map((k) => <path d={k} class="as" />)}
+        </g>
+        <g class="ds-schaal">
+          <path d={`M 107 642 L 107 652 M ${107 + METER} 642 L ${107 + METER} 652 M 107 647 L ${107 + METER} 647`} />
+          <text x={107 + METER / 2} y="666" text-anchor="middle">1 meter</text>
+        </g>
 
         {/* --- gespiegelde punten zonder eigen nummer --- */}
         {ONDERDELEN.filter((o) => o.spiegel).map((o) => (
@@ -328,21 +228,54 @@ const info = Object.fromEntries(
   }
 
   /* ---- de auto ---- */
-  .ds-lijn { fill: none; stroke: var(--text-dim); stroke-width: 2; stroke-linejoin: round; }
-  .ds-lijn path:first-child { stroke-width: 2.5; opacity: .9; }
-  .ds-ruit { opacity: .4; }
-  .ds-dun { opacity: .3; }
-  .ds-stoel { fill: none; stroke: var(--text-dim); opacity: .32; }
+  /* De auto. De carrosserie krijgt de stevigste lijn; alles daarbinnen is
+     lichter, zodat je door het dak heen kijkt zonder dat het rommelig wordt.
+     Zie src/data/schets.js voor de vormen zelf. */
+  .ds-lijn { fill: none; stroke: var(--text-dim); stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
+  .ds-omtrek { stroke-width: 2.6; opacity: .95; }
+  .ds-paneel { opacity: .5; stroke-width: 1.5; }
+  .ds-detail { opacity: .3; stroke-width: 1.1; }
+  .ds-ruit { opacity: .4; fill: color-mix(in srgb, var(--text) 4%, transparent); }
+  .ds-dak { opacity: .18; }
+  .ds-lamp { opacity: .5; stroke-width: 1.2; fill: color-mix(in srgb, var(--text-dim) 14%, transparent); }
+  .ds-spiegelkap { opacity: .7; fill: color-mix(in srgb, var(--text-dim) 22%, transparent); stroke-width: 1.4; }
+  .ds-wiel { fill: color-mix(in srgb, var(--text-dim) 24%, transparent); stroke: none; }
+  .ds-stuur { opacity: .5; stroke-width: 1.5; }
+  .ds-console { opacity: .26; stroke-width: 1.4; }
+  .ds-stoel { opacity: .36; stroke-width: 1.5; }
+  .ds-vulling { fill: color-mix(in srgb, var(--text-dim) 18%, transparent); stroke: none; }
+  .ds-kussen { fill: color-mix(in srgb, var(--text-dim) 12%, transparent); opacity: .5; stroke-width: 1.3; }
 
   /* ---- dempingsvlakken ---- */
+  /* ---- ruitjespapier ---- */
+  .ds-raster { fill: none; stroke: var(--accent); stroke-opacity: .09; stroke-width: .7; }
+  .ds-raster.grof { stroke-opacity: .16; stroke-width: 1; }
+
+  /* ---- dempingsvlakken ---- */
+  /* De vulling komt uit de arcering in de defs; aan of uit regelen we met
+     doorzichtigheid. Ze liggen onder de auto, dus de lijnen van de deur en
+     de stoelen lopen er dwars overheen. */
+  .ds-arc-vlak { fill: color-mix(in srgb, var(--accent) 9%, transparent); }
+  .ds-arc-lijn { stroke: var(--accent); stroke-opacity: .55; stroke-width: 1.1; }
+  .ds-arc-vlak.zacht { fill: color-mix(in srgb, var(--accent) 4%, transparent); }
+  .ds-arc-lijn.zacht { stroke-opacity: .3; stroke-width: .9; }
   .ds-vlak {
-    /* Uit = onzichtbaar. Grijze blokken van zones die niet bij het pakket
-       horen maakten de tekening onrustig. */
-    fill: transparent; stroke: none;
-    transition: fill .3s ease;
+    opacity: 0;
+    stroke: var(--accent); stroke-opacity: .5; stroke-width: 1.1;
+    transition: opacity .3s ease;
   }
-  .ds-vlak.aan { fill: color-mix(in srgb, var(--accent) 40%, transparent); }
-  .ds-vlak.gekozen { fill: var(--accent); }
+  .ds-vlak.aan { opacity: .8; }
+  .ds-vlak.gekozen { opacity: 1; }
+
+  /* ---- hulplijnen en schaal ---- */
+  .ds-hulp path { fill: none; stroke: var(--accent); stroke-opacity: .34; stroke-width: .9; }
+  .ds-hulp .hart { stroke-dasharray: 22 5 3 5; }
+  .ds-hulp .as { stroke-dasharray: 16 4 2.5 4; }
+  .ds-schaal path { fill: none; stroke: var(--text-dim); stroke-width: 1; opacity: .5; }
+  .ds-schaal text {
+    font-family: 'Oswald', sans-serif; text-transform: uppercase;
+    letter-spacing: .2em; font-size: 13px; fill: var(--text-dim);
+  }
 
   /* ---- punten ---- */
   .ds-punt { cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .3s ease; }
@@ -351,6 +284,9 @@ const info = Object.fromEntries(
   .ds-punt:focus-visible .ds-halo { fill: color-mix(in srgb, var(--accent) 40%, transparent); }
 
   .ds-halo { fill: transparent; transition: fill .25s ease; }
+  /* Een rand in de kleur van de pagina, zodat de bol niet vastloopt in de
+     arcering eronder. Op een tekening heet dat een uitsparing. */
+  .ds-bol, .ds-spiegel { stroke: var(--bg); stroke-width: 3; }
   .ds-bol { fill: var(--uit); transition: fill .25s ease; }
   .ds-nr {
     font-family: 'Oswald', sans-serif; font-size: 17px; font-weight: 600;

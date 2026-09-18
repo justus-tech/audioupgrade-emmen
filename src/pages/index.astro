@@ -8,6 +8,7 @@ import Fotoband from '../components/Fotoband.astro';
 import OverJustus from '../components/OverJustus.astro';
 import Reviews from '../components/Reviews.astro';
 import NogGeenAuto from '../components/NogGeenAuto.astro';
+import KomLuisteren from '../components/KomLuisteren.astro';
 import { REVIEWS } from '../data/reviews.js';
 /* Foto: Unsplash — vrij te gebruiken. Zie src/components/Fotoband.astro. */
 import deurspeaker from '../assets/foto/deurspeaker.jpg';
@@ -78,12 +79,16 @@ const los = pakkettenVan(LOSSE_OPTIES);
       <div class="losse-opties">
         <h3 class="center">Los te bestellen</h3>
         <p class="center" style="margin:0 auto 2.2em;">
-          Zoek je alleen een scherm dat wél werkt, of juist alleen rust?
+          Zoek je alleen een scherm dat wél werkt, stroom die niet inzakt, of juist rust?
         </p>
-        <div class="grid cols-2 gelijk">
+        <div class="grid cols-3 gelijk">
           {los.map((pkg) => <PackageCard pkg={pkg} showScores={false} />)}
         </div>
       </div>
+
+      {/* Het antwoord op "maar hoe weet ik of dat verschil 2.700 euro waard
+          is?" — horen bij iemand die het al heeft. */}
+      <KomLuisteren />
 
       {/* Direct onder de prijzen, want daar wordt de afweging gemaakt. Stond
           eerder alleen in artikel 8 van de algemene voorwaarden. */}

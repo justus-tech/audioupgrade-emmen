@@ -203,6 +203,38 @@ const id = (naam) => `${slug}-${naam}`;
       </g>
     )}
 
+    {slug === 'accu-voeding' && (
+      <g>
+        {/* De accu, met de pluspool in de merkkleur. */}
+        <rect x="96" y="70" width="188" height="118" rx="8" class="vlak" />
+        <rect x="116" y="88" width="148" height="34" rx="4" class="scherm" />
+        <g class="dun">
+          <path d="M116 140h148M116 156h148M116 172h148" />
+        </g>
+        {/* De polen bovenop. */}
+        <rect x="128" y="52" width="38" height="20" rx="4" class="vlak" />
+        <rect x="214" y="52" width="38" height="20" rx="4" fill="var(--accent)" />
+        <g class="dun">
+          <path d="M139 62h16" />
+        </g>
+        <path d="M225 56v12M219 62h12" stroke="var(--accent-ink)" stroke-width="3" fill="none" />
+
+        {/* De hoofdkabel naar achteren, met de zekering er direct achter. */}
+        <path d="M233 52C233 30 300 30 300 62v58h44" class="kabel" />
+        <rect x="344" y="98" width="86" height="44" rx="6" class="vlak" />
+        <path d="M358 120h20l8 -12 8 24 8 -12h14" class="lijn" />
+        <path d="M430 120h60" class="kabel" />
+
+        {/* En wat er aan hangt: de versterker. */}
+        <rect x="490" y="82" width="110" height="76" rx="7" class="scherm" />
+        <g class="dun">
+          <path d="M506 96v48M518 96v48M530 96v48" />
+        </g>
+        <circle cx="566" cy="112" r="6" class="stip aan" />
+        <circle cx="566" cy="134" r="6" class="stip" />
+      </g>
+    )}
+
     {slug === 'akoestische-isolatie' && (
       <g>
         <defs>
@@ -261,6 +293,12 @@ const id = (naam) => `${slug}-${naam}`;
   .conus { fill: none; stroke: var(--teken-lijn); stroke-width: 2; }
   .stofkap { fill: var(--teken-vul); stroke: var(--teken-lijn); stroke-width: 2; }
   .glans { fill: none; stroke: var(--accent); stroke-width: 3; opacity: .7; stroke-linecap: round; }
+
+  /* De hoofdkabel: dikker dan een gewone lijn, want dat is het hele punt. */
+  .kabel {
+    fill: none; stroke: var(--accent); stroke-width: 7;
+    stroke-linecap: round; stroke-linejoin: round; opacity: .9;
+  }
 
   .stip { fill: var(--teken-vul); }
   .stip.aan { fill: var(--accent); }

@@ -16,6 +16,7 @@ import { ALGEMENE_VOORWAARDEN } from '../src/data/juridisch.js';
 import { STANDAARD_PAKKETTEN } from '../src/data/generiek.js';
 import { AUTOS, autoTabel } from '../src/data/autos.js';
 import { REVIEWS, reviewsOpDatum } from '../src/data/reviews.js';
+import { AUTO, ONDERDELEN, ZONES, ALLES, VOLGORDE, schetsVan, spiegelPad, MATEN, METER, HULPLIJNEN, inMeters } from '../src/data/schets.js';
 import { PAGINAS } from '../src/i18n/paginas.js';
 import { TEKSTEN } from '../src/i18n/teksten.js';
 import { VRAGEN } from '../src/data/vragen.js';
@@ -225,8 +226,8 @@ describe('merken', () => {
 });
 
 describe('pakketten en prijzen', () => {
-  test('alle zes pakketten staan er', () => {
-    assert.equal(PACKAGES.length, 6);
+  test('alle zeven pakketten staan er', () => {
+    assert.equal(PACKAGES.length, 7);
   });
 
   // De site toont de pakketten in twee groepen: vier audiopakketten in één
@@ -352,6 +353,9 @@ describe('pakketten en prijzen', () => {
       // Het startbedrag staat in de kleine regel eronder — dat is het anker
       // dat 3.695 ernaast leesbaar houdt.
       'competitie-show': 'Prijs op aanvraag',
+      // Losse optie, met een vaste prijs: 'prijs op aanvraag' kost Justus werk
+      // en klanten haken erop af.
+      'accu-voeding': '€ 395,00',
       'akoestische-isolatie': 'Prijs op aanvraag',
     };
     for (const p of PACKAGES) {
@@ -708,5 +712,153 @@ describe('de algemene voorwaarden', () => {
       ]),
     ].join(' ');
     assert.doesNotMatch(alles, /\$\{/, 'er staat letterlijk ${...} in de voorwaarden');
+  });
+});
+
+/**
+ * De doorkijktekening. De auto is met de hand getekend in coördinaten, en dat
+ * is precies het soort bestand waarin een verschoven getal niemand opvalt —
+ * tot er een bol half over een andere heen staat op een poster van A1.
+ */
+describe('de doorkijktekening van de auto', () => {
+  /* De bol op de site is 16 breed, de halo 26. Twee bollen die dichter dan
+     50 bij elkaar staan raken elkaar dus zichtbaar. */
+  const MINSTENS = 50;
+  const afstand = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+  test('elk onderdeel staat binnen de carrosserie', () => {
+    for (const o of ALLES) {
+      assert.ok(o.x > 100 && o.x < 340, `${o.id} staat met x=${o.x} naast de auto`);
+      assert.ok(o.y > 24 && o.y < 616, `${o.id} staat met y=${o.y} buiten de auto`);
+    }
+  });
+
+  test('een gespiegeld punt staat precies aan de andere kant', () => {
+    for (const o of ONDERDELEN.filter((d) => d.spiegel)) {
+      assert.equal(
+        o.spiegel, AUTO.breedte - o.x,
+        `${o.id} hangt scheef: ${o.spiegel} is niet de spiegeling van ${o.x}`
+      );
+    }
+  });
+
+  test('binnen één pakket raken twee bollen elkaar nooit', () => {
+    for (const pakket of PACKAGES) {
+      const punten = schetsVan(pakket.slug).flatMap((o) =>
+        o.spiegel ? [{ id: o.id, x: o.x, y: o.y }, { id: `${o.id} (gespiegeld)`, x: o.spiegel, y: o.y }]
+                  : [{ id: o.id, x: o.x, y: o.y }]
+      );
+      for (let i = 0; i < punten.length; i += 1) {
+        for (let j = i + 1; j < punten.length; j += 1) {
+          const d = afstand(punten[i], punten[j]);
+          assert.ok(
+            d >= MINSTENS,
+            `bij ${pakket.slug} staan ${punten[i].id} en ${punten[j].id} maar ${d.toFixed(0)} uit elkaar`
+          );
+        }
+      }
+    }
+  });
+
+  test('elk pakket heeft iets te laten zien', () => {
+    for (const pakket of PACKAGES) {
+      assert.ok(schetsVan(pakket.slug).length > 0, `${pakket.slug} levert een lege tekening op`);
+    }
+  });
+
+  test('de volgorde noemt elk onderdeel precies één keer', () => {
+    assert.deepEqual([...VOLGORDE].sort(), [...new Set(VOLGORDE)].sort());
+    assert.equal(VOLGORDE.length, ALLES.length);
+    for (const o of ALLES) assert.ok(VOLGORDE.includes(o.id), `${o.id} staat niet in de volgorde`);
+  });
+
+  /* Alle getallen uit een pad, als paren. */
+  const punten = (d) => {
+    const getallen = d.replace(/[MLCZ]/g, ' ').split(/[ ,]+/).filter(Boolean).map(Number);
+    return getallen.reduce((rij, n, i) => {
+      if (i % 2 === 0) rij.push({ x: n, y: getallen[i + 1] });
+      return rij;
+    }, []);
+  };
+
+  test('de paden gebruiken alleen wat gespiegeld kan worden', () => {
+    /* Een boog (A) klapt bij het spiegelen de verkeerde kant op. M, L, C en
+       Z kunnen wel, en meer hebben we niet nodig. */
+    for (const p of AUTO.paden) {
+      assert.match(p.d, /^[MLCZ0-9. -]+$/, `pad met klasse ${p.klasse} gebruikt een letter die niet gespiegeld kan worden`);
+    }
+  });
+
+  test('twee keer spiegelen levert hetzelfde pad op', () => {
+    const heen = 'M 331 214 C 318 213 304 211 291 210 Z';
+    assert.equal(spiegelPad(spiegelPad(heen)), heen);
+  });
+
+  test('de auto staat precies in het midden', () => {
+    /* Elk pad hoort een tegenhanger aan de andere kant te hebben. We
+       vergelijken de punten en niet de tekst, want een gespiegeld pad loopt
+       de andere kant op: dezelfde vorm, andere schrijfwijze.
+
+       Wat overblijft hoort scheef te zijn: het stuur met zijn spaken en de
+       tellerbak zitten links, en de ruitenwisser achter en de tankklep zijn
+       er maar één. */
+    /* Het beginpunt staat in een gesloten pad twee keer; daarom tellen we
+       elk punt maar één keer mee. */
+    const sleutel = (lijst) => [...new Set(lijst.map((p) => `${p.x},${p.y}`))].sort().join(' ');
+    const sleutels = new Set(AUTO.paden.map((p) => sleutel(punten(p.d))));
+    const scheef = AUTO.paden.filter((p) => {
+      const omgekeerd = punten(p.d).map((q) => ({ x: AUTO.breedte - q.x, y: q.y }));
+      return !sleutels.has(sleutel(omgekeerd));
+    });
+    const mag = new Set(['stuur', 'detail']);
+    const fout = scheef.filter((p) => !mag.has(p.klasse));
+    assert.equal(fout.length, 0, `deze horen symmetrisch te zijn: ${fout.map((p) => p.klasse).join(', ')}`);
+    assert.ok(
+      scheef.length <= 8,
+      `${scheef.length} paden staan scheef: ${scheef.map((p) => p.klasse).join(', ')}`
+    );
+  });
+
+  test('de maten op de tekening kloppen met de tekening zelf', () => {
+    const omtrek = AUTO.paden.find((p) => p.klasse === 'omtrek');
+    const pt = punten(omtrek.d);
+    const bijna = (a, b, speling, wat) =>
+      assert.ok(Math.abs(a - b) <= speling, `${wat}: ${a} tegenover ${b} in de tekening`);
+
+    bijna(MATEN.lengte.van, Math.min(...pt.map((p) => p.y)), 6, 'de neus');
+    bijna(MATEN.lengte.tot, Math.max(...pt.map((p) => p.y)), 6, 'de achterbumper');
+    bijna(MATEN.breedte.van, Math.min(...pt.map((p) => p.x)), 2, 'de linkerflank');
+    bijna(MATEN.breedte.tot, Math.max(...pt.map((p) => p.x)), 2, 'de rechterflank');
+
+    /* De aslijnen horen door het hart van de wielen te lopen. */
+    const wielen = AUTO.paden.filter((p) => p.klasse === 'wiel').map((p) => {
+      const y = punten(p.d).map((q) => q.y);
+      return (Math.min(...y) + Math.max(...y)) / 2;
+    });
+    for (const as of [MATEN.wielbasis.van, MATEN.wielbasis.tot]) {
+      assert.ok(wielen.some((w) => Math.abs(w - as) <= 1), `geen wiel op as ${as}`);
+    }
+  });
+
+  test('een maat wordt geschreven zoals wij hem schrijven', () => {
+    assert.equal(inMeters(METER), '1,00 m');
+    assert.equal(inMeters(MATEN.breedte.tot - MATEN.breedte.van), '1,82 m');
+    /* Een auto van vier meter tachtig is geloofwaardig; veertig meter niet. */
+    const lengte = (MATEN.lengte.tot - MATEN.lengte.van) / METER;
+    assert.ok(lengte > 3.5 && lengte < 5.6, `de referentieauto is ${lengte.toFixed(2)} m lang`);
+  });
+
+  test('de hulplijnen lopen over de hele tekening', () => {
+    assert.ok(HULPLIJNEN.hart.includes('M 220 '), 'de hartlijn staat niet op het midden');
+    assert.equal(HULPLIJNEN.assen.length, 2, 'er horen twee aslijnen te zijn');
+    assert.equal(HULPLIJNEN.kruizen.length, 4, 'er horen vier wielhartten te zijn');
+  });
+
+  test('elke dempingszone heeft een vlak en elk onderdeel een uitleg', () => {
+    for (const z of ZONES) assert.ok(z.vlakken && z.vlakken.length, `${z.id} heeft geen vlak om op te lichten`);
+    for (const o of ALLES) {
+      assert.ok(o.naam && o.plek && o.uitleg, `${o.id} mist een naam, plek of uitleg`);
+      assert.ok(o.uitleg.length > 80, `de uitleg bij ${o.id} is wel erg kort`);
+    }
   });
 });

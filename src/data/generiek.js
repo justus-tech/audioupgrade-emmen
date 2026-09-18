@@ -123,6 +123,35 @@ export const VAKMANSCHAP = [
  * zelf. Op de oude site stond wél dat we haalden en brachten; dat klopte niet
  * meer en is eruit. Alles hieronder is met Justus doorgenomen.
  */
+/**
+ * EERST HOREN BIJ EEN KLANT DIE HET AL HEEFT.
+ *
+ * Het probleem van deze hele branche: niemand kan een geluidsinstallatie
+ * beoordelen op papier. Een opname van car audio zegt niets — die hoor je
+ * door je eigen speakers. Dus staat een klant voor de keuze tussen 995 en
+ * 3.695 euro zonder dat hij het verschil ooit gehoord heeft, en dan kiest
+ * hij het goedkoopste of hij stelt het uit.
+ *
+ * Dit is het antwoord, en het kost niets: er rijden al auto's rond met deze
+ * pakketten erin. Vraag de eigenaar of er iemand mag komen luisteren.
+ *
+ * TWEE DINGEN OM AAN TE HOUDEN
+ *   1. Vraag het altijd eerst aan die klant. Zijn naam, auto of woonplaats
+ *      gaan nooit zonder toestemming naar een ander — dat is niet alleen de
+ *      AVG, het is ook gewoon de afspraak.
+ *   2. De tekst hieronder belooft dat je het vráágt, niet dat het altijd
+ *      lukt. Beloof nooit een auto die er misschien niet is.
+ */
+export const LUISTEREN = {
+  eyebrow: 'Eerst horen, dan pas beslissen',
+  kop: 'Luister in een auto die er al mee rondrijdt',
+  tekst:
+    'Het verschil tussen de pakketten hoor je in tien minuten, en lees je nergens in terug. Zeg welk pakket je overweegt, dan vragen we een klant met precies dat pakket of je een keer mag komen luisteren. Neem je eigen muziek mee — dat is de enige eerlijke test.',
+  knop: 'Vraag een luisterafspraak',
+  /* Zonder aanhef: whatsappLink() zet er zelf "Hoi Justus," voor. */
+  bericht: 'ik zou het graag eerst een keer willen horen. Ik denk aan dit pakket:',
+};
+
 export const ONTZORGEN = {
   kop: 'Je hoeft niet te wachten.',
   tekst:

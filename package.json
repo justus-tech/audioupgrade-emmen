@@ -11,6 +11,7 @@
     "test:browser": "npm run build && node --test --test-concurrency=1 tests/browser.test.js",
     "rdw": "node scripts/rdw-dekking.mjs",
     "schermafdrukken": "node scripts/screenshot.mjs",
+    "posters": "node scripts/posters.mjs",
     "deel": "node scripts/deel-tunnel.mjs"
   },
   "dependencies": {
