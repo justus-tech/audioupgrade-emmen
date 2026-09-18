@@ -211,6 +211,33 @@ describe('de pdf-schrijver', () => {
     for (const regel of regels) assert.ok(breedteVan(regel, 9) <= 100 || !regel.includes(' '));
   });
 
+  test('een regeleinde dat je zelf typt, blijft staan', () => {
+    // Anders wordt een opsomming in een toelichting één grijze lap tekst.
+    const regels = breekAf('Wat er gebeurt:\nDe DSP erin\nInmeten', 400, 9);
+    assert.deepEqual(regels, ['Wat er gebeurt:', 'De DSP erin', 'Inmeten']);
+  });
+
+  test('een lege regel blijft een lege regel', () => {
+    // Zo staat er witruimte tussen twee alinea's.
+    assert.deepEqual(breekAf('Eerste.\n\nTweede.', 400, 9), ['Eerste.', '', 'Tweede.']);
+  });
+
+  test('elke getypte regel wordt nog steeds apart afgebroken op breedte', () => {
+    const regels = breekAf('kort\neen tamelijk lange omschrijving van het werk', 100, 9);
+    assert.equal(regels[0], 'kort');
+    assert.ok(regels.length > 2, 'de tweede regel hoort nog steeds afgebroken te worden');
+    assert.equal(regels.slice(1).join(' '), 'een tamelijk lange omschrijving van het werk');
+  });
+
+  test('witruimte aan het eind levert geen lege regel op', () => {
+    // Een tekst die op een enter eindigt zou anders onderaan ruimte pakken
+    // die niemand getypt heeft.
+    assert.deepEqual(breekAf('een zin\n', 400, 9), ['een zin']);
+    assert.deepEqual(breekAf('   ', 400, 9), ['']);
+    assert.deepEqual(breekAf('', 400, 9), ['']);
+    assert.deepEqual(breekAf(null, 400, 9), ['']);
+  });
+
   test('een leeg document levert nog steeds een geldige pdf', () => {
     const bytes = nieuwPdf().naarBytes();
     assert.ok(bytes.length > 0);
