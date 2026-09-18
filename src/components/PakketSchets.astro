@@ -38,11 +38,9 @@ const info = Object.fromEntries(
            aria-label="Bovenaanzicht van een auto met de plek van de onderdelen">
         {/* --- carrosserie --- */}
         <g class="ds-lijn">
-          <path d={AUTO.omtrek} />
-          {AUTO.ruiten.map((d) => <path d={d} class="ds-ruit" />)}
-          {AUTO.dun.map((d) => <path d={d} class="ds-dun" />)}
-          {AUTO.stoelen.map((s) => (
-            <rect x={s.x} y={s.y} width={s.breedte} height={s.hoogte} rx={s.rond} class="ds-stoel" />
+          {AUTO.vormen.map((v) => <path d={v.d} class={`ds-${v.klasse}`} />)}
+          {AUTO.blokken.map((b) => (
+            <rect x={b.x} y={b.y} width={b.breedte} height={b.hoogte} rx={b.rond} class={`ds-${b.klasse}`} />
           ))}
         </g>
 
@@ -196,11 +194,20 @@ const info = Object.fromEntries(
   }
 
   /* ---- de auto ---- */
-  .ds-lijn { fill: none; stroke: var(--text-dim); stroke-width: 2; stroke-linejoin: round; }
-  .ds-lijn path:first-child { stroke-width: 2.5; opacity: .9; }
-  .ds-ruit { opacity: .4; }
-  .ds-dun { opacity: .3; }
-  .ds-stoel { fill: none; stroke: var(--text-dim); opacity: .32; }
+  /* De auto. De carrosserie krijgt de stevigste lijn; alles daarbinnen is
+     lichter, zodat je door het dak heen kijkt zonder dat het rommelig wordt.
+     Zie src/data/schets.js voor de vormen zelf. */
+  .ds-lijn { fill: none; stroke: var(--text-dim); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .ds-omtrek { stroke-width: 2.6; opacity: .95; }
+  .ds-ruit { opacity: .4; fill: color-mix(in srgb, var(--text) 4%, transparent); }
+  .ds-dak { opacity: .18; }
+  .ds-dun { opacity: .34; stroke-width: 1.6; }
+  .ds-spiegelkap { opacity: .7; fill: color-mix(in srgb, var(--text-dim) 22%, transparent); }
+  .ds-stuur { opacity: .55; stroke-width: 1.8; }
+  .ds-wiel { fill: color-mix(in srgb, var(--text-dim) 26%, transparent); stroke: none; }
+  .ds-stoel { fill: none; stroke: var(--text-dim); opacity: .34; }
+  .ds-hoofdsteun { fill: color-mix(in srgb, var(--text-dim) 20%, transparent); stroke: none; }
+  .ds-console { fill: none; stroke: var(--text-dim); opacity: .22; stroke-width: 1.6; }
 
   /* ---- dempingsvlakken ---- */
   .ds-vlak {

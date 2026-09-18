@@ -82,18 +82,29 @@ function tekening(slug) {
   const verdeel = (lijst) => {
     const top = 60;
     const bodem = AUTO.hoogte - 40;
-    const stap = lijst.length > 1 ? (bodem - top) / (lijst.length - 1) : 0;
-    return lijst
-      .slice()
-      .sort((a, b) => a.y - b.y)
-      .map((d, i) => ({ ...d, labelY: lijst.length > 1 ? top + i * stap : (top + bodem) / 2 }));
+    const MAX = 132; // grootste gat tussen twee bijschriften
+    if (lijst.length < 2) {
+      return lijst.map((d) => ({ ...d, labelY: (top + bodem) / 2 }));
+    }
+    const op = lijst.slice().sort((a, b) => a.y - b.y);
+    const stap = Math.min((bodem - top) / (op.length - 1), MAX);
+    const hoog = stap * (op.length - 1);
+    /* De hele stapel hangt om het zwaartepunt van de punten zelf, zodat de
+       bijschriften in de buurt blijven van waar ze naar wijzen. */
+    const midden = op.reduce((som, d) => som + d.y, 0) / op.length;
+    const begin = Math.min(Math.max(midden - hoog / 2, top), bodem - hoog);
+    return op.map((d, i) => ({ ...d, labelY: begin + i * stap }));
   };
 
   /* De kantlijn waarin de bijschriften staan. Deze maten bepalen samen de
      verhouding van de hele tekening, en dus hoe groot de auto op de poster
      wordt afgedrukt: hoe breder de kantlijn, hoe kleiner de auto. */
-  const KOLOM = 250;   // ruimte voor de tekst zelf
-  const KIER = 45;     // tussen de auto en de tekst
+  const KOLOM = 178;   // ruimte voor de tekst zelf
+  const KIER = 32;     // tussen de auto en de tekst
+  /* Links en rechts van de auto zit lege ruimte in het tekenvlak; daar komen
+     alleen de spiegels. Die lucht snijden we eraf, want elke millimeter die
+     niet aan niets opgaat komt bij de auto zelf terecht. */
+  const KADER = { x: 68, breedte: 304 };
   /* Zit een onderdeel links én rechts in de auto (tweeters, speakers), dan
      zetten we het nummer aan de kant waar het bijschrift hangt. Anders loopt
      de aanwijslijn dwars door de cabine heen. */
@@ -101,8 +112,8 @@ function tekening(slug) {
     const gespiegeld = kant === 'rechts' && d.spiegel;
     return { ...d, kant, ankerX: gespiegeld ? d.spiegel : d.x, stipX: gespiegeld ? d.x : d.spiegel };
   };
-  const linksLabels = verdeel(links).map((d) => ({ ...metAnker(d, 'links'), labelX: -KIER }));
-  const rechtsLabels = verdeel(rechts).map((d) => ({ ...metAnker(d, 'rechts'), labelX: AUTO.breedte + KIER }));
+  const linksLabels = verdeel(links).map((d) => ({ ...metAnker(d, 'links'), labelX: KADER.x - KIER }));
+  const rechtsLabels = verdeel(rechts).map((d) => ({ ...metAnker(d, 'rechts'), labelX: KADER.x + KADER.breedte + KIER }));
   const labels = [...linksLabels, ...rechtsLabels];
 
   const vlakken = genummerd
@@ -112,13 +123,13 @@ function tekening(slug) {
 
   const spiegels = labels
     .filter((d) => d.stipX)
-    .map((d) => `<circle cx="${d.stipX}" cy="${d.y}" r="9" class="bol"/>`)
+    .map((d) => `<circle cx="${d.stipX}" cy="${d.y}" r="7.5" class="bol"/>`)
     .join('');
 
   const lijnen = labels
     .map((d) => {
-      const uitX = d.kant === 'links' ? d.labelX + 12 : d.labelX - 12;
-      const knik = d.kant === 'links' ? d.ankerX - 34 : d.ankerX + 34;
+      const uitX = d.kant === 'links' ? d.labelX + 10 : d.labelX - 10;
+      const knik = d.kant === 'links' ? d.ankerX - 30 : d.ankerX + 30;
       return `<path d="M ${d.ankerX} ${d.y} L ${knik} ${d.y} L ${knik} ${d.labelY} L ${uitX} ${d.labelY}" class="aanwijs"/>`;
     })
     .join('');
@@ -126,8 +137,8 @@ function tekening(slug) {
   const punten = labels
     .map(
       (d) => `<g class="punt">
-        <circle cx="${d.ankerX}" cy="${d.y}" r="19" class="halo"/>
-        <circle cx="${d.ankerX}" cy="${d.y}" r="15" class="bol aan"/>
+        <circle cx="${d.ankerX}" cy="${d.y}" r="16" class="halo"/>
+        <circle cx="${d.ankerX}" cy="${d.y}" r="12.5" class="bol aan"/>
         <text x="${d.ankerX}" y="${d.y}" class="nr" text-anchor="middle" dominant-baseline="central">${d.nr}</text>
       </g>`
     )
@@ -151,10 +162,10 @@ function tekening(slug) {
       const anker = d.kant === 'links' ? 'end' : 'start';
       const x = d.labelX;
       const regels = afbreken(d.plek)
-        .map((r, i) => `<text x="${x}" y="${d.labelY + 24 + i * 22}" text-anchor="${anker}" class="bij-plek">${r}</text>`)
+        .map((r, i) => `<text x="${x}" y="${d.labelY + 20 + i * 18}" text-anchor="${anker}" class="bij-plek">${r}</text>`)
         .join('');
       return `<g class="bijschrift">
-        <text x="${x}" y="${d.labelY - 4}" text-anchor="${anker}" class="bij-naam">${d.nr}. ${d.naam}</text>
+        <text x="${x}" y="${d.labelY - 3}" text-anchor="${anker}" class="bij-naam">${d.nr}. ${d.naam}</text>
         ${regels}
       </g>`;
     })
@@ -163,20 +174,20 @@ function tekening(slug) {
   /* De viewBox: de auto met aan weerszijden precies de kantlijn erbij. Zo
      blijft de auto zo groot mogelijk en valt er niets buiten beeld. */
   const marge = KIER + KOLOM;
-  return `<svg class="schets" viewBox="${-marge} 0 ${AUTO.breedte + marge * 2} ${AUTO.hoogte}">
+  const vakX = KADER.x - marge;
+  const vakB = KADER.breedte + marge * 2;
+  return `<svg class="schets" viewBox="${vakX} 0 ${vakB} ${AUTO.hoogte}">
     <!-- Het ruitjespapier eronder. Zonder dit is het een tekening op een zwart
          vlak; met dit is het een werktekening, en dat is het ook. -->
     <defs>
-      <pattern id="ruit" width="40" height="40" patternUnits="userSpaceOnUse">
-        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="${BRAND.accent}" stroke-opacity=".1" stroke-width="1"/>
+      <pattern id="ruit" width="34" height="34" patternUnits="userSpaceOnUse">
+        <path d="M 34 0 L 0 0 0 34" fill="none" stroke="${BRAND.accent}" stroke-opacity=".1" stroke-width="1"/>
       </pattern>
     </defs>
-    <rect x="${-marge}" y="0" width="${AUTO.breedte + marge * 2}" height="${AUTO.hoogte}" fill="url(#ruit)"/>
+    <rect x="${vakX}" y="0" width="${vakB}" height="${AUTO.hoogte}" fill="url(#ruit)"/>
     <g class="carrosserie">
-      <path d="${AUTO.omtrek}"/>
-      ${AUTO.ruiten.map((d) => `<path d="${d}" class="ruit"/>`).join('')}
-      ${AUTO.dun.map((d) => `<path d="${d}" class="dun"/>`).join('')}
-      ${AUTO.stoelen.map((s) => `<rect x="${s.x}" y="${s.y}" width="${s.breedte}" height="${s.hoogte}" rx="${s.rond}" class="stoel"/>`).join('')}
+      ${AUTO.vormen.map((v) => `<path d="${v.d}" class="${v.klasse}"/>`).join('')}
+      ${AUTO.blokken.map((b) => `<rect x="${b.x}" y="${b.y}" width="${b.breedte}" height="${b.hoogte}" rx="${b.rond}" class="${b.klasse}"/>`).join('')}
     </g>
     ${vlakken}${spiegels}${lijnen}${punten}${bijschriften}
   </svg>`;
@@ -312,24 +323,35 @@ const stijl = `
     font-family: 'Oswald'; text-transform: uppercase; letter-spacing: .2em;
     font-size: 3.2mm; color: ${BRAND.textDim};
   }
-  .carrosserie path { fill: none; stroke: ${BRAND.tekenLijn}; stroke-width: 2.5 }
+  /* De auto zelf. Zie src/data/schets.js voor de vormen. */
+  .carrosserie path, .carrosserie rect {
+    fill: none; stroke: ${BRAND.tekenLijn}; stroke-width: 1.7;
+    stroke-linejoin: round; stroke-linecap: round;
+  }
+  .carrosserie .omtrek { stroke-width: 2.4; stroke: rgba(135,135,135,.75) }
   .carrosserie .ruit { fill: rgba(245,245,245,.04) }
-  .carrosserie .dun { stroke-width: 1.5; opacity: .7 }
-  .stoel { fill: rgba(135,135,135,.14); stroke: ${BRAND.tekenLijn}; stroke-width: 1.5 }
-  .zone { fill: rgba(255,94,31,.30); stroke: ${BRAND.accent}; stroke-width: 1.5 }
-  .aanwijs { fill: none; stroke: rgba(255,94,31,.5); stroke-width: 1.4 }
+  .carrosserie .dak { opacity: .4 }
+  .carrosserie .dun { stroke-width: 1.3; opacity: .75 }
+  .carrosserie .spiegelkap { fill: rgba(135,135,135,.28) }
+  .carrosserie .stuur { stroke-width: 1.5; opacity: .8 }
+  .carrosserie .wiel { fill: rgba(135,135,135,.3); stroke: none }
+  .carrosserie .stoel { fill: rgba(135,135,135,.1) }
+  .carrosserie .hoofdsteun { fill: rgba(135,135,135,.26); stroke: none }
+  .carrosserie .console { opacity: .5; stroke-width: 1.3 }
+  .zone { fill: rgba(255,94,31,.30); stroke: ${BRAND.accent}; stroke-width: 1.3 }
+  .aanwijs { fill: none; stroke: rgba(255,94,31,.5); stroke-width: 1.2 }
   .halo { fill: rgba(255,94,31,.18) }
   .bol { fill: rgba(135,135,135,.4) }
   .bol.aan { fill: ${BRAND.accent} }
   .nr {
-    font-family: 'Oswald'; font-weight: 600; font-size: 17px;
+    font-family: 'Oswald'; font-weight: 600; font-size: 14px;
     fill: ${BRAND.accentInk};
   }
   .bij-naam {
     font-family: 'Oswald'; font-weight: 600; text-transform: uppercase;
-    letter-spacing: .08em; font-size: 16px; fill: ${BRAND.text};
+    letter-spacing: .08em; font-size: 13.5px; fill: ${BRAND.text};
   }
-  .bij-plek { font-family: 'Inter'; font-size: 14px; fill: ${BRAND.textDim} }
+  .bij-plek { font-family: 'Inter'; font-size: 11.5px; fill: ${BRAND.textDim} }
 
   /* ---- onderste band ---- */
   .onder {

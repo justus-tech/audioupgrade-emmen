@@ -16,6 +16,7 @@ import { ALGEMENE_VOORWAARDEN } from '../src/data/juridisch.js';
 import { STANDAARD_PAKKETTEN } from '../src/data/generiek.js';
 import { AUTOS, autoTabel } from '../src/data/autos.js';
 import { REVIEWS, reviewsOpDatum } from '../src/data/reviews.js';
+import { AUTO, ONDERDELEN, ZONES, ALLES, VOLGORDE, schetsVan } from '../src/data/schets.js';
 import { PAGINAS } from '../src/i18n/paginas.js';
 import { TEKSTEN } from '../src/i18n/teksten.js';
 import { VRAGEN } from '../src/data/vragen.js';
@@ -711,5 +712,71 @@ describe('de algemene voorwaarden', () => {
       ]),
     ].join(' ');
     assert.doesNotMatch(alles, /\$\{/, 'er staat letterlijk ${...} in de voorwaarden');
+  });
+});
+
+/**
+ * De doorkijktekening. De auto is met de hand getekend in coördinaten, en dat
+ * is precies het soort bestand waarin een verschoven getal niemand opvalt —
+ * tot er een bol half over een andere heen staat op een poster van A1.
+ */
+describe('de doorkijktekening van de auto', () => {
+  /* De bol op de site is 16 breed, de halo 26. Twee bollen die dichter dan
+     50 bij elkaar staan raken elkaar dus zichtbaar. */
+  const MINSTENS = 50;
+  const afstand = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+  test('elk onderdeel staat binnen de carrosserie', () => {
+    for (const o of ALLES) {
+      assert.ok(o.x > 100 && o.x < 340, `${o.id} staat met x=${o.x} naast de auto`);
+      assert.ok(o.y > 24 && o.y < 616, `${o.id} staat met y=${o.y} buiten de auto`);
+    }
+  });
+
+  test('een gespiegeld punt staat precies aan de andere kant', () => {
+    for (const o of ONDERDELEN.filter((d) => d.spiegel)) {
+      assert.equal(
+        o.spiegel, AUTO.breedte - o.x,
+        `${o.id} hangt scheef: ${o.spiegel} is niet de spiegeling van ${o.x}`
+      );
+    }
+  });
+
+  test('binnen één pakket raken twee bollen elkaar nooit', () => {
+    for (const pakket of PACKAGES) {
+      const punten = schetsVan(pakket.slug).flatMap((o) =>
+        o.spiegel ? [{ id: o.id, x: o.x, y: o.y }, { id: `${o.id} (gespiegeld)`, x: o.spiegel, y: o.y }]
+                  : [{ id: o.id, x: o.x, y: o.y }]
+      );
+      for (let i = 0; i < punten.length; i += 1) {
+        for (let j = i + 1; j < punten.length; j += 1) {
+          const d = afstand(punten[i], punten[j]);
+          assert.ok(
+            d >= MINSTENS,
+            `bij ${pakket.slug} staan ${punten[i].id} en ${punten[j].id} maar ${d.toFixed(0)} uit elkaar`
+          );
+        }
+      }
+    }
+  });
+
+  test('elk pakket heeft iets te laten zien', () => {
+    for (const pakket of PACKAGES) {
+      assert.ok(schetsVan(pakket.slug).length > 0, `${pakket.slug} levert een lege tekening op`);
+    }
+  });
+
+  test('de volgorde noemt elk onderdeel precies één keer', () => {
+    assert.deepEqual([...VOLGORDE].sort(), [...new Set(VOLGORDE)].sort());
+    assert.equal(VOLGORDE.length, ALLES.length);
+    for (const o of ALLES) assert.ok(VOLGORDE.includes(o.id), `${o.id} staat niet in de volgorde`);
+  });
+
+  test('elke dempingszone heeft een vlak en elk onderdeel een uitleg', () => {
+    for (const z of ZONES) assert.ok(z.vlak, `${z.id} heeft geen vlak om op te lichten`);
+    for (const o of ALLES) {
+      assert.ok(o.naam && o.plek && o.uitleg, `${o.id} mist een naam, plek of uitleg`);
+      assert.ok(o.uitleg.length > 80, `de uitleg bij ${o.id} is wel erg kort`);
+    }
   });
 });
