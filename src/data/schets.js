@@ -44,7 +44,7 @@
  */
 
 const BREEDTE = 440;
-const HOOGTE = 640;
+const HOOGTE = 680;
 
 /**
  * Spiegelt een pad om de middenas van de auto: elke x wordt 440 min x, elke
@@ -102,13 +102,13 @@ const VORMEN = [
   {
     klasse: 'dak',
     d:
-      'M 151 212 C 147 262 147 362 151 412 C 196 404 244 404 288 412 ' +
-      'C 292 362 292 262 288 212 C 244 205 196 205 151 212 Z',
+      'M 151 212 C 147 262 147 362 151 412 C 196 404 244 404 289 412 ' +
+      'C 293 362 293 262 289 212 C 244 205 196 205 151 212 Z',
   },
   {
     klasse: 'ruit',
     d:
-      'M 151 412 C 196 404 244 404 288 412 C 293 432 297 452 300 470 ' +
+      'M 151 412 C 196 404 244 404 289 412 C 293 432 297 452 300 470 ' +
       'C 246 461 194 461 140 470 C 143 452 147 432 151 412 Z',
   },
   { klasse: 'detail', d: 'M 146 466 C 196 458 244 458 294 466' },
@@ -245,6 +245,49 @@ export const AUTO = {
   breedte: BREEDTE,
   hoogte: HOOGTE,
   paden,
+};
+
+/**
+ * ==========================================================================
+ * DE WERKTEKENING: HARTLIJN, ASSEN EN MAATVOERING
+ * ==========================================================================
+ * Een tekening van een onderdeel dat nog gebouwd moet worden ziet er anders
+ * uit dan een plaatje van iets dat al bestaat: er staan hartlijnen in, de
+ * assen zijn aangegeven, en de maten staan erbij met pijlen. Dat is precies
+ * wat deze installatie is — hij bestaat nog niet, hij wordt gebouwd.
+ *
+ * De maten hieronder zijn uit de tekening zelf gerekend. Verplaats je een
+ * as, dan verspringt de maat mee; er staat dus nooit iets anders op papier
+ * dan wat je ziet.
+ */
+
+/** Tekeneenheden per meter. De carrosserie is 226 breed, oftewel 1,82 m. */
+export const METER = 124;
+
+/** Een maat in meters, zoals wij hem schrijven: 2,63 m. */
+export const inMeters = (eenheden) => `${(eenheden / METER).toFixed(2).replace('.', ',')} m`;
+
+/** De maten van de referentiecarrosserie, in tekeneenheden. */
+export const MATEN = {
+  lengte: { van: 18, tot: 622 },
+  breedte: { van: 107, tot: 333 },
+  wielbasis: { van: 158, tot: 484 },
+};
+
+/**
+ * Hartlijn, aslijnen en de kruisjes op de wielhartten. Streep-punt, zoals
+ * het hoort: zo zie je meteen dat het hulplijnen zijn en geen onderdelen.
+ */
+export const HULPLIJNEN = {
+  hart: `M 220 4 L 220 ${HOOGTE - 24}`,
+  assen: [
+    `M 92 ${MATEN.wielbasis.van} L 348 ${MATEN.wielbasis.van}`,
+    `M 92 ${MATEN.wielbasis.tot} L 348 ${MATEN.wielbasis.tot}`,
+  ],
+  kruizen: [
+    'M 105 146 L 105 170', 'M 335 146 L 335 170',
+    'M 105 472 L 105 496', 'M 335 472 L 335 496',
+  ],
 };
 
 /**
@@ -412,4 +455,7 @@ export const schetsVan = (slug) =>
   VOLGORDE.map((id) => ALLES.find((o) => o.id === id))
     .filter((o) => o && o.pakketten.includes(slug));
 
-export default { AUTO, ONDERDELEN, ZONES, VOLGORDE, ALLES, schetsVan, spiegelPad };
+export default {
+  AUTO, ONDERDELEN, ZONES, VOLGORDE, ALLES, schetsVan, spiegelPad,
+  METER, MATEN, HULPLIJNEN, inMeters,
+};

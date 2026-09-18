@@ -16,7 +16,7 @@ import { ALGEMENE_VOORWAARDEN } from '../src/data/juridisch.js';
 import { STANDAARD_PAKKETTEN } from '../src/data/generiek.js';
 import { AUTOS, autoTabel } from '../src/data/autos.js';
 import { REVIEWS, reviewsOpDatum } from '../src/data/reviews.js';
-import { AUTO, ONDERDELEN, ZONES, ALLES, VOLGORDE, schetsVan } from '../src/data/schets.js';
+import { AUTO, ONDERDELEN, ZONES, ALLES, VOLGORDE, schetsVan, spiegelPad, MATEN, METER, HULPLIJNEN, inMeters } from '../src/data/schets.js';
 import { PAGINAS } from '../src/i18n/paginas.js';
 import { TEKSTEN } from '../src/i18n/teksten.js';
 import { VRAGEN } from '../src/data/vragen.js';
@@ -770,6 +770,88 @@ describe('de doorkijktekening van de auto', () => {
     assert.deepEqual([...VOLGORDE].sort(), [...new Set(VOLGORDE)].sort());
     assert.equal(VOLGORDE.length, ALLES.length);
     for (const o of ALLES) assert.ok(VOLGORDE.includes(o.id), `${o.id} staat niet in de volgorde`);
+  });
+
+  /* Alle getallen uit een pad, als paren. */
+  const punten = (d) => {
+    const getallen = d.replace(/[MLCZ]/g, ' ').split(/[ ,]+/).filter(Boolean).map(Number);
+    return getallen.reduce((rij, n, i) => {
+      if (i % 2 === 0) rij.push({ x: n, y: getallen[i + 1] });
+      return rij;
+    }, []);
+  };
+
+  test('de paden gebruiken alleen wat gespiegeld kan worden', () => {
+    /* Een boog (A) klapt bij het spiegelen de verkeerde kant op. M, L, C en
+       Z kunnen wel, en meer hebben we niet nodig. */
+    for (const p of AUTO.paden) {
+      assert.match(p.d, /^[MLCZ0-9. -]+$/, `pad met klasse ${p.klasse} gebruikt een letter die niet gespiegeld kan worden`);
+    }
+  });
+
+  test('twee keer spiegelen levert hetzelfde pad op', () => {
+    const heen = 'M 331 214 C 318 213 304 211 291 210 Z';
+    assert.equal(spiegelPad(spiegelPad(heen)), heen);
+  });
+
+  test('de auto staat precies in het midden', () => {
+    /* Elk pad hoort een tegenhanger aan de andere kant te hebben. We
+       vergelijken de punten en niet de tekst, want een gespiegeld pad loopt
+       de andere kant op: dezelfde vorm, andere schrijfwijze.
+
+       Wat overblijft hoort scheef te zijn: het stuur met zijn spaken en de
+       tellerbak zitten links, en de ruitenwisser achter en de tankklep zijn
+       er maar één. */
+    /* Het beginpunt staat in een gesloten pad twee keer; daarom tellen we
+       elk punt maar één keer mee. */
+    const sleutel = (lijst) => [...new Set(lijst.map((p) => `${p.x},${p.y}`))].sort().join(' ');
+    const sleutels = new Set(AUTO.paden.map((p) => sleutel(punten(p.d))));
+    const scheef = AUTO.paden.filter((p) => {
+      const omgekeerd = punten(p.d).map((q) => ({ x: AUTO.breedte - q.x, y: q.y }));
+      return !sleutels.has(sleutel(omgekeerd));
+    });
+    const mag = new Set(['stuur', 'detail']);
+    const fout = scheef.filter((p) => !mag.has(p.klasse));
+    assert.equal(fout.length, 0, `deze horen symmetrisch te zijn: ${fout.map((p) => p.klasse).join(', ')}`);
+    assert.ok(
+      scheef.length <= 8,
+      `${scheef.length} paden staan scheef: ${scheef.map((p) => p.klasse).join(', ')}`
+    );
+  });
+
+  test('de maten op de tekening kloppen met de tekening zelf', () => {
+    const omtrek = AUTO.paden.find((p) => p.klasse === 'omtrek');
+    const pt = punten(omtrek.d);
+    const bijna = (a, b, speling, wat) =>
+      assert.ok(Math.abs(a - b) <= speling, `${wat}: ${a} tegenover ${b} in de tekening`);
+
+    bijna(MATEN.lengte.van, Math.min(...pt.map((p) => p.y)), 6, 'de neus');
+    bijna(MATEN.lengte.tot, Math.max(...pt.map((p) => p.y)), 6, 'de achterbumper');
+    bijna(MATEN.breedte.van, Math.min(...pt.map((p) => p.x)), 2, 'de linkerflank');
+    bijna(MATEN.breedte.tot, Math.max(...pt.map((p) => p.x)), 2, 'de rechterflank');
+
+    /* De aslijnen horen door het hart van de wielen te lopen. */
+    const wielen = AUTO.paden.filter((p) => p.klasse === 'wiel').map((p) => {
+      const y = punten(p.d).map((q) => q.y);
+      return (Math.min(...y) + Math.max(...y)) / 2;
+    });
+    for (const as of [MATEN.wielbasis.van, MATEN.wielbasis.tot]) {
+      assert.ok(wielen.some((w) => Math.abs(w - as) <= 1), `geen wiel op as ${as}`);
+    }
+  });
+
+  test('een maat wordt geschreven zoals wij hem schrijven', () => {
+    assert.equal(inMeters(METER), '1,00 m');
+    assert.equal(inMeters(MATEN.breedte.tot - MATEN.breedte.van), '1,82 m');
+    /* Een auto van vier meter tachtig is geloofwaardig; veertig meter niet. */
+    const lengte = (MATEN.lengte.tot - MATEN.lengte.van) / METER;
+    assert.ok(lengte > 3.5 && lengte < 5.6, `de referentieauto is ${lengte.toFixed(2)} m lang`);
+  });
+
+  test('de hulplijnen lopen over de hele tekening', () => {
+    assert.ok(HULPLIJNEN.hart.includes('M 220 '), 'de hartlijn staat niet op het midden');
+    assert.equal(HULPLIJNEN.assen.length, 2, 'er horen twee aslijnen te zijn');
+    assert.equal(HULPLIJNEN.kruizen.length, 4, 'er horen vier wielhartten te zijn');
   });
 
   test('elke dempingszone heeft een vlak en elk onderdeel een uitleg', () => {

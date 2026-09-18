@@ -22,8 +22,11 @@
 import { chromium } from 'playwright';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { AUDIOPAKKETTEN, pakkettenVan, SITE } from '../src/data/site.js';
-import { AUTO, schetsVan } from '../src/data/schets.js';
+import { AUTO, schetsVan, HULPLIJNEN, MATEN, METER, inMeters } from '../src/data/schets.js';
 import { BRAND } from '../src/data/brand.js';
+
+const nu = new Date();
+const UITGAVE = `${nu.getFullYear()}.${String(nu.getMonth() + 1).padStart(2, '0')}`;
 
 const UIT = process.argv[2] || './posters';
 await mkdir(UIT, { recursive: true });
@@ -118,19 +121,20 @@ function tekening(slug) {
 
   const vlakken = genummerd
     .filter((d) => d.vlakken)
-    .flatMap((d) => d.vlakken.map((vlak) => `<path d="${vlak}" class="zone${d.zacht ? ' zacht' : ''}"/>`))
+    .flatMap((d) => d.vlakken.map((vlak) => `<path d="${vlak}" class="zone" fill="url(#arcering${d.zacht ? '-zacht' : ''})"/>`))
     .join('');
 
   const spiegels = labels
     .filter((d) => d.stipX)
-    .map((d) => `<circle cx="${d.stipX}" cy="${d.y}" r="7.5" class="bol"/>`)
+    .map((d) => `<circle cx="${d.stipX}" cy="${d.y}" r="7.5" class="bol aan"/>`)
     .join('');
 
   const lijnen = labels
     .map((d) => {
       const uitX = d.kant === 'links' ? d.labelX + 10 : d.labelX - 10;
       const knik = d.kant === 'links' ? d.ankerX - 30 : d.ankerX + 30;
-      return `<path d="M ${d.ankerX} ${d.y} L ${knik} ${d.y} L ${knik} ${d.labelY} L ${uitX} ${d.labelY}" class="aanwijs"/>`;
+      return `<path d="M ${d.ankerX} ${d.y} L ${knik} ${d.y} L ${knik} ${d.labelY} L ${uitX} ${d.labelY}" class="aanwijs"/>` +
+        `<circle cx="${uitX}" cy="${d.labelY}" r="2.4" class="aanwijs-stip"/>`;
     })
     .join('');
 
@@ -176,21 +180,87 @@ function tekening(slug) {
   const marge = KIER + KOLOM;
   const vakX = KADER.x - marge;
   const vakB = KADER.breedte + marge * 2;
+  /* De maatvoering. De carrosserie is een referentie — elke auto is anders —
+     maar de maten komen wel uit deze tekening, en niet uit de duim. */
+  const maten = [
+    maatStaand(74, MATEN.wielbasis.van, MATEN.wielbasis.tot, inMeters(MATEN.wielbasis.tot - MATEN.wielbasis.van), [
+      `M 96 ${MATEN.wielbasis.van} L 68 ${MATEN.wielbasis.van}`,
+      `M 96 ${MATEN.wielbasis.tot} L 68 ${MATEN.wielbasis.tot}`,
+    ]),
+    maatStaand(366, MATEN.lengte.van, MATEN.lengte.tot, inMeters(MATEN.lengte.tot - MATEN.lengte.van), [
+      `M 228 ${MATEN.lengte.van} L 372 ${MATEN.lengte.van}`,
+      `M 228 ${MATEN.lengte.tot} L 372 ${MATEN.lengte.tot}`,
+    ]),
+    maatLiggend(652, MATEN.breedte.van, MATEN.breedte.tot, inMeters(MATEN.breedte.tot - MATEN.breedte.van), [
+      `M ${MATEN.breedte.van} 630 L ${MATEN.breedte.van} 658`,
+      `M ${MATEN.breedte.tot} 630 L ${MATEN.breedte.tot} 658`,
+    ]),
+  ].join('');
+
+  const hulplijnen = `<g class="hulp">
+    <path d="${HULPLIJNEN.hart}" class="hart"/>
+    ${HULPLIJNEN.assen.map((a) => `<path d="${a}" class="as"/>`).join('')}
+    ${HULPLIJNEN.kruizen.map((k) => `<path d="${k}" class="as"/>`).join('')}
+  </g>`;
+
   return `<svg class="schets" viewBox="${vakX} 0 ${vakB} ${AUTO.hoogte}">
-    <!-- Het ruitjespapier eronder. Zonder dit is het een tekening op een zwart
-         vlak; met dit is het een werktekening, en dat is het ook. -->
+    <!-- Ruitjespapier, arcering en pijlpunten. Zonder dit is het een tekening
+         op een zwart vlak; met dit is het een werktekening, en dat is het. -->
     <defs>
-      <pattern id="ruit" width="34" height="34" patternUnits="userSpaceOnUse">
-        <path d="M 34 0 L 0 0 0 34" fill="none" stroke="${BRAND.accent}" stroke-opacity=".1" stroke-width="1"/>
+      <pattern id="ruit-fijn" width="${METER / 4}" height="${METER / 4}" patternUnits="userSpaceOnUse"
+               patternTransform="translate(220 ${MATEN.wielbasis.van})">
+        <path d="M ${METER / 4} 0 L 0 0 0 ${METER / 4}" fill="none" stroke="${BRAND.accent}" stroke-opacity=".07" stroke-width=".7"/>
+      </pattern>
+      <pattern id="ruit-grof" width="${METER}" height="${METER}" patternUnits="userSpaceOnUse"
+               patternTransform="translate(220 ${MATEN.wielbasis.van})">
+        <path d="M ${METER} 0 L 0 0 0 ${METER}" fill="none" stroke="${BRAND.accent}" stroke-opacity=".15" stroke-width="1"/>
+      </pattern>
+      <pattern id="arcering" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="10" height="10" fill="rgba(255,94,31,.07)"/>
+        <path d="M 0 0 L 0 10" stroke="${BRAND.accent}" stroke-opacity=".6" stroke-width="1.1"/>
+      </pattern>
+      <pattern id="arcering-zacht" width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
+        <rect width="20" height="20" fill="rgba(255,94,31,.035)"/>
+        <path d="M 0 0 L 0 20" stroke="${BRAND.accent}" stroke-opacity=".3" stroke-width=".9"/>
       </pattern>
     </defs>
-    <rect x="${vakX}" y="0" width="${vakB}" height="${AUTO.hoogte}" fill="url(#ruit)"/>
+    <rect x="${vakX}" y="0" width="${vakB}" height="${AUTO.hoogte}" fill="url(#ruit-fijn)"/>
+    <rect x="${vakX}" y="0" width="${vakB}" height="${AUTO.hoogte}" fill="url(#ruit-grof)"/>
     ${vlakken}
     <g class="carrosserie">
       ${AUTO.paden.map((v) => `<path d="${v.d}" class="${v.klasse}"/>`).join('')}
     </g>
-    ${spiegels}${lijnen}${punten}${bijschriften}
+    ${hulplijnen}${maten}${spiegels}${lijnen}${punten}${bijschriften}
   </svg>`;
+}
+
+/* ---------------------------------------------------------- maatlijn --- */
+/**
+ * Een maat zoals een tekenaar hem zet: twee hulplijntjes die van het
+ * onderdeel af wijzen, een lijn met pijlpunten ertussen en de maat erbij.
+ * De maat komt uit de tekening zelf, dus er kan nooit iets anders op papier
+ * staan dan wat je ziet.
+ */
+const PIJL = 10;
+function maatStaand(x, y1, y2, tekst, hulp = []) {
+  return `<g class="maat">
+    ${hulp.map((h) => `<path d="${h}" class="maat-hulp"/>`).join('')}
+    <path d="M ${x} ${y1} L ${x} ${y2}" class="maat-lijn"/>
+    <path d="M ${x} ${y1} L ${x - 3.2} ${y1 + PIJL} L ${x + 3.2} ${y1 + PIJL} Z" class="maat-punt"/>
+    <path d="M ${x} ${y2} L ${x - 3.2} ${y2 - PIJL} L ${x + 3.2} ${y2 - PIJL} Z" class="maat-punt"/>
+    <g transform="translate(${x} ${(y1 + y2) / 2}) rotate(-90)">
+      <text x="0" y="-7" text-anchor="middle" class="maat-tekst">${tekst}</text>
+    </g>
+  </g>`;
+}
+function maatLiggend(y, x1, x2, tekst, hulp = []) {
+  return `<g class="maat">
+    ${hulp.map((h) => `<path d="${h}" class="maat-hulp"/>`).join('')}
+    <path d="M ${x1} ${y} L ${x2} ${y}" class="maat-lijn"/>
+    <path d="M ${x1} ${y} L ${x1 + PIJL} ${y - 3.2} L ${x1 + PIJL} ${y + 3.2} Z" class="maat-punt"/>
+    <path d="M ${x2} ${y} L ${x2 - PIJL} ${y - 3.2} L ${x2 - PIJL} ${y + 3.2} Z" class="maat-punt"/>
+    <text x="${(x1 + x2) / 2}" y="${y - 8}" text-anchor="middle" class="maat-tekst">${tekst}</text>
+  </g>`;
 }
 
 /* ------------------------------------------------------------ poster --- */
@@ -225,7 +295,18 @@ function poster(pkg, index, totaal) {
     </div>
 
     ${tekening(pkg.slug)}
-    <p class="onderschrift">Bovenaanzicht · plaatsing verschilt per auto</p>
+    <div class="stempel">
+      ${[
+        ['Tekening', 'Doorsnede · bovenaanzicht'],
+        ['Pakket', pkg.name],
+        ['Blad', `${String(index + 1).padStart(2, '0')} / ${String(totaal).padStart(2, '0')}`],
+        ['Maatvoering', 'Raster 1,00 m · indicatief'],
+        ['Plaatsing', 'Verschilt per auto'],
+        ['Uitgave', UITGAVE],
+      ]
+        .map(([kop, waarde]) => `<div class="vak"><span>${kop}</span><b>${waarde}</b></div>`)
+        .join('')}
+    </div>
 
     <div class="onder">
       <div class="kenmerken">
@@ -318,10 +399,26 @@ const stijl = `
 
   /* ---- de tekening ---- */
   .schets { flex: 1; width: 100%; margin: 4mm 0 0; min-height: 0 }
-  .onderschrift {
-    text-align: center; margin-bottom: 4mm;
-    font-family: 'Oswald'; text-transform: uppercase; letter-spacing: .2em;
-    font-size: 3.2mm; color: ${BRAND.textDim};
+  /* Het tekeningstempel: op een echte werktekening staat in de hoek wat je
+     voor je hebt, welk blad het is en hoe hard de maten zijn. Hier staat het
+     over de volle breedte, want het is ook het onderschrift bij de auto. */
+  .stempel {
+    display: flex; margin: 3mm 0 5mm;
+    border: .35mm solid ${BRAND.line}; border-radius: .8mm; overflow: hidden;
+  }
+  .stempel .vak {
+    flex: 1; padding: 2.4mm 3mm;
+    border-left: .35mm solid ${BRAND.line};
+  }
+  .stempel .vak:first-child { border-left: 0 }
+  .stempel span {
+    display: block; font-family: 'Oswald'; text-transform: uppercase;
+    letter-spacing: .22em; font-size: 2.5mm; color: ${BRAND.textDim};
+    margin-bottom: 1mm;
+  }
+  .stempel b {
+    display: block; font-family: 'Oswald'; font-weight: 400;
+    letter-spacing: .06em; font-size: 3.4mm; color: ${BRAND.text};
   }
   /* De auto zelf. Zie src/data/schets.js voor de vormen. */
   .carrosserie path, .carrosserie rect {
@@ -343,11 +440,29 @@ const stijl = `
   .carrosserie .kussen { fill: rgba(135,135,135,.16); stroke-width: 1.2; opacity: .9 }
   /* De vlakken liggen onder de auto: de deurnaden en de stoelen lopen er
      overheen, zodat je ziet waar de demping tegenaan zit. */
-  .zone { fill: rgba(255,94,31,.26); stroke: rgba(255,94,31,.5); stroke-width: 1.1 }
-  .zone.zacht { fill: rgba(255,94,31,.12); stroke: rgba(255,94,31,.32) }
+  /* Gearceerd, zoals een behandeld oppervlak op een werktekening. De vulling
+     komt uit het patroon in de defs; hier staat alleen de omlijning. */
+  .zone { stroke: rgba(255,94,31,.55); stroke-width: 1.1 }
+
+  /* Hulplijnen: streep-punt, zodat je ziet dat het geen onderdeel is. */
+  .hulp path { fill: none; stroke: rgba(255,94,31,.42); stroke-width: .9 }
+  .hulp .hart { stroke-dasharray: 22 5 3 5 }
+  .hulp .as { stroke-dasharray: 16 4 2.5 4 }
+
+  /* Maatvoering. */
+  .maat-lijn, .maat-hulp { fill: none; stroke: rgba(235,235,235,.45); stroke-width: .8 }
+  .maat-hulp { stroke-dasharray: 4 4; stroke: rgba(235,235,235,.28) }
+  .maat-punt { fill: rgba(235,235,235,.6); stroke: none }
+  .maat-tekst {
+    font-family: 'Oswald'; font-weight: 400; font-size: 11px;
+    letter-spacing: .14em; fill: rgba(235,235,235,.72);
+  }
   .aanwijs { fill: none; stroke: rgba(255,94,31,.5); stroke-width: 1.2 }
+  .aanwijs-stip { fill: ${BRAND.accent} }
   .halo { fill: rgba(255,94,31,.18) }
-  .bol { fill: rgba(135,135,135,.4) }
+  /* Een donkere rand om de bol: zonder die onderbreking loopt hij vast in de
+     arcering eronder. Op een tekening heet dat een uitsparing. */
+  .bol { fill: rgba(135,135,135,.4); stroke: ${BRAND.bg}; stroke-width: 3 }
   .bol.aan { fill: ${BRAND.accent} }
   .nr {
     font-family: 'Oswald'; font-weight: 600; font-size: 14px;

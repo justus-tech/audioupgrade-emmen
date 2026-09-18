@@ -16,9 +16,13 @@
 import { PACKAGES } from '../data/site.js';
 /* De tekening zelf staat in een gegevensbestand, want de posters voor aan de
    muur gebruiken precies dezelfde auto. Zie src/data/schets.js. */
-import { AUTO, ONDERDELEN, ZONES, VOLGORDE } from '../data/schets.js';
+import { AUTO, ONDERDELEN, ZONES, VOLGORDE, HULPLIJNEN, MATEN, METER } from '../data/schets.js';
 
 const { start = 'akoestische-basis' } = Astro.props;
+
+/* De patronen hebben een eigen naam nodig: staan er twee tekeningen op
+   dezelfde pagina, dan mogen ze elkaars arcering niet oppakken. */
+const uid = Math.random().toString(36).slice(2, 8);
 
 const info = Object.fromEntries(
   [...ONDERDELEN, ...ZONES].map((o) => [o.id, { naam: o.naam, plek: o.plek, uitleg: o.uitleg }])
@@ -36,15 +40,54 @@ const info = Object.fromEntries(
     <figure class="ds-figuur">
       <svg class="ds-svg" viewBox={AUTO.viewBox} role="img"
            aria-label="Bovenaanzicht van een auto met de plek van de onderdelen">
+        <defs>
+          {/* Het raster is een meetraster: grof is een meter, fijn een kwart
+              meter, en de lijnen vallen op de hartlijn en op de vooras. */}
+          <pattern id={`fijn-${uid}`} width={METER / 4} height={METER / 4} patternUnits="userSpaceOnUse"
+                   patternTransform={`translate(220 ${MATEN.wielbasis.van})`}>
+            <path d={`M ${METER / 4} 0 L 0 0 0 ${METER / 4}`} class="ds-raster" />
+          </pattern>
+          <pattern id={`grof-${uid}`} width={METER} height={METER} patternUnits="userSpaceOnUse"
+                   patternTransform={`translate(220 ${MATEN.wielbasis.van})`}>
+            <path d={`M ${METER} 0 L 0 0 0 ${METER}`} class="ds-raster grof" />
+          </pattern>
+          {/* Arcering: zo geef je op een tekening een behandeld oppervlak aan. */}
+          <pattern id={`arcering-${uid}`} width="10" height="10" patternUnits="userSpaceOnUse"
+                   patternTransform="rotate(45)">
+            <rect width="10" height="10" class="ds-arc-vlak" />
+            <path d="M 0 0 L 0 10" class="ds-arc-lijn" />
+          </pattern>
+          <pattern id={`arcering-zacht-${uid}`} width="20" height="20" patternUnits="userSpaceOnUse"
+                   patternTransform="rotate(-45)">
+            <rect width="20" height="20" class="ds-arc-vlak zacht" />
+            <path d="M 0 0 L 0 20" class="ds-arc-lijn zacht" />
+          </pattern>
+        </defs>
+
+        <rect x="0" y="0" width={AUTO.breedte} height={AUTO.hoogte} fill={`url(#fijn-${uid})`} />
+        <rect x="0" y="0" width={AUTO.breedte} height={AUTO.hoogte} fill={`url(#grof-${uid})`} />
+
         {/* --- dempingsvlakken, onder de auto door --- */}
         {ZONES.map((z) => z.vlakken.map((vlak) => (
-          <path class:list={['ds-vlak', z.zacht && 'zacht']} d={vlak} data-id={z.id}
+          <path class="ds-vlak" d={vlak} data-id={z.id}
+                fill={`url(#arcering${z.zacht ? '-zacht' : ''}-${uid})`}
                 data-pakketten={z.pakketten.join(' ')} />
         )))}
 
         {/* --- carrosserie --- */}
         <g class="ds-lijn">
           {AUTO.paden.map((v) => <path d={v.d} class={`ds-${v.klasse}`} />)}
+        </g>
+
+        {/* --- hartlijn, assen en de schaalbalk --- */}
+        <g class="ds-hulp">
+          <path d={HULPLIJNEN.hart} class="hart" />
+          {HULPLIJNEN.assen.map((a) => <path d={a} class="as" />)}
+          {HULPLIJNEN.kruizen.map((k) => <path d={k} class="as" />)}
+        </g>
+        <g class="ds-schaal">
+          <path d={`M 107 642 L 107 652 M ${107 + METER} 642 L ${107 + METER} 652 M 107 647 L ${107 + METER} 647`} />
+          <text x={107 + METER / 2} y="666" text-anchor="middle">1 meter</text>
         </g>
 
         {/* --- gespiegelde punten zonder eigen nummer --- */}
@@ -204,19 +247,35 @@ const info = Object.fromEntries(
   .ds-kussen { fill: color-mix(in srgb, var(--text-dim) 12%, transparent); opacity: .5; stroke-width: 1.3; }
 
   /* ---- dempingsvlakken ---- */
+  /* ---- ruitjespapier ---- */
+  .ds-raster { fill: none; stroke: var(--accent); stroke-opacity: .09; stroke-width: .7; }
+  .ds-raster.grof { stroke-opacity: .16; stroke-width: 1; }
+
+  /* ---- dempingsvlakken ---- */
+  /* De vulling komt uit de arcering in de defs; aan of uit regelen we met
+     doorzichtigheid. Ze liggen onder de auto, dus de lijnen van de deur en
+     de stoelen lopen er dwars overheen. */
+  .ds-arc-vlak { fill: color-mix(in srgb, var(--accent) 9%, transparent); }
+  .ds-arc-lijn { stroke: var(--accent); stroke-opacity: .55; stroke-width: 1.1; }
+  .ds-arc-vlak.zacht { fill: color-mix(in srgb, var(--accent) 4%, transparent); }
+  .ds-arc-lijn.zacht { stroke-opacity: .3; stroke-width: .9; }
   .ds-vlak {
-    /* Uit = onzichtbaar. Grijze vlakken van zones die niet bij het pakket
-       horen maakten de tekening onrustig. Ze liggen onder de auto, dus de
-       lijnen van de deur en de stoelen lopen er dwars overheen. */
-    fill: transparent; stroke: none;
-    transition: fill .3s ease;
+    opacity: 0;
+    stroke: var(--accent); stroke-opacity: .5; stroke-width: 1.1;
+    transition: opacity .3s ease;
   }
-  .ds-vlak.aan { fill: color-mix(in srgb, var(--accent) 28%, transparent); }
-  .ds-vlak.gekozen { fill: color-mix(in srgb, var(--accent) 55%, transparent); }
-  /* De motorkap en de vloer beslaan een halve auto: die krijgen een waas
-     in plaats van een vlak, anders verdwijnt de tekening eronder. */
-  .ds-vlak.zacht.aan { fill: color-mix(in srgb, var(--accent) 13%, transparent); }
-  .ds-vlak.zacht.gekozen { fill: color-mix(in srgb, var(--accent) 26%, transparent); }
+  .ds-vlak.aan { opacity: .8; }
+  .ds-vlak.gekozen { opacity: 1; }
+
+  /* ---- hulplijnen en schaal ---- */
+  .ds-hulp path { fill: none; stroke: var(--accent); stroke-opacity: .34; stroke-width: .9; }
+  .ds-hulp .hart { stroke-dasharray: 22 5 3 5; }
+  .ds-hulp .as { stroke-dasharray: 16 4 2.5 4; }
+  .ds-schaal path { fill: none; stroke: var(--text-dim); stroke-width: 1; opacity: .5; }
+  .ds-schaal text {
+    font-family: 'Oswald', sans-serif; text-transform: uppercase;
+    letter-spacing: .2em; font-size: 13px; fill: var(--text-dim);
+  }
 
   /* ---- punten ---- */
   .ds-punt { cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .3s ease; }
@@ -225,6 +284,9 @@ const info = Object.fromEntries(
   .ds-punt:focus-visible .ds-halo { fill: color-mix(in srgb, var(--accent) 40%, transparent); }
 
   .ds-halo { fill: transparent; transition: fill .25s ease; }
+  /* Een rand in de kleur van de pagina, zodat de bol niet vastloopt in de
+     arcering eronder. Op een tekening heet dat een uitsparing. */
+  .ds-bol, .ds-spiegel { stroke: var(--bg); stroke-width: 3; }
   .ds-bol { fill: var(--uit); transition: fill .25s ease; }
   .ds-nr {
     font-family: 'Oswald', sans-serif; font-size: 17px; font-weight: 600;
