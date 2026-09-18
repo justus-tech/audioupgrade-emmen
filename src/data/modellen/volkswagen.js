@@ -17,7 +17,7 @@ export default [
     brand: 'Volkswagen',
     model: 'Golf',
     matchers: { merk: 'VOLKSWAGEN', model: /GOLF/ },
-    title: 'VW Golf audio upgrade & CarPlay v.a. €695 | Audio Upgrade Emmen',
+    title: 'VW Golf audio upgrade & CarPlay | Audio Upgrade Emmen',
     description:
       'Betere speakers, echte bas en draadloos CarPlay in je VW Golf. All-in prijzen, inbouw in één dag, fabrieksgarantie blijft behouden.',
     intro:
@@ -58,7 +58,7 @@ export default [
     brand: 'Volkswagen',
     model: 'Polo',
     matchers: { merk: 'VOLKSWAGEN', model: /POLO/ },
-    title: 'VW Polo audio upgrade & CarPlay v.a. €695 | Audio Upgrade Emmen',
+    title: 'VW Polo audio upgrade & CarPlay | Audio Upgrade Emmen',
     description:
       'Van blikkerig naar vol geluid in je VW Polo. Speakers, deurdemping en draadloos CarPlay met all-in prijs en behoud van fabrieksgarantie.',
     intro:

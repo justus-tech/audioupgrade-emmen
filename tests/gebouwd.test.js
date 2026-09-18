@@ -201,6 +201,23 @@ describe('titels en omschrijvingen', alsGebouwd, () => {
    * die begon daar dus halverwege. Met het blote oog zie je het niet, want
    * een h2 ziet er ook uit als een kop.
    */
+  /* Google kapt een titel af rond de 60 tekens en een omschrijving rond de
+     155. Wat daarachter staat leest niemand, en een zin die halverwege
+     ophoudt ziet er in de zoekresultaten uit alsof er niemand op let. De
+     grens hier ligt iets ruimer, want hoeveel er precies past hangt van de
+     letterbreedte af. */
+  test('titels en omschrijvingen passen in een zoekresultaat', () => {
+    for (const [pad, html] of inhoud) {
+      const titel = titelVan(html).replace(/&amp;/g, '&');
+      const omschrijving = omschrijvingVan(html);
+      assert.ok(titel.length <= 65, `${pad}: titel van ${titel.length} tekens — "${titel}"`);
+      assert.ok(
+        omschrijving.length <= 165,
+        `${pad}: omschrijving van ${omschrijving.length} tekens`
+      );
+    }
+  });
+
   test('elke pagina heeft precies één h1', () => {
     for (const [pad, html] of inhoud) {
       const aantal = (html.match(/<h1[\s>]/g) || []).length;

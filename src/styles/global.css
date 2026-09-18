@@ -233,9 +233,26 @@ header.site .wrap {
 .footer-logo { margin-bottom: 14px; color: var(--text); }
 nav.main { display: flex; gap: 34px; }
 nav.main a {
+  position: relative;
   text-decoration: none; font-size: .8rem; color: var(--text-dim);
   transition: color .2s; padding-bottom: 3px; border-bottom: 2px solid transparent;
 }
+
+/* ---- tikdoelen ----
+   Een duim mikt grover dan een muis, en vrijwel al ons bezoek komt van een
+   telefoon. De letters in het menu zijn klein — dat hoort bij de opmaak —
+   maar het vlak waar je op kunt tikken hoeft niet even klein te zijn.
+   Dit onzichtbare vlakje maakt het doel hoger zonder dat er iets verschuift:
+   de streep onder de actieve pagina blijft strak onder de letters staan. */
+nav.main a::after,
+.logo::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; top: 50%;
+  height: 40px;
+  transform: translateY(-50%);
+}
+.logo { position: relative; }
 nav.main a:hover { color: var(--text); }
 nav.main a[aria-current="page"] { color: var(--text); border-bottom-color: var(--accent); }
 
@@ -496,7 +513,14 @@ footer.site {
   background: var(--bg-alt);
 }
 footer.site .wrap { display: flex; flex-wrap: wrap; gap: 40px; justify-content: space-between; font-size: .88rem; color: var(--text-dim); }
-footer.site a { color: var(--text-dim); transition: color .2s; }
+/* De links staan onder elkaar met een <br> ertussen. Als losse regels tekst
+   zijn ze precies 23 pixels hoog, en dat is net te krap om met een duim te
+   raken zonder de regel eronder mee te pakken. Als blokje mét lucht eromheen
+   groeit de regelhoogte mee, dus ze komen ook verder uit elkaar te staan. */
+footer.site a {
+  display: inline-block; padding: 5px 0;
+  color: var(--text-dim); transition: color .2s;
+}
 footer.site a:hover { color: var(--accent-text); }
 footer.site .legal { font-size: .82rem; }
 /* De bedrijfsnummers zijn de minst interessante regel van de site; de
@@ -529,18 +553,23 @@ footer.site .legal-klein { display: inline-block; margin-top: 14px; font-size: .
     height: auto;
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
-    padding-top: 10px;
-    padding-bottom: 10px;
+    /* Het menu heeft zijn eigen lucht (zie nav.main hieronder), dus hier
+       hoeft er nauwelijks tussen. */
+    gap: 4px;
+    padding-top: 8px;
+    padding-bottom: 8px;
     /* Anker voor de themaknop hieronder. */
     position: relative;
   }
   /* De schakelaars horen op de regel van het logo. In de kolomvolgorde zouden
      ze onder het menu belanden, en daar zijn ze niet te vinden. */
+  /* Hoog genoeg voor een duim, maar niet hoger: eronder begint het tikvlak
+     van het menu, en twee vlakken die elkaar overlappen betekent dat je op
+     goed geluk de taal of de pagina opent. */
   .hulpmiddelen {
     position: absolute;
     right: 24px;
-    top: 8px;
+    top: 6px;
   }
   .thema-knop { width: 34px; height: 34px; }
   .thema-knop svg { width: 16px; height: 16px; }
@@ -551,6 +580,10 @@ footer.site .legal-klein { display: inline-block; margin-top: 14px; font-size: .
     flex-wrap: nowrap;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    /* Deze lucht is er voor de duim en niet voor het oog: een rij die opzij
+       schuift knipt alles af wat erbuiten valt, dus het grotere tikvlak van
+       de menu-items moet hier bínnen passen. */
+    padding-block: 10px;
   }
   nav.main::-webkit-scrollbar { display: none; }
   /* Kleiner én krappere letterafstand, zodat alle vijf de items passen en

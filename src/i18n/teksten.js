@@ -104,9 +104,9 @@ export const TEKSTEN = {
     },
 
     meta: {
-      titel: 'Car-Hifi und CarPlay nachrüsten in Emmen — 20 Minuten hinter der Grenze',
+      titel: 'Car-Hifi und CarPlay in Emmen — 20 Min. hinter der Grenze',
       omschrijving:
-        'Kabelloses Apple CarPlay, Lautsprecher und Dämmung — unsichtbar hinter den Originalverkleidungen eingebaut. Festpreise inklusive Einbau. Werksgarantie bleibt bestehen. Emmen, Niederlande.',
+        'Kabelloses Apple CarPlay, Lautsprecher und Dämmung, unsichtbar hinter den Originalverkleidungen. Festpreise inklusive Einbau, Werksgarantie bleibt.',
     },
 
     hero: {
@@ -264,7 +264,7 @@ export const TEKSTEN = {
     meta: {
       titel: 'Car audio and CarPlay installation in Emmen, Netherlands',
       omschrijving:
-        'Wireless Apple CarPlay, speakers and sound deadening — built in behind your original panels. All-in prices including fitting. Your factory warranty stays intact. Emmen, Drenthe.',
+        'Wireless Apple CarPlay, speakers and sound deadening, built in behind your original panels. All-in prices including fitting, factory warranty intact.',
     },
 
     hero: {

@@ -333,7 +333,7 @@ const DE = {
   prijzen: {
     titel: 'Preise für Car-Hifi und CarPlay — Audio Upgrade Emmen',
     omschrijving:
-      'Vier Pakete mit Festpreisen ab 695 €, inklusive Einbau und Mehrwertsteuer. Kabelloses CarPlay, Lautsprecher, DSP-Abstimmung und Dämmung. Werksgarantie bleibt bestehen.',
+      'Vier Pakete mit Festpreisen ab 695 €, inklusive Einbau und Mehrwertsteuer. Kabelloses CarPlay, Lautsprecher, DSP-Abstimmung und Dämmung.',
     eyebrow: 'Festpreise, inklusive Einbau und Mehrwertsteuer',
     kop: 'Preise',
     lead:
@@ -467,7 +467,7 @@ const DE = {
   over: {
     titel: 'Über uns — Justus, Audio Engineer in Emmen | Audio Upgrade Emmen',
     omschrijving:
-      'Am Konservatorium zum Audio Engineer ausgebildet, seit 2018 im Audiobereich, und Fahrzeuginnenräume zerlegt, bevor es einen Führerschein gab. Lernen Sie den Mann hinter Audio Upgrade Emmen kennen.',
+      'Am Konservatorium zum Audio Engineer ausgebildet, seit 2018 im Audiobereich, und Fahrzeuginnenräume zerlegt, bevor es einen Führerschein gab.',
     eyebrow: 'Hinter Audio Upgrade Emmen',
     kop: 'Wer sind wir?',
     lead:
@@ -489,7 +489,7 @@ const DE = {
   contact: {
     titel: 'Kontakt und Anfahrt | Audio Upgrade Emmen',
     omschrijving:
-      'Schicken Sie ein Foto Ihres Armaturenbretts über WhatsApp und erfahren Sie innerhalb von 24 Stunden, was für Ihr Auto möglich ist. Audio Upgrade Emmen, nur nach Vereinbarung.',
+      'Schicken Sie ein Foto Ihres Armaturenbretts über WhatsApp und erfahren Sie innerhalb von 24 Stunden, was möglich ist. Nur nach Vereinbarung.',
     eyebrow: 'Nur nach Vereinbarung',
     kop: 'Bereit für den Klang, den Ihr Auto verdient?',
     lead:
@@ -509,7 +509,7 @@ const DE = {
   },
 
   oldtimer: {
-    titel: 'Oldtimer und Youngtimer — Klang ohne Eingriff | Audio Upgrade Emmen',
+    titel: 'Oldtimer und Youngtimer | Audio Upgrade Emmen',
     omschrijving:
       'Audio für Klassiker ab Baujahr 1980: das Originalarmaturenbrett bleibt, kein modernes Display, alles rückbaubar. Preis nach Absprache.',
     eyebrow: 'Ab Baujahr 1980',
@@ -680,7 +680,7 @@ const EN = {
   over: {
     titel: 'About — Justus, audio engineer in Emmen | Audio Upgrade Emmen',
     omschrijving:
-      'Trained as an audio engineer at a music conservatoire, working in audio since 2018, and taking car interiors apart before he had a driving licence. Meet the man behind Audio Upgrade Emmen.',
+      'Trained as an audio engineer at a conservatoire, in audio since 2018, and taking car interiors apart before he had a driving licence.',
     eyebrow: 'Behind Audio Upgrade Emmen',
     kop: 'Who are we?',
     lead:
@@ -722,7 +722,7 @@ const EN = {
   },
 
   oldtimer: {
-    titel: 'Classics and youngtimers — sound without the surgery | Audio Upgrade Emmen',
+    titel: 'Classics and youngtimers | Audio Upgrade Emmen',
     omschrijving:
       'Audio for classics from 1980 onwards: the original dashboard stays, no modern screen, everything reversible. Price by arrangement.',
     eyebrow: 'From 1980 onwards',

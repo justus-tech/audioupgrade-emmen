@@ -44,7 +44,15 @@ const whatsappHulp = whatsappLink(
     {/* Een <input> kan geen kindelementen hebben, dus het logo ligt er als
         apart element overheen, precies op de oranje band. */}
     <span class="plaat-veld">
-      <input class="plate" id="kenteken-input" type="text" placeholder="XX-99-XX" maxlength="8" aria-label="Kenteken" />
+      {/* De vier laatste attributen zijn er voor de telefoon, en daar komt
+          vrijwel al het bezoek vandaan. Zonder autocapitalize begint het
+          toetsenbord in kleine letters, terwijl een kenteken in hoofdletters
+          hoort; spellcheck haalt de rode kringeltjes weg onder wat de
+          telefoon voor een typfout aanziet; en enterkeyhint zet "zoek" op de
+          groene toets in plaats van "enter". */}
+      <input class="plate" id="kenteken-input" type="text" placeholder="XX-99-XX" maxlength="8"
+             aria-label="Kenteken"
+             autocapitalize="characters" autocorrect="off" spellcheck="false" enterkeyhint="search" />
       <Logo height={18} decoratief={true} class="plaat-veld-logo" />
     </span>
     <button class="btn solid" type="submit">Check mijn auto</button>

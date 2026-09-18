@@ -723,6 +723,59 @@ describe('op een telefoon', alsGebouwd, () => {
     await pagina.close();
   });
 
+  /* De menubalk en de voettekst staan in kleine letters — dat hoort bij de
+     opmaak. Het vlak waar je op kunt tikken hoeft niet even klein te zijn.
+     Vandaar dat we hier niet het kadertje van de link meten maar prikken
+     waar hij echt op reageert: het onzichtbare vlakje eromheen telt mee,
+     en een schakelaar die er half overheen ligt telt juist niet mee. */
+  test('de kleine links in kop en voet zijn te raken met een duim', async () => {
+    const pagina = await browser.newPage(telefoon);
+    await pagina.goto(paginaUrl(''));
+    await pagina.evaluate(() => document.fonts.ready);
+
+    const teKlein = await pagina.evaluate(() => {
+      const raakhoogte = (el) => {
+        // elementFromPoint kijkt alleen in het beeld dat nu op het scherm
+        // staat. Wat eronder hangt moet dus eerst in beeld komen.
+        // 'instant', want de site scrollt zacht: zonder dit meten we de
+        // plek waar de link nog stond in plaats van waar hij nu is.
+        el.scrollIntoView({ block: 'center', behavior: 'instant' });
+        const r = el.getBoundingClientRect();
+        const x = r.left + r.width / 2;
+        const midden = r.top + r.height / 2;
+        const raakt = (y) => {
+          const doel = document.elementFromPoint(x, y);
+          return doel === el || el.contains(doel)
+            || (doel && doel.closest && doel.closest('a, button, summary') === el);
+        };
+        let boven = midden;
+        let onder = midden;
+        while (boven > midden - 60 && raakt(boven - 1)) boven -= 1;
+        while (onder < midden + 60 && raakt(onder + 1)) onder += 1;
+        return Math.round(onder - boven);
+      };
+      const uit = [];
+      const kiezers = [
+        '.logo', 'nav.main a', '.taalkiezer a', '.thema-knop',
+        'footer.site .wrap a',
+      ];
+      for (const kiezer of kiezers) {
+        for (const el of document.querySelectorAll(kiezer)) {
+          const r = el.getBoundingClientRect();
+          if (r.width === 0 || r.height === 0) continue;
+          const hoog = raakhoogte(el);
+          if (hoog < 30 || r.width < 24) {
+            uit.push(`${kiezer} "${(el.textContent || el.getAttribute("aria-label") || "").trim().slice(0, 20)}" ${Math.round(r.width)} bij ${hoog}`);
+          }
+        }
+      }
+      return uit;
+    });
+
+    assert.deepEqual(teKlein, [], `te klein om te raken: ${teKlein.join(' | ')}`);
+    await pagina.close();
+  });
+
   test('de belangrijkste knoppen zijn groot genoeg voor een duim', async () => {
     const pagina = await browser.newPage(telefoon);
     await pagina.goto(paginaUrl(''));

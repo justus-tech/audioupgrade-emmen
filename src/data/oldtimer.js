@@ -31,9 +31,9 @@ export const VANAF_JAAR = 1980;
 
 export const OLDTIMER = {
   slug: 'oldtimer-audio',
-  titel: 'Oldtimer audio upgrade — geluid zonder je dashboard aan te tasten | Audio Upgrade Emmen',
+  titel: 'Oldtimer en youngtimer audio upgrade | Audio Upgrade Emmen',
   beschrijving:
-    'Beter geluid in je klassieker of youngtimer, zonder modern scherm in je dashboard. De originele radio blijft bewaard en alles is terug te bouwen. Vanaf bouwjaar 1980.',
+    'Beter geluid in je klassieker of youngtimer, zonder modern scherm in je dashboard. De originele radio blijft bewaard en alles is terug te bouwen.',
   eyebrow: 'Klassiekers en youngtimers',
   kop: 'Je dashboard blijft zoals het was',
 
