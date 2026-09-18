@@ -9,6 +9,8 @@
     "test": "npm run build && node --test --test-concurrency=1 \"tests/*.test.js\"",
     "test:snel": "node --test tests/match.test.js tests/voertuig.test.js tests/matchers.test.js tests/data.test.js tests/huisstijl.test.js",
     "test:browser": "npm run build && node --test --test-concurrency=1 tests/browser.test.js",
+    "prijs": "node scripts/offerteprijs.mjs",
+    "offerte": "node scripts/offerte.mjs",
     "rdw": "node scripts/rdw-dekking.mjs",
     "schermafdrukken": "node scripts/screenshot.mjs",
     "posters": "node scripts/posters.mjs",

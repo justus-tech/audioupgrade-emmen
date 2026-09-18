@@ -132,21 +132,42 @@ export function breedteVan(tekst, grootte = 10, vet = false) {
  * Een lange zin in regels knippen die binnen `maxBreedte` passen.
  * Een woord dat in zijn eentje al te lang is blijft heel; liever een regel
  * die een millimeter uitsteekt dan een woord dat middenin doormidden valt.
+ *
+ * EEN REGELEINDE DAT JE ZELF TYPT, BLIJFT STAAN.
+ *
+ * Dit knipte eerst op alle witruimte tegelijk, dus ook op een regeleinde. Een
+ * toelichting met een opsomming erin — "Wat er gebeurt:" met daaronder drie
+ * puntjes — werd daardoor één grijze lap tekst waarin niets meer opviel. Nu
+ * wordt elke getypte regel apart afgebroken, en blijft een lege regel een lege
+ * regel, zodat er witruimte tussen twee alinea's staat.
  */
 export function breekAf(tekst, maxBreedte, grootte = 10, vet = false) {
-  const woorden = String(tekst ?? '').split(/\s+/).filter(Boolean);
+  /* Witruimte aan het eind eraf: een tekst die op een regeleinde eindigt zou
+     anders een lege regel onderaan opleveren die niemand getypt heeft. */
+  const alineas = String(tekst ?? '').replace(/\s+$/, '').split(/\r?\n/);
   const regels = [];
-  let regel = '';
-  for (const woord of woorden) {
-    const poging = regel ? `${regel} ${woord}` : woord;
-    if (regel && breedteVan(poging, grootte, vet) > maxBreedte) {
-      regels.push(regel);
-      regel = woord;
-    } else {
-      regel = poging;
+
+  for (const alinea of alineas) {
+    /* Binnen een regel splitsen we wél op alle witruimte, maar niet op het
+       regeleinde zelf: dat hebben we hierboven al gebruikt. */
+    const woorden = alinea.split(/[^\S\r\n]+/).filter(Boolean);
+    if (!woorden.length) {
+      regels.push('');
+      continue;
     }
+    let regel = '';
+    for (const woord of woorden) {
+      const poging = regel ? `${regel} ${woord}` : woord;
+      if (regel && breedteVan(poging, grootte, vet) > maxBreedte) {
+        regels.push(regel);
+        regel = woord;
+      } else {
+        regel = poging;
+      }
+    }
+    if (regel) regels.push(regel);
   }
-  if (regel) regels.push(regel);
+
   return regels.length ? regels : [''];
 }
 
