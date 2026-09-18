@@ -1092,6 +1092,165 @@ describe('Headroom', alsGebouwd, () => {
     await pagina.close();
   });
 
+  test('wat je aan het invullen was overleeft een afgesloten tabblad', async () => {
+    /**
+     * Android sluit een tabblad op de achtergrond af zodra hij geheugen nodig
+     * heeft. Ga je even naar WhatsApp of naar de camera — de hele dag door —
+     * dan kwam je terug op een leeg scherm met je werk eraf.
+     */
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+    await pagina.fill('#wb-naam', 'Mark de Vries');
+    await pagina.fill('#wb-kenteken', 'XX99XX');
+    await pagina.fill('#wb-opmerking', 'inbouw in overleg');
+    await pagina.fill('#wb-inbouwdatum', '2026-10-07');
+    await pagina.locator('#wb-naam').blur();
+
+    // Zonder op Bewaren te drukken: het tabblad gaat naar de achtergrond.
+    await pagina.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    await pagina.reload();
+
+    assert.equal(await pagina.inputValue('#wb-naam'), 'Mark de Vries');
+    assert.equal(await pagina.inputValue('#wb-kenteken'), 'XX99XX');
+    assert.equal(await pagina.inputValue('#wb-opmerking'), 'inbouw in overleg');
+    assert.equal(await pagina.inputValue('#wb-inbouwdatum'), '2026-10-07');
+    assert.equal(await pagina.locator('#wb-regels .wb-regel').count(), 1);
+    assert.equal(await pagina.textContent('#wb-totaal'), '€ 695,00');
+
+    // En hij is er niet stiekem ook in je lijst bij gezet.
+    const staat = await pagina.evaluate(() =>
+      JSON.parse(localStorage.getItem('aue-werkbak-v1')));
+    assert.equal(staat.offertes.length, 0, 'een niet-bewaarde offerte hoort niet in de lijst');
+
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een lege offerte laat niets achter', async () => {
+    // Anders sta je bij het openen naar een leeg formulier te kijken dat
+    // zogenaamd hersteld is.
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    const staat = await pagina.evaluate(() =>
+      JSON.parse(localStorage.getItem('aue-werkbak-v1') || 'null'));
+    assert.ok(!staat?.concept, 'er staat een leeg concept opgeslagen');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een nieuwe beginnen vraagt eerst als er werk in staat', async () => {
+    // Deze knop staat vlak onder Bewaren; met een vette duim zit je ernaast.
+    const { pagina, fouten } = await openWerkbak();
+    const gevraagd = [];
+    pagina.on('dialog', (d) => { gevraagd.push(d.message()); d.dismiss(); });
+
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+    await pagina.fill('#wb-naam', 'Mark de Vries');
+    await pagina.click('#wb-nieuw');
+
+    assert.match(gevraagd.join(' '), /nog niet in je lijst/i);
+    // Afgewezen, dus alles staat er nog.
+    assert.equal(await pagina.inputValue('#wb-naam'), 'Mark de Vries');
+    assert.equal(await pagina.locator('#wb-regels .wb-regel').count(), 1);
+
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('is de offerte bewaard, dan vraagt hij niets', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    const gevraagd = [];
+    pagina.on('dialog', (d) => { gevraagd.push(d.message()); d.accept(); });
+
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+    await pagina.fill('#wb-naam', 'Mark de Vries');
+    await pagina.click('#wb-bewaar');
+    await pagina.click('#wb-nieuw');
+
+    assert.deepEqual(gevraagd, [], 'er valt niets te verliezen, dus niets te vragen');
+    assert.equal(await pagina.inputValue('#wb-naam'), '');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('twee offertes achter elkaar overschrijven elkaar niet', async () => {
+    /**
+     * Dit ging mis en het kostte werk.
+     *
+     * Het offertenummer kwam van de teller uit Instellingen, en die schoof pas
+     * op als je de offerte had verstuurd. Maakte Justus er twee achter elkaar
+     * zonder er een te versturen — op een autoshow, of gewoon op een drukke
+     * dag — dan droegen ze allebei nummer 2026-001. Bewaren ging op nummer,
+     * dus de tweede ging boven op de eerste. Die klant was weg, zonder melding.
+     */
+    const { pagina, fouten } = await openWerkbak();
+    const bewaard = () => pagina.evaluate(() =>
+      JSON.parse(localStorage.getItem('aue-werkbak-v1')).offertes
+        .map((o) => `${o.nummer} ${o.klant?.naam || ''}`)
+    );
+
+    for (const naam of ['Mark de Vries', 'Sanne Bakker', 'Tim Jansen']) {
+      await pagina.click('#wb-nieuw');
+      await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+      await pagina.fill('#wb-naam', naam);
+      await pagina.click('#wb-bewaar');
+    }
+
+    assert.deepEqual(await bewaard(), [
+      '2026-003 Tim Jansen',
+      '2026-002 Sanne Bakker',
+      '2026-001 Mark de Vries',
+    ]);
+
+    // De teller wijst naar het eerste vrije nummer, niet verder.
+    await pagina.click('[data-tab="instellingen"]');
+    assert.equal(await pagina.inputValue('#wb-i-volgnummer'), '4');
+
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('dezelfde offerte nog eens bewaren verandert niets', async () => {
+    // Anders staat hij dubbel in je lijst, of springt je nummerreeks vooruit
+    // met nummers die nooit bij een offerte hebben gehoord.
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+    await pagina.fill('#wb-naam', 'Mark de Vries');
+    await pagina.click('#wb-bewaar');
+    await pagina.click('#wb-bewaar');
+    await pagina.click('#wb-bewaar');
+
+    const staat = await pagina.evaluate(() =>
+      JSON.parse(localStorage.getItem('aue-werkbak-v1')));
+    assert.equal(staat.offertes.length, 1);
+    assert.equal(staat.offertes[0].nummer, '2026-001');
+    assert.equal(staat.instellingen.volgnummer, 2);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een bewaarde offerte openen en wijzigen houdt hetzelfde nummer', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    for (const naam of ['Mark', 'Sanne']) {
+      await pagina.click('#wb-nieuw');
+      await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+      await pagina.fill('#wb-naam', naam);
+      await pagina.click('#wb-bewaar');
+    }
+    // De onderste in de lijst is de oudste: Mark, met 2026-001.
+    await pagina.click('#wb-bewaard .wb-open-offerte >> nth=1');
+    await pagina.fill('#wb-naam', 'Mark de Vries');
+    await pagina.click('#wb-bewaar');
+
+    const staat = await pagina.evaluate(() =>
+      JSON.parse(localStorage.getItem('aue-werkbak-v1')));
+    assert.equal(staat.offertes.length, 2, 'er is er een bij gekomen of verdwenen');
+    const mark = staat.offertes.find((o) => o.klant.naam === 'Mark de Vries');
+    assert.equal(mark.nummer, '2026-001', 'het nummer is veranderd bij het wijzigen');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
   test('je kunt rechtstreeks in een tabblad binnenkomen', async () => {
     // Dit is wat een snelkoppeling op het beginscherm doet: meteen de agenda,
     // zonder eerst langs de offerte.
@@ -1576,8 +1735,12 @@ describe('de aanbetaling', alsGebouwd, () => {
     // Het factuurnummer schuift één op, en niet meer dan één.
     await pagina.click('[data-tab="instellingen"]');
     assert.equal(await pagina.inputValue('#wb-i-factuurnummer'), '2');
-    // En het offertenummer blijft waar het was: aparte reeksen.
-    assert.equal(await pagina.inputValue('#wb-i-volgnummer'), '1');
+    // De twee reeksen tellen los van elkaar. Het offertenummer staat ook op 2,
+    // maar om een andere reden: bij het factureren is deze offerte bewaard, en
+    // daarmee is 2026-001 vergeven. De teller wijst dus naar het eerste nummer
+    // dat nog vrij is. Bleef hij op 1 staan, dan kreeg de volgende klant
+    // hetzelfde nummer en overschreef die deze offerte.
+    assert.equal(await pagina.inputValue('#wb-i-volgnummer'), '2');
     assert.deepEqual(fouten, []);
     await pagina.close();
   });

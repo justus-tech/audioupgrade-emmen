@@ -146,8 +146,11 @@ export function factuurPdf(offerte, inst = STANDAARD_INSTELLINGEN, opties = {}) 
     ay += 10;
   }
   const autoNaam = [offerte.auto?.merk, offerte.auto?.model].filter(Boolean).join(' ');
-  if (autoNaam) {
-    doc.tekst(autoNaam, rechterKolom, ay, { grootte: 11, vet: true, kleur: KLEUR.inkt });
+  /* Net als op de offerte: een lange modelnaam liep anders het blad af. */
+  /* breekAf levert bij lege tekst één lege regel; die zou hier een gat
+     van veertien punten maken bij een auto zonder merk. */
+  for (const stuk of (autoNaam ? breekAf(autoNaam, RECHTS - rechterKolom, 11, true) : [])) {
+    doc.tekst(stuk, rechterKolom, ay, { grootte: 11, vet: true, kleur: KLEUR.inkt });
     ay += 14;
   }
   doc.tekst(`Offerte ${offerte.nummer}`, rechterKolom, ay, { grootte: 9, kleur: KLEUR.zacht });

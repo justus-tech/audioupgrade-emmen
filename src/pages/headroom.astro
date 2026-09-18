@@ -563,7 +563,7 @@ import { APP } from '../data/app.js';
   import {
     SOORTEN, STANDAARD_INSTELLINGEN, euro, naarCent, regelPrijs, totalen, marge,
     offertenummer, geldigTot, stuklijst, aanbetaling, eindafrekening,
-    factuurnummer, kortingNaarExcl, datumNl,
+    factuurnummer, kortingNaarExcl, datumNl, soortenIn,
   } from '../lib/headroom/rekenen.js';
   import { offertePdf, pdfBestandsnaam } from '../lib/headroom/offerte-pdf.js';
   import { werkbonPdf, werkbonBestandsnaam } from '../lib/headroom/werkbon.js';
@@ -594,6 +594,16 @@ import { APP } from '../data/app.js';
      waarschuwing in src/data/app.js. */
   const SLEUTEL = APP.opslagSleutel;
 
+  /**
+   * Offertes uit de opslag of uit een reservekopie een kenmerk geven.
+   *
+   * Alles van vóór deze versie heeft er nog geen. Zonder kenmerk valt een
+   * offerte terug op zijn nummer, en dat is precies wat er misging.
+   */
+  const metKenmerk = (lijst) =>
+    (Array.isArray(lijst) ? lijst : []).map((o, i) =>
+      (o && o.id ? o : { ...o, id: `oud-${o?.nummer || 'x'}-${i}` }));
+
   const leegteStaat = () => ({
     instellingen: { ...STANDAARD_INSTELLINGEN },
     catalogus: [],
@@ -602,6 +612,8 @@ import { APP } from '../data/app.js';
     dossiers: [],
     /* Luistersessies: afspraken die aan een offerte voorafgaan. */
     sessies: [],
+    /* De offerte waar je nu aan werkt en die je nog niet hebt bewaard. */
+    concept: null,
   });
 
   function laden() {
@@ -612,11 +624,12 @@ import { APP } from '../data/app.js';
       return {
         instellingen: { ...STANDAARD_INSTELLINGEN, ...(gelezen.instellingen || {}) },
         catalogus: Array.isArray(gelezen.catalogus) ? gelezen.catalogus : [],
-        offertes: Array.isArray(gelezen.offertes) ? gelezen.offertes : [],
+        offertes: metKenmerk(gelezen.offertes),
         /* Opslag van vóór de autodossiers heeft dit veld nog niet. */
         dossiers: Array.isArray(gelezen.dossiers) ? gelezen.dossiers : [],
         /* En van vóór de luistersessies dit veld niet. */
         sessies: Array.isArray(gelezen.sessies) ? gelezen.sessies : [],
+        concept: gelezen.concept || null,
       };
     } catch (e) {
       /* Kapotte of geblokkeerde opslag mag de app niet stilzetten. */
@@ -635,8 +648,32 @@ import { APP } from '../data/app.js';
   let staat = laden();
 
   /* ================= DE OFFERTE DIE JE NU MAAKT ================= */
+  /* Een kenmerk dat nergens anders voorkomt. Staat hierboven omdat een
+     nieuwe offerte er meteen een krijgt. */
+  const eigenId = () => `r${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+
+  /**
+   * Het eerstvolgende nummer dat nog niet vergeven is.
+   *
+   * De teller uit Instellingen is het uitgangspunt, maar een nummer dat al in
+   * je lijst staat wordt overgeslagen. Anders krijgt de tweede offerte van
+   * vandaag hetzelfde nummer als de eerste — en met twee keer 2026-014 in je
+   * boekhouding kun je niets.
+   */
+  function vrijNummer() {
+    let n = Math.max(1, Math.round(Number(staat.instellingen.volgnummer) || 1));
+    const bezet = new Set(staat.offertes.map((o) => o.nummer));
+    while (bezet.has(offertenummer(n))) n += 1;
+    return { n, nummer: offertenummer(n) };
+  }
+
   const nieuweOfferte = () => ({
-    nummer: offertenummer(staat.instellingen.volgnummer),
+    /* Een eigen kenmerk dat je nergens ziet. Het zichtbare offertenummer is
+       niet geschikt om offertes uit elkaar te houden: dat wordt pas vastgelegd
+       als je bewaart, en tot dat moment dragen twee nieuwe offertes hetzelfde
+       nummer. Op nummer bijwerken overschreef daardoor de vorige klant. */
+    id: eigenId(),
+    nummer: vrijNummer().nummer,
     datum: new Date(),
     zakelijk: false,
     klant: {},
@@ -664,7 +701,22 @@ import { APP } from '../data/app.js';
   let bewerktOnderdeel = null;
 
   const melden = (tekst) => { $('#wb-auto-melding').textContent = tekst; };
-  const eigenId = () => `r${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+
+  /** "1 onderdeel", "3 onderdelen" — geen "1 onderdelen". */
+  const telling = (n, enkel, meer) => `${n} ${n === 1 ? enkel : meer}`;
+
+  /**
+   * Een ingetikt bedrag, nooit onder nul.
+   *
+   * De rekensom negeerde een negatieve inkoopprijs al, maar hij bleef wél zo
+   * in je lijst staan. Dan zie je "-€ 50,00" bij een onderdeel terwijl de app
+   * met nul rekent, en snap je je marge niet meer. Een min is altijd een
+   * typefout; korting geef je met het kortingsveld.
+   */
+  const bedragIn = (waarde) => Math.max(0, naarCent(waarde));
+
+  /** Een ingetikt aantal uren, nooit onder nul. */
+  const urenIn = (waarde) => Math.max(0, Number(String(waarde).replace(',', '.')) || 0);
 
   /* ================= TABBLADEN ================= */
   /**
@@ -785,8 +837,12 @@ import { APP } from '../data/app.js';
   };
   Object.entries(klantVelden).forEach(([sleutel, id]) => {
     $(`#wb-${id}`).addEventListener('input', (e) => { offerte.klant[sleutel] = e.target.value; });
+    /* Bij het verlaten van het veld pas wegschrijven: bij elke toetsaanslag de
+       hele opslag opnieuw wegzetten maakt het typen stroperig. */
+    $(`#wb-${id}`).addEventListener('change', bewaarConcept);
   });
   $('#wb-opmerking').addEventListener('input', (e) => { offerte.opmerking = e.target.value; });
+  $('#wb-opmerking').addEventListener('change', bewaarConcept);
 
   /* ================= DE AFSPRAAK EN DE AGENDA ================= */
   ['inbouwdatum', 'inbouwtijd'].forEach((veld) => {
@@ -1335,18 +1391,18 @@ import { APP } from '../data/app.js';
         regel.toelichting = e.target.value;
       });
       rij.querySelector('.wb-d-inkoop').addEventListener('change', (e) => {
-        zetEnTeken('inkoopCent', naarCent(e.target.value));
+        zetEnTeken('inkoopCent', bedragIn(e.target.value));
       });
       rij.querySelector('.wb-d-marge').addEventListener('change', (e) => {
         const n = Number(String(e.target.value).replace(',', '.'));
         zetEnTeken('margePct', Number.isFinite(n) && e.target.value !== '' ? n : undefined);
       });
       rij.querySelector('.wb-d-uren').addEventListener('change', (e) => {
-        zetEnTeken('uren', Number(String(e.target.value).replace(',', '.')) || 0);
+        zetEnTeken('uren', urenIn(e.target.value));
       });
       rij.querySelector('.wb-d-vast').addEventListener('change', (e) => {
         const leeg = String(e.target.value).trim() === '';
-        zetEnTeken('vastExclCent', leeg ? undefined : naarCent(e.target.value));
+        zetEnTeken('vastExclCent', leeg ? undefined : bedragIn(e.target.value));
       });
 
       vak.appendChild(rij);
@@ -1371,7 +1427,7 @@ import { APP } from '../data/app.js';
       <div><span>Omzet excl. btw</span><strong>${euro(m.omzetCent)}</strong></div>
       <div><span>Inkoop</span><strong>${euro(m.kostprijsCent)}</strong></div>
       <div><span>Marge</span><strong>${euro(m.margeCent)}</strong></div>
-      <div><span>Marge %</span><strong>${m.margePct.toFixed(1)}%</strong></div>
+      <div><span>Marge %</span><strong>${m.margePct.toFixed(1).replace('.', ',')}%</strong></div>
       <div><span>Montage</span><strong>${m.urenTotaal} uur · ${euro(m.arbeidCent)}</strong></div>` +
       (zonderInkoop
         ? `<p class="wb-waarschuwing">Let op: bij ${zonderInkoop} ${
@@ -1485,6 +1541,7 @@ import { APP } from '../data/app.js';
   $('#wb-aanbetaling-pct').addEventListener('input', tekenAanbetaling);
 
   function tekenAlles() {
+    bewaarConcept();
     tekenAfspraak();
     tekenKorting();
     tekenRegels();
@@ -1592,7 +1649,7 @@ import { APP } from '../data/app.js';
         toonVoorbeeld();
       });
       rij.querySelector('.wb-t-inkoop').addEventListener('change', (e) => {
-        stuk.inkoopCent = naarCent(e.target.value);
+        stuk.inkoopCent = bedragIn(e.target.value);
         toonVoorbeeld();
       });
       rij.querySelector('.wb-t-weg').addEventListener('click', () => {
@@ -1618,9 +1675,9 @@ import { APP } from '../data/app.js';
       merk: $('#wb-o-merk').value.trim(),
       artikelnummer: $('#wb-o-artikelnummer').value.trim(),
       leverancier: $('#wb-o-leverancier').value.trim(),
-      inkoopCent: naarCent($('#wb-o-inkoop').value),
+      inkoopCent: bedragIn($('#wb-o-inkoop').value),
       margePct: margeIn === '' ? undefined : Number(margeIn.replace(',', '.')),
-      uren: Number($('#wb-o-uren').value.replace(',', '.')) || 0,
+      uren: urenIn($('#wb-o-uren').value),
       /* Een kopie, geen verwijzing: anders wijzigt het volgende onderdeel dat
          je bewerkt stilletjes de toebehoren van het vorige mee. */
       toebehoren: toebehorenNu.map((t) => ({ ...t })),
@@ -1926,19 +1983,50 @@ import { APP } from '../data/app.js';
       const aantal = gelezen.catalogus.length;
 
       if (isReservekopie) {
+        /**
+         * Wat er in het bestand zit én wat je nu hebt.
+         *
+         * Alleen vertellen wat erin zit is de verkeerde helft van het verhaal:
+         * zet je een kopie van vorige maand terug, dan ben je de offertes van
+         * deze maand kwijt, en dat is precies wat je moet weten vóór je op ja
+         * drukt.
+         */
+        const nu = [
+          telling(staat.catalogus.length, 'onderdeel', 'onderdelen'),
+          telling(staat.offertes.length, 'offerte', 'offertes'),
+          telling(staat.dossiers.length, 'auto', "auto's"),
+        ].join(', ');
+        const straks = [
+          telling(aantal, 'onderdeel', 'onderdelen'),
+          telling((gelezen.offertes || []).length, 'offerte', 'offertes'),
+          telling((gelezen.dossiers || []).length, 'auto', "auto's"),
+        ].join(', ');
         const zeker = confirm(
-          `Dit is een volledige reservekopie (${aantal} onderdelen, ` +
-          `${(gelezen.dossiers || []).length} auto's).\n\n` +
-          `Alles wat nu in ${APP.naam} staat wordt vervangen. Doorgaan?`
+          'Dit is een volledige reservekopie.\n\n' +
+          `Je hebt nu:  ${nu}\n` +
+          `In dit bestand:  ${straks}\n\n` +
+          `Alles wat nu in ${APP.naam} staat wordt vervangen door wat er in dit ` +
+          'bestand staat. Wat er nu is en niet in het bestand zit, is daarna weg.\n\n' +
+          'Doorgaan?'
         );
         if (!zeker) { e.target.value = ''; return; }
         staat = {
           instellingen: { ...STANDAARD_INSTELLINGEN, ...(gelezen.instellingen || {}) },
           catalogus: gelezen.catalogus,
-          offertes: Array.isArray(gelezen.offertes) ? gelezen.offertes : [],
+          offertes: metKenmerk(gelezen.offertes),
           dossiers: Array.isArray(gelezen.dossiers) ? gelezen.dossiers : [],
+          /* Een reservekopie van vóór de luistersessies heeft dit veld niet.
+             Zonder deze regel bleef staat.sessies leeg achter en liep de app
+             stuk zodra je er een wilde bewaren. */
+          sessies: Array.isArray(gelezen.sessies) ? gelezen.sessies : [],
         };
-        alert(`Teruggezet: ${staat.catalogus.length} onderdelen, ${staat.dossiers.length} auto's.`);
+        alert(
+          'Teruggezet: ' + [
+            telling(staat.catalogus.length, 'onderdeel', 'onderdelen'),
+            telling(staat.offertes.length, 'offerte', 'offertes'),
+            telling(staat.dossiers.length, 'auto', "auto's"),
+          ].join(', ') + '.'
+        );
       } else {
         /* Toevoegen, en wat er al staat overslaan. Zonder die controle staat
            na twee keer inlezen alles dubbel in je lijst. */
@@ -1985,10 +2073,13 @@ import { APP } from '../data/app.js';
 
         const overgeslagen = aantal - nieuw.length;
         alert(
-          `${nieuw.length} onderdelen toegevoegd` +
-          (nieuweAutos.length ? ` en ${nieuweAutos.length} auto's` : '') + '.' +
-          (aangevuld ? `\n${aangevuld} lege instelling${aangevuld === 1 ? '' : 'en'} ingevuld.` : '') +
-          (overgeslagen ? `\n${overgeslagen} stond er al in en is overgeslagen.` : '')
+          `${telling(nieuw.length, 'onderdeel', 'onderdelen')} toegevoegd` +
+          (nieuweAutos.length ? ` en ${telling(nieuweAutos.length, 'auto', "auto's")}` : '') + '.' +
+          (aangevuld ? `\n${telling(aangevuld, 'lege instelling', 'lege instellingen')} ingevuld.` : '') +
+          (overgeslagen
+            ? `\n${overgeslagen} ${overgeslagen === 1 ? 'stond' : 'stonden'} er al in en ` +
+              `${overgeslagen === 1 ? 'is' : 'zijn'} overgeslagen.`
+            : '')
         );
       }
 
@@ -2014,15 +2105,61 @@ import { APP } from '../data/app.js';
   const STATUSSEN = ['concept', 'verstuurd', 'aanbetaald', 'gefactureerd', 'betaald'];
 
   /**
+   * HET CONCEPT — de offerte waar je nu aan werkt.
+   *
+   * WAAROM DIT BESTAAT
+   * Android sluit een tabblad dat op de achtergrond staat gewoon af als hij
+   * geheugen nodig heeft. Ga je tussendoor naar WhatsApp of naar de camera —
+   * en dat doe je de hele dag — dan kun je bij terugkomst een leeg scherm
+   * treffen met een half uur werk eraf. Er staat geen server achter deze app
+   * die dat opvangt.
+   *
+   * Daarom onthoudt de app wat er op dit moment in het formulier staat, ook
+   * zonder dat je op Bewaren drukt. Het is één plek, geen lijst: hij bewaart
+   * wat er nu open staat, en die wordt leeg zodra je aan een nieuwe begint.
+   * Je lijst met bewaarde offertes blijft dus precies wat je zelf bewaard
+   * hebt — dit staat daarnaast.
+   */
+  const heeftInhoud = (o) => !!(
+    o?.regels?.length || o?.klant?.naam || o?.klant?.bedrijf ||
+    o?.auto?.kenteken || o?.auto?.merk || o?.inbouwdatum || o?.opmerking
+  );
+
+  function bewaarConcept() {
+    const nieuwConcept = heeftInhoud(offerte)
+      ? { ...offerte, datum: offerte.datum.toISOString() }
+      : null;
+    /* Niets veranderd? Dan ook niet schrijven. Anders staat de app bij elke
+       toetsaanslag de hele opslag opnieuw weg te zetten. */
+    if (JSON.stringify(staat.concept) === JSON.stringify(nieuwConcept)) return;
+    staat.concept = nieuwConcept;
+    opslaan();
+  }
+
+  /**
    * De offerte bewaren, of bijwerken als hij er al staat.
    *
-   * Op nummer, niet er gewoon bovenop: zonder die controle stond dezelfde
-   * offerte vier keer in je lijst nadat je hem had bewaard, verstuurd,
-   * aanbetaald en afgerekend.
+   * Op het eigen kenmerk en niet op het nummer. Op nummer ging het twee keer
+   * mis: eerst stond dezelfde offerte vier keer in de lijst nadat je hem had
+   * bewaard, verstuurd, aanbetaald en afgerekend; daarna overschreef een
+   * tweede nieuwe offerte de eerste, omdat die allebei nog het nummer van de
+   * teller droegen. Een klant verdwenen zonder melding.
+   *
+   * Het nummer wordt daarom pas vastgelegd als je bewaart, en de teller
+   * schuift op datzelfde moment op. Zo hoort bij elk vergeven nummer ook echt
+   * een offerte, en houdt je reeks geen gaten van offertes die nooit bestonden.
    */
   function bewaarOfferte() {
+    if (!offerte.id) offerte.id = eigenId();
+    const i = staat.offertes.findIndex((o) => o.id === offerte.id);
+
+    if (i < 0) {
+      const { n, nummer } = vrijNummer();
+      offerte.nummer = nummer;
+      staat.instellingen.volgnummer = n + 1;
+    }
+
     const plat = { ...offerte, datum: offerte.datum.toISOString() };
-    const i = staat.offertes.findIndex((o) => o.nummer === offerte.nummer);
     if (i >= 0) staat.offertes[i] = plat;
     else staat.offertes.unshift(plat);
     staat.offertes = staat.offertes.slice(0, 200);
@@ -2033,11 +2170,31 @@ import { APP } from '../data/app.js';
     bewaarOfferte();
     opslaan();
     tekenOpgeslagen();
+    tekenInstellingen();
+    /* Het nummer wordt bij het bewaren vastgelegd; de balk bovenin en de
+       marge moeten dat meteen laten zien. */
+    tekenAlles();
   });
 
   $('#wb-zoek').addEventListener('input', tekenBewaard);
 
   $('#wb-nieuw').addEventListener('click', () => {
+    /**
+     * Eerst vragen als er werk in staat dat nergens bewaard is.
+     *
+     * Deze knop staat vlak onder Bewaren, en in de werkplaats tik je met een
+     * vette duim. Zonder deze vraag ben je een half uur invoeren kwijt met één
+     * misser. Staat de offerte al in je lijst, dan valt er niets te verliezen
+     * en vraagt hij niets.
+     */
+    const bewaard = staat.offertes.some((o) => o.id === offerte.id);
+    if (!bewaard && heeftInhoud(offerte)) {
+      const weg = confirm(
+        'Deze offerte staat nog niet in je lijst. Begin je een nieuwe, dan is ' +
+        'wat je hier hebt ingevuld weg.\n\nToch een nieuwe beginnen?'
+      );
+      if (!weg) return;
+    }
     offerte = nieuweOfferte();
     voorkeuren = new Set();
     $$('#wb-voorkeuren .wb-chip').forEach((c) => c.classList.remove('aan'));
@@ -2344,8 +2501,10 @@ import { APP } from '../data/app.js';
    */
   function bewaarNaVersturen() {
     if (!offerte.status || offerte.status === 'concept') offerte.status = 'verstuurd';
+    /* De teller schuift niet meer hier op maar in bewaarOfferte, en alleen als
+       de offerte er nog niet stond. Deed hij het hier ook, dan sprong hij bij
+       elke verstuurde offerte twee nummers verder. */
     bewaarOfferte();
-    staat.instellingen.volgnummer = (Number(staat.instellingen.volgnummer) || 1) + 1;
     opslaan();
     tekenOpgeslagen();
     tekenInstellingen();
@@ -2359,12 +2518,33 @@ import { APP } from '../data/app.js';
   vulDossierFormulier(leegDossier());
   tekenInstellingen();
   tekenOpgeslagen();
+
+  /**
+   * Was je ergens mee bezig toen de telefoon het tabblad afsloot? Dan sta je
+   * weer precies waar je was. Alleen als er iets in stond, natuurlijk.
+   */
+  if (heeftInhoud(staat.concept)) {
+    offerte = { ...staat.concept, datum: new Date(staat.concept.datum) };
+    voorkeuren = new Set(soortenIn(offerte.regels || []));
+    $$('#wb-voorkeuren .wb-chip').forEach((c) => {
+      c.classList.toggle('aan', voorkeuren.has(c.dataset.soort));
+    });
+    vulFormulierUitOfferte();
+  }
+
   tekenAfspraken();
   tekenAlles();
   /* Kom je binnen via een snelkoppeling van je beginscherm, dan sta je meteen
      op het goede tabblad. */
   tekenBericht();
   toonTab(new URLSearchParams(location.search).get('tab') || 'offerte');
+
+  /* Het moment waarop Android een tabblad afsluit is precies dit moment.
+     Wat er nog niet weggeschreven was, gaat hier alsnog mee. */
+  window.addEventListener('pagehide', bewaarConcept);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') bewaarConcept();
+  });
 </script>
 
 <style is:global>

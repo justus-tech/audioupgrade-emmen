@@ -63,12 +63,17 @@ export function offertePdf(offerte, inst = STANDAARD_INSTELLINGEN) {
     ky += 13;
   }
   klantRegels.forEach((regel, i) => {
-    doc.tekst(regel, LINKS, ky, {
-      grootte: i === 0 ? 11 : 9.5,
-      vet: i === 0,
-      kleur: i === 0 ? KLEUR.inkt : KLEUR.zacht,
-    });
-    ky += i === 0 ? 15 : 12;
+    /* Afbreken op de breedte van de linkerkolom. Zonder dit liep een lange
+       naam of een lang adres dwars door het blok met de auto heen, en dat
+       staat dan zo op de offerte bij de klant op tafel. */
+    for (const stuk of breekAf(regel, rechterKolom - LINKS - 16, i === 0 ? 11 : 9.5, i === 0)) {
+      doc.tekst(stuk, LINKS, ky, {
+        grootte: i === 0 ? 11 : 9.5,
+        vet: i === 0,
+        kleur: i === 0 ? KLEUR.inkt : KLEUR.zacht,
+      });
+      ky += i === 0 ? 15 : 12;
+    }
   });
 
   blokkop(doc, 'De auto', rechterKolom, y);
@@ -79,8 +84,12 @@ export function offertePdf(offerte, inst = STANDAARD_INSTELLINGEN) {
     ay += 9;
   }
   const autoNaam = [offerte.auto?.merk, offerte.auto?.model].filter(Boolean).join(' ');
-  if (autoNaam) {
-    doc.tekst(autoNaam, rechterKolom, ay, { grootte: 11, vet: true, kleur: KLEUR.inkt });
+  /* "Mercedes-Benz C 180 Kompressor Avantgarde Estate" past niet op één regel
+     en liep anders het blad af. */
+  /* breekAf levert bij lege tekst één lege regel; die zou hier een gat
+     van veertien punten maken bij een auto zonder merk. */
+  for (const stuk of (autoNaam ? breekAf(autoNaam, RECHTS - rechterKolom, 11, true) : [])) {
+    doc.tekst(stuk, rechterKolom, ay, { grootte: 11, vet: true, kleur: KLEUR.inkt });
     ay += 14;
   }
   const autoExtra = [

@@ -1657,3 +1657,64 @@ describe('de WhatsApp-link', () => {
     assert.equal(decodeURIComponent(link.split('text=')[1]), tekst);
   });
 });
+
+/**
+ * LANGE NAMEN EN LANGE MODELNAMEN.
+ *
+ * Deze stukken gaan naar een klant. Liep er iets over de kolom heen, dan stond
+ * dat zo op de offerte die bij hem op tafel ligt. Op de factuur werd de
+ * klantnaam al afgebroken, op de offerte niet — en de modelnaam op geen van
+ * beide.
+ */
+describe('niets loopt de kolom uit op de pdf', () => {
+  const datum = new Date(2026, 8, 18);
+  const LANGE_NAAM = 'Mevrouw Alexandra Wilhelmina van der Heijden-Oosterbroek';
+  const LANG_ADRES = 'Een heel erg lange straatnaam met huisnummer 1234A, 9999 ZZ Nieuw-Amsterdam';
+  const LANG_MODEL = 'C 180 Kompressor Avantgarde Estate';
+  const basis = {
+    nummer: '2026-042',
+    datum,
+    geldigTot: geldigTot(datum, 30),
+    klant: { naam: LANGE_NAAM, adres: LANG_ADRES },
+    auto: { kenteken: 'XX99XX', merk: 'Mercedes-Benz', model: LANG_MODEL, bouwjaar: '2018' },
+    regels: [{ omschrijving: 'CarPlay', aantal: 1, vastExclCent: 57438 }],
+    voorwaardenBijlage: false,
+  };
+  const lees = (doc) => Buffer.from(doc.naarBytes()).toString('latin1');
+
+  for (const [wat, maak] of [
+    ['de offerte', () => offertePdf(basis, INST)],
+    ['de factuur', () => factuurPdf(basis, { ...INST, iban: 'NL00BANK0123456789' },
+      { nummer: '2026-F042', datum, percentage: 30 })],
+  ]) {
+    test(`${wat} breekt een lange klantnaam af`, () => {
+      // Staat de naam er in één stuk op, dan is hij niet afgebroken en loopt
+      // hij dus dwars door het blok met de auto heen.
+      const pdf = lees(maak());
+      assert.ok(!pdf.includes(LANGE_NAAM), 'de naam staat in één stuk op de pdf');
+      assert.match(pdf, /Heijden-Oosterbroek/, 'de naam staat er helemaal niet meer op');
+    });
+
+    test(`${wat} breekt een lange modelnaam af`, () => {
+      const pdf = lees(maak());
+      assert.ok(!pdf.includes(LANG_MODEL), 'de modelnaam staat in één stuk op de pdf');
+      assert.match(pdf, /Avantgarde Estate/, 'de modelnaam staat er helemaal niet meer op');
+    });
+
+    test(`${wat} blijft heel zonder auto en zonder klant`, () => {
+      // Een half ingevulde offerte mag geen lege regels of gaten geven.
+      const kaal = { ...basis, klant: {}, auto: {} };
+      const pdf = wat === 'de offerte'
+        ? lees(offertePdf(kaal, INST))
+        : lees(factuurPdf(kaal, { ...INST, iban: 'NL00BANK0123456789' },
+          { nummer: '2026-F042', datum, percentage: 30 }));
+      assert.match(pdf, /2026-042|2026-F042/);
+    });
+  }
+
+  test('een korte naam blijft gewoon op één regel staan', () => {
+    // De afbreking mag niet zomaar overal gaan knippen.
+    const pdf = lees(offertePdf({ ...basis, klant: { naam: 'Mark de Vries' } }, INST));
+    assert.match(pdf, /Mark de Vries/);
+  });
+});
