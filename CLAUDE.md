@@ -112,6 +112,19 @@ en marge-eis staan in `prijsinstellingen.json`, en dat bestand gaat net als het
 rekeningnummer niet mee naar GitHub — deze map staat openbaar.
 `prijsinstellingen.voorbeeld.json` laat de vorm zien met verzonnen bedragen.
 
+### Een offerte-pdf maken
+
+```bash
+npm run offerte -- --invoer offerte.voorbeeld.json --uit /mnt/project-files/offertes
+```
+
+Je schrijft één invulblad met de bedragen zoals de klant ze leest (inclusief btw)
+en het script doet de rest: terugrekenen naar exclusief btw, weigeren als een
+bedrag door de afronding een cent verschuift (met een voorstel voor de splitsing),
+de aanbetalingszin met de echte bedragen erin, controleren dat het totaal klopt
+met wat je hebt afgesproken, en de pdf de naam geven met het offertenummer en het
+kenteken erin. `offerte.voorbeeld.json` laat zien hoe zo'n invulblad eruitziet.
+
 Commando's:
 
 ```bash
