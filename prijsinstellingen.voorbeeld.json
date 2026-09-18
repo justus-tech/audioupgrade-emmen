@@ -1,0 +1,75 @@
+{
+  "_uitleg": "VERZONNEN BEDRAGEN. Dit bestand laat alleen de vorm zien. Zet je echte inkoopprijzen, uurtarief en marge-eis in prijsinstellingen.json ernaast; dat bestand blijft buiten GitHub.",
+  "uurtariefCent": 6500,
+  "margeEisPct": 30,
+  "margeStreefPct": 40,
+  "btwPct": 21,
+  "inkoopregels": {
+    "merk-met-korting": {
+      "naam": "Merk met dealerkorting",
+      "deelDoor": 1.21,
+      "maal": 0.7,
+      "toelichting": "advies incl. 21% btw, daarna de dealerkorting eraf"
+    },
+    "merk-uit-duitsland": {
+      "naam": "Merk met Duitse lijst",
+      "deelDoor": 1.19,
+      "maal": 0.7,
+      "toelichting": "advies incl. 19% Duitse btw, daarna de korting eraf"
+    },
+    "merk-met-dealerkolom": {
+      "naam": "Merk met eigen dealerkolom",
+      "deelDoor": 1,
+      "maal": 1,
+      "toelichting": "de dealerkolom is al inkoop, dus overnemen zoals gedrukt"
+    },
+    "vast": {
+      "naam": "Vaste inkoop",
+      "deelDoor": 1,
+      "maal": 1,
+      "toelichting": "een bedrag dat al inkoop exclusief btw is"
+    }
+  },
+  "catalogus": {
+    "voorbeeld-dsp": {
+      "naam": "Voorbeeld DSP-versterker",
+      "merk": "merk-uit-duitsland",
+      "lijstCent": 50000
+    },
+    "voorbeeld-speakers": {
+      "naam": "Voorbeeld composet voor",
+      "merk": "merk-met-korting",
+      "lijstCent": 40000
+    },
+    "voorbeeld-sub": {
+      "naam": "Voorbeeld slim subwoofer met kist",
+      "merk": "merk-met-dealerkolom",
+      "lijstCent": 10000
+    },
+    "voorbeeld-kabelset": {
+      "naam": "Voorbeeld kabelset",
+      "merk": "vast",
+      "lijstCent": 5000,
+      "bron": "schatting"
+    }
+  },
+  "controle": [
+    {
+      "nummer": "voorbeeld",
+      "klant": "Voorbeeldklus",
+      "prijsCent": 149500,
+      "uren": 8,
+      "stuklijst": [
+        "voorbeeld-dsp",
+        "voorbeeld-speakers",
+        "voorbeeld-sub",
+        "voorbeeld-kabelset"
+      ],
+      "verwacht": {
+        "inkoopCent": 67552,
+        "margePct": 37.5,
+        "perUurCent": 7000
+      }
+    }
+  ]
+}

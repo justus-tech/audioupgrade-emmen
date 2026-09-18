@@ -1,0 +1,50 @@
+{
+  "_uitleg": "Zo ziet een invulblad eruit. Bedragen schrijf je zoals de klant ze leest: inclusief btw. Draaien met: npm run offerte -- --invoer offerte.voorbeeld.json",
+  "nummer": "2026-999",
+  "datum": "2026-09-18",
+  "geldigDagen": 30,
+  "zakelijk": false,
+  "klant": {
+    "naam": "Voorbeeld Klant",
+    "adres": "Voorbeeldstraat 1",
+    "postcode": "7811 AA",
+    "plaats": "Emmen"
+  },
+  "auto": {
+    "merk": "Ford",
+    "model": "Focus",
+    "bouwjaar": "2019",
+    "kenteken": "AA-123-B"
+  },
+  "opAfstand": true,
+  "startDirect": false,
+  "aanbetalingPct": 40,
+  "verwachtTotaalIncl": "1595,00",
+  "opmerking": "Voor de inbouw heb ik woensdag 28 en donderdag 29 oktober vrij. Het is een werkdag; brengen in de ochtend, ophalen aan het eind.",
+  "regels": [
+    {
+      "omschrijving": "DSP-versterker op het fabriekssysteem",
+      "incl": "895,00",
+      "toelichting": "Corrigeert digitaal het signaal van de fabrieksradio. Alle originele functies blijven werken; er wordt niet in de bedrading geknipt."
+    },
+    {
+      "omschrijving": "Compacte subwoofer onder de kofferbakvloer",
+      "incl": "495,00",
+      "toelichting": "Slimline kist van 13 cm, onzichtbaar weggewerkt. Geeft de diepe bas en ontlast de voorspeakers, zonder verlies van laadruimte."
+    },
+    {
+      "omschrijving": "Inmeten en tunen op de bestuurderspositie",
+      "incl": "205,00",
+      "toelichting": "De DSP wordt op de dag zelf akoestisch ingemeten en afgestemd op jouw luisterpositie."
+    }
+  ],
+  "_velden": {
+    "regels[].incl": "wat de klant voor die regel betaalt, inclusief btw. Komt het bedrag door de btw-afronding een cent anders uit, dan stopt het script en stelt het een splitsing voor.",
+    "regels[].excl": "alternatief voor incl, als je het bedrag al exclusief btw hebt.",
+    "kortingIncl": "apparatuur die de klant zelf meebrengt, als korting op het totaal. Nooit als negatieve regel: een regelprijs klemt op nul.",
+    "opAfstand": "true als de klant nooit in Emmen is geweest; dan geldt 14 dagen bedenktijd.",
+    "startDirect": "alleen true als de montage binnen die 14 dagen valt en de klant daar uitdrukkelijk om vraagt.",
+    "verwachtTotaalIncl": "het bedrag dat je met de klant hebt afgesproken. Klopt het totaal daar niet mee, dan stopt het script.",
+    "bestand": "optioneel; zonder dit veld krijgt de pdf de naam met offertenummer en kenteken erin."
+  }
+}
