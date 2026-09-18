@@ -16,6 +16,10 @@ Thumbs.db
 .env
 .env.*
 
+# Inkoopprijzen, kortingen, uurtarief en marge-eis. Deze map staat openbaar op
+# GitHub, dus die getallen horen hier niet in. Zie prijsinstellingen.voorbeeld.json.
+prijsinstellingen.json
+
 # Screenshots ter controle (lokaal genereren met: node screenshot.mjs)
 shots/
 

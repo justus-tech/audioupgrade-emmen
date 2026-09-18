@@ -96,6 +96,22 @@ src/layouts/Base.astro  Kop, voet en de SEO-tags van elke pagina
 
 Nieuwe modelpagina toevoegen = één record toevoegen aan `models.js`. De pagina wordt automatisch gebouwd.
 
+### De prijs van een offerte bepalen
+
+```bash
+npm run prijs -- --uren 8 pico6-8 gs10-slim kabelset-dsp
+```
+
+Dit geeft de inkoop, allebei de ondergrenzen (uurtarief en marge-eis) en het
+bedrag dat er op de offerte mag staan. Met `--prijs 1595` erbij toetst het een
+bedrag dat je al in gedachten hebt, en `--controle` kijkt na of de uitkomsten
+nog gelijk zijn aan die van de offertes die al verstuurd zijn.
+
+**De bedragen zelf staan niet in deze map.** Inkoopprijzen, kortingen, uurtarief
+en marge-eis staan in `prijsinstellingen.json`, en dat bestand gaat net als het
+rekeningnummer niet mee naar GitHub — deze map staat openbaar.
+`prijsinstellingen.voorbeeld.json` laat de vorm zien met verzonnen bedragen.
+
 Commando's:
 
 ```bash
