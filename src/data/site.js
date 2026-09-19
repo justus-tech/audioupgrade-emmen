@@ -355,7 +355,7 @@ export const PACKAGES = [
     features: [
       'Geavanceerde DSP-versterker (Digitale Sound Processor).',
       'Voertuigspecifieke High-End luidsprekerset.',
-      'Onzichtbare, ultra-compacte actieve subwoofer.',
+      'Onzichtbare, ultra-compacte subwoofer, aangestuurd door de DSP-versterker.',
       'Extreme drielaags ontdreuning van deuren.',
       'Volledig akoestisch op maat ingemeten.',
       'Accu en laadspanning gemeten, met de waarden op je werkbon.',
