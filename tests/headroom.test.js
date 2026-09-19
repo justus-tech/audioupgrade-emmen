@@ -30,11 +30,12 @@ import {
 import {
   agenda, agendaItem, bestelUiterlijk, dagenTussen, opMiddernacht, hoeLangNog,
   icsVoorKlus, icsBestandsnaam, icsTekst, vouwOp, ontvouw,
+  googleAgendaLink, googleLinksVoorKlus, googleEmbedUrl,
 } from '../src/lib/headroom/agenda.js';
 import { voorbereiding, voorbereidingMetWaarom } from '../src/lib/headroom/voorbereiding.js';
 import {
   bevestiging, datumVoluit, icsLuistersessie, luistersessieBestandsnaam,
-  luistersessieItems, whatsappBericht,
+  luistersessieItems, whatsappBericht, googleLinkLuistersessie,
 } from '../src/lib/headroom/luistersessie.js';
 import { SITE, ADRES } from '../src/data/site.js';
 import {
@@ -42,6 +43,7 @@ import {
 } from '../src/lib/headroom/autos.js';
 import { MODELS } from '../src/data/models.js';
 import { TABBLADEN } from '../src/data/app.js';
+import { BRAND } from '../src/data/brand.js';
 
 const INST = { ...STANDAARD_INSTELLINGEN, uurtariefCent: 7500, margePct: 60, btwPct: 21 };
 
@@ -1743,5 +1745,125 @@ describe('niets loopt de kolom uit op de pdf', () => {
     // De afbreking mag niet zomaar overal gaan knippen.
     const pdf = lees(offertePdf({ ...basis, klant: { naam: 'Mark de Vries' } }, INST));
     assert.match(pdf, /Mark de Vries/);
+  });
+});
+
+/**
+ * GOOGLE AGENDA.
+ *
+ * Justus werkt met Google Agenda. De app kan een afspraak daar rechtstreeks
+ * in zetten zonder koppeling: een link met de afspraak er al in, hij drukt op
+ * Opslaan. Gaat er in die link iets mis met de tijd, dan staat de klant een
+ * uur te vroeg of te laat voor de deur.
+ */
+describe('een afspraak rechtstreeks in Google Agenda', () => {
+  const velden = (url) => Object.fromEntries(new URL(url).searchParams);
+
+  test('de link wijst naar Google en maakt een nieuwe afspraak', () => {
+    const v = velden(googleAgendaLink({ titel: 'Proef', datum: '2026-10-07', tijd: '09:00' }));
+    assert.equal(v.action, 'TEMPLATE');
+    assert.equal(v.text, 'Proef');
+  });
+
+  test('de tijdzone staat erbij', () => {
+    // Zonder ctz leest Google de tijd in de tijdzone van het account. Staat
+    // die op iets anders, dan schuift de afspraak een uur op.
+    const v = velden(googleAgendaLink({ titel: 'x', datum: '2026-10-07', tijd: '09:00' }));
+    assert.equal(v.ctz, 'Europe/Amsterdam');
+  });
+
+  test('begin en eind staan er goed in', () => {
+    const v = velden(googleAgendaLink({
+      titel: 'x', datum: '2026-10-07', tijd: '09:00', eindTijd: '17:00',
+    }));
+    assert.equal(v.dates, '20261007T090000/20261007T170000');
+  });
+
+  test('het telefoonnummer blijft heel', () => {
+    // De plus van +31 is in een webadres een spatie. Raakt hij kwijt, dan
+    // staat er een nummer in de afspraak waarmee je niet kunt bellen.
+    const v = velden(googleAgendaLink({
+      titel: 'x', datum: '2026-10-07', uitleg: 'Bel +31 6 44 37 98 44.',
+    }));
+    assert.match(v.details, /\+31 6 44 37 98 44/);
+  });
+
+  test('regeleindes in de uitleg blijven regeleindes', () => {
+    const v = velden(googleAgendaLink({
+      titel: 'x', datum: '2026-10-07', uitleg: 'Eerste regel\nTweede regel',
+    }));
+    assert.equal(v.details, 'Eerste regel\nTweede regel');
+  });
+
+  test('een klus levert twee afspraken: de inbouw en het bestellen', () => {
+    const item = agendaItem({
+      nummer: '2026-014',
+      klant: { naam: 'Mark de Vries', telefoon: '0612345678' },
+      auto: { merk: 'Volkswagen', model: 'Golf VII', kenteken: 'XX99XX' },
+      inbouwdatum: '2026-10-07', inbouwtijd: '09:00', status: 'aanbetaald',
+    }, { bestelDagen: 14 }, new Date(2026, 8, 18));
+    const g = googleLinksVoorKlus(item, { voorbereiding: { dag: ['Onderdelen uitpakken'] } });
+
+    const inbouw = velden(g.inbouw.url);
+    assert.match(inbouw.text, /^Inbouw Mark de Vries/);
+    assert.equal(inbouw.dates, '20261007T090000/20261007T170000');
+    assert.match(inbouw.location, /Charles Darwinstraat 35/);
+    assert.match(inbouw.details, /Onderdelen uitpakken/);
+
+    const bestellen = velden(g.bestellen.url);
+    assert.match(bestellen.text, /Onderdelen bestellen/);
+    assert.equal(bestellen.dates, '20260923T080000/20260923T083000');
+  });
+
+  test('een luistersessie krijgt het adres en het hek mee', () => {
+    const v = velden(googleLinkLuistersessie({
+      voornaam: 'Mark', kenteken: 'XX99XX', datum: '2026-10-07', tijd: '14:00', duurMinuten: 45,
+    }));
+    assert.match(v.text, /Luistersessie/);
+    assert.equal(v.dates, '20261007T140000/20261007T144500');
+    assert.match(v.location, /Charles Darwinstraat 35/);
+    assert.match(v.details, /hek/);
+    assert.match(v.details, /XX-99-XX/);
+  });
+});
+
+/**
+ * HET VENSTER MET ZIJN EIGEN AGENDA.
+ *
+ * Kijken, geen koppeling. Wat hij plakt komt in een venstertje op zijn eigen
+ * scherm, dus dat mag alleen van Google komen.
+ */
+describe('je Google-agenda in beeld', () => {
+  test('een e-mailadres wordt een venster van Google', () => {
+    const url = new URL(googleEmbedUrl('justus@audioupgradeemmen.nl'));
+    assert.equal(url.hostname, 'calendar.google.com');
+    assert.equal(url.searchParams.get('src'), 'justus@audioupgradeemmen.nl');
+    assert.equal(url.searchParams.get('ctz'), 'Europe/Amsterdam');
+    // Maandag vooraan, zoals de kalender aan de muur.
+    assert.equal(url.searchParams.get('wkst'), '2');
+  });
+
+  test('een hele link uit Google mag ook', () => {
+    const uit = googleEmbedUrl('https://calendar.google.com/calendar/embed?src=abc');
+    assert.match(uit, /^https:\/\/calendar\.google\.com\/calendar\/embed/);
+  });
+
+  test('een adres dat niet van Google is komt er niet in', () => {
+    // Een willekeurige site in een venster op je eigen scherm zetten is
+    // nergens voor nodig.
+    assert.equal(googleEmbedUrl('https://kwaadaardig.example/iets'), '');
+    assert.equal(googleEmbedUrl('http://calendar.google.com.kwaadaardig.example/x'), '');
+    assert.equal(googleEmbedUrl('javascript:alert(1)'), '');
+  });
+
+  test('niets ingevuld levert ook niets op', () => {
+    assert.equal(googleEmbedUrl(''), '');
+    assert.equal(googleEmbedUrl('   '), '');
+    assert.equal(googleEmbedUrl(undefined), '');
+  });
+
+  test('de achtergrondkleur komt uit het merk en niet uit een losse code', () => {
+    const url = new URL(googleEmbedUrl('x@y.nl', { achtergrond: BRAND.bg }));
+    assert.equal(url.searchParams.get('bgcolor'), BRAND.bg);
   });
 });

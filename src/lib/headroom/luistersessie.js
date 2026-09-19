@@ -24,6 +24,7 @@ import { SITE, ADRES } from '../../data/site.js';
 import { formatteerKenteken } from '../match.js';
 import {
   icsTekst, icsStempel, icsNu, icsBestand, opMiddernacht, dagenTussen, hoeLangNog,
+  googleAgendaLink,
 } from './agenda.js';
 
 const DAGEN = ['zondag', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag'];
@@ -142,6 +143,32 @@ export function icsLuistersessie(sessie = {}) {
     'END:VALARM',
     'END:VEVENT',
   ]);
+}
+
+/**
+ * Dezelfde afspraak, maar rechtstreeks in Google Agenda.
+ *
+ * Handig voor jezelf, en je kunt de link ook aan de klant sturen: hij drukt
+ * op Opslaan en het staat in zijn eigen agenda, met het adres en de
+ * instructie over het hek erbij.
+ */
+export function googleLinkLuistersessie(sessie = {}) {
+  const { voornaam = '', kenteken = '', datum, tijd = '10:00', duurMinuten = 45 } = sessie;
+  const naam = String(voornaam).trim().split(/\s+/)[0] || '';
+  const plaat = formatteerKenteken(kenteken);
+  return googleAgendaLink({
+    titel: `Luistersessie ${SITE.name}${naam ? ` — ${naam}` : ''}`,
+    datum,
+    tijd,
+    eindTijd: tijdPlus(tijd, duurMinuten),
+    uitleg: [
+      naam && `Voor ${naam}.`,
+      plaat && `Auto: ${plaat}.`,
+      '',
+      `Er zit een hek voor het terrein. Bel bij aankomst ${SITE.phoneDisplay}, dan gaat het hek open.`,
+    ].filter(Boolean).join('\n'),
+    plaats: ADRES,
+  });
 }
 
 /** luistersessie-2026-10-07-XX99XX.ics */

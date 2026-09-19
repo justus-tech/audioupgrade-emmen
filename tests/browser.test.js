@@ -963,6 +963,71 @@ describe('Headroom', alsGebouwd, () => {
     }
   });
 
+  test('je Google-agenda verschijnt zodra je het adres invult', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.click('[data-tab="agenda"]');
+
+    // Zonder adres geen leeg venstertje van Google op je scherm.
+    assert.equal(await pagina.locator('#wb-google-venster iframe').count(), 0);
+    assert.match(await pagina.textContent('#wb-google-venster'), /Instellingen/);
+
+    await pagina.click('[data-tab="instellingen"]');
+    await pagina.fill('#wb-i-googleagenda', 'justus@audioupgradeemmen.nl');
+    await pagina.locator('#wb-i-googleagenda').blur();
+    await pagina.click('[data-tab="agenda"]');
+
+    const src = await pagina.getAttribute('#wb-google-venster iframe', 'src');
+    assert.match(src, /^https:\/\/calendar\.google\.com\/calendar\/embed/);
+    assert.match(src, /ctz=Europe%2FAmsterdam/);
+
+    // En iets dat geen agenda-adres is komt er niet in.
+    await pagina.click('[data-tab="instellingen"]');
+    await pagina.fill('#wb-i-googleagenda', 'zomaar wat');
+    await pagina.locator('#wb-i-googleagenda').blur();
+    await pagina.click('[data-tab="agenda"]');
+    assert.equal(await pagina.locator('#wb-google-venster iframe').count(), 0);
+    assert.match(await pagina.textContent('#wb-google-venster'), /herken ik niet/i);
+
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een klus gaat met twee tikken in Google Agenda', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+    await pagina.fill('#wb-naam', 'Mark de Vries');
+    await pagina.fill('#wb-inbouwdatum', '2026-10-07');
+    await pagina.click('#wb-bewaar');
+    await pagina.click('[data-tab="agenda"]');
+
+    /* Twee afspraken, dus twee vensters: de inbouw en de dag dat er besteld
+       moet zijn. Google kent geen link die er twee tegelijk aanmaakt. */
+    const geopend = [];
+    /* Google zelf niet echt aanroepen: we testen onze link, niet hun server. */
+    await pagina.context().route('**://calendar.google.com/**', (route) =>
+      route.fulfill({ status: 200, contentType: 'text/html', body: 'ok' }));
+    pagina.context().on('page', async (pg) => {
+      /* Een net geopend venster staat eerst nog op about:blank; pas na het
+         laden weet je welk adres erin staat. */
+      await pg.waitForLoadState('domcontentloaded').catch(() => {});
+      geopend.push(pg.url());
+    });
+    await pagina.click('.wb-google');
+    await pagina.waitForTimeout(1200);
+
+    assert.equal(geopend.length, 2, 'er horen twee afspraken open te gaan');
+    assert.ok(geopend.every((u) => u.startsWith('https://calendar.google.com/calendar/render')));
+    /* Uitlezen via searchParams en niet met decodeURIComponent: in een
+       webadres is een spatie een plusteken, en dat draait decodeURIComponent
+       niet terug. */
+    const titels = geopend.map((u) => new URL(u).searchParams.get('text'));
+    assert.ok(titels.some((t) => t.startsWith('Inbouw Mark de Vries')), titels.join(' | '));
+    assert.ok(titels.some((t) => t.startsWith('Onderdelen bestellen')), titels.join(' | '));
+
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
   test('een luistersessie plannen en versturen', async () => {
     const { pagina, fouten } = await openWerkbak();
     await pagina.click('[data-tab="agenda"]');

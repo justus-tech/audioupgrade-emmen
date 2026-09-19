@@ -290,12 +290,17 @@ import { APP } from '../data/app.js';
       <div class="wb-knoprij">
         <button type="button" class="btn solid wb-vol" id="wb-ls-whatsapp">Versturen via WhatsApp</button>
         <button type="button" class="btn wb-vol" id="wb-ls-ics">Agendabestand voor de klant</button>
+        <button type="button" class="btn wb-vol" id="wb-ls-google">In Google Agenda zetten</button>
         <button type="button" class="btn wb-vol" id="wb-ls-bewaar">In mijn agenda zetten</button>
       </div>
       <div id="wb-ls-melding"></div>
     </div>
 
     <div id="wb-agenda-nu"></div>
+    <div class="wb-kaart" id="wb-google-kaart">
+      <span class="eyebrow">Je Google-agenda</span>
+      <div id="wb-google-venster"></div>
+    </div>
     <div id="wb-agenda-lijst"></div>
     <p class="wb-leeg" id="wb-agenda-leeg">
       Nog geen klus met een datum. Zet bij een offerte een inbouwdatum, dan staat
@@ -459,6 +464,10 @@ import { APP } from '../data/app.js';
         <label>Bestellen uiterlijk (dagen vooraf)
           <input type="text" id="wb-i-besteldagen" inputmode="numeric" />
         </label>
+        <label class="wb-breed">Google Agenda — adres van je agenda
+          <input type="text" id="wb-i-googleagenda"
+                 placeholder="jouw@gmail.com of de link uit Google" />
+        </label>
       </div>
       <p class="wb-uitleg">
         Het uurtarief en de marge gebruikt de app om uit te rekenen wat de klant betaalt.
@@ -485,6 +494,13 @@ import { APP } from '../data/app.js';
           <input type="text" id="wb-i-factuurnummer" inputmode="numeric" />
         </label>
       </div>
+      <p class="wb-uitleg">
+        <strong>Je Google-agenda:</strong> plak het adres van je agenda, dan zie je hem
+        op het tabblad Agenda meekijken. Dat adres vind je in Google Agenda onder
+        <em>Instellingen » jouw agenda » Agenda integreren</em>; meestal is het gewoon
+        je e-mailadres. Je ziet hem alleen als je in deze browser bij dat Google-account
+        bent ingelogd, of als de agenda openbaar staat.
+      </p>
       <p class="wb-uitleg">
         Je rekeningnummer staat alleen in deze telefoon, niet in de code van de site.
         Facturen krijgen een eigen doorlopende reeks: offerte 2026-014, factuur 2026-F014.
@@ -559,6 +575,9 @@ import { APP } from '../data/app.js';
 
 <script>
   import { PACKAGES, SITE } from '../data/site.js';
+  /* De achtergrondkleur gaat mee naar Google, zodat het venster niet als een
+     wit vlak in een donkere app staat. Uit brand.js, niet met de hand. */
+  import { BRAND } from '../data/brand.js';
   import { APP, TABBLADEN } from '../data/app.js';
   import {
     SOORTEN, STANDAARD_INSTELLINGEN, euro, naarCent, regelPrijs, totalen, marge,
@@ -572,12 +591,13 @@ import { APP } from '../data/app.js';
     DOSSIER_VELDEN, autoSleutel, zoekDossier, dossierNaam, dossierStand, leegDossier,
   } from '../lib/headroom/autos.js';
   import {
-    agenda, agendaItem, icsVoorKlus, icsBestandsnaam, hoeLangNog,
+    agenda, agendaItem, icsVoorKlus, icsBestandsnaam, hoeLangNog, googleLinksVoorKlus,
+    googleEmbedUrl,
   } from '../lib/headroom/agenda.js';
   import { voorbereidingMetWaarom, voorbereiding } from '../lib/headroom/voorbereiding.js';
   import {
     bevestiging, icsLuistersessie, luistersessieBestandsnaam, luistersessieItems,
-    whatsappBericht, datumVoluit,
+    whatsappBericht, datumVoluit, googleLinkLuistersessie,
   } from '../lib/headroom/luistersessie.js';
   import { MODELS } from '../data/models.js';
   /* Dezelfde schrijfwijze als de site: de RDW levert "GOLF VII 1.4 TSI" en dat
@@ -911,6 +931,49 @@ import { APP } from '../data/app.js';
     gedaan: 'geregeld',
   };
 
+  /**
+   * Je Google-agenda in een venstertje op het tabblad Agenda.
+   *
+   * Kijken, geen koppeling: de browser houdt twee sites uit elkaar, dus de
+   * app kan niet lezen wat erin staat. Voor inplannen is dat genoeg — je ziet
+   * in één scherm of een dag al vol staat.
+   *
+   * Het venster wordt pas aangemaakt als er een adres staat. Een leeg
+   * venstertje van Google op je scherm is alleen maar in de weg.
+   */
+  function tekenGoogleAgenda() {
+    const vak = $('#wb-google-venster');
+    const url = googleEmbedUrl(staat.instellingen.googleAgenda, { achtergrond: BRAND.bg });
+
+    if (!url) {
+      vak.innerHTML =
+        `<p class="wb-uitleg">Plak bij <strong>Instellingen</strong> het adres van je
+         Google-agenda, dan staat hij hier. Zo zie je meteen of een dag al vol zit
+         voordat je iets afspreekt.</p>` +
+        (String(staat.instellingen.googleAgenda || '').trim()
+          ? `<p class="wb-waarschuwing">Wat er nu staat herken ik niet als een agenda
+             van Google. Plak je e-mailadres, of de hele link die onder
+             <em>Agenda integreren</em> staat.</p>`
+          : '');
+      return;
+    }
+
+    /* Alleen opnieuw aanmaken als het adres écht veranderd is: anders laadt
+       het venster bij elke tekenronde opnieuw en zie je hem knipperen. */
+    const bestaand = vak.querySelector('iframe');
+    if (bestaand && bestaand.src === url) return;
+
+    vak.innerHTML = '';
+    const venster = document.createElement('iframe');
+    venster.className = 'wb-google-agenda';
+    venster.src = url;
+    venster.loading = 'lazy';
+    venster.title = 'Je Google-agenda';
+    /* Dit venster hoort niets met de app te kunnen. */
+    venster.referrerPolicy = 'no-referrer';
+    vak.appendChild(venster);
+  }
+
   function tekenAgenda() {
     const klussen = agenda(staat.offertes, staat.instellingen);
     const sessies = luistersessieItems(staat.sessies);
@@ -990,7 +1053,8 @@ import { APP } from '../data/app.js';
         <em>${LABELS[item.bestellen]}</em>
       </div>
       <div class="wb-regel-rij">
-        <button type="button" class="btn wb-ics">Zet in je agenda</button>
+        <button type="button" class="btn wb-ics">Agendabestand</button>
+        <button type="button" class="btn wb-google">In Google Agenda</button>
         <button type="button" class="wb-link wb-open">Offerte openen</button>
       </div>
       <label class="wb-vink wb-besteld">
@@ -1026,6 +1090,16 @@ import { APP } from '../data/app.js';
     kaart.querySelector('.wb-besteld input').addEventListener('change', (e) => {
       werkBij(item.nummer, { besteld: e.target.checked });
       tekenOpgeslagen();
+    });
+
+    /* Twee afspraken, dus twee vensters. Google kent geen link die er twee
+       tegelijk aanmaakt; dit is de kortste weg die er wel is. */
+    kaart.querySelector('.wb-google').addEventListener('click', () => {
+      const links = googleLinksVoorKlus(item, { voorbereiding: voorbereiding(bron || {}) });
+      window.open(links.inbouw.url, '_blank', 'noopener');
+      if (item.bestellen !== 'gedaan') {
+        window.open(links.bestellen.url, '_blank', 'noopener');
+      }
     });
 
     kaart.querySelector('.wb-ics').addEventListener('click', () => {
@@ -1117,6 +1191,14 @@ import { APP } from '../data/app.js';
     bewaarBestand(icsLuistersessie(sessie), luistersessieBestandsnaam(sessie), 'text/calendar;charset=utf-8');
   });
 
+  $('#wb-ls-google').addEventListener('click', () => {
+    const sessie = sessieUitFormulier();
+    const mis = sessieCompleet(sessie);
+    if (mis) { lsMelden(mis, true); return; }
+    lsMelden('Google Agenda opent met de afspraak erin. Controleer hem en druk op Opslaan.');
+    window.open(googleLinkLuistersessie(sessie), '_blank', 'noopener');
+  });
+
   $('#wb-ls-bewaar').addEventListener('click', () => {
     const sessie = sessieUitFormulier();
     const mis = sessieCompleet(sessie);
@@ -1141,13 +1223,17 @@ import { APP } from '../data/app.js';
         <em class="wb-wanneer">${item.hoeLang}</em>
       </div>
       <div class="wb-regel-rij">
-        <button type="button" class="btn wb-ls-ics2">Zet in je agenda</button>
+        <button type="button" class="btn wb-ls-ics2">Agendabestand</button>
+        <button type="button" class="btn wb-ls-google">In Google Agenda</button>
         <button type="button" class="wb-link wb-ls-weg">Weghalen</button>
       </div>
       <div class="wb-regel-rij">
         <button type="button" class="wb-link wb-ls-opnieuw">Bericht opnieuw sturen</button>
       </div>`;
 
+    kaart.querySelector('.wb-ls-google').addEventListener('click', () => {
+      window.open(googleLinkLuistersessie(item), '_blank', 'noopener');
+    });
     kaart.querySelector('.wb-ls-ics2').addEventListener('click', () => {
       bewaarBestand(
         icsLuistersessie(item), luistersessieBestandsnaam(item), 'text/calendar;charset=utf-8'
@@ -1901,6 +1987,7 @@ import { APP } from '../data/app.js';
     ['#wb-i-geldig', 'geldigDagen', (v) => Number(v) || 0, (w) => w],
     ['#wb-i-volgnummer', 'volgnummer', (v) => Number(v) || 1, (w) => w],
     ['#wb-i-besteldagen', 'bestelDagen', (v) => Number(v) || 14, (w) => w],
+    ['#wb-i-googleagenda', 'googleAgenda', (v) => v.trim(), (w) => w || ''],
     ['#wb-i-iban', 'iban', (v) => v.trim(), (w) => w || ''],
     ['#wb-i-tenaamstelling', 'tenaamstelling', (v) => v.trim(), (w) => w || ''],
     ['#wb-i-aanbetaling', 'aanbetalingPct', (v) => Number(v.replace(',', '.')) || 0, (w) => w],
@@ -1920,6 +2007,7 @@ import { APP } from '../data/app.js';
       opslaan();
       tekenInstellingen();
       tekenCatalogus();
+      tekenGoogleAgenda();
       tekenAlles();
     });
   }
@@ -2225,6 +2313,7 @@ import { APP } from '../data/app.js';
   function tekenOpgeslagen() {
     tekenBewaard();
     tekenAgenda();
+    tekenGoogleAgenda();
   }
 
   function tekenBewaard() {
@@ -2749,6 +2838,21 @@ import { APP } from '../data/app.js';
     line-height: 15px;
     text-align: center;
   }
+  /* Het venster met je Google-agenda. Hoog genoeg om een week te zien,
+     maar niet zo hoog dat de rest van de agenda eronder verdwijnt. */
+  .wb-google-agenda {
+    display: block;
+    width: 100%;
+    height: 420px;
+    margin-top: 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--bg);
+  }
+  @media (min-width: 1000px) {
+    .wb-google-agenda { height: 560px; }
+  }
+
   .wb-dringend { border-color: var(--accent); }
   .wb-dringend p { margin: 8px 0 0; font-size: .88rem; line-height: 1.4; }
 

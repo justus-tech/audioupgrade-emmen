@@ -22,6 +22,7 @@
  * Open je Headroom zelf, dan zie je bovenaan de agenda wat eraan komt.
  */
 import { datumNl } from './rekenen.js';
+import { ADRES } from '../../data/site.js';
 
 /** Statussen waarbij de aanbetaling binnen is en je dus mag bestellen. */
 const BETAALD = ['aanbetaald', 'gefactureerd', 'betaald'];
@@ -222,6 +223,139 @@ export function icsStempel(datum, tijd = '09:00') {
     `${d.getFullYear()}${twee(d.getMonth() + 1)}${twee(d.getDate())}` +
     `T${twee(Number(uur) || 0)}${twee(Number(min) || 0)}00`
   );
+}
+
+/**
+ * RECHTSTREEKS IN GOOGLE AGENDA — zonder koppeling, zonder inloggen.
+ *
+ * WAAROM DIT NAAST HET AGENDABESTAND STAAT
+ * Een .ics-bestand moet je downloaden en openen; op Android is dat een paar
+ * tikken en soms landt hij in de verkeerde agenda. Deze link opent Google
+ * Agenda met de afspraak al ingevuld — je controleert hem en drukt op
+ * Opslaan. Eén tik, en het staat in dezelfde agenda die je al gebruikt.
+ *
+ * `ctz` is het belangrijkste veld hier. Zonder dat leest Google de tijd als
+ * de tijdzone van het account, en dat is niet altijd de onze; met Europe/
+ * Amsterdam staat negen uur ook echt om negen uur in zijn agenda.
+ *
+ * Dit werkt vandaag al. Om een afspraak later automatisch te laten meeschuiven
+ * als je hem verzet, is een echte koppeling met Google nodig.
+ */
+export function googleAgendaLink({
+  titel = '',
+  datum,
+  tijd = '09:00',
+  eindDatum,
+  eindTijd,
+  uitleg = '',
+  plaats = '',
+} = {}) {
+  const begin = icsStempel(datum, tijd);
+  const eind = icsStempel(eindDatum || datum, eindTijd || tijd);
+  const velden = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: titel,
+    dates: `${begin}/${eind}`,
+    ctz: 'Europe/Amsterdam',
+  });
+  if (uitleg) velden.set('details', uitleg);
+  if (plaats) velden.set('location', plaats);
+  return `https://calendar.google.com/calendar/render?${velden.toString()}`;
+}
+
+/** De inbouw en de besteldag als twee links naar Google Agenda. */
+export function googleLinksVoorKlus(item, { duurUren = 8, voorbereiding = {} } = {}) {
+  const wat = [item.auto, item.kenteken].filter(Boolean).join(' · ');
+  const titel = `Inbouw ${item.wie}${wat ? ` — ${wat}` : ''}`;
+  const regels = (lijst) => [
+    `Offerte ${item.nummer}`,
+    item.telefoon && `Tel. ${item.telefoon}`,
+    '',
+    ...lijst,
+  ].filter((r) => r !== false && r !== undefined).join('\n');
+
+  return {
+    inbouw: {
+      naam: 'Inbouw',
+      url: googleAgendaLink({
+        titel,
+        datum: item.datum,
+        tijd: item.tijd,
+        eindTijd: plusUren(item.tijd, duurUren),
+        uitleg: regels(voorbereiding.dag || []),
+        plaats: ADRES,
+      }),
+    },
+    bestellen: {
+      naam: 'Bestellen',
+      url: googleAgendaLink({
+        titel: `Onderdelen bestellen — ${item.wie}`,
+        datum: item.besteldag,
+        tijd: '08:00',
+        eindTijd: '08:30',
+        uitleg: regels([
+          `Uiterlijk vandaag bestellen voor de inbouw op ${datumNl(item.datum)}.`,
+          'Bestel pas als de aanbetaling binnen is.',
+        ]),
+      }),
+    },
+  };
+}
+
+/**
+ * JE GOOGLE-AGENDA IN BEELD IN DE APP.
+ *
+ * Google laat een agenda zien in een venstertje binnen je eigen pagina. Dat
+ * is kijken, geen koppeling: de app kan niet lézen wat erin staat, want de
+ * browser houdt de twee sites uit elkaar. Voor het inplannen is dat genoeg —
+ * je ziet in één scherm of een dag al vol staat.
+ *
+ * Je plakt bij Instellingen je agenda-adres. Dat is meestal het e-mailadres
+ * van je Google-account, of het lange adres dat onder "Agenda integreren"
+ * staat. Een volledige link uit Google mag ook.
+ *
+ * WAT ER NIET IN DE CODE KOMT
+ * Dat adres blijft in je telefoon staan, net als je rekeningnummer. Deze map
+ * staat openbaar op GitHub.
+ */
+export function googleEmbedUrl(invoer, { achtergrond = '', weergave = 'AGENDA' } = {}) {
+  const tekst = String(invoer || '').trim();
+  if (!tekst) return '';
+
+  /* Plakt hij een hele link uit Google, dan die gebruiken — maar alleen als
+     hij ook echt van Google komt. Een willekeurig adres in een venstertje op
+     je eigen scherm zetten is nergens voor nodig. */
+  if (/^https?:\/\//i.test(tekst)) {
+    try {
+      const url = new URL(tekst);
+      if (url.hostname !== 'calendar.google.com') return '';
+      return url.toString();
+    } catch (e) {
+      return '';
+    }
+  }
+
+  /**
+   * Een agenda-adres van Google ziet er altijd uit als een e-mailadres: je
+   * eigen adres, of zoiets als abc123@group.calendar.google.com. Plakt hij
+   * iets anders, dan levert Google een leeg venster op en snapt niemand
+   * waarom. Beter meteen zeggen dat het niet klopt.
+   */
+  if (!/^[^\s:@]+@[^\s:@]+\.[^\s:@]+$/.test(tekst)) return '';
+
+  const velden = new URLSearchParams({
+    src: tekst,
+    ctz: 'Europe/Amsterdam',
+    mode: weergave,
+    showTitle: '0',
+    showPrint: '0',
+    showCalendars: '0',
+    showTz: '0',
+    /* Maandag vooraan, zoals de kalender aan de muur. */
+    wkst: '2',
+  });
+  if (achtergrond) velden.set('bgcolor', achtergrond);
+  return `https://calendar.google.com/calendar/embed?${velden.toString()}`;
 }
 
 /** De tijd een aantal uren later, voor het einde van de afspraak. */

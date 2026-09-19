@@ -377,6 +377,37 @@ Het bericht staat in een veld dat je kunt aanpassen voordat je het verstuurt.
 Verander je daarna nog iets aan de datum of de naam, dan wordt het opnieuw
 opgesteld — dan ben je je aanpassing kwijt.
 
+### Google Agenda
+
+Justus werkt met Google Agenda. Headroom praat daar op twee manieren mee.
+
+**Van de app naar Google.** Bij elke klus en elke luistersessie staat
+**In Google Agenda**. Die knop opent Google met de afspraak al ingevuld — titel,
+dag, tijd, adres, en bij een luistersessie de instructie over het hek. Je
+controleert hem en drukt op Opslaan. Bij een inbouw gaan er twee vensters open:
+de inbouwdag en de dag dat de onderdelen besteld moeten zijn. Google kent geen
+link die er twee tegelijk aanmaakt.
+
+Dit werkt vandaag al, zonder koppeling en zonder in te loggen. De tijdzone gaat
+mee als `Europe/Amsterdam`; zonder dat leest Google de tijd in de tijdzone van
+het account en schuift de afspraak een uur op.
+
+**Van Google naar de app.** Vul bij **Instellingen** het adres van je agenda in
+(meestal je e-mailadres, of het lange adres onder *Agenda integreren*). Dan staat
+je Google-agenda boven aan het tabblad Agenda, zodat je ziet of een dag al vol
+zit voordat je iets afspreekt.
+
+> **Dit is kijken, geen koppeling.** De app kan niet *lezen* wat er in die agenda
+> staat: de browser houdt twee verschillende sites uit elkaar. Hij kan dus ook
+> niet waarschuwen dat je dubbel boekt. Daarvoor is een echte koppeling nodig —
+> een Google-project met de Agenda-API aan, en inloggen met je Google-account.
+> Dat staat apart gepland.
+
+Het agenda-adres blijft net als het rekeningnummer in de telefoon staan en komt
+niet in de code: deze map staat openbaar op GitHub. Een adres dat er niet
+uitziet als een agenda van Google wordt geweigerd — dan krijg je een melding in
+plaats van een leeg venster.
+
 ### De meldingen
 
 **De app kan je geen melding sturen als hij dichtstaat.** Daar is een server
