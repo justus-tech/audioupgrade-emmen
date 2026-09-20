@@ -430,6 +430,34 @@ De tijden staan er zonder tijdzone in. Dat heet een *zwevende tijd*: negen uur
 is negen uur op de klok waar je bent. Voor een werkplaats die altijd in
 Nederland staat is dat precies goed, en het scheelt gedoe met de zomertijd.
 
+### Het rapport
+
+Op het tabblad **Rapport** zie je hoe je draait. Kies een periode — deze maand,
+vorige maand, dit kwartaal, dit jaar of alles — en je krijgt vier blokken:
+
+| | |
+|---|---|
+| **Moet nog binnenkomen** | staat bovenaan, want dit is het enige waar je iets mee moet: gefactureerd maar niet betaald, het restant na een aanbetaling, en offertes waar nog niets op binnen is |
+| **Omzet** | omzet excl. en incl. btw, inkoop, marge in euro's en procenten, gemiddelde per klus, montage-uren |
+| **Waar de marge vandaan komt** | per soort werk, op volgorde van wat het opbrengt |
+| **Hoeveel gaat er door** | hoeveel van je verstuurde offertes uiteindelijk doorgaan |
+
+Een klus telt mee op zijn **inbouwdatum**, en anders op de datum van de offerte.
+Hij telt pas als omzet zodra de status op *aanbetaald* staat of verder — een
+offerte die nog nergens op binnen is, is geen omzet.
+
+"Moet nog binnenkomen" kijkt met opzet naar **alle** offertes en niet alleen
+naar de gekozen periode. Een factuur van twee maanden geleden die nooit betaald
+is, is juist dán het belangrijkste getal op dat scherm.
+
+Met **Rapport als pdf** krijg je hetzelfde op papier. Daar staan je inkoop en je
+marge op, dus dat stuk gaat nooit naar een klant — dat staat ook op elke pagina.
+
+> **Dit is geen boekhouding.** Er staat alleen in wat er in Headroom is gezet.
+> Handel je iets buiten de app om af, dan staat het hier niet bij en klopt het
+> bedrag dus niet met de bankrekening. Gebruik het om te zien hoe je draait en om
+> te vinden wie nog moet betalen, niet voor een btw-aangifte.
+
 ### Headroom op je computer
 
 Het is een website, dus hij werkt ook op je laptop: open

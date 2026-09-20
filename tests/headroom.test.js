@@ -44,6 +44,9 @@ import {
 import { MODELS } from '../src/data/models.js';
 import { TABBLADEN } from '../src/data/app.js';
 import { BRAND } from '../src/data/brand.js';
+import {
+  rapport, periodes, telDatum, soortNaam, rapportPdf, rapportBestandsnaam,
+} from '../src/lib/headroom/rapport.js';
 
 const INST = { ...STANDAARD_INSTELLINGEN, uurtariefCent: 7500, margePct: 60, btwPct: 21 };
 
@@ -1865,5 +1868,180 @@ describe('je Google-agenda in beeld', () => {
   test('de achtergrondkleur komt uit het merk en niet uit een losse code', () => {
     const url = new URL(googleEmbedUrl('x@y.nl', { achtergrond: BRAND.bg }));
     assert.equal(url.searchParams.get('bgcolor'), BRAND.bg);
+  });
+});
+
+/**
+ * HET RAPPORT.
+ *
+ * Twee dingen moeten hier kloppen. De omzet, want daar kijkt Justus naar om te
+ * weten hoe hij draait. En vooral: wat er nog moet binnenkomen — een factuur
+ * die is verstuurd en nooit betaald valt in een lijst van veertig offertes
+ * niet op, en hier hoort hij eruit te springen.
+ */
+describe('het rapport', () => {
+  const inst = { ...INST, uurtariefCent: 7500, margePct: 60 };
+  const vandaag = new Date(2026, 8, 20);   // 20 september 2026
+  const carplay = [{ omschrijving: 'CarPlay', soort: 'carplay', aantal: 1, vastExclCent: 57438, inkoopCent: 22222 }];
+  const speakers = [{ omschrijving: 'Composet', soort: 'speakers-voor', aantal: 1, inkoopCent: 24444, margePct: 60, uren: 3 }];
+  const klus = (nummer, status, inbouwdatum, regels, factuur) => ({
+    nummer, status, regels, factuur,
+    datum: '2026-09-01T10:00:00.000Z',
+    inbouwdatum,
+  });
+  const offertes = [
+    klus('2026-001', 'betaald', '2026-09-05', carplay),
+    klus('2026-002', 'gefactureerd', '2026-09-12', speakers, { nummer: 'F1', inclCent: 20000 }),
+    klus('2026-003', 'aanbetaald', '2026-09-20', [...carplay, ...speakers], { nummer: 'F2', inclCent: 40000 }),
+    klus('2026-004', 'verstuurd', '2026-09-28', carplay),
+    klus('2026-005', 'concept', '', speakers),
+    klus('2026-006', 'betaald', '2026-08-14', carplay),
+  ];
+  const deze = () => periodes(vandaag)[0];
+  const maak = (periode = deze()) => rapport(offertes, inst, periode);
+
+  test('de periodes lopen tot de eerste dag van de volgende', () => {
+    // Niet rekenen met "de laatste dag van de maand": dat gaat bij februari en
+    // bij een schrikkeljaar mis, en dat zie je pas een jaar later.
+    const [maand] = periodes(new Date(2026, 1, 15));
+    assert.equal(maand.van.getDate(), 1);
+    assert.equal(maand.tot.getMonth(), 2, 'de maand loopt niet door tot maart');
+    assert.equal(maand.tot.getDate(), 1);
+  });
+
+  test('vorige maand klopt ook in januari', () => {
+    const [, vorige] = periodes(new Date(2026, 0, 10));
+    assert.equal(vorige.van.getFullYear(), 2025);
+    assert.equal(vorige.van.getMonth(), 11, 'december van het jaar ervoor');
+    assert.match(vorige.kop, /december 2025/);
+  });
+
+  test('een klus telt op zijn inbouwdatum, anders op de offertedatum', () => {
+    assert.equal(telDatum({ inbouwdatum: '2026-10-07', datum: '2026-09-01' }).getMonth(), 9);
+    assert.equal(telDatum({ datum: '2026-09-01T10:00:00.000Z' }).getMonth(), 8);
+    assert.equal(telDatum({}), null);
+  });
+
+  test('alleen klussen die zijn doorgegaan tellen mee in de omzet', () => {
+    // Een offerte die nog niet is aanbetaald is geen omzet. Zou hij meetellen,
+    // dan lijkt de maand beter dan hij is.
+    const r = maak();
+    assert.equal(r.omzet.aantal, 3);
+    const eigen = [offertes[0], offertes[1], offertes[2]]
+      .reduce((som, o) => som + totalen(o.regels, inst, 0).exclCent, 0);
+    assert.equal(r.omzet.exclCent, eigen);
+  });
+
+  test('de maandgrens houdt augustus buiten september', () => {
+    const r = maak();
+    assert.ok(!r.omzet.exclCent.toString().includes('NaN'));
+    const augustus = rapport(offertes, inst, periodes(vandaag)[1]);
+    assert.equal(augustus.omzet.aantal, 1, 'augustus hoort één klus te hebben');
+  });
+
+  test('marge en btw tellen op tot de omzet', () => {
+    const r = maak();
+    assert.equal(r.omzet.exclCent + r.omzet.btwCent, r.omzet.inclCent);
+    assert.equal(r.omzet.inkoopCent + r.omzet.margeCent, r.omzet.exclCent);
+  });
+
+  test('wat nog moet binnenkomen kijkt naar ALLE offertes', () => {
+    /**
+     * Met opzet niet alleen naar de gekozen periode: een factuur van twee
+     * maanden geleden die nooit betaald is, is juist dan het belangrijkste
+     * getal op dit scherm.
+     */
+    const smal = rapport(offertes, inst, {
+      id: 'niks', kop: 'niks', van: new Date(2020, 0, 1), tot: new Date(2020, 0, 2),
+    });
+    assert.equal(smal.omzet.aantal, 0, 'in die periode is niets gedaan');
+    assert.ok(smal.openstaand.gefactureerd.inclCent > 0, 'maar er staat wel geld open');
+    assert.equal(smal.openstaand.verstuurd.aantal, 1);
+  });
+
+  test('bij een aanbetaling telt alleen het restant als openstaand', () => {
+    // Het aanbetaalde deel is al binnen; dat nog een keer meetellen zou je
+    // laten denken dat je meer tegoed hebt dan waar is.
+    const r = maak();
+    const t = totalen(offertes[2].regels, inst, 0);
+    assert.equal(r.openstaand.aanbetaald.inclCent, t.inclCent - 40000);
+  });
+
+  test('een concept telt nergens in mee', () => {
+    const r = maak();
+    const statussen = ['verstuurd', 'aanbetaald', 'gefactureerd'];
+    const totaalOpen = statussen.reduce((s, k) => s + r.openstaand[k].aantal, 0);
+    assert.equal(totaalOpen, 3, 'het concept hoort er niet bij te staan');
+  });
+
+  test('de conversie telt alleen wat de deur uit ging', () => {
+    const r = maak();
+    assert.equal(r.conversie.gemaakt, 5, 'vijf in september, inclusief het concept');
+    assert.equal(r.conversie.verstuurd, 4, 'het concept ging de deur niet uit');
+    assert.equal(r.conversie.doorgegaan, 3);
+    assert.equal(Math.round(r.conversie.pct), 75);
+  });
+
+  test('per soort werk staat de marge erbij', () => {
+    const r = maak();
+    const soorten = r.perSoort.map((s) => s.soort);
+    assert.ok(soorten.includes('carplay'));
+    assert.ok(soorten.includes('speakers-voor'));
+    // Op volgorde van marge: waar het meeste aan verdiend is bovenaan.
+    assert.ok(r.perSoort[0].margeCent >= r.perSoort[1].margeCent);
+    assert.equal(soortNaam('carplay'), 'CarPlay / bron');
+  });
+
+  test('zonder offertes blijft alles netjes op nul', () => {
+    // Een lege app mag geen NaN of een deling door nul laten zien.
+    const leeg = rapport([], inst, deze());
+    assert.equal(leeg.omzet.aantal, 0);
+    assert.equal(leeg.omzet.margePct, 0);
+    assert.equal(leeg.omzet.gemiddeldInclCent, 0);
+    assert.equal(leeg.conversie.pct, 0);
+    assert.deepEqual(leeg.perSoort, []);
+  });
+});
+
+describe('het rapport als pdf', () => {
+  const inst = { ...INST, uurtariefCent: 7500, margePct: 60 };
+  const vandaag = new Date(2026, 8, 20);
+  const offertes = [{
+    nummer: '2026-001', status: 'betaald', inbouwdatum: '2026-09-05',
+    datum: '2026-09-01T10:00:00.000Z',
+    regels: [{ omschrijving: 'CarPlay', soort: 'carplay', aantal: 1, vastExclCent: 57438, inkoopCent: 22222 }],
+  }];
+  const maak = () => rapportPdf(rapport(offertes, inst, periodes(vandaag)[0]), inst, vandaag);
+  const lees = () => Buffer.from(maak().naarBytes()).toString('latin1');
+
+  test('de cijfers staan erop', () => {
+    const pdf = lees();
+    // De kopbalk zet het woord in hoofdletters, net als op de offerte.
+    assert.match(pdf, /RAPPORT/);
+    assert.match(pdf, /september 2026/);
+    assert.match(pdf, /Marge/);
+    assert.match(pdf, /Inkoop/);
+  });
+
+  test('er staat op dat dit stuk niet naar een klant gaat', () => {
+    // Hier staan inkoopprijzen en marges op. Een pdf die per ongeluk in de
+    // verkeerde WhatsApp belandt is precies de fout die je één keer maakt.
+    assert.match(lees(), /Alleen voor jezelf/);
+  });
+
+  test('en dat het geen boekhouding is', () => {
+    assert.match(lees(), /geen boekhouding/);
+  });
+
+  test('de bestandsnaam zegt over welke periode het gaat', () => {
+    const r = rapport(offertes, inst, periodes(vandaag)[0]);
+    assert.equal(rapportBestandsnaam(r), 'rapport-september-2026.pdf');
+    assert.equal(rapportBestandsnaam({ periode: null }), 'rapport-alles.pdf');
+  });
+
+  test('een leeg rapport levert ook een nette pdf op', () => {
+    const doc = rapportPdf(rapport([], inst, periodes(vandaag)[0]), inst, vandaag);
+    const pdf = Buffer.from(doc.naarBytes()).toString('latin1');
+    assert.match(pdf, /Geen klus doorgegaan/);
   });
 });

@@ -91,11 +91,14 @@ export function kopbalk(doc, { soort, nummer, datum, vervolg = false }) {
  * te kunnen nalezen); op de werkbon alleen het paginanummer en een
  * waarschuwing, want die hoort de deur niet uit te gaan.
  */
-export function voetregel(doc, paginaNr, { intern = false } = {}) {
+export function voetregel(doc, paginaNr, {
+  intern = false,
+  waarschuwing = 'Interne werkbon — niet aan de klant meegeven.',
+} = {}) {
   const y = A4.hoogte - 46;
   doc.lijn(LINKS, y - 20, RECHTS, y - 20, KLEUR.lijnZacht);
   if (intern) {
-    doc.tekst('Interne werkbon — niet aan de klant meegeven.', LINKS, y - 8, {
+    doc.tekst(waarschuwing, LINKS, y - 8, {
       grootte: 7.5, vet: true, kleur: KLEUR.accentInkt,
     });
     doc.tekst(`${SITE.name}  ·  ${SITE.phoneDisplay}`, LINKS, y + 3, {

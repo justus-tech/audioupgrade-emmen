@@ -963,6 +963,71 @@ describe('Headroom', alsGebouwd, () => {
     }
   });
 
+  test('het rapport telt op wat er is doorgegaan en wat nog moet komen', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    const dezeMaand = (d) => {
+      const v = new Date();
+      return `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2, '0')}-${d}`;
+    };
+
+    /* Drie klussen, elk een andere status: betaald, gefactureerd, verstuurd.
+       De status tikt door van concept naar betaald in vier tikken. */
+    for (const [naam, tikken, dag] of [['Mark', 4, '05'], ['Sanne', 3, '12'], ['Tim', 1, '20']]) {
+      await pagina.click('#wb-nieuw');
+      await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+      await pagina.fill('#wb-naam', naam);
+      await pagina.fill('#wb-inbouwdatum', dezeMaand(dag));
+      await pagina.click('#wb-bewaar');
+      for (let i = 0; i < tikken; i++) await pagina.click('#wb-bewaard .wb-status >> nth=0');
+    }
+
+    await pagina.click('[data-tab="rapport"]');
+
+    // Twee klussen zijn doorgegaan (betaald en gefactureerd), de derde niet.
+    const omzet = await pagina.textContent('#wb-r-omzet');
+    assert.match(omzet, /2 klussen/);
+    assert.match(omzet, /€ 1\.390,00/, 'de omzet inclusief btw klopt niet');
+
+    /* Het belangrijkste blok: wat er nog moet binnenkomen. Een gefactureerde
+       klus die nog niet betaald is hoort er bovenaan te staan. */
+    const open = await pagina.textContent('#wb-r-openstaand');
+    assert.match(open, /Gefactureerd, nog niet betaald/);
+    assert.match(open, /Offertes waar nog niets op binnen is/);
+
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('het rapport blijft leeg zonder klussen, zonder rare getallen', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.click('[data-tab="rapport"]');
+    const tekst = await pagina.textContent('[data-paneel="rapport"]');
+    assert.match(tekst, /Nog geen klus die is doorgegaan/);
+    assert.doesNotMatch(tekst, /NaN/);
+    assert.equal((await pagina.textContent('#wb-r-openstaand')).trim(), '');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('het rapport komt eruit als pdf', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+    await pagina.fill('#wb-naam', 'Mark de Vries');
+    await pagina.click('#wb-bewaar');
+    await pagina.click('[data-tab="rapport"]');
+
+    const [download] = await Promise.all([
+      pagina.waitForEvent('download'),
+      pagina.click('#wb-r-pdf'),
+    ]);
+    assert.match(download.suggestedFilename(), /^rapport-.*\.pdf$/);
+    const pdf = readFileSync(await download.path(), 'latin1');
+    // Hier staan inkoop en marge op; dat stuk gaat nooit naar een klant.
+    assert.match(pdf, /Alleen voor jezelf/);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
   test('je Google-agenda verschijnt zodra je het adres invult', async () => {
     const { pagina, fouten } = await openWerkbak();
     await pagina.click('[data-tab="agenda"]');

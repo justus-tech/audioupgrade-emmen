@@ -62,6 +62,7 @@ import { APP } from '../data/app.js';
 <nav class="wb-tabs" aria-label="Onderdelen">
   <button type="button" class="wb-tab aan" data-tab="offerte">Offerte</button>
   <button type="button" class="wb-tab" data-tab="agenda">Agenda<span class="wb-bel" id="wb-agenda-bel" hidden></span></button>
+  <button type="button" class="wb-tab" data-tab="rapport">Rapport</button>
   <button type="button" class="wb-tab" data-tab="catalogus">Onderdelen</button>
   <button type="button" class="wb-tab" data-tab="autos">Auto's</button>
   <button type="button" class="wb-tab" data-tab="instellingen">Instellingen</button>
@@ -315,6 +316,38 @@ import { APP } from '../data/app.js';
         telefoon te staan, mét een wekker een week en een dag van tevoren, en een
         aparte afspraak op de dag dat je uiterlijk moet bestellen. Die piept ook als
         Headroom dicht staat en zonder internet.
+      </p>
+    </div>
+  </section>
+
+  <!-- ================= RAPPORT ================= -->
+  <section class="wb-paneel" data-paneel="rapport" hidden>
+    <h1 class="wb-h">Rapport</h1>
+
+    <div class="wb-kaart">
+      <div class="wb-veldrij">
+        <label class="wb-breed">Over welke periode
+          <select id="wb-r-periode"></select>
+        </label>
+      </div>
+      <p class="wb-uitleg">
+        Een klus telt mee op zijn inbouwdatum. Staat die er niet bij, dan op de datum
+        van de offerte.
+      </p>
+    </div>
+
+    <div id="wb-r-openstaand"></div>
+    <div id="wb-r-omzet"></div>
+    <div id="wb-r-soorten"></div>
+    <div id="wb-r-conversie"></div>
+
+    <div class="wb-kaart">
+      <button type="button" class="btn wb-vol" id="wb-r-pdf">Rapport als pdf</button>
+      <p class="wb-uitleg">
+        <strong>Dit is geen boekhouding.</strong> Hier staat alleen wat je in Headroom
+        hebt gezet. Werk je iets buiten de app om af, dan staat het hier niet bij en
+        klopt het bedrag dus niet met je bankrekening. Gebruik het om te zien hoe je
+        draait en om te vinden wie nog moet betalen — niet voor je btw-aangifte.
       </p>
     </div>
   </section>
@@ -595,6 +628,9 @@ import { APP } from '../data/app.js';
     googleEmbedUrl,
   } from '../lib/headroom/agenda.js';
   import { voorbereidingMetWaarom, voorbereiding } from '../lib/headroom/voorbereiding.js';
+  import {
+    rapport, periodes, soortNaam, rapportPdf, rapportBestandsnaam,
+  } from '../lib/headroom/rapport.js';
   import {
     bevestiging, icsLuistersessie, luistersessieBestandsnaam, luistersessieItems,
     whatsappBericht, datumVoluit, googleLinkLuistersessie,
@@ -1250,6 +1286,114 @@ import { APP } from '../data/app.js';
     });
     return kaart;
   }
+
+  /* ================= RAPPORT ================= */
+  let gekozenPeriode = 'maand';
+
+  const rijtje = (paren) => paren
+    .map(([wat, bedrag, bij]) =>
+      `<div><span>${wat}</span><strong>${bedrag}</strong>${bij ? `<em>${bij}</em>` : ''}</div>`)
+    .join('');
+
+  function tekenRapport() {
+    const lijst = periodes();
+    const periode = lijst.find((x) => x.id === gekozenPeriode) || lijst[0];
+
+    /* De keuzelijst één keer vullen; daarna alleen de stand bijwerken. */
+    const kies = $('#wb-r-periode');
+    if (kies.options.length !== lijst.length) {
+      kies.innerHTML = lijst
+        .map((x) => `<option value="${x.id}">${ontsnap(x.naam)}</option>`)
+        .join('');
+    }
+    kies.value = periode.id;
+
+    const r = rapport(staat.offertes, staat.instellingen, periode);
+
+    /**
+     * WAT ER NOG MOET BINNENKOMEN staat bovenaan, en met opzet.
+     *
+     * Dit is het enige blok waar je iets mee moet. Een factuur van twee
+     * maanden geleden die nooit betaald is valt in een lijst van veertig
+     * offertes niet op; hier wel.
+     */
+    const open = r.openstaand;
+    const totaalOpen = open.verstuurd.inclCent + open.aanbetaald.inclCent + open.gefactureerd.inclCent;
+    $('#wb-r-openstaand').innerHTML = totaalOpen
+      ? `<div class="wb-kaart${open.gefactureerd.inclCent ? ' wb-dringend' : ''}">
+           <span class="eyebrow">Moet nog binnenkomen</span>
+           <div class="wb-cijfers">${rijtje([
+        open.gefactureerd.inclCent
+          ? ['Gefactureerd, nog niet betaald', euro(open.gefactureerd.inclCent),
+            `${telling(open.gefactureerd.aantal, 'factuur', 'facturen')} — hier achteraan`]
+          : null,
+        open.aanbetaald.inclCent
+          ? ['Restant na de aanbetaling', euro(open.aanbetaald.inclCent),
+            `${telling(open.aanbetaald.aantal, 'klus', 'klussen')} in de planning`]
+          : null,
+        open.verstuurd.inclCent
+          ? ['Offertes waar nog niets op binnen is', euro(open.verstuurd.inclCent),
+            telling(open.verstuurd.aantal, 'offerte', 'offertes')]
+          : null,
+      ].filter(Boolean))}</div>
+         </div>`
+      : '';
+
+    const o = r.omzet;
+    $('#wb-r-omzet').innerHTML =
+      `<div class="wb-kaart">
+         <span class="eyebrow">Omzet ${ontsnap(periode.kop)}</span>
+         ${o.aantal
+        ? `<div class="wb-cijfers">${rijtje([
+          ['Omzet excl. btw', euro(o.exclCent), telling(o.aantal, 'klus', 'klussen')],
+          ['Btw', euro(o.btwCent), ''],
+          ['Omzet incl. btw', euro(o.inclCent), ''],
+          ['Inkoop', euro(o.inkoopCent), ''],
+          ['Marge', euro(o.margeCent), `${o.margePct.toFixed(1).replace('.', ',')}%`],
+          ['Gemiddeld per klus', euro(o.gemiddeldInclCent), 'inclusief btw'],
+          ['Montage-uren', `${String(o.uren).replace('.', ',')}`, 'uur'],
+        ])}</div>`
+        : `<p class="wb-leeg">Nog geen klus die is doorgegaan in deze periode.
+             Een klus telt mee zodra de status op <strong>aanbetaald</strong> staat.</p>`}
+       </div>`;
+
+    $('#wb-r-soorten').innerHTML = r.perSoort.length
+      ? `<div class="wb-kaart">
+           <span class="eyebrow">Waar de marge vandaan komt</span>
+           <div class="wb-cijfers">${rijtje(r.perSoort.map((s) => [
+        ontsnap(soortNaam(s.soort)),
+        euro(s.margeCent),
+        `${telling(s.aantal, 'klus', 'klussen')} · omzet ${euro(s.exclCent)}`,
+      ]))}</div>
+           <p class="wb-uitleg">Zit er meer dan één soort werk op een offerte, dan telt
+             die omzet bij allebei mee. Deze kolom telt dus niet op tot je totaal.</p>
+         </div>`
+      : '';
+
+    const c = r.conversie;
+    $('#wb-r-conversie').innerHTML = c.verstuurd
+      ? `<div class="wb-kaart">
+           <span class="eyebrow">Hoeveel gaat er door</span>
+           <div class="wb-cijfers">${rijtje([
+        ['Doorgegaan', `${c.doorgegaan} van ${c.verstuurd}`, `${c.pct.toFixed(0)}% van wat je verstuurde`],
+        ['Gemaakt in deze periode', String(c.gemaakt), 'inclusief concepten'],
+      ])}</div>
+         </div>`
+      : '';
+  }
+
+  $('#wb-r-periode').addEventListener('change', (e) => {
+    gekozenPeriode = e.target.value;
+    tekenRapport();
+  });
+
+  $('#wb-r-pdf').addEventListener('click', () => {
+    const lijst = periodes();
+    const periode = lijst.find((x) => x.id === gekozenPeriode) || lijst[0];
+    const r = rapport(staat.offertes, staat.instellingen, periode);
+    const doc = rapportPdf(r, staat.instellingen);
+    bewaarBestand(doc.naarBytes(), rapportBestandsnaam(r), 'application/pdf');
+  });
 
   /* ================= AFSPRAKEN OP PAPIER ================= */
   const AFSPRAKEN = {
@@ -2314,6 +2458,7 @@ import { APP } from '../data/app.js';
     tekenBewaard();
     tekenAgenda();
     tekenGoogleAgenda();
+    tekenRapport();
   }
 
   function tekenBewaard() {
@@ -2653,6 +2798,18 @@ import { APP } from '../data/app.js';
      aan geplakt. Met is:global geldt de opmaak ook voor die elementen.
      Dat kan hier veilig: deze pagina staat op zichzelf. */
   body.headroom { padding-bottom: 96px; }
+
+  /**
+   * DE TABBLADEN ZIJN GEEN SECTIES VAN DE WEBSITE.
+   *
+   * global.css geeft elke <section> 88 pixels lucht boven en onder, en zet er
+   * een scheidingslijntje tussen. Dat hoort bij de marketingpagina's, waar je
+   * rustig langs scrollt. In de app kostte het op elk tabblad ruim honderd
+   * pixels van je scherm voordat de eerste kop in beeld kwam — op een telefoon
+   * is dat een derde van wat je ziet — plus een lijntje dat nergens op sloeg.
+   */
+  .wb-paneel { padding: 0; }
+  .wb-paneel + .wb-paneel::before { content: none; }
 
   .wb-kop {
     position: sticky;
@@ -2998,10 +3155,36 @@ import { APP } from '../data/app.js';
 
   /* ---- cijfers ---- */
   .wb-marge { background: var(--bg-alt); }
+  /* Een regel met een omschrijving links en een bedrag rechts. In het rapport
+     staat er soms ook nog een toelichting achter; op een telefoon past dat
+     niet naast elkaar, dus die zakt dan naar een eigen regel eronder. Het
+     bedrag mag nooit over twee regels breken — dan lees je "€" en op de
+     volgende regel "695,00". */
   .wb-cijfers { display: grid; gap: 6px; }
-  .wb-cijfers div { display: flex; justify-content: space-between; gap: 12px; font-size: .9rem; }
+  .wb-cijfers div {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: baseline;
+    gap: 2px 12px;
+    font-size: .9rem;
+  }
   .wb-cijfers span { color: var(--text-dim); }
-  .wb-cijfers strong { font-family: 'Oswald', sans-serif; letter-spacing: .04em; }
+  .wb-cijfers strong {
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: .04em;
+    white-space: nowrap;
+  }
+  .wb-cijfers em {
+    grid-column: 1 / -1;
+    font-style: normal;
+    font-size: .78rem;
+    color: var(--text-dim);
+  }
+  /* Op een breed scherm past de toelichting wel gewoon achter het bedrag. */
+  @media (min-width: 1000px) {
+    .wb-cijfers div { grid-template-columns: 1fr auto auto; }
+    .wb-cijfers em { grid-column: auto; }
+  }
 
   /* Een waarschuwing die je niet over het hoofd ziet, maar die ook niet
      schreeuwt: de oranje streep links doet het werk. */
