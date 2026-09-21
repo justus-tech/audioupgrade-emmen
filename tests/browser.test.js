@@ -963,6 +963,127 @@ describe('Headroom', alsGebouwd, () => {
     }
   });
 
+  /**
+   * EEN INGELEZEN PRIJSLIJST IS ZO VIERHONDERD ARTIKELEN.
+   *
+   * Alles tegelijk laten zien maakte de offertepagina veertigduizend pixels
+   * lang — zo'n vijftig schermen scrollen voordat je bij de rest van het
+   * formulier was, en het tabblad Onderdelen was bijna honderdduizend.
+   * Nagemeten voordat ik eraan begon.
+   */
+  async function metGroteCatalogus(pagina, aantal = 485) {
+    await pagina.evaluate((n) => {
+      const soorten = ['speakers-voor', 'speakers-achter', 'versterker', 'dsp', 'demping', 'carplay'];
+      const catalogus = Array.from({ length: n }, (_, i) => ({
+        omschrijving: `Gladen Mosconi artikel ${i + 1}`,
+        soort: soorten[i % soorten.length],
+        merk: 'Gladen', artikelnummer: `ART${i}`, leverancier: 'Gladen',
+        inkoopCent: 12000 + i, margePct: 60, uren: 2, toebehoren: [],
+      }));
+      catalogus.push({
+        omschrijving: 'Pico 6to8 DSP-versterker', soort: 'dsp', merk: 'Gladen',
+        artikelnummer: 'PICO68', leverancier: 'Gladen',
+        inkoopCent: 45000, margePct: 60, uren: 4, toebehoren: [],
+      });
+      const st = JSON.parse(localStorage.getItem('aue-werkbak-v1') || '{}');
+      st.catalogus = catalogus;
+      st.instellingen = st.instellingen || {};
+      localStorage.setItem('aue-werkbak-v1', JSON.stringify(st));
+    }, aantal);
+    await pagina.reload();
+  }
+
+  test('een grote prijslijst maakt de offertepagina niet onbruikbaar', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await metGroteCatalogus(pagina);
+
+    const knoppen = await pagina.locator('#wb-onderdelen .wb-toevoeg').count();
+    assert.ok(knoppen <= 12, `er staan er ${knoppen}; dat is een muur om langs te scrollen`);
+    assert.match(await pagina.textContent('#wb-onderdelen-meer'), /Nog 474 onderdelen meer/);
+
+    const hoogte = await pagina.evaluate(() => document.documentElement.scrollHeight);
+    assert.ok(hoogte < 8000, `de pagina is ${hoogte} pixels lang`);
+
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('zoeken vindt een onderdeel op naam en op artikelnummer', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await metGroteCatalogus(pagina);
+
+    for (const term of ['pico', 'PICO68', '6to8']) {
+      await pagina.fill('#wb-onderdeel-zoek', term);
+      assert.equal(await pagina.locator('#wb-onderdelen .wb-toevoeg').count(), 1, `"${term}" vindt niet één`);
+      assert.match(await pagina.textContent('#wb-onderdelen'), /Pico 6to8/);
+    }
+
+    await pagina.fill('#wb-onderdeel-zoek', 'bestaatnietzomaar');
+    assert.match(await pagina.textContent('#wb-onderdelen'), /Niets gevonden/);
+
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een gevonden onderdeel kun je gewoon op de offerte zetten', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await metGroteCatalogus(pagina);
+    await pagina.fill('#wb-onderdeel-zoek', 'pico');
+    await pagina.click('#wb-onderdelen .wb-toevoeg >> nth=0');
+    /* De omschrijving op een offerteregel staat in een invoerveld — je kunt
+       hem per klant bijschaven — dus die lees je uit de waarde, niet uit de
+       tekst van het blok. */
+    assert.equal(
+      await pagina.inputValue('#wb-regels .wb-regel-naam'),
+      'Pico 6to8 DSP-versterker'
+    );
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('aanpassen pakt het gezochte onderdeel en niet de eerste van de lijst', async () => {
+    /**
+     * Hier zat het risico. De lijst wordt nu gefilterd getekend, maar
+     * aanpassen en weghalen wijzen naar de plek in de HELE lijst. Zou dat
+     * meeschuiven met het filter, dan pas je na zoeken het verkeerde
+     * onderdeel aan — of gooi je het verkeerde weg.
+     */
+    const { pagina, fouten } = await openWerkbak();
+    await metGroteCatalogus(pagina);
+    await pagina.click('[data-tab="catalogus"]');
+    await pagina.fill('#wb-cat-zoek', 'pico');
+    await pagina.click('#wb-catalogus .wb-bewerk >> nth=0');
+    assert.equal(await pagina.inputValue('#wb-o-naam'), 'Pico 6to8 DSP-versterker');
+    assert.equal(await pagina.inputValue('#wb-o-artikelnummer'), 'PICO68');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('weghalen na zoeken gooit ook het gezochte onderdeel weg', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await metGroteCatalogus(pagina);
+    await pagina.click('[data-tab="catalogus"]');
+    await pagina.fill('#wb-cat-zoek', 'pico');
+    await pagina.click('#wb-catalogus .wb-weg >> nth=0');
+
+    const over = await pagina.evaluate(() =>
+      JSON.parse(localStorage.getItem('aue-werkbak-v1')).catalogus);
+    assert.equal(over.length, 485);
+    assert.ok(!over.some((o) => o.artikelnummer === 'PICO68'), 'het verkeerde onderdeel is weg');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('bij een korte lijst staat er geen zoekveld in de weg', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await metGroteCatalogus(pagina, 3);
+    assert.equal(await pagina.isHidden('#wb-onderdeel-zoekveld'), true);
+    // En alles staat er gewoon, want vier past prima.
+    assert.equal(await pagina.locator('#wb-onderdelen .wb-toevoeg').count(), 4);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
   test('het rapport telt op wat er is doorgegaan en wat nog moet komen', async () => {
     const { pagina, fouten } = await openWerkbak();
     const dezeMaand = (d) => {

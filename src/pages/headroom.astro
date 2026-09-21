@@ -147,7 +147,11 @@ import { APP } from '../data/app.js';
       <div class="wb-knoprij" id="wb-pakketten"></div>
 
       <h2 class="wb-h3">Je eigen onderdelen</h2>
+      <label class="wb-breed wb-zoeken" id="wb-onderdeel-zoekveld" hidden>Zoeken
+        <input type="search" id="wb-onderdeel-zoek" placeholder="naam, merk of artikelnummer" />
+      </label>
       <div class="wb-knoprij" id="wb-onderdelen"></div>
+      <p class="wb-uitleg" id="wb-onderdelen-meer" hidden></p>
       <p class="wb-leeg" id="wb-catalogus-leeg" hidden>
         Je hebt nog geen onderdelen ingevoerd. Ga naar <strong>Onderdelen</strong> en zet je
         leveranciersprijzen er één keer in — daarna kies je ze hier met één tik.
@@ -409,6 +413,9 @@ import { APP } from '../data/app.js';
 
     <div class="wb-kaart">
       <span class="eyebrow">In je lijst</span>
+      <label class="wb-breed wb-zoeken" id="wb-cat-zoekveld" hidden>Zoeken
+        <input type="search" id="wb-cat-zoek" placeholder="naam, merk of artikelnummer" />
+      </label>
       <div id="wb-catalogus"></div>
     </div>
 
@@ -1498,10 +1505,23 @@ import { APP } from '../data/app.js';
   function tekenOnderdeelknoppen() {
     const vak = $('#wb-onderdelen');
     vak.innerHTML = '';
-    const lijst = voorkeuren.size
+    const opSoort = voorkeuren.size
       ? staat.catalogus.filter((o) => voorkeuren.has(o.soort))
       : staat.catalogus;
     $('#wb-catalogus-leeg').hidden = staat.catalogus.length > 0;
+
+    const zoek = $('#wb-onderdeel-zoek').value.trim().toLowerCase();
+    $('#wb-onderdeel-zoekveld').hidden = staat.catalogus.length <= ZICHTBAAR;
+
+    const gevonden = opSoort.filter((o) => past(o, zoek));
+    const lijst = zoek ? gevonden : gevonden.slice(0, ZICHTBAAR);
+    const rest = gevonden.length - lijst.length;
+
+    const meer = $('#wb-onderdelen-meer');
+    meer.hidden = !rest && !(zoek && gevonden.length);
+    meer.textContent = zoek
+      ? `${telling(gevonden.length, 'onderdeel', 'onderdelen')} gevonden.`
+      : `Nog ${telling(rest, 'onderdeel', 'onderdelen')} meer — zoek hierboven.`;
 
     for (const onderdeel of lijst) {
       const prijs = regelPrijs(onderdeel, staat.instellingen);
@@ -1521,7 +1541,9 @@ import { APP } from '../data/app.js';
     if (staat.catalogus.length && !lijst.length) {
       const leeg = document.createElement('p');
       leeg.className = 'wb-leeg';
-      leeg.textContent = 'Geen onderdelen in deze categorieën.';
+      leeg.textContent = zoek
+        ? 'Niets gevonden. Probeer een deel van de naam of het artikelnummer.'
+        : 'Geen onderdelen in deze categorieën.';
       vak.appendChild(leeg);
     }
   }
@@ -1782,14 +1804,66 @@ import { APP } from '../data/app.js';
   }
 
   /* ================= CATALOGUS ================= */
+  /**
+   * ZOEKEN IN JE ONDERDELEN.
+   *
+   * Een ingelezen leveranciersprijslijst is zo vierhonderd artikelen. Alles
+   * tegelijk laten zien maakte de offertepagina veertigduizend pixels lang —
+   * vijftig schermen scrollen voordat je bij de rest van het formulier bent.
+   * Dus: zoeken, en zonder zoekterm alleen de eerste handvol.
+   */
+  const ZICHTBAAR = 12;
+
+  function past(onderdeel, zoek) {
+    if (!zoek) return true;
+    return [onderdeel.omschrijving, onderdeel.merk, onderdeel.artikelnummer, onderdeel.leverancier]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+      .includes(zoek);
+  }
+
   function tekenCatalogus() {
     const vak = $('#wb-catalogus');
     vak.innerHTML = '';
     if (!staat.catalogus.length) {
       vak.innerHTML = '<p class="wb-leeg">Nog geen onderdelen.</p>';
+      $('#wb-cat-zoekveld').hidden = true;
       return;
     }
-    staat.catalogus.forEach((onderdeel, i) => {
+
+    /* Het zoekveld verschijnt pas als er zoveel in staat dat scrollen niet
+       meer werkt. Bij tien onderdelen is een zoekveld alleen maar in de weg. */
+    $('#wb-cat-zoekveld').hidden = staat.catalogus.length <= ZICHTBAAR;
+    const zoek = $('#wb-cat-zoek').value.trim().toLowerCase();
+
+    /* Met de index erbij: aanpassen en weghalen wijzen naar de plek in de
+       hele lijst, niet naar de plek in wat er nu toevallig staat. */
+    const gevonden = staat.catalogus
+      .map((onderdeel, i) => ({ onderdeel, i }))
+      .filter(({ onderdeel }) => past(onderdeel, zoek));
+
+    const tonen = zoek ? gevonden : gevonden.slice(0, ZICHTBAAR);
+    const rest = gevonden.length - tonen.length;
+
+    const kop = document.createElement('p');
+    kop.className = 'wb-uitleg';
+    kop.innerHTML = zoek
+      ? `${telling(gevonden.length, 'onderdeel', 'onderdelen')} gevonden van de
+         ${staat.catalogus.length}.`
+      : `Je hebt ${telling(staat.catalogus.length, 'onderdeel', 'onderdelen')}.` +
+        (rest ? ` Hieronder de eerste ${tonen.length}; zoek hierboven om de rest te vinden.` : '');
+    vak.appendChild(kop);
+
+    if (!gevonden.length) {
+      const leeg = document.createElement('p');
+      leeg.className = 'wb-leeg';
+      leeg.textContent = 'Niets gevonden. Probeer een deel van de naam of het artikelnummer.';
+      vak.appendChild(leeg);
+      return;
+    }
+
+    tonen.forEach(({ onderdeel, i }) => {
       const prijs = regelPrijs(onderdeel, staat.instellingen);
       const rij = document.createElement('div');
       rij.className = 'wb-regel';
@@ -1945,6 +2019,11 @@ import { APP } from '../data/app.js';
   });
 
   $('#wb-o-annuleer').addEventListener('click', leegOnderdeelFormulier);
+
+  /* Tijdens het typen meezoeken: je wilt na drie letters al zien of het erin
+     staat, niet pas als je het hele artikelnummer hebt ingetikt. */
+  $('#wb-cat-zoek').addEventListener('input', tekenCatalogus);
+  $('#wb-onderdeel-zoek').addEventListener('input', tekenOnderdeelknoppen);
 
   function leegOnderdeelFormulier() {
     bewerktOnderdeel = null;

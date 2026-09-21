@@ -190,6 +190,16 @@ montage en (bij particulieren) btw er al in. Je inkoopprijzen, je marge en je
 uurtarief staan er nooit op — daar staat een test op in
 `tests/headroom.test.js`.
 
+### Zoeken in je onderdelen
+
+Een ingelezen leveranciersprijslijst is zo vierhonderd artikelen. Daarom staat
+er boven **Je eigen onderdelen** een zoekveld, en boven je lijst bij
+**Onderdelen** ook. Zoeken kan op naam, merk, artikelnummer en leverancier.
+
+Zonder zoekterm zie je de eerste twaalf, met eronder hoeveel er nog meer zijn.
+Heb je er minder dan twaalf, dan verschijnt het zoekveld niet — dat is dan
+alleen maar in de weg.
+
 ### Elk kabeltje klopt
 
 Bij een onderdeel zet je onder **Wat hoort hier verplicht bij** de ringen,
