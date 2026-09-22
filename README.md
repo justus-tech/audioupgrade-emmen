@@ -231,7 +231,11 @@ erachter zit. Dat verschilt per uitvoering en is nergens op te halen.
 een lege regel met een streep — geen gok. Een verzonnen stekkertype kost een
 middag; een verzonnen draadkleur kost de fabrieksgarantie van je klant.
 
-Onder **Auto's** leg je per model vast wat je hebt nagemeten. De volgende keer
+Onder **Auto's** leg je per model vast wat je hebt nagemeten. Dat mag op twee
+manieren: vanaf een offerte (dan staat het model er al in), of door zelf de
+modelnaam in te tikken. Allebei komen ze onder dezelfde noemer terecht — tik je
+"Volkswagen Golf VII", dan herkent de app dat als dezelfde Golf die op een
+offerte staat. De volgende keer
 dat zo'n auto op de brug staat, herkent de app hem aan het kenteken en staat
 alles al ingevuld. Vul bij de bouwjaren de jaren van de **generatie** in (een
 Golf 7 liep van 2013 tot 2020), niet het bouwjaar van de auto die er nu staat.

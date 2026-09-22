@@ -40,6 +40,7 @@ import {
 import { SITE, ADRES } from '../src/data/site.js';
 import {
   DOSSIER_VELDEN, autoSleutel, zoekDossier, dossierStand, leegDossier, dossierNaam,
+  sleutelUitNaam, sleutelsVoor,
 } from '../src/lib/headroom/autos.js';
 import { MODELS } from '../src/data/models.js';
 import { TABBLADEN } from '../src/data/app.js';
@@ -2043,5 +2044,74 @@ describe('het rapport als pdf', () => {
     const doc = rapportPdf(rapport([], inst, periodes(vandaag)[0]), inst, vandaag);
     const pdf = Buffer.from(doc.naarBytes()).toString('latin1');
     assert.match(pdf, /Geen klus doorgegaan/);
+  });
+});
+
+/**
+ * DE SLEUTEL VAN EEN AUTODOSSIER.
+ *
+ * Dit was stuk, en het brak precies de belofte van het tabblad Auto's: "de
+ * volgende keer staat het al op je werkbon". Legde Justus een model vast vanaf
+ * een offerte, dan kreeg het dossier de slug van de modelpagina
+ * ("volkswagen-golf"). Tikte hij op het tabblad Auto's zelf "Volkswagen Golf
+ * VII" in, dan werd de sleutel van die letters gemaakt
+ * ("volkswagen-golf-vii"). Die twee kwamen nooit bij elkaar, dus zei de app
+ * bij de volgende Golf dat er niets was vastgelegd — terwijl het er stond.
+ */
+describe('een zelf getikte modelnaam vindt hetzelfde dossier', () => {
+  test('een getikte naam levert dezelfde sleutel als een echte auto', () => {
+    const viaAuto = autoSleutel({ merk: 'Volkswagen', handelsbenaming: 'Golf VII' }, MODELS);
+    assert.equal(sleutelUitNaam('Volkswagen Golf VII', MODELS), viaAuto);
+    assert.equal(sleutelUitNaam('Volkswagen Golf', MODELS), viaAuto);
+  });
+
+  test('ook als de RDW het model heel anders schrijft', () => {
+    // De RDW noemt een C-klasse "C 180". Allebei horen bij hetzelfde dossier.
+    const viaAuto = autoSleutel({ merk: 'Mercedes-Benz', handelsbenaming: 'C 180' }, MODELS);
+    assert.equal(sleutelUitNaam('Mercedes-Benz C 180', MODELS), viaAuto);
+  });
+
+  test('een merk met een spatie erin gaat ook goed', () => {
+    // Land Rover en Alfa Romeo hebben twee woorden nodig voor het merk.
+    for (const naam of ['Land Rover Discovery', 'Alfa Romeo Giulia']) {
+      const sleutel = sleutelUitNaam(naam, MODELS);
+      assert.ok(sleutel && sleutel !== 'onbekend', `geen sleutel voor ${naam}`);
+      assert.doesNotMatch(sleutel, /\s/, 'een sleutel hoort geen spaties te hebben');
+    }
+  });
+
+  test('een model dat de site niet kent werkt gewoon door', () => {
+    assert.equal(sleutelUitNaam('Zomaar Een Auto', MODELS), 'zomaar-een-auto');
+    assert.equal(sleutelUitNaam('  ', MODELS), 'onbekend');
+    assert.equal(sleutelUitNaam(undefined, MODELS), 'onbekend');
+  });
+
+  test('een dossier onder de oude noemer wordt nog steeds gevonden', () => {
+    /**
+     * Wat er vóór deze versie met de hand is ingetikt staat onder de verkeerde
+     * sleutel. Dat mag niet stilletjes onvindbaar worden: dan is Justus zijn
+     * eigen metingen kwijt zonder dat iemand het merkt.
+     */
+    const oud = [{ sleutel: 'volkswagen-golf-vii', naam: 'Volkswagen Golf VII', speakerVoor: '165 mm' }];
+    const sleutels = sleutelsVoor({ merk: 'Volkswagen', handelsbenaming: 'Golf VII' }, MODELS);
+    assert.ok(sleutels.length >= 2, 'er hoort een tweede noemer bij te staan');
+    assert.equal(zoekDossier(oud, sleutels)?.speakerVoor, '165 mm');
+  });
+
+  test('de nieuwe noemer gaat voor op de oude', () => {
+    // Staan ze er allebei, dan telt het dossier onder de goede sleutel.
+    const beide = [
+      { sleutel: 'volkswagen-golf-vii', naam: 'oud', speakerVoor: 'oud' },
+      { sleutel: 'volkswagen-golf', naam: 'nieuw', speakerVoor: 'nieuw' },
+    ];
+    const sleutels = sleutelsVoor({ merk: 'Volkswagen', handelsbenaming: 'Golf VII' }, MODELS);
+    assert.equal(zoekDossier(beide, sleutels)?.speakerVoor, 'nieuw');
+  });
+
+  test('zoeken met één sleutel blijft werken zoals het was', () => {
+    const lijst = [{ sleutel: 'volkswagen-golf', vanJaar: '2013', totJaar: '2020', speakerVoor: '165' }];
+    assert.equal(zoekDossier(lijst, 'volkswagen-golf', '2016')?.speakerVoor, '165');
+    assert.equal(zoekDossier(lijst, 'volkswagen-golf', '2004'), null);
+    assert.equal(zoekDossier(lijst, 'bestaat-niet'), null);
   });
 });

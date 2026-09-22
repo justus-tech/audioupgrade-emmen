@@ -993,6 +993,78 @@ describe('Headroom', alsGebouwd, () => {
     await pagina.reload();
   }
 
+  test('een zelf vastgelegd model komt terug op de werkbon', async () => {
+    /**
+     * De hele belofte van het tabblad Auto's: wat je één keer nameet staat de
+     * volgende keer al op je werkbon. Dat werkte alleen als je het model
+     * vastlegde vanáf een offerte; tikte je het zelf in op het tabblad Auto's,
+     * dan kwam het onder een andere noemer te staan en vond de app het nooit
+     * meer terug.
+     */
+    const { pagina, fouten } = await openWerkbak();
+
+    await pagina.click('[data-tab="autos"]');
+    await pagina.fill('#wb-a-naam', 'Volkswagen Golf VII');
+    await pagina.fill('#wb-a-van', '2013');
+    await pagina.fill('#wb-a-tot', '2020');
+    for (const [veld, waarde] of [
+      ['speakerVoor', '165 mm'],
+      ['ringVoor', 'Gladen GA-VW165'],
+      ['stekker', 'Quadlock 12-polig'],
+      ['let', 'Deurfolie altijd terugplakken'],
+    ]) {
+      await pagina.fill(`[data-dossier="${veld}"]`, waarde);
+    }
+    await pagina.click('#wb-a-bewaar');
+
+    // Dezelfde auto op een offerte moet dit dossier vinden.
+    await pagina.click('[data-tab="offerte"]');
+    await pagina.click('#wb-auto-handmatig');
+    await pagina.fill('#wb-merk', 'Volkswagen');
+    await pagina.fill('#wb-model', 'Golf VII');
+    await pagina.fill('#wb-bouwjaar', '2016');
+    await pagina.locator('#wb-bouwjaar').blur();
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+
+    assert.match(await pagina.textContent('#wb-dossier-melding'), /Vastgelegd/);
+
+    const [download] = await Promise.all([
+      pagina.waitForEvent('download'),
+      pagina.click('#wb-werkbon'),
+    ]);
+    const bon = readFileSync(await download.path(), 'latin1');
+    for (const waarde of ['165 mm', 'Gladen GA-VW165', 'Quadlock', 'Deurfolie altijd terugplakken']) {
+      assert.ok(bon.includes(waarde), `"${waarde}" staat niet op de werkbon`);
+    }
+
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een dossier van vóór deze versie blijft vindbaar', async () => {
+    // Anders is Justus zijn eigen metingen kwijt zonder dat iemand het merkt.
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.evaluate(() => {
+      const st = JSON.parse(localStorage.getItem('aue-werkbak-v1') || '{}');
+      st.dossiers = [{
+        sleutel: 'volkswagen-polo-vi', naam: 'Volkswagen Polo VI',
+        vanJaar: '', totJaar: '', speakerVoor: '165 mm onder de oude noemer',
+      }];
+      st.instellingen = st.instellingen || {};
+      localStorage.setItem('aue-werkbak-v1', JSON.stringify(st));
+    });
+    await pagina.reload();
+
+    await pagina.click('#wb-auto-handmatig');
+    await pagina.fill('#wb-merk', 'Volkswagen');
+    await pagina.fill('#wb-model', 'Polo VI');
+    await pagina.locator('#wb-model').blur();
+    assert.match(await pagina.textContent('#wb-dossier-melding'), /Vastgelegd/);
+
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
   test('een grote prijslijst maakt de offertepagina niet onbruikbaar', async () => {
     const { pagina, fouten } = await openWerkbak();
     await metGroteCatalogus(pagina);

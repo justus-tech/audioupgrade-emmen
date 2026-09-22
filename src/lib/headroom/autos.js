@@ -97,6 +97,63 @@ export function autoSleutel(voertuig, modellen = []) {
 }
 
 /**
+ * DE SLEUTEL UIT EEN ZELF GETIKTE MODELNAAM.
+ *
+ * WAAROM DIT BESTAAT
+ * Hier ging het mis. Leg je een model vast vanaf een offerte, dan krijgt het
+ * dossier de slug van de modelpagina: "volkswagen-golf". Tik je op het tabblad
+ * Auto's zelf "Volkswagen Golf VII" in, dan werd de sleutel gemaakt van die
+ * letters: "volkswagen-golf-vii". Die twee komen nooit bij elkaar, en dus zei
+ * de app bij de volgende Golf dat er niets was vastgelegd — terwijl het er
+ * gewoon stond. Precies de belofte van dit tabblad die dan niet uitkomt.
+ *
+ * Nu gaat een getikte naam door dezelfde herkenning. "Volkswagen Golf VII"
+ * wordt opgeknipt in merk en benaming, en levert dan dezelfde sleutel op als
+ * een offerte dat zou doen.
+ *
+ * Merken met een spatie erin — Land Rover, Alfa Romeo — hebben twee woorden
+ * nodig. Daarom proberen we allebei, en als laatste de hele naam als merk
+ * (voor een merk zonder model erachter).
+ */
+export function sleutelUitNaam(naam, modellen = []) {
+  const schoon = String(naam || '').trim().replace(/\s+/g, ' ');
+  if (!schoon) return 'onbekend';
+
+  const woorden = schoon.split(' ');
+  for (const merkWoorden of [1, 2]) {
+    if (woorden.length <= merkWoorden) continue;
+    const gevonden = matchAuto({
+      merk: woorden.slice(0, merkWoorden).join(' '),
+      handelsbenaming: woorden.slice(merkWoorden).join(' '),
+    }, modellen);
+    if (gevonden) return gevonden.slug;
+  }
+  const alleenMerk = matchAuto({ merk: schoon, handelsbenaming: '' }, modellen);
+  if (alleenMerk) return alleenMerk.slug;
+
+  /* Kennen we het model niet, dan de naam zelf. Dan werkt het dossier nog
+     steeds, alleen minder slim — net als bij autoSleutel. */
+  return schoon.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'onbekend';
+}
+
+/**
+ * Alle sleutels waaronder deze auto in het dossier kan staan.
+ *
+ * De eerste is de goede: de slug van de modelpagina. De tweede is de kale
+ * sleutel uit merk en benaming. Die staat erbij voor dossiers die vóór deze
+ * versie met de hand zijn ingetikt en dus onder de verkeerde noemer staan —
+ * die blijven zo gewoon gevonden worden.
+ */
+export function sleutelsVoor(voertuig, modellen = []) {
+  const uit = [autoSleutel(voertuig, modellen)];
+  const merk = normaliseerMerk(voertuig?.merk);
+  const benaming = normaliseerBenaming(voertuig?.merk, voertuig?.handelsbenaming);
+  const kaal = `${merk} ${benaming}`.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  if (kaal && !uit.includes(kaal)) uit.push(kaal);
+  return uit;
+}
+
+/**
  * Het dossier dat bij deze auto hoort.
  *
  * Eén model kan meerdere dossiers hebben, want een Golf 7 is geen Golf 4.
@@ -105,8 +162,20 @@ export function autoSleutel(voertuig, modellen = []) {
  * dossier zonder reeks (dat geldt dan voor alle jaren).
  */
 export function zoekDossier(dossiers = [], sleutel, bouwjaar) {
+  /* Eén sleutel of een rijtje: bij een rijtje telt de eerste die iets
+     oplevert. Zo blijft een dossier dat onder een oude noemer staat gewoon
+     gevonden worden. */
+  const sleutels = Array.isArray(sleutel) ? sleutel : [sleutel];
+  if (sleutels.length > 1) {
+    for (const s of sleutels) {
+      const gevonden = zoekDossier(dossiers, s, bouwjaar);
+      if (gevonden) return gevonden;
+    }
+    return null;
+  }
+
   const jaar = Number(String(bouwjaar ?? '').slice(0, 4));
-  const vanModel = dossiers.filter((d) => d.sleutel === sleutel);
+  const vanModel = dossiers.filter((d) => d.sleutel === sleutels[0]);
   if (!vanModel.length) return null;
 
   if (Number.isFinite(jaar) && jaar > 0) {

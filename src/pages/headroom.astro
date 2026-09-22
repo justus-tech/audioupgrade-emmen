@@ -628,7 +628,8 @@ import { APP } from '../data/app.js';
   import { werkbonPdf, werkbonBestandsnaam } from '../lib/headroom/werkbon.js';
   import { factuurPdf, factuurBestandsnaam } from '../lib/headroom/factuur.js';
   import {
-    DOSSIER_VELDEN, autoSleutel, zoekDossier, dossierNaam, dossierStand, leegDossier,
+    DOSSIER_VELDEN, autoSleutel, sleutelUitNaam, sleutelsVoor, zoekDossier,
+    dossierNaam, dossierStand, leegDossier,
   } from '../lib/headroom/autos.js';
   import {
     agenda, agendaItem, icsVoorKlus, icsBestandsnaam, hoeLangNog, googleLinksVoorKlus,
@@ -2058,7 +2059,12 @@ import { APP } from '../data/app.js';
     const naam = bekend
       ? `${bekend.brand} ${bekend.model}`
       : [auto.merk, auto.model].filter(Boolean).join(' ');
-    return { sleutel, naam, dossier: zoekDossier(staat.dossiers, sleutel, auto.bouwjaar) };
+    /* Ook onder de oude noemer kijken: dossiers die met de hand zijn ingetikt
+       stonden voor deze versie onder een andere sleutel. */
+    const sleutels = sleutelsVoor(
+      { merk: auto.merk, handelsbenaming: auto.model }, MODELS
+    );
+    return { sleutel, naam, dossier: zoekDossier(staat.dossiers, sleutels, auto.bouwjaar) };
   }
 
   /**
@@ -2132,9 +2138,13 @@ import { APP } from '../data/app.js';
     const dossier = {
       /* Zonder sleutel wordt het dossier nooit teruggevonden bij een kenteken.
          Is er geen, dan maken we er een van de modelnaam. */
+      /* Zonder sleutel wordt het dossier nooit teruggevonden bij een kenteken.
+         Komt hij niet van een offerte, dan gaat de getikte modelnaam door
+         dezelfde herkenning als een echte auto — anders zou "Volkswagen Golf
+         VII" onder een andere noemer staan dan de Golf op een offerte, en
+         vond de app hem nooit. */
       sleutel: $('#wb-a-sleutel').dataset.sleutel
-        || $('#wb-a-naam').value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-        || 'onbekend',
+        || sleutelUitNaam($('#wb-a-naam').value, MODELS),
       naam: $('#wb-a-naam').value.trim(),
       vanJaar: $('#wb-a-van').value.trim(),
       totJaar: $('#wb-a-tot').value.trim(),
