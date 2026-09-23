@@ -993,6 +993,67 @@ describe('Headroom', alsGebouwd, () => {
     await pagina.reload();
   }
 
+  test('na een storing bij de RDW staat de vorige auto niet meer op je scherm', async () => {
+    /**
+     * Hier ging het mis. Bij een storing werd alleen de auto ín de offerte
+     * vervangen; de velden op het scherm bleven de vórige auto tonen en het
+     * scherm werd niet opnieuw getekend. Je zag dan auto A staan terwijl er
+     * auto B in zat — en na een herstart kwam A gewoon weer terug.
+     */
+    const { pagina, fouten } = await openWerkbak();
+
+    // Eerst een auto die wél gevonden wordt.
+    await pagina.fill('#wb-kenteken', '92DJHG');
+    await pagina.press('#wb-kenteken', 'Enter');
+    await pagina.waitForFunction(() => document.querySelector('#wb-merk').value !== '');
+    assert.equal(await pagina.inputValue('#wb-merk'), 'Saab');
+
+    // Dan een tweede kenteken waarbij de RDW eruit ligt.
+    await pagina.unroute(RDW_VOERTUIG);
+    await pagina.route(RDW_VOERTUIG, (route) => route.abort('failed'));
+    await pagina.fill('#wb-kenteken', 'YY11YY');
+    await pagina.press('#wb-kenteken', 'Enter');
+    await pagina.waitForFunction(() =>
+      document.querySelector('#wb-auto-melding').textContent.includes('niet bereikbaar'));
+
+    assert.equal(await pagina.inputValue('#wb-merk'), '', 'de vorige auto staat er nog');
+    assert.equal(await pagina.inputValue('#wb-model'), '');
+
+    const bewaard = await pagina.evaluate(() =>
+      JSON.parse(localStorage.getItem('aue-werkbak-v1') || '{}').concept?.auto || null);
+    assert.equal(bewaard?.kenteken, 'YY11YY', 'het oude kenteken staat nog weggeschreven');
+
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een auto zonder model bij de RDW zegt dat er iets ontbreekt', async () => {
+    // Zonder deze controle stond er "Gevonden: Volkswagen  (2016)." met een
+    // gat erin, en werd niet gezegd dat het model mist — terwijl het
+    // autodossier daarop hangt.
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.unroute(RDW_VOERTUIG);
+    await pagina.route(RDW_VOERTUIG, (route) => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([{
+        kenteken: 'ZZ22ZZ', merk: 'VOLKSWAGEN',
+        datum_eerste_toelating: '20160417', eerste_kleur: 'GRIJS',
+      }]),
+    }));
+    await pagina.fill('#wb-kenteken', 'ZZ22ZZ');
+    await pagina.press('#wb-kenteken', 'Enter');
+    await pagina.waitForFunction(() =>
+      document.querySelector('#wb-auto-melding').textContent.includes('Gevonden'));
+
+    const melding = await pagina.textContent('#wb-auto-melding');
+    assert.match(melding, /Gevonden: Volkswagen \(2016\)/, 'er zit een gat in de melding');
+    assert.match(melding, /model staat niet bij de RDW/);
+
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
   test('een zelf vastgelegd model komt terug op de werkbon', async () => {
     /**
      * De hele belofte van het tabblad Auto's: wat je één keer nameet staat de

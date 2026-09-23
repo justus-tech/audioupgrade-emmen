@@ -826,10 +826,7 @@ import { APP } from '../data/app.js';
       );
       const gegevens = await antwoord.json();
       if (!gegevens.length) {
-        melden('Niet gevonden bij de RDW. Vul hem hieronder met de hand in.');
-        toonAutoVelden(true);
-        offerte.auto = { kenteken: plaat };
-        tekenAlles();
+        metDeHand(plaat, 'Niet gevonden bij de RDW. Vul hem hieronder met de hand in.');
         return;
       }
       const auto = gegevens[0];
@@ -845,17 +842,39 @@ import { APP } from '../data/app.js';
       };
       vulAutoVelden();
       toonAutoVelden(true);
-      melden(`Gevonden: ${offerte.auto.merk} ${offerte.auto.model} (${jaar}).`);
+      /* Niet elke auto heeft een handelsbenaming bij de RDW staan. Zonder deze
+         controle stond er "Gevonden: Volkswagen  (2016)." met een gat erin, en
+         werd er niet bij gezegd dat het model nog ontbreekt — terwijl daar het
+         autodossier op hangt. */
+      const naam = [offerte.auto.merk, offerte.auto.model].filter(Boolean).join(' ');
+      melden(offerte.auto.model
+        ? `Gevonden: ${naam} (${jaar}).`
+        : `Gevonden: ${naam} (${jaar}). Het model staat niet bij de RDW — vul het hieronder aan.`);
       /* Nu pas weten we welke auto het is, dus nu pas kan de app zeggen of er
          over dit model iets is vastgelegd. Zonder deze regel bleef daar
          "vul eerst een kenteken in" staan. */
       tekenAlles();
     } catch (err) {
-      melden('De RDW is even niet bereikbaar. Vul de auto met de hand in.');
-      toonAutoVelden(true);
-      offerte.auto = { kenteken: plaat };
+      metDeHand(plaat, 'De RDW is even niet bereikbaar. Vul de auto met de hand in.');
     }
   });
+
+  /**
+   * Geen auto gevonden: terug naar met de hand invullen.
+   *
+   * Hier ging het twee keer mis. Bij een storing werd alleen `offerte.auto`
+   * vervangen — de velden op het scherm bleven de vórige auto tonen, en het
+   * scherm werd niet opnieuw getekend, dus het weggeschreven concept hield
+   * ook nog het oude kenteken vast. Je zag dan auto A staan terwijl er auto B
+   * in zat, en na een herstart kwam A weer terug.
+   */
+  function metDeHand(plaat, bericht) {
+    offerte.auto = { kenteken: plaat };
+    vulAutoVelden();
+    toonAutoVelden(true);
+    melden(bericht);
+    tekenAlles();
+  }
 
   const toonAutoVelden = (aan) => { $('#wb-auto-velden').hidden = !aan; };
 
