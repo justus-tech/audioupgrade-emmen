@@ -34,6 +34,10 @@
  *   let     een waarschuwing die dikgedrukt onder de stap komt
  *   meet    verwijst naar een veld uit het autodossier; staat dat leeg, dan
  *           zet de werkbon er een opvallende lege regel neer om in te vullen
+ *   invul   een meting die bij DEZE auto hoort en niet bij het model: een
+ *           accuspanning geldt voor deze accu op deze dag. Zo'n stap krijgt
+ *           altijd een lege regel op de werkbon, met dit woord ervoor. Nooit
+ *           uit het dossier, want dan zou de vorige Golf je waarde bepalen.
  */
 export const WERKBLOKKEN = [
   {
@@ -51,6 +55,41 @@ export const WERKBLOKKEN = [
       {
         tekst: 'Accu afkoppelen als het werk aan de bedrading zit.',
         let: 'Controleer eerst of de auto een codebeveiliging of startonderbreker heeft die daarna opnieuw aangeleerd moet worden.',
+      },
+    ],
+  },
+  {
+    /**
+     * ACCU METEN — VOORAF.
+     *
+     * De site belooft dit bij de Executive, de Reference en bij Accu & Voeding:
+     * "Accu en laadspanning gemeten, met de waarden op je werkbon." Deze stap
+     * zorgt dat die belofte ook echt wordt waargemaakt, en levert meteen de
+     * getallen voor het meetrapport dat de klant meekrijgt.
+     *
+     * Het meten is er niet om een accu te verkopen. Blijkt de accu gewoon
+     * goed, dan zet je dat er zo in.
+     */
+    id: 'accu-voor',
+    naam: 'Accu meten (vooraf)',
+    soorten: ['versterker', 'subwoofer', 'dsp'],
+    stappen: [
+      {
+        tekst: 'Rustspanning meten met het contact af.',
+        invul: 'Rustspanning voor:',
+        let: 'Doe dit voordat je de accu afkoppelt. Daarna is de waarde weg en kun je achteraf niet meer laten zien wat je hebt aangetroffen.',
+      },
+      {
+        tekst: 'Laadspanning meten met de motor draaiend.',
+        invul: 'Laadspanning voor:',
+      },
+      {
+        tekst: 'Type accu en de datum op de accu overnemen.',
+        invul: 'Type en datum:',
+        let: 'Een AGM-accu wil een andere laadspanning dan een natte accu. Staat er geen datum op, noteer dan de kilometerstand.',
+      },
+      {
+        tekst: 'Massaverbinding nakijken: vast, schoon en zonder aanslag.',
       },
     ],
   },
@@ -147,15 +186,104 @@ export const WERKBLOKKEN = [
     ],
   },
   {
+    /**
+     * DE VOORMETING — DE STAP DIE JE NIET KUNT INHALEN.
+     *
+     * Een meetrapport laat zien wat er veranderd is. Dat kan alleen als je
+     * weet hoe het was. Sla je de voormeting over, dan staat de auto straks
+     * goed en is er niets meer om mee te vergelijken; je kunt hem niet alsnog
+     * maken door de instellingen even terug te zetten.
+     *
+     * Daarom staat dit blok apart voor 'DSP afstemmen' en niet erin: het moet
+     * op de werkbon een eigen genummerde stap zijn die je afvinkt.
+     */
+    id: 'voormeting',
+    naam: 'Voormeting',
+    soorten: ['dsp'],
+    stappen: [
+      {
+        tekst: 'Staat er al een DSP in, exporteer dan eerst de bestaande instelling.',
+        let: 'Dat is je weg terug als de klant de oude afstemming toch fijner vond.',
+      },
+      {
+        tekst: 'Meetkop op de meetpositie zetten: oorhoogte bestuurder, deuren dicht, motor uit.',
+        invul: 'Meetpositie:',
+        let: 'Leg vast waar de kop stond. Staat hij bij de nameting ergens anders, dan vergelijk je twee verschillende auto\'s met elkaar.',
+      },
+      {
+        tekst: 'Voormeting draaien en opslaan voordat je ook maar een instelling aanraakt.',
+        let: 'Zonder voormeting is er geen meetrapport. Headroom weigert het rapport te maken als deze meting ontbreekt.',
+      },
+      {
+        tekst: 'Schermafbeelding van de frequentierespons opslaan als kenteken-voor.',
+      },
+    ],
+  },
+  {
     id: 'dsp',
     naam: 'DSP afstemmen',
     soorten: ['dsp'],
     stappen: [
-      { tekst: 'Meetmicrofoon op oorhoogte van de bestuurder, deuren dicht, motor uit.' },
       { tekst: 'Looptijdcorrectie instellen per speaker.' },
       { tekst: 'Scheidingsfilters en helling zetten passend bij de gemonteerde speakers.' },
       { tekst: 'Meten, corrigeren, opnieuw meten.' },
       { tekst: 'Instelling opslaan én exporteren; het bestand bij de klantgegevens bewaren.', let: 'Komt de klant over een jaar terug, dan begin je niet opnieuw.' },
+    ],
+  },
+  {
+    /**
+     * DE NAMETING EN HET RAPPORT DAT DE KLANT MEEKRIJGT.
+     *
+     * WAT ER BEWUST NIET IN HET RAPPORT KOMT: de instellingen per kanaal —
+     * vertraging, niveau, fase, filters. Dat is het werk waar de klant voor
+     * betaald heeft. Zet je het op papier dat de auto uit gaat, dan geef je
+     * je afstemming weg aan de volgende inbouwer. Die waarden horen in de app
+     * bij de auto, niet in het rapport.
+     */
+    id: 'nameting',
+    naam: 'Nameting en meetrapport',
+    soorten: ['dsp'],
+    stappen: [
+      {
+        tekst: 'Nameting draaien met de meetkop op precies dezelfde plek als bij de voormeting.',
+      },
+      {
+        tekst: 'Schermafbeelding van de frequentierespons opslaan als kenteken-na.',
+      },
+      {
+        tekst: 'Looptijd en fase voor en na opslaan als je die hebt. Mag, hoeft niet.',
+      },
+      {
+        tekst: 'Meetrapport invullen onder Meting in Headroom: de twee schermafbeeldingen erin en in gewone taal wat er veranderd is.',
+        let: 'Geen instellingen per kanaal in het rapport. Die zet je in de app bij de auto.',
+      },
+      {
+        tekst: 'Rapport op wit A4 printen en in de AUE-map aan de klant meegeven.',
+      },
+    ],
+  },
+  {
+    id: 'accu-na',
+    naam: 'Accu meten (na afloop)',
+    soorten: ['versterker', 'subwoofer', 'dsp'],
+    stappen: [
+      {
+        tekst: 'Rustspanning opnieuw meten, contact af, minstens tien minuten nadat de motor uit is.',
+        invul: 'Rustspanning na:',
+      },
+      {
+        tekst: 'Spanning meten met het systeem aan op luistervolume.',
+        invul: 'Onder belasting:',
+        let: 'Dit is het getal waar het om draait. Zakt de spanning hier in, dan hoor je dat als slappe bas en zie je het als dimmende lichten.',
+      },
+      {
+        tekst: 'Laadspanning meten met de motor draaiend.',
+        invul: 'Laadspanning na:',
+      },
+      {
+        tekst: 'De waarden overnemen in het meetrapport onder Meting in Headroom.',
+        let: 'Is de accu gewoon goed, dan zet je dat er ook zo in. We verkopen niets wat er niet in hoeft.',
+      },
     ],
   },
   {
@@ -210,8 +338,11 @@ export function stappenlijst(soortenInHetWerk, dossier = {}, eigenBlokken = []) 
         veld: stap.meet || '',
         waarde: vastgelegd,
         /* Een stap die om een gegeven vraagt dat nog niet vastligt, krijgt op
-           de werkbon een invulregel. Zo groeit het dossier vanzelf. */
-        invullen: !!stap.meet && !vastgelegd,
+           de werkbon een invulregel. Zo groeit het dossier vanzelf. Een stap
+           met `invul` krijgt hem altijd: die meting hoort bij deze auto op
+           deze dag en kan nooit uit het dossier komen. */
+        invullen: (!!stap.meet && !vastgelegd) || !!stap.invul,
+        invulLabel: stap.invul || 'Meet na en noteer:',
       };
     }),
   }));

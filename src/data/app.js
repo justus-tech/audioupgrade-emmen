@@ -46,6 +46,7 @@ export const TABBLADEN = [
   { id: 'rapport', naam: 'Rapport', wat: 'Hoe je draait en wat er nog moet binnenkomen' },
   { id: 'catalogus', naam: 'Onderdelen', wat: 'Je leveranciersprijzen' },
   { id: 'autos', naam: "Auto's", wat: 'Wat je per model hebt nagemeten' },
+  { id: 'meting', naam: 'Meting', wat: 'Het meetrapport dat de klant meekrijgt' },
   { id: 'instellingen', naam: 'Instellingen', wat: 'Uurtarief, marge en rekeningnummer' },
 ];
 

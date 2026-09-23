@@ -38,6 +38,12 @@ import {
   luistersessieItems, whatsappBericht, googleLinkLuistersessie,
 } from '../src/lib/headroom/luistersessie.js';
 import { SITE, ADRES } from '../src/data/site.js';
+import { autoNaam } from '../src/lib/headroom/autos.js';
+import {
+  RAPPORT_SOORTEN, ACCU_METINGEN, KORTE_PUNTEN, NAZORG_TIPS, MEETKOP,
+  leegRapport, rapportnummer, rapportenVoor, ontbreekt, meetrapportHtml,
+  meetrapportBestandsnaam,
+} from '../src/lib/headroom/meetrapport.js';
 import {
   DOSSIER_VELDEN, autoSleutel, zoekDossier, dossierStand, leegDossier, dossierNaam,
   sleutelUitNaam, sleutelsVoor,
@@ -2113,5 +2119,310 @@ describe('een zelf getikte modelnaam vindt hetzelfde dossier', () => {
     assert.equal(zoekDossier(lijst, 'volkswagen-golf', '2016')?.speakerVoor, '165');
     assert.equal(zoekDossier(lijst, 'volkswagen-golf', '2004'), null);
     assert.equal(zoekDossier(lijst, 'bestaat-niet'), null);
+  });
+});
+
+
+/* ================= HET MEETRAPPORT ================= */
+describe('het meetrapport', () => {
+  /** Een compleet geluidsrapport, zoals het uit het formulier komt. */
+  const geluid = () => ({
+    ...leegRapport('geluid'),
+    nummer: '26-007',
+    datum: '2026-09-23',
+    klant: 'Sanne de Vries',
+    kenteken: '92DJHG',
+    auto: 'Saab 9-3',
+    bouwjaar: '1999',
+    systeem: [{ onderdeel: 'Speakers voor', merktype: 'Gladen RS 165', plaats: 'voordeuren' }],
+    voorBeeld: 'data:image/png;base64,AAAA',
+    naBeeld: 'data:image/png;base64,BBBB',
+  });
+
+  const accu = () => ({
+    ...leegRapport('accu'),
+    nummer: '26-008',
+    klant: 'Sanne de Vries',
+    kenteken: '92DJHG',
+    accu: {
+      type: 'AGM 80 Ah',
+      metingen: {
+        rustVoor: '12,1', rustNa: '12,7',
+        belastVoor: '11,4', belastNa: '12,3',
+        laadVoor: '14,1', laadNa: '14,4',
+      },
+    },
+  });
+
+  test('een klus met een DSP krijgt allebei de rapporten', () => {
+    const ids = rapportenVoor(['speakers-voor', 'dsp']).map((r) => r.id);
+    assert.deepEqual(ids, ['geluid', 'accu']);
+  });
+
+  test('een klus met alleen speakers krijgt er geen', () => {
+    assert.deepEqual(rapportenVoor(['speakers-voor', 'demping']), []);
+  });
+
+  test('een subwoofer zonder DSP krijgt wel het accurapport, niet het geluidsrapport', () => {
+    // De site belooft de accumeting bij elke klus die stroom trekt. Zonder DSP
+    // is er niets afgestemd, dus ook niets om voor en na te laten zien.
+    const ids = rapportenVoor(['subwoofer']).map((r) => r.id);
+    assert.deepEqual(ids, ['accu']);
+  });
+
+  test('het rapportnummer is jj-nnn', () => {
+    assert.equal(rapportnummer(1, '2026-03-04'), '26-001');
+    assert.equal(rapportnummer(42, '2026-12-31'), '26-042');
+    // Voorbij de duizend groeit het nummer mee in plaats van terug te springen:
+    // twee rapporten met hetzelfde nummer is erger dan een cijfer extra.
+    assert.equal(rapportnummer(1000, '2026-01-01'), '26-1000');
+  });
+
+  test('ZONDER VOORMETING GEEN RAPPORT', () => {
+    /**
+     * De belangrijkste test van dit blok. De voormeting is de enige stap die
+     * je niet kunt inhalen: staat de auto eenmaal goed, dan is er niets meer
+     * om mee te vergelijken. De app moet dat tegenhouden, niet er omheen
+     * werken.
+     */
+    const zonder = { ...geluid(), voorBeeld: '' };
+    const gemist = ontbreekt(zonder);
+    assert.ok(gemist.length > 0, 'dit rapport hoort geweigerd te worden');
+    assert.match(gemist[0], /voormeting/i);
+    // En het moet zeggen waaróm het niet later goedkomt.
+    assert.match(gemist[0], /niet alsnog/i);
+  });
+
+  test('zonder nameting ook niet', () => {
+    assert.match(ontbreekt({ ...geluid(), naBeeld: '' }).join(' '), /nameting/i);
+  });
+
+  test('een compleet geluidsrapport mist niets', () => {
+    assert.deepEqual(ontbreekt(geluid()), []);
+  });
+
+  test('een accurapport zonder de meting vooraf wordt geweigerd', () => {
+    const zonder = accu();
+    zonder.accu.metingen.rustVoor = '';
+    const gemist = ontbreekt(zonder).join(' ');
+    assert.match(gemist, /voor het werk/i);
+    assert.match(gemist, /rustspanning/i);
+  });
+
+  test('een compleet accurapport mist niets', () => {
+    assert.deepEqual(ontbreekt(accu()), []);
+  });
+
+  test('klant en kenteken zijn verplicht', () => {
+    assert.match(ontbreekt({ ...geluid(), klant: '' }).join(' '), /naam van de klant/i);
+    assert.match(ontbreekt({ ...geluid(), kenteken: '' }).join(' '), /kenteken/i);
+  });
+
+  test('het geluidsrapport telt drie bladen, met de fasepagina vier', () => {
+    const drie = meetrapportHtml(geluid());
+    assert.equal((drie.match(/class="mr-blad"/g) || []).length, 3);
+    assert.ok(drie.includes('1 / 3'), 'de bladen horen genummerd te zijn');
+    assert.ok(drie.includes('3 / 3'));
+
+    const vier = meetrapportHtml({ ...geluid(), faseVoor: 'data:image/png;base64,CCCC' });
+    assert.equal((vier.match(/class="mr-blad"/g) || []).length, 4);
+    assert.ok(vier.includes('4 / 4'));
+    // En de nummering telt mee: geen "1 / 3" meer op een rapport van vier.
+    assert.ok(!vier.includes('/ 3'));
+  });
+
+  test('het accurapport telt twee bladen', () => {
+    const html = meetrapportHtml(accu());
+    assert.equal((html.match(/class="mr-blad"/g) || []).length, 2);
+  });
+
+  test('DE INSTELLINGEN PER KANAAL STAAN ER NIET OP', () => {
+    /**
+     * Dit is het rapport dat de auto uit gaat. Staan de vertragingen, niveaus,
+     * fases en filters erop, dan leest de volgende inbouwer de afstemming
+     * waar de klant voor betaald heeft zo over. Ze horen in de app bij de
+     * auto, niet op dit papier.
+     */
+    const html = meetrapportHtml({
+      ...geluid(),
+      /* Ook als iemand ze er per ongeluk zelf in typt: dan staan ze er wél,
+         en daarom kijkt deze test naar wat de app zélf neerzet. */
+    }).toLowerCase();
+    for (const woord of ['looptijdcorrectie', 'ms vertraging', 'crossover', 'scheidingsfilter', 'db/oct']) {
+      assert.ok(!html.includes(woord), `"${woord}" hoort niet op het rapport van de klant`);
+    }
+  });
+
+  test('er staan geen verzonnen cijfers in de standaardteksten', () => {
+    // "Twee keer zo stil" en "6 dB winst" zijn beloftes die je niet waarmaakt.
+    const tekst = [...KORTE_PUNTEN.map((p) => p.tekst), ...NAZORG_TIPS].join(' ');
+    assert.ok(!/\d+\s*(db|dB|hz|Hz|procent|%)/.test(tekst), tekst);
+  });
+
+  test('de naam en de rol van de eigenaar staan eronder', () => {
+    const html = meetrapportHtml(geluid());
+    assert.ok(html.includes(SITE.eigenaar));
+    assert.ok(html.includes(SITE.eigenaarRol));
+    assert.ok(html.includes(MEETKOP), 'er hoort te staan waarmee gemeten is');
+  });
+
+  test('een klantnaam met een & of een < breekt de pagina niet', () => {
+    const html = meetrapportHtml({ ...geluid(), klant: 'Jansen & Zn. <auto>' });
+    assert.ok(html.includes('Jansen &amp; Zn. &lt;auto&gt;'));
+    assert.ok(!html.includes('<auto>'));
+  });
+
+  test('een ontbrekende schermafbeelding wordt een leeg vak, geen kapotte foto', () => {
+    // Alleen als iemand het rapport tóch bekijkt voordat het compleet is.
+    const html = meetrapportHtml({ ...geluid(), naBeeld: '' });
+    assert.ok(html.includes('mr-beeld-leeg'));
+    assert.ok(!html.includes('<img src=""'));
+  });
+
+  test('de accuwaarden komen met hun eenheid op het blad', () => {
+    const html = meetrapportHtml(accu());
+    assert.ok(html.includes('12,1 V'), 'de rustspanning voor');
+    assert.ok(html.includes('12,7 V'), 'de rustspanning na');
+    assert.ok(html.includes('14,4 V'), 'de laadspanning na');
+  });
+
+  test('een accumeting die niet gedaan is wordt een streepje, geen nul', () => {
+    // Een 0 V zou betekenen dat de accu leeg was. Een streepje betekent: niet
+    // gemeten. Dat verschil moet op papier te zien zijn.
+    const half = accu();
+    half.accu.metingen.belastNa = '';
+    const html = meetrapportHtml(half);
+    assert.ok(html.includes('—'));
+    assert.ok(!html.includes('0 V'));
+  });
+
+  test('het kenteken staat er als kentekenplaat op', () => {
+    const html = meetrapportHtml(geluid());
+    assert.ok(html.includes('mr-plaat'));
+    // Netjes gegroepeerd, zoals op de offerte.
+    assert.ok(html.includes('92-DJ-HG') || html.includes('92DJHG'), html.slice(0, 400));
+  });
+
+  test('de bestandsnaam zegt waar het over gaat', () => {
+    assert.equal(meetrapportBestandsnaam(geluid()), 'Meetrapport-geluid-26-007-92DJHG.pdf');
+    assert.equal(meetrapportBestandsnaam(accu()), 'Meetrapport-accu-26-008-92DJHG.pdf');
+  });
+
+  test('de nazorgtips staan erop, en bij de accu alleen de tips die gelden', () => {
+    const html = meetrapportHtml(geluid());
+    NAZORG_TIPS.forEach((t) => assert.ok(html.includes(t.slice(0, 40)), t));
+    // Een accurapport gaat niet over de klankregeling van de radio.
+    const accuHtml = meetrapportHtml(accu());
+    assert.ok(!accuHtml.includes(NAZORG_TIPS[0].slice(0, 40)));
+    assert.ok(accuHtml.includes(NAZORG_TIPS[3].slice(0, 40)));
+  });
+
+  test('er staan geen prijzen op het meetrapport', () => {
+    const html = meetrapportHtml({ ...geluid(), klant: 'Sanne' });
+    assert.ok(!html.includes('€'), 'een meetrapport gaat niet over geld');
+  });
+
+  test('de systeemtabel houdt het bij vijf regels', () => {
+    const veel = { ...geluid(), systeem: Array.from({ length: 9 }, (_, i) => ({
+      onderdeel: `Onderdeel ${i}`, merktype: `Type ${i}`, plaats: 'ergens',
+    })) };
+    const html = meetrapportHtml(veel);
+    assert.ok(html.includes('Onderdeel 4'));
+    assert.ok(!html.includes('Onderdeel 5'), 'meer dan vijf past niet op het blad');
+  });
+});
+
+/* ================= DE MEETSTAPPEN OP DE WERKBON ================= */
+describe('de meetstappen op de werkbon', () => {
+  const alles = ['dsp', 'versterker', 'speakers-voor'];
+
+  test('de voormeting staat vóór het afstemmen en de nameting erna', () => {
+    const namen = blokkenVoor(alles).map((b) => b.id);
+    const voor = namen.indexOf('voormeting');
+    const stel = namen.indexOf('dsp');
+    const na = namen.indexOf('nameting');
+    assert.ok(voor > -1 && stel > -1 && na > -1, namen.join(', '));
+    assert.ok(voor < stel, 'eerst meten, dan pas afstellen');
+    assert.ok(stel < na, 'de nameting komt na het afstellen');
+  });
+
+  test('de accu wordt voor én na gemeten, en de voormeting staat vooraan', () => {
+    const namen = blokkenVoor(['versterker']).map((b) => b.id);
+    assert.ok(namen.includes('accu-voor'));
+    assert.ok(namen.includes('accu-na'));
+    assert.ok(namen.indexOf('accu-voor') < namen.indexOf('accu-na'));
+    // Vóór het werk begint, want na het afkoppelen is de waarde weg.
+    assert.ok(namen.indexOf('accu-voor') < namen.indexOf('afronden'));
+  });
+
+  test('een klus zonder DSP en zonder versterker krijgt geen meetstappen', () => {
+    const namen = blokkenVoor(['demping']).map((b) => b.id);
+    assert.ok(!namen.includes('voormeting'));
+    assert.ok(!namen.includes('accu-voor'));
+  });
+
+  test('de werkbon waarschuwt dat je de voormeting niet kunt inhalen', () => {
+    const lijst = stappenlijst(['dsp'], {});
+    const blok = lijst.find((b) => b.naam === 'Voormeting');
+    const waarschuwing = blok.stappen.map((s) => s.let).join(' ');
+    assert.match(waarschuwing, /zonder voormeting is er geen meetrapport/i);
+  });
+
+  test('een accumeting krijgt altijd een lege regel op de werkbon', () => {
+    /**
+     * Een spanning hoort bij DEZE accu op DEZE dag. Zou hij uit het dossier
+     * van het model komen, dan stond de waarde van de vorige Golf op de bon
+     * van deze — en die schrijf je over in het rapport van de klant.
+     */
+    const lijst = stappenlijst(['versterker'], { stroom: 'rubber doorvoer links' });
+    const blok = lijst.find((b) => b.naam === 'Accu meten (vooraf)');
+    const rust = blok.stappen[0];
+    assert.equal(rust.invullen, true);
+    assert.equal(rust.invulLabel, 'Rustspanning voor:');
+    assert.equal(rust.waarde, '', 'een meting komt nooit uit het dossier');
+  });
+
+  test('een stap uit het dossier houdt zijn eigen woorden', () => {
+    // De invulregel bestond al voor de dossiervelden; die moet blijven werken.
+    const lijst = stappenlijst(['speakers-voor'], {});
+    const blok = lijst.find((b) => b.naam === 'Nameten en vastleggen');
+    assert.equal(blok.stappen[0].invulLabel, 'Meet na en noteer:');
+  });
+
+  test('de stappen blijven doorlopend genummerd', () => {
+    const lijst = stappenlijst(alles, {});
+    const nummers = lijst.flatMap((b) => b.stappen.map((s) => s.nummer));
+    assert.deepEqual(nummers, nummers.map((_, i) => i + 1));
+  });
+});
+
+
+describe('de naam van een auto', () => {
+  /**
+   * De RDW zet het merk vaak ook al in de handelsbenaming. Zonder deze
+   * controle stond er "hierbij de offerte voor je Saab Saab 9-3" in het
+   * bericht dat de klant leest.
+   */
+  test('het merk staat er niet twee keer in', () => {
+    assert.equal(autoNaam('Saab', 'Saab 9-3'), 'Saab 9-3');
+    assert.equal(autoNaam('Audi', 'Audi A3'), 'Audi A3');
+    assert.equal(autoNaam('Tesla', 'Model 3'), 'Tesla Model 3');
+  });
+
+  test('een model zonder het merk erin krijgt het merk ervoor', () => {
+    assert.equal(autoNaam('BMW', '3ER REIHE'), 'BMW 3ER REIHE');
+    assert.equal(autoNaam('Mercedes-Benz', 'C 180'), 'Mercedes-Benz C 180');
+    assert.equal(autoNaam('Volkswagen', 'Golf VII'), 'Volkswagen Golf VII');
+  });
+
+  test('een streepje of een spatie meer of minder maakt niet uit', () => {
+    assert.equal(autoNaam('Mercedes-Benz', 'MERCEDES BENZ C 180'), 'MERCEDES BENZ C 180');
+  });
+
+  test('één van de twee leeg levert de ander op', () => {
+    assert.equal(autoNaam('Saab', ''), 'Saab');
+    assert.equal(autoNaam('', 'Saab 9-3'), 'Saab 9-3');
+    assert.equal(autoNaam('', ''), '');
+    assert.equal(autoNaam(null, undefined), '');
   });
 });

@@ -1812,6 +1812,184 @@ describe('Headroom', alsGebouwd, () => {
     assert.deepEqual(teKlein, []);
     await pagina.close();
   });
+
+  /* ================= HET MEETRAPPORT ================= */
+  /**
+   * Het enige papier met meetwaarden dat de klant meekrijgt. Twee dingen
+   * moeten hier kloppen: het rapport mag niet zonder voormeting de deur uit,
+   * en er mag geen instelling per kanaal op staan.
+   */
+  async function vulMeetrapport(pagina, { voormeting = true } = {}) {
+    await pagina.click('[data-tab="meting"]');
+    await pagina.fill('#mr-klant', 'Sanne de Vries');
+    await pagina.fill('#mr-kenteken', '92DJHG');
+    await pagina.fill('#mr-auto', 'Saab 9-3');
+    /* Een schermafbeelding erin zetten zoals de browser hem aanlevert: een
+       piepklein doorzichtig plaatje is genoeg om te testen dat hij aankomt. */
+    const PIXEL = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+    if (voormeting) {
+      await pagina.setInputFiles('[data-beeld="voorBeeld"]', {
+        name: 'voor.png', mimeType: 'image/png', buffer: Buffer.from(PIXEL, 'base64'),
+      });
+    }
+    await pagina.setInputFiles('[data-beeld="naBeeld"]', {
+      name: 'na.png', mimeType: 'image/png', buffer: Buffer.from(PIXEL, 'base64'),
+    });
+  }
+
+  test('zonder voormeting kun je het rapport niet afdrukken', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await vulMeetrapport(pagina, { voormeting: false });
+    await pagina.waitForFunction(() => document.querySelector('#mr-print').disabled === true);
+
+    const melding = await pagina.textContent('#mr-ontbreekt');
+    assert.match(melding, /voormeting/i);
+    // En het moet uitleggen dat je het niet later goed kunt maken.
+    assert.match(melding, /niet alsnog/i);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('met allebei de metingen komt het rapport op papier te staan', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await vulMeetrapport(pagina);
+    await pagina.waitForFunction(() => document.querySelector('#mr-print').disabled === false);
+
+    /* Het printvenster van de browser blokkeert een test, dus we vangen het af
+       en kijken alleen of het rapport klaarstaat in het afdrukblok. */
+    await pagina.evaluate(() => { window.print = () => { window.__gedrukt = true; }; });
+    await pagina.click('#mr-print');
+    await pagina.waitForFunction(() => window.__gedrukt === true);
+
+    const blad = await pagina.innerHTML('#wb-print');
+    assert.ok(blad.includes('Sanne de Vries'), 'de klant hoort erop');
+    assert.ok(blad.includes('Saab 9-3'));
+    assert.ok(blad.includes('mr-plaat'), 'het kenteken als plaat');
+    assert.ok(blad.includes('data:image/png'), 'de twee schermafbeeldingen');
+    assert.ok(!blad.includes('€'), 'een meetrapport gaat niet over geld');
+
+    // Het rapportnummer wordt bij het afdrukken vergeven: jj-nnn.
+    assert.match(await pagina.inputValue('#mr-nummer'), /^\d{2}-\d{3}$/);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('het rapport staat niet op het scherm, alleen op papier', async () => {
+    /**
+     * Zonder dit staat er onder de app een tweede, witte versie van het
+     * rapport — en dat is precies het soort ding dat je pas ziet als de klant
+     * over je schouder meekijkt.
+     */
+    const { pagina } = await openWerkbak();
+    await vulMeetrapport(pagina);
+    await pagina.evaluate(() => { window.print = () => {}; });
+    await pagina.click('#mr-print');
+    assert.equal(await pagina.isVisible('#wb-print'), false);
+    await pagina.close();
+  });
+
+  test('het tabblad Meting loopt niet over de zijkant heen', async () => {
+    for (const breedte of [320, 390]) {
+      const pagina = await browser.newPage({ ...telefoon, viewport: { width: breedte, height: 844 } });
+      await pagina.goto(paginaUrl('headroom?tab=meting'));
+      await pagina.evaluate(() => document.fonts.ready);
+      // Mét een regel in de systeemtabel: dan staan de meeste velden er.
+      await pagina.click('#mr-systeem-erbij');
+      const overloop = await pagina.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+      );
+      assert.equal(overloop, 0, `bij ${breedte} pixels steekt er iets uit`);
+      await pagina.close();
+    }
+  });
+
+  test('het accurapport vraagt om de meting van vóór het werk', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.click('[data-tab="meting"]');
+    await pagina.click('[data-meting="accu"]');
+    await pagina.fill('#mr-klant', 'Sanne de Vries');
+    await pagina.fill('#mr-kenteken', '92DJHG');
+    await pagina.waitForFunction(() =>
+      document.querySelector('#mr-ontbreekt').textContent.toLowerCase().includes('voor het werk')
+    );
+    assert.equal(await pagina.isDisabled('#mr-print'), true);
+
+    // Alles invullen; dan mag het wel.
+    for (const [veld, waarde] of [
+      ['rustVoor', '12,1'], ['rustNa', '12,7'],
+      ['belastVoor', '11,4'], ['belastNa', '12,3'],
+      ['laadVoor', '14,1'], ['laadNa', '14,4'],
+    ]) {
+      await pagina.fill(`[data-accu="${veld}"]`, waarde);
+    }
+    await pagina.waitForFunction(() => document.querySelector('#mr-print').disabled === false);
+
+    await pagina.evaluate(() => { window.print = () => { window.__gedrukt = true; }; });
+    await pagina.click('#mr-print');
+    await pagina.waitForFunction(() => window.__gedrukt === true);
+    const blad = await pagina.innerHTML('#wb-print');
+    assert.ok(blad.includes('12,1 V'), 'de rustspanning voor het werk');
+    assert.ok(blad.includes('14,4 V'), 'de laadspanning erna');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('wat je intikt blijft staan als de app opnieuw geladen wordt', async () => {
+    const { pagina } = await openWerkbak();
+    await pagina.click('[data-tab="meting"]');
+    await pagina.fill('#mr-klant', 'Sanne de Vries');
+    await pagina.fill('#mr-meetpositie', 'Oorhoogte bijrijder');
+    await pagina.click('#mr-systeem-erbij');
+    await pagina.fill('[data-sys="merktype"][data-rij="0"]', 'Gladen RS 165');
+
+    await pagina.reload();
+    await pagina.click('[data-tab="meting"]');
+    assert.equal(await pagina.inputValue('#mr-klant'), 'Sanne de Vries');
+    assert.equal(await pagina.inputValue('#mr-meetpositie'), 'Oorhoogte bijrijder');
+    assert.equal(await pagina.inputValue('[data-sys="merktype"][data-rij="0"]'), 'Gladen RS 165');
+    await pagina.close();
+  });
+
+  test('de schermafbeeldingen gaan NIET de opslag in', async () => {
+    /**
+     * Een schermafbeelding van een meetprogramma is zo een paar honderd
+     * kilobyte. De opslag van een browser houdt bij een megabyte of vijf op.
+     * Zouden ze meegaan, dan duwen twee rapporten de catalogus, de offertes en
+     * de autodossiers eruit — en díé kun je niet terughalen.
+     */
+    const { pagina } = await openWerkbak();
+    await vulMeetrapport(pagina);
+    const opslag = await pagina.evaluate(() => localStorage.getItem('aue-werkbak-v1') || '');
+    assert.ok(!opslag.includes('data:image'), 'er staat een plaatje in de opslag');
+    assert.ok(opslag.includes('Sanne de Vries'), 'de tekst hoort er wel in te staan');
+    await pagina.close();
+  });
+
+  test('overnemen uit de offerte scheelt overtypen', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    await vulCatalogus(pagina);
+    await pagina.fill('#wb-naam', 'Sanne de Vries');
+    await pagina.fill('#wb-kenteken', '92DJHG');
+    await pagina.click('#wb-kenteken-form button[type=submit]');
+    await pagina.waitForFunction(() =>
+      document.querySelector('#wb-auto-melding').textContent.includes('Gevonden')
+    );
+    await pagina.click('#wb-onderdelen .wb-toevoeg >> nth=0');
+
+    await pagina.click('[data-tab="meting"]');
+    await pagina.click('#mr-uit-offerte');
+    assert.equal(await pagina.inputValue('#mr-klant'), 'Sanne de Vries');
+    assert.equal(await pagina.inputValue('#mr-kenteken'), '92DJHG');
+    // De RDW zet het merk ook in de handelsbenaming; dat mag er niet twee keer in.
+    assert.equal(await pagina.inputValue('#mr-auto'), 'Saab 9-3');
+    // De regels van de offerte worden de systeemtabel.
+    assert.equal(
+      await pagina.inputValue('[data-sys="merktype"][data-rij="0"]'),
+      'Premium 2-weg composet voor'
+    );
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
 });
 
 /**

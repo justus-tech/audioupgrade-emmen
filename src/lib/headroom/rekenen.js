@@ -103,6 +103,9 @@ export const STANDAARD_INSTELLINGEN = {
    * niet doorgaat. Een offerte heet 2026-014, een factuur 2026-F014.
    */
   factuurVolgnummer: 1,
+  /* De teller van het meetrapport: 26-001, 26-002. Loopt los van de
+     offertes, want niet elke klus krijgt een meetrapport. */
+  rapportVolgnummer: 1,
   /** Welk deel je vooraf vraagt. Justus kan dit per factuur aanpassen. */
   aanbetalingPct: 30,
   /** Binnen hoeveel dagen de factuur betaald moet zijn. */

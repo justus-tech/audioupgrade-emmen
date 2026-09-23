@@ -14,6 +14,19 @@ export const SITE = {
   kvk: '96356723',
   btw: 'NL005205204B66',
   /**
+   * WIE ER ONDER HET WERK STAAT.
+   *
+   * Het meetrapport dat de klant meekrijgt, is ondertekend. Niet met een
+   * bedrijfsnaam maar met een mens: iemand heeft die auto zelf gemeten en
+   * afgesteld, en dat is precies waar de klant voor betaald heeft.
+   *
+   * Staat hier en niet in het meetrapport zelf, want zodra hij ergens anders
+   * ook nodig is — een e-mailhandtekening, een garantiebewijs — moet hij daar
+   * vanzelf kloppen.
+   */
+  eigenaar: 'J.A. Nassi',
+  eigenaarRol: 'Eigenaar / OEM+ Integration Specialist',
+  /**
    * TWEE ADRESSEN, en het verschil is belangrijk.
    *
    *   street / postalCode   De werkplaats. Hier komt de klant naartoe en hier

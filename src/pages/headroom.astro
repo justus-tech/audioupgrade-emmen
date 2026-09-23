@@ -22,7 +22,7 @@
  * zonder die reservekopie ben je ze kwijt als de telefoon stukgaat.
  */
 import '../styles/global.css';
-import { BRAND, cssThema } from '../data/brand.js';
+import { BRAND, cssThema, cssPapier } from '../data/brand.js';
 import { SITE } from '../data/site.js';
 import { SOORTEN } from '../lib/headroom/rekenen.js';
 import { DOSSIER_VELDEN } from '../lib/headroom/autos.js';
@@ -39,6 +39,9 @@ import { APP } from '../data/app.js';
   {/* Deze pagina hoort niet in Google. Hij is voor Justus, niet voor klanten. */}
   <meta name="robots" content="noindex, nofollow" />
   <style is:global set:html={cssThema}></style>
+  {/* Het meetrapport komt op wit papier uit de printer en mag dus niet
+      meelopen met de donkere stand van de app. Ook uit brand.js. */}
+  <style is:global set:html={cssPapier}></style>
   {/* Geen losse kleurcode: brand.js is de enige plek waar kleuren staan. */}
   <meta name="theme-color" content={BRAND.bg} />
   {/* pad() zet de mapnaam ervoor op de voorbeeldsite; zonder dat zoekt de
@@ -65,6 +68,7 @@ import { APP } from '../data/app.js';
   <button type="button" class="wb-tab" data-tab="rapport">Rapport</button>
   <button type="button" class="wb-tab" data-tab="catalogus">Onderdelen</button>
   <button type="button" class="wb-tab" data-tab="autos">Auto's</button>
+  <button type="button" class="wb-tab" data-tab="meting">Meting</button>
   <button type="button" class="wb-tab" data-tab="instellingen">Instellingen</button>
 </nav>
 
@@ -481,6 +485,109 @@ import { APP } from '../data/app.js';
     </div>
   </section>
 
+  <!-- ================= MEETRAPPORT ================= -->
+  <section class="wb-paneel" data-paneel="meting" hidden>
+    <h1 class="wb-h">Meetrapport</h1>
+    <p class="wb-uitleg">
+      Het papier dat de klant meekrijgt in de AUE-map. Bij een DSP: de meting voor
+      en na, met in gewone taal wat er veranderd is. Bij een versterker of
+      subwoofer: wat je aan de accu hebt gemeten. Je drukt het af op wit A4.
+    </p>
+
+    <div class="wb-kaart">
+      <div class="wb-schakel" role="group" aria-label="Soort rapport">
+        <button type="button" class="wb-keuze aan" data-meting="geluid">Geluid</button>
+        <button type="button" class="wb-keuze" data-meting="accu">Accu en voeding</button>
+      </div>
+      <p class="wb-uitleg" id="mr-soort-uitleg"></p>
+    </div>
+
+    <div class="wb-kaart">
+      <span class="eyebrow">Wie en welke auto</span>
+      <button type="button" class="wb-link" id="mr-uit-offerte">Overnemen uit de offerte waar je aan werkt</button>
+      <div class="wb-veldrij">
+        <label>Rapportnummer
+          <input type="text" id="mr-nummer" placeholder="26-001" />
+        </label>
+        <label>Datum
+          <input type="date" id="mr-datum" />
+        </label>
+        <label class="wb-breed">Klant
+          <input type="text" id="mr-klant" placeholder="voornaam en achternaam" />
+        </label>
+        <label>Kenteken
+          <input type="text" id="mr-kenteken" placeholder="XX-99-XX" />
+        </label>
+        <label>Bouwjaar
+          <input type="text" id="mr-bouwjaar" inputmode="numeric" maxlength="4" />
+        </label>
+        <label class="wb-breed">Auto
+          <input type="text" id="mr-auto" placeholder="Volkswagen Golf" />
+        </label>
+        <label class="wb-breed" data-voor="geluid">Meetpositie
+          <input type="text" id="mr-meetpositie" />
+        </label>
+      </div>
+    </div>
+
+    <div class="wb-kaart" data-voor="geluid">
+      <span class="eyebrow">Jouw systeem</span>
+      <p class="wb-uitleg">
+        Maximaal vijf regels. Wat de klant eruit wil kunnen halen als hij over een
+        jaar vraagt wat er ook alweer in zit.
+      </p>
+      <div id="mr-systeem"></div>
+      <button type="button" class="wb-link" id="mr-systeem-erbij">+ Regel erbij</button>
+    </div>
+
+    <div class="wb-kaart" data-voor="geluid">
+      <span class="eyebrow">Frequentierespons</span>
+      <p class="wb-uitleg">
+        De twee schermafbeeldingen uit je meetprogramma. Deze blijven niet bewaard
+        in de app &mdash; je zoekt ze erbij op het moment dat je afdrukt.
+      </p>
+      <div id="mr-beelden"></div>
+      <label class="wb-breed">Toelichting bij de grafieken
+        <textarea id="mr-respons-toelichting" rows="3" placeholder="laat leeg voor de standaarduitleg"></textarea>
+      </label>
+    </div>
+
+    <div class="wb-kaart" data-voor="geluid">
+      <span class="eyebrow">In het kort</span>
+      <p class="wb-uitleg">
+        Drie punten in gewone taal. Hier staat een begintekst; pas hem aan op deze
+        auto. Geen getallen &mdash; die laten de grafieken zien.
+      </p>
+      <div id="mr-kort"></div>
+      <button type="button" class="wb-link" id="mr-kort-terug">Terug naar de standaardtekst</button>
+    </div>
+
+    <div class="wb-kaart" data-voor="accu">
+      <span class="eyebrow">Wat je aan de accu hebt gemeten</span>
+      <label class="wb-breed">Type accu en datum
+        <input type="text" id="mr-accu-type" placeholder="AGM 80 Ah, 03-2021" />
+      </label>
+      <div id="mr-accu-metingen"></div>
+      <label class="wb-breed">Wat dat betekent
+        <textarea id="mr-accu-toelichting" rows="3" placeholder="Is de accu gewoon goed, zet dat er dan ook zo in."></textarea>
+      </label>
+    </div>
+
+    <div class="wb-kaart">
+      <span class="eyebrow">Voor de klant om te bewaren</span>
+      <div class="wb-veldrij" id="mr-nazorg"></div>
+    </div>
+
+    <div class="wb-kaart">
+      <div id="mr-ontbreekt"></div>
+      <button type="button" class="btn solid wb-vol" id="mr-print">Rapport afdrukken</button>
+      <p class="wb-uitleg">
+        Het printvenster van je browser komt op. Kies je printer voor papier, of
+        &quot;opslaan als pdf&quot; als je hem wilt bewaren of appen.
+      </p>
+    </div>
+  </section>
+
   <!-- ================= INSTELLINGEN ================= -->
   <section class="wb-paneel" data-paneel="instellingen" hidden>
     <h1 class="wb-h">Instellingen</h1>
@@ -604,6 +711,14 @@ import { APP } from '../data/app.js';
   </section>
 </main>
 
+{/* HET AFDRUKBLOK.
+
+    Staat buiten <main> en is op het scherm niet te zien. Bij het afdrukken
+    draait dat om: dit blok wordt zichtbaar en de rest van de app verdwijnt.
+    Zo hoeft er geen apart venster open en doen de letters en de opmaak van de
+    app gewoon mee. */}
+<div class="wb-print" id="wb-print" aria-hidden="true"></div>
+
 {/* De belangrijkste knop staat altijd binnen duimbereik. */}
 <div class="wb-balk">
   <div class="wb-balk-som">
@@ -629,7 +744,7 @@ import { APP } from '../data/app.js';
   import { factuurPdf, factuurBestandsnaam } from '../lib/headroom/factuur.js';
   import {
     DOSSIER_VELDEN, autoSleutel, sleutelUitNaam, sleutelsVoor, zoekDossier,
-    dossierNaam, dossierStand, leegDossier,
+    dossierNaam, dossierStand, leegDossier, autoNaam,
   } from '../lib/headroom/autos.js';
   import {
     agenda, agendaItem, icsVoorKlus, icsBestandsnaam, hoeLangNog, googleLinksVoorKlus,
@@ -643,6 +758,10 @@ import { APP } from '../data/app.js';
     bevestiging, icsLuistersessie, luistersessieBestandsnaam, luistersessieItems,
     whatsappBericht, datumVoluit, googleLinkLuistersessie,
   } from '../lib/headroom/luistersessie.js';
+  import {
+    RAPPORT_SOORTEN, ACCU_METINGEN, NAZORG_VELDEN, KORTE_PUNTEN,
+    leegRapport, rapportnummer, rapportenVoor, ontbreekt, meetrapportHtml,
+  } from '../lib/headroom/meetrapport.js';
   import { MODELS } from '../data/models.js';
   /* Dezelfde schrijfwijze als de site: de RDW levert "GOLF VII 1.4 TSI" en dat
      moet "Golf VII 1.4 TSI" worden, niet "Golf Vii 1.4 Tsi". */
@@ -678,6 +797,8 @@ import { APP } from '../data/app.js';
     sessies: [],
     /* De offerte waar je nu aan werkt en die je nog niet hebt bewaard. */
     concept: null,
+    /* Het meetrapport waar je aan werkt, zonder de schermafbeeldingen. */
+    meting: null,
   });
 
   function laden() {
@@ -694,6 +815,8 @@ import { APP } from '../data/app.js';
         /* En van vóór de luistersessies dit veld niet. */
         sessies: Array.isArray(gelezen.sessies) ? gelezen.sessies : [],
         concept: gelezen.concept || null,
+        /* Opslag van vóór het meetrapport heeft dit veld nog niet. */
+        meting: gelezen.meting || null,
       };
     } catch (e) {
       /* Kapotte of geblokkeerde opslag mag de app niet stilzetten. */
@@ -846,7 +969,7 @@ import { APP } from '../data/app.js';
          controle stond er "Gevonden: Volkswagen  (2016)." met een gat erin, en
          werd er niet bij gezegd dat het model nog ontbreekt — terwijl daar het
          autodossier op hangt. */
-      const naam = [offerte.auto.merk, offerte.auto.model].filter(Boolean).join(' ');
+      const naam = autoNaam(offerte.auto.merk, offerte.auto.model);
       melden(offerte.auto.model
         ? `Gevonden: ${naam} (${jaar}).`
         : `Gevonden: ${naam} (${jaar}). Het model staat niet bij de RDW — vul het hieronder aan.`);
@@ -2673,7 +2796,7 @@ import { APP } from '../data/app.js';
     const naam = pdfBestandsnaam(compleet);
     const bestand = new File([blob], naam, { type: 'application/pdf' });
 
-    const auto = [offerte.auto?.merk, offerte.auto?.model].filter(Boolean).join(' ');
+    const auto = autoNaam(offerte.auto?.merk, offerte.auto?.model);
     const bericht = `Hoi${offerte.klant?.naam ? ` ${offerte.klant.naam.split(' ')[0]}` : ''}, ` +
       `hierbij de offerte${auto ? ` voor je ${auto}` : ''}. ` +
       `Vragen? App gerust terug. Groet, Justus — ${SITE.name}`;
@@ -2759,7 +2882,7 @@ import { APP } from '../data/app.js';
     const naam = factuurBestandsnaam(nummer, offerte);
     const bestand = new File([blob], naam, { type: 'application/pdf' });
 
-    const auto = [offerte.auto?.merk, offerte.auto?.model].filter(Boolean).join(' ');
+    const auto = autoNaam(offerte.auto?.merk, offerte.auto?.model);
     const bericht = factuurSoort === 'aanbetaling'
       ? `Hoi${offerte.klant?.naam ? ` ${offerte.klant.naam.split(' ')[0]}` : ''}, ` +
         `hierbij de aanbetalingsfactuur${auto ? ` voor je ${auto}` : ''}: ${euro(teBetalenCent)}. ` +
@@ -2857,6 +2980,324 @@ import { APP } from '../data/app.js';
     tekenInstellingen();
   }
 
+
+  /* ================= HET MEETRAPPORT ================= */
+  /**
+   * HET RAPPORT DAT DE KLANT MEEKRIJGT.
+   *
+   * Twee dingen zitten hier bewust anders in elkaar dan bij de rest van de app.
+   *
+   * 1. DE SCHERMAFBEELDINGEN WORDEN NIET BEWAARD. Een schermafbeelding van een
+   *    meetprogramma is al gauw een paar honderd kilobyte, en de opslag van een
+   *    browser houdt bij een megabyte of vijf op. Twee rapporten met plaatjes
+   *    erin en je hele catalogus, je offertes en je autodossiers passen er niet
+   *    meer bij — dan verlies je dingen die je niet meer terug kunt halen. De
+   *    tekst blijft dus wel bewaard, de plaatjes niet. Dat staat er ook bij.
+   *
+   * 2. HET RAPPORT IS GEEN PDF MAAR EEN AFDRUK. Onze eigen pdf-schrijver kan
+   *    geen foto's. In plaats van daar een halve fotobibliotheek voor te
+   *    bouwen, drukt de browser dit blok gewoon af — en "opslaan als pdf" zit
+   *    in datzelfde printvenster.
+   */
+  let meting = leegRapport('geluid');
+
+  /** De invoervelden van de nazorg, in het paneel gezet zoals ze in de lib staan. */
+  function tekenNazorgvelden() {
+    $('#mr-nazorg').innerHTML = NAZORG_VELDEN.map((v) => `
+      <label class="wb-breed">${v.naam}
+        <input type="text" data-nazorg="${v.id}" />
+      </label>`).join('');
+    $$('#mr-nazorg [data-nazorg]').forEach((invoer) => {
+      invoer.addEventListener('input', () => {
+        meting.nazorg[invoer.dataset.nazorg] = invoer.value;
+        bewaarMeting();
+      });
+    });
+  }
+
+  /** De drie regels van "In het kort", elk met een eigen kop en tekst. */
+  function tekenKort() {
+    $('#mr-kort').innerHTML = meting.kort.map((p, i) => `
+      <label class="wb-breed">${p.kop}
+        <textarea data-kort="${i}" rows="5">${p.tekst}</textarea>
+      </label>`).join('');
+    $$('#mr-kort [data-kort]').forEach((invoer) => {
+      invoer.addEventListener('input', () => {
+        meting.kort[Number(invoer.dataset.kort)].tekst = invoer.value;
+        bewaarMeting();
+      });
+    });
+  }
+
+  /** De systeemtabel: maximaal vijf regels, want meer past niet op het blad. */
+  const SYSTEEM_MAX = 5;
+  function tekenSysteem() {
+    $('#mr-systeem').innerHTML = meting.systeem.map((r, i) => `
+      <div class="wb-veldrij mr-rij">
+        <label>Onderdeel
+          <input type="text" data-sys="onderdeel" data-rij="${i}" value="${(r.onderdeel || '').replace(/"/g, '&quot;')}" placeholder="Speakers voor" />
+        </label>
+        <label>Merk en type
+          <input type="text" data-sys="merktype" data-rij="${i}" value="${(r.merktype || '').replace(/"/g, '&quot;')}" placeholder="Gladen RS 165" />
+        </label>
+        <label>Plaats
+          <input type="text" data-sys="plaats" data-rij="${i}" value="${(r.plaats || '').replace(/"/g, '&quot;')}" placeholder="voordeuren" />
+        </label>
+        <button type="button" class="wb-link mr-weg" data-rij="${i}">Regel weg</button>
+      </div>`).join('') || '<p class="wb-uitleg">Nog geen regels.</p>';
+
+    $$('#mr-systeem [data-sys]').forEach((invoer) => {
+      invoer.addEventListener('input', () => {
+        meting.systeem[Number(invoer.dataset.rij)][invoer.dataset.sys] = invoer.value;
+        bewaarMeting();
+      });
+    });
+    $$('#mr-systeem .mr-weg').forEach((knop) => {
+      knop.addEventListener('click', () => {
+        meting.systeem.splice(Number(knop.dataset.rij), 1);
+        bewaarMeting();
+        tekenSysteem();
+      });
+    });
+    $('#mr-systeem-erbij').disabled = meting.systeem.length >= SYSTEEM_MAX;
+  }
+
+  /** De accumetingen: per regel een waarde voor en een waarde na. */
+  function tekenAccuMetingen() {
+    const m = meting.accu.metingen;
+    $('#mr-accu-metingen').innerHTML = ACCU_METINGEN.map((r) => `
+      <div class="wb-veldrij mr-rij">
+        <p class="wb-uitleg wb-breed"><strong>${r.naam}</strong> — ${r.uitleg}</p>
+        <label>Voor
+          <input type="text" inputmode="decimal" data-accu="${r.id}Voor" value="${(m[`${r.id}Voor`] || '').replace(/"/g, '&quot;')}" placeholder="12,4" />
+        </label>
+        <label>Na
+          <input type="text" inputmode="decimal" data-accu="${r.id}Na" value="${(m[`${r.id}Na`] || '').replace(/"/g, '&quot;')}" placeholder="12,7" />
+        </label>
+      </div>`).join('');
+    $$('#mr-accu-metingen [data-accu]').forEach((invoer) => {
+      invoer.addEventListener('input', () => {
+        meting.accu.metingen[invoer.dataset.accu] = invoer.value;
+        bewaarMeting();
+      });
+    });
+  }
+
+  /**
+   * De vier plekken voor een schermafbeelding.
+   *
+   * De laatste twee — looptijd en fase — mogen leeg blijven. Blijven ze leeg,
+   * dan komt dat blad er ook niet in; een leeg blad in een rapport dat de klant
+   * meekrijgt ziet eruit alsof er iets mis is gegaan.
+   */
+  const BEELDEN = [
+    { id: 'voorBeeld', naam: 'Frequentierespons voor', nodig: true },
+    { id: 'naBeeld', naam: 'Frequentierespons na', nodig: true },
+    { id: 'faseVoor', naam: 'Looptijd en fase voor', nodig: false },
+    { id: 'faseNa', naam: 'Looptijd en fase na', nodig: false },
+  ];
+
+  function tekenBeelden() {
+    $('#mr-beelden').innerHTML = BEELDEN.map((b) => `
+      <div class="mr-beeldveld">
+        <label class="wb-breed">${b.naam}${b.nodig ? '' : ' <span class="mr-mag">mag leeg</span>'}
+          <input type="file" accept="image/*" data-beeld="${b.id}" />
+        </label>
+        ${meting[b.id] ? `<img class="mr-mini" src="${meting[b.id]}" alt="${b.naam}" />
+          <button type="button" class="wb-link" data-beeld-weg="${b.id}">Weghalen</button>` : ''}
+      </div>`).join('');
+
+    $$('#mr-beelden [data-beeld]').forEach((invoer) => {
+      invoer.addEventListener('change', () => {
+        const bestand = invoer.files?.[0];
+        if (!bestand) return;
+        const lezer = new FileReader();
+        lezer.onload = () => {
+          meting[invoer.dataset.beeld] = String(lezer.result || '');
+          tekenBeelden();
+          tekenOntbreekt();
+        };
+        lezer.readAsDataURL(bestand);
+      });
+    });
+    $$('#mr-beelden [data-beeld-weg]').forEach((knop) => {
+      knop.addEventListener('click', () => {
+        meting[knop.dataset.beeldWeg] = '';
+        tekenBeelden();
+        tekenOntbreekt();
+      });
+    });
+  }
+
+  /**
+   * Wat er nog ontbreekt, en waarom dat erg is.
+   *
+   * De voormeting staat bovenaan met een oranje streep ernaast. Dat is de enige
+   * stap die je niet kunt inhalen: staat de auto eenmaal goed, dan is er niets
+   * meer om mee te vergelijken.
+   */
+  function tekenOntbreekt() {
+    const gemist = ontbreekt(meting);
+    $('#mr-ontbreekt').innerHTML = gemist.length
+      ? `<div class="wb-waarschuwing"><strong>Nog niet compleet.</strong>
+          <ul>${gemist.map((r) => `<li>${r}</li>`).join('')}</ul></div>`
+      : '<p class="wb-uitleg">Compleet. Je kunt afdrukken.</p>';
+    $('#mr-print').disabled = gemist.length > 0;
+  }
+
+  /** Welke kaarten horen bij dit soort rapport? */
+  function tekenSoort() {
+    const soort = meting.soort;
+    $$('[data-meting]').forEach((k) => k.classList.toggle('aan', k.dataset.meting === soort));
+    $$('[data-paneel="meting"] [data-voor]').forEach((blok) => {
+      blok.hidden = blok.dataset.voor !== soort;
+    });
+    $('#mr-soort-uitleg').textContent = soort === 'accu'
+      ? 'Hoort bij elke klus met een versterker, subwoofer of DSP. De site belooft bij die pakketten dat je de accu en de laadspanning meet.'
+      : 'Hoort bij elke klus met een DSP. Zonder de meting van voor de afstemming kan dit rapport niet gemaakt worden.';
+    tekenOntbreekt();
+  }
+
+  /** De tekstvelden bewaren. De plaatjes gaan hier bewust niet in mee. */
+  function bewaarMeting() {
+    const { voorBeeld, naBeeld, faseVoor, faseNa, ...zonderBeeld } = meting;
+    staat.meting = zonderBeeld;
+    opslaan();
+    tekenOntbreekt();
+  }
+
+  /** Het formulier vullen uit wat er in `meting` staat. */
+  function vulMeting() {
+    $('#mr-nummer').value = meting.nummer;
+    $('#mr-datum').value = meting.datum;
+    $('#mr-klant').value = meting.klant;
+    $('#mr-kenteken').value = meting.kenteken;
+    $('#mr-bouwjaar').value = meting.bouwjaar;
+    $('#mr-auto').value = meting.auto;
+    $('#mr-meetpositie').value = meting.meetpositie;
+    $('#mr-respons-toelichting').value = meting.responsToelichting;
+    $('#mr-accu-type').value = meting.accu.type;
+    $('#mr-accu-toelichting').value = meting.accuToelichting;
+    NAZORG_VELDEN.forEach((v) => {
+      const invoer = $(`[data-nazorg="${v.id}"]`);
+      if (invoer) invoer.value = meting.nazorg[v.id] || '';
+    });
+    tekenKort();
+    tekenSysteem();
+    tekenBeelden();
+    tekenAccuMetingen();
+    tekenSoort();
+  }
+
+  /* De gewone tekstvelden aan het rapport knopen. */
+  const MR_VELDEN = {
+    '#mr-nummer': 'nummer',
+    '#mr-datum': 'datum',
+    '#mr-klant': 'klant',
+    '#mr-kenteken': 'kenteken',
+    '#mr-bouwjaar': 'bouwjaar',
+    '#mr-auto': 'auto',
+    '#mr-meetpositie': 'meetpositie',
+    '#mr-respons-toelichting': 'responsToelichting',
+    '#mr-accu-toelichting': 'accuToelichting',
+  };
+  Object.entries(MR_VELDEN).forEach(([kies, sleutel]) => {
+    $(kies).addEventListener('input', () => {
+      meting[sleutel] = $(kies).value;
+      bewaarMeting();
+    });
+  });
+  $('#mr-accu-type').addEventListener('input', () => {
+    meting.accu.type = $('#mr-accu-type').value;
+    bewaarMeting();
+  });
+
+  $$('[data-meting]').forEach((knop) => {
+    knop.addEventListener('click', () => {
+      meting.soort = knop.dataset.meting;
+      bewaarMeting();
+      tekenSoort();
+    });
+  });
+
+  $('#mr-systeem-erbij').addEventListener('click', () => {
+    if (meting.systeem.length >= SYSTEEM_MAX) return;
+    meting.systeem.push({ onderdeel: '', merktype: '', plaats: '' });
+    bewaarMeting();
+    tekenSysteem();
+  });
+
+  $('#mr-kort-terug').addEventListener('click', () => {
+    meting.kort = KORTE_PUNTEN.map((p) => ({ ...p }));
+    bewaarMeting();
+    tekenKort();
+  });
+
+  /**
+   * Overnemen uit de offerte waar je aan werkt.
+   *
+   * Scheelt overtypen én typefouten in een kenteken. De regels van de offerte
+   * worden meteen de systeemtabel: dat is precies wat erin gaat.
+   */
+  $('#mr-uit-offerte').addEventListener('click', () => {
+    const naam = offerte.klant?.naam || offerte.klant?.bedrijf || '';
+    if (naam) meting.klant = naam;
+    if (offerte.auto?.kenteken) meting.kenteken = offerte.auto.kenteken;
+    if (offerte.auto?.bouwjaar) meting.bouwjaar = String(offerte.auto.bouwjaar);
+    const auto = autoNaam(offerte.auto?.merk, offerte.auto?.model);
+    if (auto) meting.auto = auto;
+
+    /* De regels van de offerte als systeemtabel. Alleen wat er echt in de auto
+       komt: kabels en montagemateriaal zegt de klant niets. */
+    const uitOfferte = (offerte.regels || [])
+      .filter((r) => r.soort !== 'kabels' && r.soort !== 'overig')
+      .slice(0, SYSTEEM_MAX)
+      .map((r) => ({
+        /* Een regel uit je catalogus heeft één soort; een pakket heeft er
+           meer. Bij een pakket zegt de soort dus niets, en staat de naam van
+           het pakket zelf in de kolom ernaast. */
+        onderdeel: (SOORTEN.find((so) => so.id === r.soort) || {}).naam || '',
+        merktype: [r.merk, r.omschrijving].filter(Boolean).join(' ').trim(),
+        plaats: '',
+      }));
+    if (uitOfferte.length) meting.systeem = uitOfferte;
+
+    /* Welk rapport hoort bij dit werk? Zit er een DSP in, dan is dat het
+       geluidsrapport; anders het accurapport. */
+    const passend = rapportenVoor(soortenIn(offerte.regels || []));
+    if (passend.length && !passend.some((r) => r.id === meting.soort)) meting.soort = passend[0].id;
+
+    bewaarMeting();
+    vulMeting();
+  });
+
+  /**
+   * AFDRUKKEN.
+   *
+   * Het rapport komt in het blok dat alleen bij het printen zichtbaar is, en
+   * dan roepen we het printvenster op. Het nummer schuift daarna een op, zodat
+   * het volgende rapport niet hetzelfde nummer krijgt.
+   */
+  $('#mr-print').addEventListener('click', () => {
+    const gemist = ontbreekt(meting);
+    if (gemist.length) {
+      alert(`Dit rapport kan nog niet:\n\n- ${gemist.join('\n- ')}`);
+      return;
+    }
+    if (!meting.nummer) meting.nummer = nieuwRapportnummer();
+    $('#wb-print').innerHTML = meetrapportHtml(meting);
+    $('#mr-nummer').value = meting.nummer;
+    bewaarMeting();
+    window.print();
+  });
+
+  /** Het eerstvolgende rapportnummer, en de teller schuift op. */
+  function nieuwRapportnummer() {
+    const n = Math.max(1, Math.round(Number(staat.instellingen.rapportVolgnummer) || 1));
+    staat.instellingen.rapportVolgnummer = n + 1;
+    return rapportnummer(n, meting.datum || new Date());
+  }
+
   /* ================= STARTEN ================= */
   tekenPakketknoppen();
   tekenCatalogus();
@@ -2878,6 +3319,18 @@ import { APP } from '../data/app.js';
     });
     vulFormulierUitOfferte();
   }
+
+  tekenNazorgvelden();
+  /* Wat er van het meetrapport bewaard is, terug in het formulier. De
+     schermafbeeldingen staan er niet in — zie de uitleg bij bewaarMeting. */
+  meting = { ...leegRapport('geluid'), ...(staat.meting || {}) };
+  meting.accu = { type: '', metingen: {}, ...(meting.accu || {}) };
+  meting.nazorg = { ...(meting.nazorg || {}) };
+  meting.systeem = Array.isArray(meting.systeem) ? meting.systeem : [];
+  meting.kort = Array.isArray(meting.kort) && meting.kort.length
+    ? meting.kort
+    : KORTE_PUNTEN.map((p) => ({ ...p }));
+  vulMeting();
 
   tekenAfspraken();
   tekenAlles();
@@ -3361,6 +3814,245 @@ import { APP } from '../data/app.js';
   }
   .wb-balk-som strong { font-family: 'Oswald', sans-serif; font-size: 1.3rem; letter-spacing: .04em; }
   .wb-balk .btn { padding: 14px 20px; white-space: nowrap; }
+
+
+  /* ================= HET MEETRAPPORT ================= */
+  /* ---- de velden in het tabblad ---- */
+  .mr-rij { border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 12px; }
+  .mr-rij:last-of-type { border-bottom: 0; }
+  .mr-beeldveld { border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 12px; }
+  .mr-beeldveld:last-of-type { border-bottom: 0; }
+  .mr-mag { font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; color: var(--text-dim); }
+  /* Een kleine weergave van de gekozen schermafbeelding, zodat je ziet dat je
+     de goede te pakken hebt voordat je afdrukt. */
+  .mr-mini {
+    display: block;
+    width: 100%;
+    max-height: 160px;
+    object-fit: contain;
+    margin: 8px 0;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+  }
+  [data-paneel="meting"] input[type="file"] {
+    width: 100%;
+    min-height: 44px;
+    padding: 9px 10px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: .9rem;
+  }
+
+  /* ---- het blad zelf ---- */
+  /* Op het scherm staat het rapport er niet; het bestaat alleen op papier.
+     Zonder deze regel staat er een tweede, witte versie van het rapport onder
+     de app. */
+  .wb-print { display: none; }
+
+  @media print {
+    /* Alles van de app weg, alleen het rapport blijft staan. */
+    body > header, body > nav, body > main, body > .wb-balk { display: none !important; }
+    .wb-print { display: block; }
+    /* De app heeft ruimte om zich heen; een vel papier niet. Blijft die
+       ruimte staan, dan schuift elk blad een stukje op en drukt de printer er
+       een leeg vel achteraan. */
+    html, body.headroom { margin: 0; padding: 0; background: none; }
+    @page { size: A4; margin: 0; }
+  }
+
+  .wb-print { color: var(--text); }
+  /* De site zet bodytekst in grijs. Op een scherm leest dat prettig, op papier
+     van acht punt niet: dat wordt vaal zodra de printer een streepje spaart.
+     In het rapport is de tekst dus gewoon inkt; alleen bijschriften blijven
+     grijs. */
+  .wb-print p, .wb-print li, .wb-print td, .wb-print h3 { color: var(--text); }
+  /**
+   * Een blad is een A4. Elk blad begint op een nieuwe pagina; het laatste niet,
+   * anders drukt de printer er een leeg vel achteraan.
+   *
+   * Bewust 295 mm en geen 297: een blad dat precies zo hoog is als het papier
+   * valt er bij de minste afronding nét naast, en dan komt er achter elk blad
+   * een leeg vel uit de printer. Die twee millimeter zie je niet.
+   */
+  .mr-blad {
+    box-sizing: border-box;
+    min-height: 295mm;
+    padding: 14mm 15mm 12mm;
+    display: flex;
+    flex-direction: column;
+    break-after: page;
+    page-break-after: always;
+  }
+  .mr-blad:last-child { break-after: auto; page-break-after: auto; }
+
+  .mr-kop {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--accent);
+  }
+  .mr-merk {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    font-size: .82rem;
+  }
+  .mr-soort { font-size: .74rem; color: var(--text-dim); letter-spacing: .08em; text-transform: uppercase; }
+  .mr-nr { color: var(--accent-text); font-weight: 700; }
+
+  .mr-titelblok {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 14px 0 4px;
+  }
+  .mr-velden { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 18px; }
+  /* Alleen naast de kentekenplaat mag dit blok de rest van de breedte pakken.
+     Stond die regel op .mr-velden zelf, dan groeide het blok op het laatste
+     blad ook in de hóógte mee en stonden de velden een halve pagina uit
+     elkaar. */
+  .mr-titelblok .mr-velden { flex: 1; }
+  .mr-velden, .mr-tips, .mr-punten, .mr-tabel { align-content: start; }
+  .mr-velden-breed { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mr-veld { display: flex; flex-direction: column; line-height: 1.3; }
+  .mr-label {
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-size: .62rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .mr-veld strong { font-size: .92rem; font-weight: 600; }
+
+  /* De kentekenplaat, dezelfde als op de offerte: metaal met de oranje band. */
+  .mr-plaat {
+    display: flex;
+    align-items: stretch;
+    min-width: 132px;
+    height: 32px;
+    border: 1px solid var(--line-strong);
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--bg-alt);
+  }
+  .mr-plaat-band { width: 20px; background: var(--accent); }
+  .mr-plaat-tekst {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.05rem;
+    letter-spacing: .14em;
+  }
+
+  .mr-h {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    font-size: .72rem;
+    color: var(--accent-text);
+    margin: 16px 0 6px;
+  }
+  .mr-uitleg { font-size: .82rem; line-height: 1.5; margin: 0 0 8px; }
+  .mr-klein-los { font-size: .72rem; color: var(--text-dim); margin-top: 8px; }
+
+  .mr-tabel { width: 100%; border-collapse: collapse; font-size: .82rem; }
+  .mr-tabel th {
+    text-align: left;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-size: .62rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    font-weight: 400;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--line-strong);
+  }
+  .mr-tabel td { padding: 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .mr-tabel td + td, .mr-tabel th + th { padding-left: 12px; }
+  .mr-meet td + td, .mr-meet th + th { text-align: right; width: 22%; }
+  .mr-klein { display: block; font-size: .7rem; color: var(--text-dim); }
+  .mr-leeg-regel { font-size: .82rem; color: var(--text-dim); }
+
+  .mr-punten { display: grid; gap: 10px; }
+  .mr-punt { padding-left: 12px; border-left: 2px solid var(--accent); }
+  .mr-punt h3 {
+    margin: 0 0 2px;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    font-size: .74rem;
+  }
+  .mr-punt p { margin: 0; font-size: .82rem; line-height: 1.5; }
+
+  .mr-handtekening { margin-top: auto; padding-top: 18px; display: flex; flex-direction: column; }
+  .mr-streep { width: 150px; border-top: 1px solid var(--line-strong); margin-bottom: 6px; }
+  .mr-handtekening strong { font-size: .88rem; }
+  .mr-handtekening span { font-size: .74rem; color: var(--text-dim); }
+  .mr-meetkop { margin-top: 4px; }
+
+  /* De twee grafieken vullen samen het blad: even hoog, over de volle breedte. */
+  .mr-beeld { margin: 0 0 10px; flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .mr-beeld img {
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    object-fit: contain;
+    border: 1px solid var(--line);
+  }
+  .mr-beeld figcaption {
+    margin-top: 4px;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-size: .62rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .mr-leeg {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+    font-size: .78rem;
+    color: var(--text-dim);
+    background: var(--bg-alt);
+    border: 1px dashed var(--line-strong);
+  }
+
+  .mr-tips { margin: 0; padding-left: 18px; }
+  .mr-tips li { font-size: .82rem; line-height: 1.5; margin-bottom: 8px; }
+
+  .mr-contact { display: flex; gap: 20px; margin-top: auto; padding-top: 18px; }
+  .mr-contact > div:first-child { flex: 1; }
+  .mr-qr { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 32mm; flex: none; }
+  .mr-qr svg { width: 32mm; height: 32mm; display: block; }
+  .mr-qr span {
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-size: .58rem;
+    line-height: 1.4;
+    color: var(--text-dim);
+    text-align: center;
+  }
+
+  .mr-voet {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 14px;
+    padding-top: 6px;
+    border-top: 1px solid var(--line);
+    font-size: .62rem;
+    color: var(--text-dim);
+  }
 
   /* Hover alleen waar er echt een muis is. Op een telefoon blijft hover na
      een tik plakken en lijkt de knop daarna uitgeschakeld. */

@@ -304,10 +304,17 @@ export function werkbonPdf(offerte, dossier = null, eigenBlokken = []) {
 
       if (stap.invullen) {
         /* Niet vastgelegd: een lege regel om ter plekke in te vullen. Geen
-           gok, geen aanname. */
+           gok, geen aanname.
+
+           Het woord ervoor komt uit de stap zelf, want het verschilt: bij een
+           speakermaat staat er "Meet na en noteer", bij een accumeting
+           "Rustspanning voor". De regel begint waar dat woord ophoudt, anders
+           loopt een lang label er dwars doorheen. */
         onder += 15;
-        doc.tekst('Meet na en noteer:', tekstX, onder, { grootte: 8, kleur: KLEUR.zacht });
-        invulregel(doc, tekstX + 82, onder + 2, RECHTS - tekstX - 82);
+        const label = stap.invulLabel || 'Meet na en noteer:';
+        doc.tekst(label, tekstX, onder, { grootte: 8, kleur: KLEUR.zacht });
+        const na = tekstX + breedteVan(label, 8) + 6;
+        invulregel(doc, na, onder + 2, RECHTS - na);
       }
       y = onder + 16;
     }

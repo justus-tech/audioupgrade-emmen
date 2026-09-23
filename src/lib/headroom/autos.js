@@ -218,3 +218,25 @@ export function leegDossier(sleutel = '', naam = '') {
   for (const veld of DOSSIER_VELDEN) leeg[veld.id] = '';
   return leeg;
 }
+
+/**
+ * DE NAAM VAN EEN AUTO, ZONDER HET MERK ER TWEE KEER IN.
+ *
+ * De RDW zet het merk vaak ook al in de handelsbenaming. Bij het kenteken van
+ * een Saab 9-3 staat er merk "SAAB" en handelsbenaming "SAAB 9-3"; bij een
+ * Audi A3 soms "AUDI A3". Plak je die twee achter elkaar, dan appte de app de
+ * klant "hierbij de offerte voor je Saab Saab 9-3".
+ *
+ * Staat het merk al vooraan in de handelsbenaming, dan is de handelsbenaming
+ * de hele naam. Zo niet, dan komt het merk ervoor: "BMW 3ER REIHE".
+ */
+export function autoNaam(merk, model) {
+  const m = String(merk || '').trim();
+  const t = String(model || '').trim();
+  if (!m) return t;
+  if (!t) return m;
+  const kaal = (tekst) => tekst.toLowerCase().replace(/[^a-z0-9]+/g, '');
+  const merkKaal = kaal(m);
+  if (merkKaal && kaal(t).startsWith(merkKaal)) return t;
+  return `${m} ${t}`;
+}

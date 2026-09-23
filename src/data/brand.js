@@ -163,4 +163,16 @@ export const cssThema =
   `}` +
   `:root[data-thema="licht"]{${naarVariabelen(LICHT)}}`;
 
+/**
+ * PAPIER — de lichte stand, vastgezet op een blok dat wordt afgedrukt.
+ *
+ * Het meetrapport komt uit de printer op wit papier. Dat blok mag dus niet
+ * meelopen met de stand van de app: staat Headroom op donker, dan zou een
+ * afdruk een bak zwarte inkt worden. Hier krijgt dat ene blok de lichte
+ * kleuren, ongeacht wat de rest van het scherm doet.
+ *
+ * Nog steeds uit brand.js, dus nog steeds een bron van waarheid.
+ */
+export const cssPapier = `.wb-print{${naarVariabelen(LICHT)}}`;
+
 export default BRAND;
