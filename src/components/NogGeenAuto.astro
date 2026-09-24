@@ -21,10 +21,13 @@ import { whatsappLink } from '../lib/whatsapp.js';
   <a class="btn wa" href={whatsappLink(NOG_GEEN_AUTO.bericht)}>{NOG_GEEN_AUTO.knop}</a>
   {/* Klein en onderaan met opzet: negenennegentig van de honderd bezoekers
       hebben hier niets te zoeken. De enkeling die een autobedrijf heeft,
-      vindt hem precies op het moment dat het over zijn vak gaat. */}
-  <p class="voor-de-handel">
-    <a href={pad(`/${DEALERS.slug}`)}>{NOG_GEEN_AUTO.link} →</a>
-  </p>
+      vindt hem precies op het moment dat het over zijn vak gaat.
+      Voorlopig uit: zie `zichtbaar` in src/data/dealers.js. */}
+  {DEALERS.zichtbaar && (
+    <p class="voor-de-handel">
+      <a href={pad(`/${DEALERS.slug}`)}>{NOG_GEEN_AUTO.link} →</a>
+    </p>
+  )}
 </div>
 
 <style>

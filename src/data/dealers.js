@@ -26,6 +26,22 @@
 export const DEALERS = {
   slug: 'voor-autobedrijven',
 
+  /**
+   * STAAT DE PAGINA IN BEELD VOOR PARTICULIEREN?
+   *
+   * Justus richt zich nu op particulieren en pas later op autobedrijven
+   * (besloten 24 september 2026). Daarom staat dit op false:
+   *
+   *   - de link in de voettekst en onder "Nog geen auto?" is weg, zodat een
+   *     particuliere bezoeker hem niet tegenkomt;
+   *   - de pagina zelf blijft gewoon bestaan en blijft in Google en in de
+   *     sitemap staan. Justus kan het adres dus zelf naar een dealer sturen,
+   *     en de pagina bouwt intussen alvast vindbaarheid op.
+   *
+   * Is het tijd voor de bedrijven? Zet dit op true en alle links zijn terug.
+   */
+  zichtbaar: false,
+
   titel: 'Audio-inbouw voor autobedrijven in Drenthe | Audio Upgrade Emmen',
   beschrijving:
     'Bied je klant een derde optie naast de standaarduitvoering en het fabriekspakket. Wij bouwen in vóór de aflevering, jij levert een auto af die een ander niet heeft.',

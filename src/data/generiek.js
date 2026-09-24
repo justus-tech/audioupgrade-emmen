@@ -177,7 +177,7 @@ export const ONTZORGEN = {
  */
 export const OVER = {
   naam: 'Justus',
-  rol: 'Eigenaar en audio engineer',
+  rol: 'Eigenaar / OEM+ Integration Specialist',
   kop: 'Wie je auto onder handen neemt',
   /**
    * De korte versie, voor de homepage.

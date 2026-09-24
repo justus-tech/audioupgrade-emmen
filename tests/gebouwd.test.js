@@ -120,17 +120,22 @@ describe('opgeleverde pagina\'s', alsGebouwd, () => {
    * maar moet wel vanaf elke Nederlandse pagina te vinden zijn, en op de
    * Duitse en Engelse juist niet: het gaat over dealers in Drenthe.
    */
-  test('de dealerpagina staat er en is vanaf elke Nederlandse pagina te vinden', () => {
+  test('de dealerpagina staat er, en is alleen te vinden als hij aan staat', () => {
     const adres = `/${DEALERS.slug}`;
     assert.ok(inhoud.has(adres), `ontbreekt: ${adres}`);
 
     for (const [pad, html] of inhoud) {
+      if (pad === adres) continue;
       const vertaald = pad === '/de' || pad === '/en' || pad.startsWith('/de/') || pad.startsWith('/en/');
       const linkt = html.includes(`href="${adres}"`);
       if (vertaald) {
         assert.equal(linkt, false, `${pad}: verwijst naar een Nederlandse pagina`);
-      } else {
+      } else if (DEALERS.zichtbaar) {
         assert.ok(linkt, `${pad}: geen link naar ${adres}`);
+      } else {
+        // Particulier eerst: zolang de schakelaar uit staat, linkt geen
+        // enkele pagina ernaar. De pagina zelf blijft wel bestaan.
+        assert.equal(linkt, false, `${pad}: linkt naar ${adres} terwijl die uit staat`);
       }
     }
   });
@@ -505,6 +510,11 @@ describe('niets van buiten de site', alsGebouwd, () => {
     'wikipedia.org',                // idem
     'w3.org',                       // de xmlns van elke SVG; er gaat niets heen
     'audioupgradeemmen.nl',         // wijzelf
+    // Onze eigen sociale profielen, alleen een link waar je zelf op klikt.
+    // Het hele adres, zodat er geen willekeurige Facebookpagina bij kan.
+    'instagram.com/audioupgradeemmen',
+    'facebook.com/p/audio-upgrade-emmen',
+    'linkedin.com/company/audio-upgrade-emmen',
   ];
 
   test('geen enkele pagina haalt lettertypen bij Google', () => {
