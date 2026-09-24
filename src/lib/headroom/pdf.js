@@ -157,6 +157,35 @@ export function breekAf(tekst, maxBreedte, grootte = 10, vet = false) {
     }
     let regel = '';
     for (const woord of woorden) {
+      /**
+       * EEN WOORD DAT ZELF AL TE BREED IS.
+       *
+       * Tussen twee woorden afbreken kan hier niet: er is geen spatie. Denk aan
+       * een e-mailadres van zestig tekens, een artikelnummer zonder streepjes of
+       * een webadres. Zo'n woord bleef in zijn geheel staan en liep gewoon door
+       * tot voorbij de rand van het papier — de printer sneed het af en je zag
+       * niet dat er iets weg was.
+       *
+       * Dus knippen we hem hard af. Lelijk, maar leesbaar, en dat is op een
+       * werkbon en een factuur wat telt.
+       */
+      if (breedteVan(woord, grootte, vet) > maxBreedte) {
+        if (regel) {
+          regels.push(regel);
+          regel = '';
+        }
+        let stuk = '';
+        for (const teken of woord) {
+          if (stuk && breedteVan(stuk + teken, grootte, vet) > maxBreedte) {
+            regels.push(stuk);
+            stuk = teken;
+          } else {
+            stuk += teken;
+          }
+        }
+        regel = stuk;
+        continue;
+      }
       const poging = regel ? `${regel} ${woord}` : woord;
       if (regel && breedteVan(poging, grootte, vet) > maxBreedte) {
         regels.push(regel);

@@ -30,6 +30,7 @@
 import { nieuwPdf, breekAf } from './pdf.js';
 import { SITE, ADRES } from '../../data/site.js';
 import { formatteerKenteken } from '../match.js';
+import { autoNaam } from './autos.js';
 import {
   KLEUR, LINKS, RECHTS, ONDERGRENS,
   kopbalk, voetregel, blokkop, kentekenplaat, voorwaardenBijlage,
@@ -145,11 +146,11 @@ export function factuurPdf(offerte, inst = STANDAARD_INSTELLINGEN, opties = {}) 
   } else {
     ay += 10;
   }
-  const autoNaam = [offerte.auto?.merk, offerte.auto?.model].filter(Boolean).join(' ');
+  const naamVanDeAuto = autoNaam(offerte.auto?.merk, offerte.auto?.model);
   /* Net als op de offerte: een lange modelnaam liep anders het blad af. */
   /* breekAf levert bij lege tekst één lege regel; die zou hier een gat
      van veertien punten maken bij een auto zonder merk. */
-  for (const stuk of (autoNaam ? breekAf(autoNaam, RECHTS - rechterKolom, 11, true) : [])) {
+  for (const stuk of (naamVanDeAuto ? breekAf(naamVanDeAuto, RECHTS - rechterKolom, 11, true) : [])) {
     doc.tekst(stuk, rechterKolom, ay, { grootte: 11, vet: true, kleur: KLEUR.inkt });
     ay += 14;
   }

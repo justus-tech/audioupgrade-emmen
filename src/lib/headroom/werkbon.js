@@ -29,7 +29,7 @@ import {
 } from './opmaak.js';
 import { stuklijst, soortenIn, datumNl } from './rekenen.js';
 import { stappenlijst } from './stappen.js';
-import { DOSSIER_VELDEN, dossierStand } from './autos.js';
+import { DOSSIER_VELDEN, dossierStand, autoNaam } from './autos.js';
 
 /** Waar de kolom met artikelnummers begint. */
 const KOLOM_ARTIKEL = RECHTS - 150;
@@ -76,15 +76,20 @@ export function werkbonPdf(offerte, dossier = null, eigenBlokken = []) {
   } else {
     ay += 10;
   }
-  const autoNaam = [offerte.auto?.merk, offerte.auto?.model].filter(Boolean).join(' ');
-  doc.tekst(autoNaam || 'Onbekende auto', LINKS, ay, { grootte: 11, vet: true, kleur: KLEUR.inkt });
-  ay += 14;
+  /* De naam over de volle breedte van de linkerkolom, afgebroken waar hij niet
+     meer past. Zonder dat liep een lange uitvoeringsnaam dwars door het blok
+     met de klantgegevens ernaast heen. */
+  const naamVanDeAuto = autoNaam(offerte.auto?.merk, offerte.auto?.model) || 'Onbekende auto';
+  for (const stuk of breekAf(naamVanDeAuto, rechterKolom - LINKS - 16, 11, true)) {
+    doc.tekst(stuk, LINKS, ay, { grootte: 11, vet: true, kleur: KLEUR.inkt });
+    ay += 14;
+  }
   const extra = [
     offerte.auto?.bouwjaar && `Bouwjaar ${offerte.auto.bouwjaar}`,
     offerte.auto?.kleur,
   ].filter(Boolean).join('  ·  ');
-  if (extra) {
-    doc.tekst(extra, LINKS, ay, { grootte: 9, kleur: KLEUR.zacht });
+  for (const stuk of (extra ? breekAf(extra, rechterKolom - LINKS - 16, 9) : [])) {
+    doc.tekst(stuk, LINKS, ay, { grootte: 9, kleur: KLEUR.zacht });
     ay += 13;
   }
   /* Kilometerstand schrijf je bij de auto op, dus daar hoort een lege regel. */
@@ -99,12 +104,23 @@ export function werkbonPdf(offerte, dossier = null, eigenBlokken = []) {
     offerte.klant?.naam || '—',
     offerte.klant?.telefoon,
   ].filter(Boolean);
+  /**
+   * WAAROM HIER WORDT AFGEBROKEN
+   * "Autobedrijf Gebroeders Van Der Molen & Zonen Emmen B.V." is geen rare
+   * naam, en hij is 60 punten breder dan het papier. De bon rolde er
+   * doodleuk uit met het eind van de naam eraf gesneden — je zag pas dat er
+   * iets weg was als je wist wat er had moeten staan.
+   */
+  const klantBreedte = RECHTS - rechterKolom;
   klantRegels.forEach((regel, i) => {
-    doc.tekst(regel, rechterKolom, ky, {
-      grootte: i === 0 ? 11 : 9.5, vet: i === 0,
-      kleur: i === 0 ? KLEUR.inkt : KLEUR.zacht,
-    });
-    ky += i === 0 ? 15 : 12;
+    const grootte = i === 0 ? 11 : 9.5;
+    const vet = i === 0;
+    for (const stuk of breekAf(regel, klantBreedte, grootte, vet)) {
+      doc.tekst(stuk, rechterKolom, ky, {
+        grootte, vet, kleur: i === 0 ? KLEUR.inkt : KLEUR.zacht,
+      });
+      ky += i === 0 ? 15 : 12;
+    }
   });
   doc.tekst('Afgesproken', rechterKolom, ky + 3, { grootte: 8, kleur: KLEUR.zacht });
   invulregel(doc, rechterKolom + 62, ky + 5, 96);
@@ -221,29 +237,56 @@ export function werkbonPdf(offerte, dossier = null, eigenBlokken = []) {
   }
 
   for (const artikel of artikelen) {
-    ruimte(20);
     /* Toebehoren staan ingesprongen onder hun hoofdartikel: zo zie je meteen
        welke kabel bij welke speaker hoort. */
     const x = artikel.hoofd ? LINKS : LINKS + 16;
-    vakje(doc, x, y - 8);
     const tekstX = x + 16;
-    const ruimteVoorNaam = KOLOM_ARTIKEL - tekstX - 8;
-    const naam = breekAf(artikel.omschrijving, ruimteVoorNaam, artikel.hoofd ? 9.5 : 9, artikel.hoofd)[0];
-    doc.tekst(naam, tekstX, y, {
-      grootte: artikel.hoofd ? 9.5 : 9,
-      vet: artikel.hoofd,
-      kleur: artikel.hoofd ? KLEUR.inkt : KLEUR.zacht,
+    const grootte = artikel.hoofd ? 9.5 : 9;
+
+    /**
+     * DE HELE NAAM, NIET ALLEEN DE EERSTE REGEL.
+     *
+     * Hier stond [0] achter: alleen de eerste regel werd getekend en de rest
+     * viel geruisloos weg. Bij een ingelezen leveranciersprijslijst zijn de
+     * omschrijvingen lang, en dan stond er "Voertuigspecifieke high-end
+     * luidsprekerset met CNC-" op de bon. Twee artikelen die met dezelfde
+     * woorden beginnen waren daardoor niet uit elkaar te houden.
+     */
+    const naamRegels = breekAf(artikel.omschrijving, KOLOM_ARTIKEL - tekstX - 8, grootte, artikel.hoofd);
+    /* Het artikelnummer moet tussen zijn kolom en de kolom met het aantal
+       blijven. Een nummer zonder streepjes liep anders het papier af. */
+    const nummerRegels = breekAf(
+      artikel.artikelnummer || '—', KOLOM_AANTAL - KOLOM_ARTIKEL - 8, 8.5
+    );
+
+    const hoogte = Math.max(
+      naamRegels.length * 11 + (artikel.leverancier ? 10 : 0),
+      nummerRegels.length * 10
+    ) + 5;
+    ruimte(hoogte + 10);
+
+    vakje(doc, x, y - 8);
+    naamRegels.forEach((regel, i) => {
+      doc.tekst(regel, tekstX, y + i * 11, {
+        grootte,
+        vet: artikel.hoofd,
+        kleur: artikel.hoofd ? KLEUR.inkt : KLEUR.zacht,
+      });
     });
     if (artikel.leverancier) {
-      doc.tekst(artikel.leverancier, tekstX, y + 10, { grootte: 7.5, kleur: KLEUR.zacht });
+      doc.tekst(artikel.leverancier, tekstX, y + naamRegels.length * 11, {
+        grootte: 7.5, kleur: KLEUR.zacht,
+      });
     }
-    doc.tekst(artikel.artikelnummer || '—', KOLOM_ARTIKEL, y, {
-      grootte: 8.5, kleur: artikel.artikelnummer ? KLEUR.inkt : KLEUR.zacht,
+    nummerRegels.forEach((regel, i) => {
+      doc.tekst(regel, KOLOM_ARTIKEL, y + i * 10, {
+        grootte: 8.5, kleur: artikel.artikelnummer ? KLEUR.inkt : KLEUR.zacht,
+      });
     });
     doc.tekst(`${artikel.aantal}x`, KOLOM_AANTAL, y, {
       grootte: 9.5, vet: true, kleur: KLEUR.inkt, uitlijnen: 'rechts',
     });
-    y += artikel.leverancier ? 22 : 15;
+    y += hoogte + 5;
     doc.lijn(LINKS, y - 5, RECHTS, y - 5, KLEUR.lijnZacht);
   }
 

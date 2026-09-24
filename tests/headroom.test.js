@@ -19,7 +19,7 @@ import {
   stuklijst, soortenIn, aanbetaling, eindafrekening, kortingNaarExcl, factuurnummer,
   STANDAARD_INSTELLINGEN, SOORTEN, BTW_PCT,
 } from '../src/lib/headroom/rekenen.js';
-import { nieuwPdf, naarPdfTekens, breedteVan, breekAf } from '../src/lib/headroom/pdf.js';
+import { nieuwPdf, naarPdfTekens, breedteVan, breekAf, A4 } from '../src/lib/headroom/pdf.js';
 import { offertePdf, pdfBestandsnaam } from '../src/lib/headroom/offerte-pdf.js';
 import { werkbonPdf, werkbonBestandsnaam } from '../src/lib/headroom/werkbon.js';
 import { factuurPdf, factuurBestandsnaam } from '../src/lib/headroom/factuur.js';
@@ -2424,5 +2424,215 @@ describe('de naam van een auto', () => {
     assert.equal(autoNaam('', 'Saab 9-3'), 'Saab 9-3');
     assert.equal(autoNaam('', ''), '');
     assert.equal(autoNaam(null, undefined), '');
+  });
+});
+
+/* ================= NIETS LOOPT HET PAPIER AF ================= */
+describe('niets loopt het papier af', () => {
+  /**
+   * WAAROM DEZE TEST BESTAAT
+   * "Autobedrijf Gebroeders Van Der Molen & Zonen Emmen B.V." is een naam die
+   * een klant gewoon kan hebben. Hij was zestig punten breder dan het papier,
+   * en de werkbon rolde er doodleuk uit met het eind eraf gesneden. Zoiets zie
+   * je niet: er komt geen foutmelding, er staat alleen minder.
+   *
+   * Deze test leest elke tekstplaatsing terug uit de gemaakte pdf en rekent na
+   * waar hij eindigt. Dat staat los van hoe de opmaak in elkaar zit —
+   * verschuift er ooit een kolom, dan valt dit om.
+   */
+  const MARGE = 46;
+  const RECHTS = A4.breedte - MARGE;
+
+  /** Elke regel tekst uit een pdf, met de plek waar hij begint en eindigt. */
+  function tekstplaatsingen(doc) {
+    const rauw = Buffer.from(doc.naarBytes()).toString('latin1');
+    const patroon =
+      /BT [^\n]*?\/(F1|F2) ([\d.]+) Tf[^\n]*?1 0 0 1 ([-\d.]+) ([-\d.]+) Tm \((.*?)\) Tj ET/g;
+    const uit = [];
+    let m;
+    while ((m = patroon.exec(rauw))) {
+      const inhoud = m[5].replace(/\\([\\()])/g, '$1');
+      const links = Number(m[3]);
+      uit.push({
+        inhoud,
+        links,
+        rechts: links + breedteVan(inhoud, Number(m[2]), m[1] === 'F2'),
+      });
+    }
+    return uit;
+  }
+
+  const buitenDeKantlijn = (doc) => {
+    const alles = tekstplaatsingen(doc);
+    /* Zonder deze regel zou de test ook slagen als het teruglezen stuk is en
+       er niets gevonden wordt. Dan controleer je niets en merk je dat niet. */
+    assert.ok(alles.length > 20, `maar ${alles.length} regels teruggelezen uit de pdf`);
+    return alles
+      /* Twee punten speling: het totaal staat rechts uitgelijnd precies op de
+         kantlijn en mag daar door afronding een haartje overheen. */
+      .filter((r) => r.rechts > RECHTS + 2 || r.links < MARGE - 2)
+      .map((r) => `${r.inhoud.slice(0, 50)} (tot ${r.rechts.toFixed(0)})`);
+  };
+
+  /* Namen en teksten die in het echt voorkomen, maar lang zijn. */
+  const ZWAAR = {
+    nummer: '2026-014',
+    datum: new Date('2026-09-24'),
+    zakelijk: true,
+    klant: {
+      bedrijf: 'Autobedrijf Gebroeders Van Der Molen & Zonen Emmen B.V.',
+      naam: 'Christiaan-Bernhard van der Heijden-Oosterhuis',
+      adres: 'Burgemeester Lambooijstraat 245A-bis, 7825 AB Emmen-Zuidbarge',
+      telefoon: '+31 6 44 37 98 44',
+      email: 'christiaan.bernhard.vanderheijden@zeerlangbedrijfsdomein.nl',
+    },
+    auto: {
+      kenteken: '92DJHG',
+      merk: 'Mercedes-Benz',
+      model: 'C 180 Kompressor Avantgarde Sport Edition Limited',
+      bouwjaar: '2008',
+      kleur: 'Obsidiaanzwart metallic met glansafwerking',
+    },
+    regels: [{
+      id: 'a',
+      omschrijving: 'Voertuigspecifieke high-end luidsprekerset met CNC-gefreesde adapterringen',
+      leverancier: 'Gladen Audio Nederland B.V.',
+      artikelnummer: 'GL-MB-165-QL-2W-V2',
+      aantal: 1, inkoopCent: 48000, marge: 60, uren: 4, soort: 'speakers-voor',
+      toebehoren: [{
+        omschrijving: 'Adapterkabel Quadlock naar ISO met vaste plusdraad',
+        artikelnummer: 'AD-QL-ISO-0042', aantal: 2, inkoopCent: 2500,
+      }],
+    }],
+    opmerking: 'De auto wordt om negen uur verwacht; reken op een volledige werkdag.',
+    voorwaardenBijlage: true,
+  };
+
+  /* En hetzelfde met woorden waar geen spatie in zit om op af te breken. */
+  const EENWOORD = 'x'.repeat(90);
+  const ONMOGELIJK = {
+    ...ZWAAR,
+    klant: {
+      bedrijf: EENWOORD, naam: EENWOORD, adres: EENWOORD,
+      telefoon: EENWOORD, email: `${EENWOORD}@${EENWOORD}.nl`,
+    },
+    auto: { kenteken: '92DJHG', merk: EENWOORD, model: EENWOORD, bouwjaar: '2008', kleur: EENWOORD },
+    regels: [{
+      ...ZWAAR.regels[0],
+      omschrijving: EENWOORD, leverancier: EENWOORD, artikelnummer: EENWOORD,
+      toebehoren: [{ omschrijving: EENWOORD, artikelnummer: EENWOORD, aantal: 1, inkoopCent: 100 }],
+    }],
+    opmerking: EENWOORD,
+  };
+
+  const DOSSIER = {
+    sleutel: 'mercedes-benz-c-klasse',
+    naam: 'Mercedes-Benz C-klasse',
+    speakerVoor: '165 mm met 20 mm opbouwring, boutgatpatroon 3 x 120 graden',
+    stekker: 'Quadlock 40-polig, adapter Gladen MB-165-QL nodig',
+    stroom: 'Rubberen doorvoer linksonder in het schutbord, achter de zekeringkast',
+    radio: 'NTG 2.5 Comand met losse schermbediening',
+    let: 'Glasvezelring (MOST) om het audiosysteem; nooit doorknippen.',
+  };
+
+  const INST = { ...STANDAARD_INSTELLINGEN, uurtarief: 7500, rekeningnummer: 'NL00BANK0123456789' };
+
+  for (const [naam, offerte] of [['lange namen', ZWAAR], ['woorden zonder spaties', ONMOGELIJK]]) {
+    test(`de offerte blijft binnen de kantlijn bij ${naam}`, () => {
+      assert.deepEqual(buitenDeKantlijn(offertePdf(offerte, INST)), []);
+    });
+
+    test(`de werkbon blijft binnen de kantlijn bij ${naam}`, () => {
+      assert.deepEqual(buitenDeKantlijn(werkbonPdf(offerte, DOSSIER)), []);
+    });
+
+    test(`de factuur blijft binnen de kantlijn bij ${naam}`, () => {
+      const doc = factuurPdf(offerte, INST, { soort: 'volledig', nummer: 'F2026-001' });
+      assert.deepEqual(buitenDeKantlijn(doc), []);
+    });
+  }
+
+  test('DE HELE ARTIKELNAAM KOMT OP DE WERKBON', () => {
+    /**
+     * Hier stond eerst alleen de eerste regel van de omschrijving. Bij een
+     * ingelezen leveranciersprijslijst zijn die lang, en dan kon je twee
+     * artikelen die met dezelfde woorden beginnen niet uit elkaar houden.
+     */
+    const alles = tekstplaatsingen(werkbonPdf(ZWAAR, DOSSIER)).map((r) => r.inhoud).join(' ');
+    assert.ok(alles.includes('CNC-gefreesde adapterringen'), 'het eind van de naam ontbreekt');
+    assert.ok(alles.includes('vaste plusdraad'), 'het eind van het toebehoren ontbreekt');
+  });
+});
+
+describe('tekst afbreken', () => {
+  test('een woord dat zelf te breed is wordt hard afgeknipt', () => {
+    /* Een e-mailadres heeft geen spaties. Zonder dit bleef het in zijn geheel
+       staan en liep het het papier af. */
+    const adres = 'christiaan.bernhard.vanderheijden@zeerlangbedrijfsdomein.nl';
+    const regels = breekAf(adres, 120, 9);
+    assert.ok(regels.length > 1, 'hier hoort afgebroken te worden');
+    regels.forEach((r) => assert.ok(breedteVan(r, 9) <= 120, `"${r}" is te breed`));
+    assert.equal(regels.join(''), adres, 'er mag geen letter zoekraken');
+  });
+
+  test('ook als er maar één letter per regel past loopt hij niet vast', () => {
+    const regels = breekAf('abcdef', 1, 9);
+    assert.equal(regels.join(''), 'abcdef');
+    assert.equal(regels.length, 6);
+  });
+
+  test('gewone tekst breekt nog steeds netjes tussen de woorden', () => {
+    const regels = breekAf('De deur gaat open en de speaker gaat erin', 120, 9);
+    regels.forEach((r) => {
+      assert.ok(!r.startsWith(' ') && !r.endsWith(' '));
+      assert.ok(breedteVan(r, 9) <= 120);
+    });
+    assert.equal(regels.join(' '), 'De deur gaat open en de speaker gaat erin');
+  });
+});
+
+describe('het merk staat niet twee keer op de papieren', () => {
+  /**
+   * De RDW geeft bij dit kenteken merk "SAAB" en handelsbenaming "SAAB 9-3".
+   * Op de offerte die de klant leest stond daardoor "Saab Saab 9-3". In de app
+   * was dat al opgelost, in de documenten nog niet.
+   */
+  const offerte = {
+    nummer: '2026-014', datum: new Date('2026-09-24'), zakelijk: false,
+    klant: { naam: 'Jan de Vries' },
+    auto: { kenteken: '92DJHG', merk: 'Saab', model: 'Saab 9-3', bouwjaar: '1999' },
+    regels: [{
+      id: 'a', omschrijving: 'Speakers', aantal: 1,
+      inkoopCent: 10000, marge: 60, uren: 2, soort: 'speakers-voor', toebehoren: [],
+    }],
+    inbouwdatum: '2026-10-08', inbouwtijd: '09:00', voorwaardenBijlage: false,
+  };
+  const INST = { ...STANDAARD_INSTELLINGEN, uurtarief: 7500, rekeningnummer: 'NL00BANK0123456789' };
+
+  const tekstIn = (doc) => {
+    const rauw = Buffer.from(doc.naarBytes()).toString('latin1');
+    return [...rauw.matchAll(/\((.*?)\) Tj/g)].map((m) => m[1]).join(' | ');
+  };
+
+  test('niet op de offerte', () => {
+    const t = tekstIn(offertePdf(offerte, INST));
+    assert.ok(t.includes('Saab 9-3'));
+    assert.ok(!t.includes('Saab Saab'));
+  });
+
+  test('niet op de werkbon', () => {
+    const t = tekstIn(werkbonPdf(offerte, null));
+    assert.ok(t.includes('Saab 9-3'));
+    assert.ok(!t.includes('Saab Saab'));
+  });
+
+  test('niet op de factuur', () => {
+    const t = tekstIn(factuurPdf(offerte, INST, { soort: 'volledig', nummer: 'F2026-001' }));
+    assert.ok(t.includes('Saab 9-3'));
+    assert.ok(!t.includes('Saab Saab'));
+  });
+
+  test('en niet in de afspraak die in je agenda komt', () => {
+    assert.equal(agendaItem(offerte).auto, 'Saab 9-3');
   });
 });

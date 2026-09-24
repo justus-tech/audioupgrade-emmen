@@ -26,6 +26,7 @@ import { kernpunten, annuleertermijn } from './voorwaarden.js';
    kenteken-check gebruikt. Twee keer dezelfde tabel onderhouden gaat een keer
    mis, en dan staat er op een werkbon een ander kenteken dan op de site. */
 import { formatteerKenteken } from '../match.js';
+import { autoNaam } from './autos.js';
 import { euro, regelPrijs, totalen, datumNl, STANDAARD_INSTELLINGEN } from './rekenen.js';
 
 /**
@@ -83,12 +84,12 @@ export function offertePdf(offerte, inst = STANDAARD_INSTELLINGEN) {
   } else {
     ay += 9;
   }
-  const autoNaam = [offerte.auto?.merk, offerte.auto?.model].filter(Boolean).join(' ');
+  const naamVanDeAuto = autoNaam(offerte.auto?.merk, offerte.auto?.model);
   /* "Mercedes-Benz C 180 Kompressor Avantgarde Estate" past niet op één regel
      en liep anders het blad af. */
   /* breekAf levert bij lege tekst één lege regel; die zou hier een gat
      van veertien punten maken bij een auto zonder merk. */
-  for (const stuk of (autoNaam ? breekAf(autoNaam, RECHTS - rechterKolom, 11, true) : [])) {
+  for (const stuk of (naamVanDeAuto ? breekAf(naamVanDeAuto, RECHTS - rechterKolom, 11, true) : [])) {
     doc.tekst(stuk, rechterKolom, ay, { grootte: 11, vet: true, kleur: KLEUR.inkt });
     ay += 14;
   }
@@ -97,8 +98,10 @@ export function offertePdf(offerte, inst = STANDAARD_INSTELLINGEN) {
     offerte.auto?.kleur,
     offerte.auto?.brandstof,
   ].filter(Boolean).join('  ·  ');
-  if (autoExtra) {
-    doc.tekst(autoExtra, rechterKolom, ay, { grootte: 9, kleur: KLEUR.zacht });
+  /* Ook deze regel afbreken: bij een kleurnaam als "Obsidiaanzwart metallic
+     met glansafwerking" liep hij het blad af. */
+  for (const stuk of (autoExtra ? breekAf(autoExtra, RECHTS - rechterKolom, 9) : [])) {
+    doc.tekst(stuk, rechterKolom, ay, { grootte: 9, kleur: KLEUR.zacht });
     ay += 12;
   }
 

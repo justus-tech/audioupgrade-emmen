@@ -23,6 +23,7 @@
  */
 import { datumNl } from './rekenen.js';
 import { ADRES } from '../../data/site.js';
+import { autoNaam } from './autos.js';
 
 /** Statussen waarbij de aanbetaling binnen is en je dus mag bestellen. */
 const BETAALD = ['aanbetaald', 'gefactureerd', 'betaald'];
@@ -118,7 +119,7 @@ export function agendaItem(offerte, inst = {}, vandaag = new Date()) {
     nummer: offerte.nummer,
     wie: offerte.klant?.bedrijf || offerte.klant?.naam || 'zonder naam',
     telefoon: offerte.klant?.telefoon || '',
-    auto: [offerte.auto?.merk, offerte.auto?.model].filter(Boolean).join(' '),
+    auto: autoNaam(offerte.auto?.merk, offerte.auto?.model),
     kenteken: offerte.auto?.kenteken || '',
     status: offerte.status || 'concept',
     datum,
