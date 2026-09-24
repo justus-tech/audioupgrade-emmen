@@ -64,6 +64,23 @@ export const AUDIOMERKEN = [
   'Steg',
 ];
 
+/**
+ * DE SOCIALE PROFIELEN.
+ *
+ * Staan in de voettekst en in de machineleesbare gegevens (sameAs). Dat
+ * laatste vertelt Google dat deze profielen en de site van hetzelfde bedrijf
+ * zijn, en helpt ze samen met het Google-bedrijfsprofiel te koppelen.
+ *
+ * Krijgt de Facebookpagina een eigen gebruikersnaam (facebook.com/
+ * audioupgradeemmen), pas het adres dan hier aan. Het oude adres met het
+ * nummer blijft wel werken, maar het nieuwe is wat mensen herkennen.
+ */
+export const SOCIALS = [
+  { naam: 'Instagram', url: 'https://www.instagram.com/audioupgradeemmen/' },
+  { naam: 'Facebook', url: 'https://www.facebook.com/p/Audio-Upgrade-Emmen-61590614038019/' },
+  { naam: 'LinkedIn', url: 'https://www.linkedin.com/company/audio-upgrade-emmen' },
+];
+
 /** Het bezoekadres op één regel: de werkplaats. */
 export const ADRES = `${SITE.street}, ${SITE.postalCode} ${SITE.city}`;
 

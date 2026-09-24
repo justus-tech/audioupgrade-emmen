@@ -1,8 +1,9 @@
 ---
 import '../styles/global.css';
-import { SITE, PACKAGES, SCHEMA_SOORT, openingsblokken } from '../data/site.js';
+import { SITE, PACKAGES, SCHEMA_SOORT, SOCIALS, openingsblokken } from '../data/site.js';
 import { BRAND, LICHT, cssThema } from '../data/brand.js';
 import Logo from '../components/Logo.astro';
+import Socials from '../components/Socials.astro';
 import Herkomst from '../components/Herkomst.astro';
 import { pad } from '../lib/pad.js';
 import { DEALERS } from '../data/dealers.js';
@@ -217,6 +218,8 @@ const anderetalen = TAALVOLGORDE.map((code) => ({
     priceRange: '€695 - €3695',
     currenciesAccepted: 'EUR',
     vatID: SITE.btw,
+    /* De sociale profielen van hetzelfde bedrijf. Zie SOCIALS in site.js. */
+    sameAs: SOCIALS.map((s) => s.url),
     address: {
       '@type': 'PostalAddress',
       streetAddress: SITE.street,
@@ -443,6 +446,7 @@ const anderetalen = TAALVOLGORDE.map((code) => ({
         {T.voettekst.opAfspraak}<br />
         <a href={`tel:${SITE.phone}`}>{SITE.phoneDisplay}</a><br />
         <a href={`mailto:${SITE.email}`}>{SITE.email}</a>
+        <Socials />
       </div>
       <div>
         <a href={whatsappLink(berichtOverAuto(null, taal), taal)}>{T.voettekst.appDashboard}</a><br />
@@ -457,8 +461,9 @@ const anderetalen = TAALVOLGORDE.map((code) => ({
         <a href={pad(padVan('oldtimer', taal))}>{T.voettekst.klassiekers}</a><br />
         {/* De pagina voor autobedrijven staat hier en niet in het menu: het
             menu is voor de klant met een auto, en dat is vrijwel iedereen.
-            Alleen in het Nederlands — het gaat over dealers in Drenthe. */}
-        {taal === STANDAARDTAAL && (
+            Alleen in het Nederlands — het gaat over dealers in Drenthe.
+            Voorlopig uit: zie `zichtbaar` in src/data/dealers.js. */}
+        {taal === STANDAARDTAAL && DEALERS.zichtbaar && (
           <a href={pad(`/${DEALERS.slug}`)}>{T.voettekst.autobedrijven}</a>
         )}
       </div>

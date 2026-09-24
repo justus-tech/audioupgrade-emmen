@@ -196,7 +196,7 @@ export const TEKSTEN = {
     },
 
     over: {
-      eyebrow: 'Inhaber und Audio Engineer',
+      eyebrow: 'Inhaber / OEM+ Integration Specialist',
       kop: 'Wer an Ihrem Auto arbeitet',
       /**
        * "Autointerieurs" stond hier eerst — dat is Nederlands met een Duits
@@ -344,7 +344,7 @@ export const TEKSTEN = {
     },
 
     over: {
-      eyebrow: 'Owner and audio engineer',
+      eyebrow: 'Owner / OEM+ Integration Specialist',
       kop: 'Who works on your car',
       /**
        * "Conservatory" stond hier eerst. Dat is in het Engels een serre — de
