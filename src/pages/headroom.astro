@@ -585,6 +585,8 @@ import { APP } from '../data/app.js';
         Het printvenster van je browser komt op. Kies je printer voor papier, of
         &quot;opslaan als pdf&quot; als je hem wilt bewaren of appen.
       </p>
+      <button type="button" class="btn wb-vol" id="mr-nieuw">Nieuw rapport beginnen</button>
+      <div id="mr-vergeven"></div>
     </div>
   </section>
 
@@ -799,6 +801,9 @@ import { APP } from '../data/app.js';
     concept: null,
     /* Het meetrapport waar je aan werkt, zonder de schermafbeeldingen. */
     meting: null,
+    /* Welke rapportnummers al vergeven zijn, en aan welke auto. Alleen het
+       nummer, het kenteken en de datum — geen meetwaarden. */
+    rapporten: [],
   });
 
   function laden() {
@@ -817,6 +822,7 @@ import { APP } from '../data/app.js';
         concept: gelezen.concept || null,
         /* Opslag van vóór het meetrapport heeft dit veld nog niet. */
         meting: gelezen.meting || null,
+        rapporten: Array.isArray(gelezen.rapporten) ? gelezen.rapporten : [],
       };
     } catch (e) {
       /* Kapotte of geblokkeerde opslag mag de app niet stilzetten. */
@@ -2487,6 +2493,12 @@ import { APP } from '../data/app.js';
              Zonder deze regel bleef staat.sessies leeg achter en liep de app
              stuk zodra je er een wilde bewaren. */
           sessies: Array.isArray(gelezen.sessies) ? gelezen.sessies : [],
+          /* Deze twee stonden hier niet, terwijl ze wél in het bestand staan:
+             de offerte waar je aan werkte en je meetrapport. Die raakte je
+             dus kwijt op het moment dat je een kopie terugzette. */
+          concept: gelezen.concept || null,
+          meting: gelezen.meting || null,
+          rapporten: Array.isArray(gelezen.rapporten) ? gelezen.rapporten : [],
         };
         alert(
           'Teruggezet: ' + [
@@ -2551,10 +2563,16 @@ import { APP } from '../data/app.js';
         );
       }
 
+      /* Eerst het werk terug op het scherm, dán pas opslaan. Andersom
+         schrijft bewaarConcept de teruggezette offerte meteen weer weg met
+         wat er toevallig nog op het scherm stond. */
+      haalWerkTerug();
       opslaan();
       tekenInstellingen();
       tekenCatalogus();
       tekenDossiers();
+      tekenAfspraken();
+      tekenOpgeslagen();
       tekenAlles();
     } catch (err) {
       alert(`Dit bestand kon ik niet lezen. Komt het uit ${APP.naam}?`);
@@ -3187,6 +3205,7 @@ import { APP } from '../data/app.js';
     tekenBeelden();
     tekenAccuMetingen();
     tekenSoort();
+    tekenVergeven();
   }
 
   /* De gewone tekstvelden aan het rapport knopen. */
@@ -3284,18 +3303,147 @@ import { APP } from '../data/app.js';
       alert(`Dit rapport kan nog niet:\n\n- ${gemist.join('\n- ')}`);
       return;
     }
-    if (!meting.nummer) meting.nummer = nieuwRapportnummer();
+
+    /**
+     * WELK NUMMER KRIJGT DIT RAPPORT?
+     *
+     * Druk je hetzelfde rapport nog eens af — omdat het papier scheef liep of
+     * omdat de klant een tweede exemplaar wil — dan hoort het zijn nummer te
+     * houden. Typ je de volgende klant erover heen zonder eerst opnieuw te
+     * beginnen, dan hoort er een nieuw nummer te komen. Twee klanten met
+     * hetzelfde rapportnummer kun je later niet meer uit elkaar halen.
+     *
+     * Het kenteken is waar de app op kijkt: dat hoort bij één auto en het
+     * staat op elk rapport.
+     */
+    const plaat = kaalKenteken(meting.kenteken);
+    const eerder = staat.rapporten.find((r) => r.nummer === meting.nummer);
+    const anderisAuto = eerder && kaalKenteken(eerder.kenteken) !== plaat;
+    if (!meting.nummer || anderisAuto) {
+      meting.nummer = nieuwRapportnummer();
+      if (anderisAuto) {
+        melden2(`Dit is een ander kenteken dan bij ${eerder.nummer}, dus het rapport `
+          + `krijgt nummer ${meting.nummer}.`);
+      }
+    }
+
     $('#wb-print').innerHTML = meetrapportHtml(meting);
     $('#mr-nummer').value = meting.nummer;
+    onthoudRapport();
     bewaarMeting();
+    tekenVergeven();
     window.print();
+  });
+
+  /** Een kenteken zonder streepjes en hoofdletters, om mee te vergelijken. */
+  const kaalKenteken = (k) => String(k || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+
+  /** Een melding onder de knop, zonder venster dat je moet wegklikken. */
+  function melden2(tekst) {
+    const vak = $('#mr-vergeven');
+    vak.innerHTML = `<p class="wb-waarschuwing">${ontsnap(tekst)}</p>`;
+  }
+
+  /**
+   * Bijhouden welk nummer bij welke auto hoort.
+   *
+   * Alleen het nummer, het kenteken, de klant en de datum. Geen meetwaarden en
+   * geen schermafbeeldingen: dit lijstje moet klein blijven, want het staat in
+   * dezelfde opslag als je onderdelen en je offertes.
+   */
+  function onthoudRapport() {
+    const rij = {
+      nummer: meting.nummer,
+      kenteken: meting.kenteken,
+      klant: meting.klant,
+      soort: meting.soort,
+      datum: meting.datum,
+    };
+    const plek = staat.rapporten.findIndex((r) => r.nummer === meting.nummer);
+    if (plek > -1) staat.rapporten[plek] = rij;
+    else staat.rapporten.push(rij);
+  }
+
+  /** Het laatste dat je hebt afgedrukt, zodat je ziet welk nummer eraan hing. */
+  function tekenVergeven() {
+    const laatste = staat.rapporten.slice(-3).reverse();
+    if (!laatste.length) {
+      $('#mr-vergeven').innerHTML = '';
+      return;
+    }
+    $('#mr-vergeven').innerHTML =
+      '<p class="wb-uitleg">Laatst afgedrukt: '
+      + laatste.map((r) => `${ontsnap(r.nummer)} (${ontsnap(r.kenteken || 'geen kenteken')})`).join(', ')
+      + '.</p>';
+  }
+
+  /**
+   * Opnieuw beginnen. Het nummer gaat mee leeg, zodat de volgende klant een
+   * eigen nummer krijgt.
+   */
+  $('#mr-nieuw').addEventListener('click', () => {
+    if (meting.klant || meting.kenteken || meting.systeem.length) {
+      if (!confirm('Dit rapport leegmaken en opnieuw beginnen?')) return;
+    }
+    const soort = meting.soort;
+    meting = leegRapport(soort);
+    bewaarMeting();
+    vulMeting();
+    tekenVergeven();
   });
 
   /** Het eerstvolgende rapportnummer, en de teller schuift op. */
   function nieuwRapportnummer() {
-    const n = Math.max(1, Math.round(Number(staat.instellingen.rapportVolgnummer) || 1));
+    let n = Math.max(1, Math.round(Number(staat.instellingen.rapportVolgnummer) || 1));
+    /* Een nummer dat al vergeven is overslaan. Zonder dit kreeg de tweede
+       klant van de dag hetzelfde nummer als de eerste zodra de teller ooit
+       was teruggezet, bijvoorbeeld door een oude reservekopie. */
+    const bezet = new Set(staat.rapporten.map((r) => r.nummer));
+    while (bezet.has(rapportnummer(n, meting.datum || new Date()))) n += 1;
     staat.instellingen.rapportVolgnummer = n + 1;
     return rapportnummer(n, meting.datum || new Date());
+  }
+
+
+  /**
+   * HET WERK UIT DE OPSLAG TERUG OP HET SCHERM.
+   *
+   * Twee momenten hebben dit nodig en ze moeten hetzelfde doen:
+   *
+   *   bij het opstarten       je was ergens mee bezig toen de telefoon het
+   *                           tabblad afsloot
+   *   na een reservekopie     je zet een kopie terug, en dan hoort daar ook
+   *                           in te staan waar je mee bezig was
+   *
+   * Dat stond eerst alleen in het startblok. Zette je een reservekopie terug,
+   * dan kwamen je onderdelen, auto's en offertes wél terug, maar de offerte
+   * waar je aan werkte en je meetrapport niet — terwijl ze allebei gewoon in
+   * het bestand staan. Erger nog: wat er op dat moment op je scherm stond
+   * werd er meteen overheen geschreven. Het venster zegt "alles wordt
+   * vervangen", dus dat moet het ook doen.
+   */
+  function haalWerkTerug() {
+    if (heeftInhoud(staat.concept)) {
+      offerte = { ...staat.concept, datum: new Date(staat.concept.datum) };
+    } else {
+      offerte = nieuweOfferte();
+    }
+    voorkeuren = new Set(soortenIn(offerte.regels || []));
+    $$('#wb-voorkeuren .wb-chip').forEach((c) => {
+      c.classList.toggle('aan', voorkeuren.has(c.dataset.soort));
+    });
+    vulFormulierUitOfferte();
+
+    /* Het meetrapport. De schermafbeeldingen zitten er niet in — zie de
+       uitleg bij bewaarMeting. */
+    meting = { ...leegRapport('geluid'), ...(staat.meting || {}) };
+    meting.accu = { type: '', metingen: {}, ...(meting.accu || {}) };
+    meting.nazorg = { ...(meting.nazorg || {}) };
+    meting.systeem = Array.isArray(meting.systeem) ? meting.systeem : [];
+    meting.kort = Array.isArray(meting.kort) && meting.kort.length
+      ? meting.kort
+      : KORTE_PUNTEN.map((p) => ({ ...p }));
+    vulMeting();
   }
 
   /* ================= STARTEN ================= */
@@ -3307,30 +3455,10 @@ import { APP } from '../data/app.js';
   tekenInstellingen();
   tekenOpgeslagen();
 
-  /**
-   * Was je ergens mee bezig toen de telefoon het tabblad afsloot? Dan sta je
-   * weer precies waar je was. Alleen als er iets in stond, natuurlijk.
-   */
-  if (heeftInhoud(staat.concept)) {
-    offerte = { ...staat.concept, datum: new Date(staat.concept.datum) };
-    voorkeuren = new Set(soortenIn(offerte.regels || []));
-    $$('#wb-voorkeuren .wb-chip').forEach((c) => {
-      c.classList.toggle('aan', voorkeuren.has(c.dataset.soort));
-    });
-    vulFormulierUitOfferte();
-  }
-
   tekenNazorgvelden();
-  /* Wat er van het meetrapport bewaard is, terug in het formulier. De
-     schermafbeeldingen staan er niet in — zie de uitleg bij bewaarMeting. */
-  meting = { ...leegRapport('geluid'), ...(staat.meting || {}) };
-  meting.accu = { type: '', metingen: {}, ...(meting.accu || {}) };
-  meting.nazorg = { ...(meting.nazorg || {}) };
-  meting.systeem = Array.isArray(meting.systeem) ? meting.systeem : [];
-  meting.kort = Array.isArray(meting.kort) && meting.kort.length
-    ? meting.kort
-    : KORTE_PUNTEN.map((p) => ({ ...p }));
-  vulMeting();
+  /* Was je ergens mee bezig toen de telefoon het tabblad afsloot? Dan sta je
+     weer precies waar je was. */
+  haalWerkTerug();
 
   tekenAfspraken();
   tekenAlles();

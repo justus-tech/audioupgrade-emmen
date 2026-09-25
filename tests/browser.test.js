@@ -1965,6 +1965,113 @@ describe('Headroom', alsGebouwd, () => {
     await pagina.close();
   });
 
+  /* ================= DE RESERVEKOPIE ================= */
+  /**
+   * EEN RESERVEKOPIE MOET ALLES TERUGBRENGEN WAT ERIN ZIT.
+   *
+   * Het venster zegt met zoveel woorden "alles wat nu in Headroom staat wordt
+   * vervangen". Deed het dat niet helemaal, dan verlies je iets terwijl je net
+   * dacht dat je iets terugzette — en dat merk je pas dagen later.
+   */
+  test('een reservekopie brengt ook je lopende offerte en je meetrapport terug', async () => {
+    const { pagina: a } = await openWerkbak();
+    await vulCatalogus(a);
+    await a.fill('#wb-naam', 'Jan Bakker');
+    await a.click('#wb-onderdelen .wb-toevoeg >> nth=0');
+    await a.click('[data-tab="meting"]');
+    await a.fill('#mr-klant', 'Jan Bakker');
+    await a.fill('#mr-kenteken', '11AB22');
+    await a.waitForFunction(() =>
+      (JSON.parse(localStorage.getItem('aue-werkbak-v1')).meting || {}).kenteken === '11AB22'
+    );
+    const kopie = await a.evaluate(() => JSON.stringify({
+      soort: 'reservekopie', ...JSON.parse(localStorage.getItem('aue-werkbak-v1')),
+    }));
+    await a.close();
+
+    /* Een andere telefoon, waar hij net met een andere klant bezig is. */
+    const { pagina: b, fouten } = await openWerkbak();
+    await b.fill('#wb-naam', 'Sanne de Vries');
+    await b.click('[data-tab="meting"]');
+    await b.fill('#mr-klant', 'Sanne de Vries');
+    b.on('dialog', (d) => d.accept());
+    await b.click('[data-tab="instellingen"]');
+    await b.setInputFiles('#wb-import', {
+      name: 'headroom-2026-09-25.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(kopie),
+    });
+
+    await b.waitForFunction(() => document.querySelector('#wb-naam').value === 'Jan Bakker');
+    assert.equal(await b.inputValue('#mr-klant'), 'Jan Bakker', 'het meetrapport hoort terug te komen');
+    assert.equal(await b.inputValue('#mr-kenteken'), '11AB22');
+
+    /* En het moet blijven staan als je de app opnieuw opent: anders schrijft
+       wat er op het scherm stond er alsnog overheen. */
+    await b.reload();
+    await b.click('[data-tab="meting"]');
+    assert.equal(await b.inputValue('#wb-naam'), 'Jan Bakker');
+    assert.equal(await b.inputValue('#mr-klant'), 'Jan Bakker');
+    assert.deepEqual(fouten, []);
+    await b.close();
+  });
+
+  /* ================= HET RAPPORTNUMMER ================= */
+  test('twee klanten krijgen nooit hetzelfde rapportnummer', async () => {
+    /**
+     * Typ je de volgende klant over het vorige rapport heen zonder eerst
+     * opnieuw te beginnen, dan kregen ze allebei 26-001. Twee rapporten met
+     * hetzelfde nummer kun je later niet meer uit elkaar halen.
+     */
+    const { pagina, fouten } = await openWerkbak();
+    pagina.on('dialog', (d) => d.accept());
+    await pagina.click('[data-tab="meting"]');
+    await pagina.evaluate(() => { window.print = () => {}; });
+
+    const PIXEL = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+    const afdrukken = async (klant, plaat) => {
+      await pagina.fill('#mr-klant', klant);
+      await pagina.fill('#mr-kenteken', plaat);
+      for (const veld of ['voorBeeld', 'naBeeld']) {
+        await pagina.setInputFiles(`[data-beeld="${veld}"]`, {
+          name: `${veld}.png`, mimeType: 'image/png', buffer: Buffer.from(PIXEL, 'base64'),
+        });
+      }
+      await pagina.waitForFunction(() => document.querySelector('#mr-print').disabled === false);
+      await pagina.click('#mr-print');
+      return pagina.inputValue('#mr-nummer');
+    };
+
+    const eerste = await afdrukken('Jan Bakker', '11AB22');
+    assert.match(eerste, /^\d{2}-\d{3}$/);
+
+    /* Nog een keer hetzelfde rapport afdrukken houdt het nummer. */
+    await pagina.click('#mr-print');
+    assert.equal(await pagina.inputValue('#mr-nummer'), eerste);
+
+    /* Een andere auto krijgt een eigen nummer. */
+    const tweede = await afdrukken('Sanne de Vries', '92DJHG');
+    assert.notEqual(tweede, eerste);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('opnieuw beginnen maakt het rapport helemaal leeg', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    pagina.on('dialog', (d) => d.accept());
+    await pagina.click('[data-tab="meting"]');
+    await pagina.fill('#mr-klant', 'Jan Bakker');
+    await pagina.fill('#mr-kenteken', '11AB22');
+    await pagina.click('#mr-systeem-erbij');
+
+    await pagina.click('#mr-nieuw');
+    await pagina.waitForFunction(() => document.querySelector('#mr-klant').value === '');
+    assert.equal(await pagina.inputValue('#mr-kenteken'), '');
+    assert.equal(await pagina.inputValue('#mr-nummer'), '', 'het nummer hoort ook leeg te zijn');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
   test('overnemen uit de offerte scheelt overtypen', async () => {
     const { pagina, fouten } = await openWerkbak();
     await vulCatalogus(pagina);
