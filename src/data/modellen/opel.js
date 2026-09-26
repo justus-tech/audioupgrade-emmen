@@ -62,7 +62,7 @@ export default [
     matchers: { merk: 'OPEL', model: /AGILA/ },
     title: 'Opel Agila audio upgrade | Audio Upgrade Emmen',
     description:
-      'Beter geluid in je Opel Agila. Speakers, akoestische deurdemping en minder rolgeluid, met all-in prijs.',
+      'Beter geluid in je Opel Agila. Speakers, akoestische deurdemping en minder rolgeluid, met all-inprijs.',
     intro:
       'De Agila is klein, hoog en praktisch, en juist die hoge rechte vorm maakt hem akoestisch levendiger dan comfortabel is.',
     problems: [
@@ -188,7 +188,7 @@ export default [
     matchers: { merk: 'OPEL', model: /KARL/ },
     title: 'Opel Karl audio upgrade | Audio Upgrade Emmen',
     description:
-      'Beter geluid in je Opel Karl. Speakers, akoestische deurdemping en minder rolgeluid, met all-in prijs.',
+      'Beter geluid in je Opel Karl. Speakers, akoestische deurdemping en minder rolgeluid, met all-inprijs.',
     intro:
       'De Karl is een eerlijke stadsauto zonder franje. Precies daarom valt er met bescheiden middelen veel aan te verbeteren.',
     problems: [

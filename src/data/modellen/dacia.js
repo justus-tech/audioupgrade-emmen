@@ -20,7 +20,7 @@ export default [
     matchers: { merk: 'DACIA', model: /SANDERO/ },
     title: 'Dacia Sandero audio upgrade | Audio Upgrade Emmen',
     description:
-      'Beter geluid in je Dacia Sandero. Speakers, akoestische deurdemping en minder rolgeluid, met all-in prijs.',
+      'Beter geluid in je Dacia Sandero. Speakers, akoestische deurdemping en minder rolgeluid, met all-inprijs.',
     intro:
       'De Sandero is gebouwd op de scherpst mogelijke prijs, en daar is niets mis mee — je weet wat je koopt. Audio is wel het eerste waar dat te horen is.',
     problems: [
@@ -62,7 +62,7 @@ export default [
     matchers: { merk: 'DACIA', model: /DUSTER/ },
     title: 'Dacia Duster audio upgrade | Audio Upgrade Emmen',
     description:
-      'Meer body in je Dacia Duster. Speakers, akoestische deurdemping en minder rolgeluid, met all-in prijs.',
+      'Meer body in je Dacia Duster. Speakers, akoestische deurdemping en minder rolgeluid, met all-inprijs.',
     intro:
       'De Duster is de eerlijkste SUV die je kunt kopen: robuust, simpel en scherp geprijsd. Het geluid is precies waar die scherpe prijs vandaan komt.',
     problems: [

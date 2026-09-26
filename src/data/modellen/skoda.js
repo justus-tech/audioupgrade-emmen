@@ -145,7 +145,7 @@ export default [
     matchers: { merk: 'SKODA', model: /CITIGO/ },
     title: 'Škoda Citigo audio upgrade | Audio Upgrade Emmen',
     description:
-      'Beter geluid in je Škoda Citigo. Speakers, akoestische deurdemping en minder rolgeluid, met all-in prijs.',
+      'Beter geluid in je Škoda Citigo. Speakers, akoestische deurdemping en minder rolgeluid, met all-inprijs.',
     intro:
       'De Citigo is samen met de VW Up! en de Seat Mii ontwikkeld: dezelfde auto, drie badges. Dat betekent ook dezelfde bezuiniging op geluid.',
     problems: [

@@ -20,7 +20,7 @@ export default [
     matchers: { merk: 'CITROEN', model: /\bC1\b/ },
     title: 'Citroën C1 audio upgrade | Audio Upgrade Emmen',
     description:
-      'Beter geluid in je Citroën C1. Speakers, deurdemping en minder rolgeluid, met all-in prijs en behoud van fabrieksgarantie.',
+      'Beter geluid in je Citroën C1. Speakers, deurdemping en minder rolgeluid, met all-inprijs en behoud van fabrieksgarantie.',
     intro:
       'De C1 deelt zijn techniek met de Toyota Aygo en de Peugeot 107, en deelt daarmee ook hun grootste tekortkoming: er is aan geluid vrijwel niets gedaan.',
     problems: [

@@ -104,7 +104,7 @@ export default [
     matchers: { merk: 'SEAT', model: /\bMII\b/ },
     title: 'Seat Mii audio upgrade | Audio Upgrade Emmen',
     description:
-      'Beter geluid in je Seat Mii. Speakers, akoestische deurdemping en minder rolgeluid, met all-in prijs.',
+      'Beter geluid in je Seat Mii. Speakers, akoestische deurdemping en minder rolgeluid, met all-inprijs.',
     intro:
       'De Mii is samen met de VW Up! en de Škoda Citigo ontwikkeld: dezelfde auto, drie badges. Dat betekent ook dezelfde bezuiniging op geluid.',
     problems: [

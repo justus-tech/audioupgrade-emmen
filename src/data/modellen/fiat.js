@@ -62,7 +62,7 @@ export default [
     matchers: { merk: 'FIAT', model: /PANDA/ },
     title: 'Fiat Panda audio upgrade | Audio Upgrade Emmen',
     description:
-      'Beter geluid in je Fiat Panda. Speakers, akoestische deurdemping en minder rolgeluid, met all-in prijs.',
+      'Beter geluid in je Fiat Panda. Speakers, akoestische deurdemping en minder rolgeluid, met all-inprijs.',
     intro:
       'De Panda is eerlijk gebouwd: recht, hoog en zonder opsmuk. Die rechte, hoge panelen maken hem akoestisch levendiger dan comfortabel is.',
     problems: [
@@ -104,7 +104,7 @@ export default [
     matchers: { merk: 'FIAT', model: /PUNTO/ },
     title: 'Fiat Punto audio upgrade | Audio Upgrade Emmen',
     description:
-      'Beter geluid in je Fiat Punto. Speakers vervangen, deuren dempen en minder rolgeluid, met all-in prijs.',
+      'Beter geluid in je Fiat Punto. Speakers vervangen, deuren dempen en minder rolgeluid, met all-inprijs.',
     intro:
       'De Punto is jarenlang een van de meest verkochte kleine auto\'s van Europa geweest. De exemplaren die nu rijden zijn op leeftijd, en dat hoor je aan het geluid.',
     problems: [

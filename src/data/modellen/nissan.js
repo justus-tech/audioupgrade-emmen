@@ -62,7 +62,7 @@ export default [
     matchers: { merk: 'NISSAN', model: /MICRA/ },
     title: 'Nissan Micra audio upgrade | Audio Upgrade Emmen',
     description:
-      'Beter geluid in je Nissan Micra. Speakers, akoestische deurdemping en minder rolgeluid, met all-in prijs en garantie behouden.',
+      'Beter geluid in je Nissan Micra. Speakers, akoestische deurdemping en minder rolgeluid, met all-inprijs en garantie behouden.',
     intro:
       'De Micra is al generaties lang de betrouwbare stadsauto. Aan geluid is er in de basisuitvoering weinig aandacht besteed, en dat maakt de sprong hier groot.',
     problems: [

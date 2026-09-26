@@ -21,7 +21,7 @@ export default [
     matchers: { merk: 'HYUNDAI', model: /\bI ?10\b/ },
     title: 'Hyundai i10 audio upgrade | Audio Upgrade Emmen',
     description:
-      'Beter geluid in je Hyundai i10. Speakers, akoestische deurdemping en minder rolgeluid, met all-in prijs en garantie behouden.',
+      'Beter geluid in je Hyundai i10. Speakers, akoestische deurdemping en minder rolgeluid, met all-inprijs en garantie behouden.',
     intro:
       'De i10 is een van de best verkochte stadsauto\'s van Nederland: compact, betrouwbaar en scherp geprijsd. Dat scherpe prijskaartje hoor je terug in het geluid.',
     problems: [

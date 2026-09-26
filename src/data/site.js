@@ -319,11 +319,11 @@ export const PACKAGES = [
     short: 'Draadloze Apple CarPlay en Android Auto, naadloos in je originele scherm.',
     body: 'Het perfecte pakket om af te rekenen met verouderde autonavigatie en lelijke losse telefoonhouders. Wij integreren Apple CarPlay en Android Auto 100% naadloos in je huidige systeem. Je bedient Flitsmeister, Spotify en Google Maps gewoon via het originele beeldscherm en stuurwiel.',
     features: [
-      'Draadloze Apple CarPlay & Android Auto integratie.',
+      'Draadloze Apple CarPlay & Android Auto-integratie.',
       'Op je originele fabrieksscherm (of nieuw high-end display).',
       'Bediening via je originele stuurwielknoppen of touchpad.',
       '100% behoud van fabriekssysteem en boordcomputer.',
-      'Inclusief carkit-functie voor kraakhelder bellen.',
+      'Inclusief carkitfunctie voor kraakhelder bellen.',
     ],
     cta: 'Kies CarPlay',
     duur: 'Klaar in ± 2 uur',
@@ -346,12 +346,12 @@ export const PACKAGES = [
     priceNote: 'Inclusief BTW & Montage',
     priceExcl: '€ 822,- excl. btw',
     short: 'De perfecte upgrade voor rust in de cabine en loepzuivere details.',
-    body: 'Het perfecte pakket om de zwakke papieren fabrieksspeakers te elimineren. We vervangen de luidsprekers voorin door een krachtige 2-weg composet. Maar we doen meer dan dat: de deuren worden voorzien van tweelaags premium ontdreuningsmateriaal.',
+    body: 'Het perfecte pakket om de zwakke papieren fabrieksspeakers te elimineren. We vervangen de luidsprekers voorin door een krachtige 2-weg componentenset. Maar we doen meer dan dat: de voordeuren worden voorzien van tweelaags premium dempingsmateriaal.',
     features: [
-      'Premium 2-weg composet luidsprekers.',
-      'Hoogwaardige tweelaags akoestische deurdemping.',
-      'Massieve, onverslijtbare montage-ringen.',
-      '100% onzichtbare OEM integratie.',
+      'Premium 2-weg componentenset.',
+      'Hoogwaardige tweelaagse akoestische deurdemping.',
+      'Massieve, onverslijtbare montageringen.',
+      '100% onzichtbare OEM-integratie.',
     ],
     cta: 'Kies Basis',
     duur: 'Klaar in een halve dag',
@@ -368,7 +368,7 @@ export const PACKAGES = [
      */
     scores: [
       { label: 'Volume', waarde: 3 },
-      { label: 'Bass', waarde: 2 },
+      { label: 'Bas', waarde: 2 },
       { label: 'Zuiverheid', waarde: 3 },
     ],
   },
@@ -381,12 +381,12 @@ export const PACKAGES = [
     priceNote: 'Inclusief BTW & Montage',
     priceExcl: '€ 1.814,- excl. btw',
     short: 'Voor de veelrijder en echte autoliefhebber die het maximale eist met 0% laadruimteverlies.',
-    body: 'Voor de veelrijder en ondernemer. Dit is niet zomaar een speaker-upgrade; dit is een totale herziening van je akoestiek. Het hart van dit systeem is een geavanceerde Digitale Sound Processor (DSP). Hiermee sturen we elke luidspreker actief aan en corrigeren we de looptijden van het geluid, zodat je letterlijk in het midden van de muziek zit. Aangevuld met een onzichtbare, voelbare subwoofer.',
+    body: 'Voor de veelrijder en ondernemer. Dit is niet zomaar een speakerupgrade; dit is een totale herziening van je akoestiek. Het hart van dit systeem is een geavanceerde digitale signaalprocessor (DSP). Hiermee sturen we elke luidspreker actief aan en corrigeren we de looptijden van het geluid, zodat je letterlijk in het midden van de muziek zit. Aangevuld met een onzichtbare, voelbare subwoofer.',
     features: [
-      'Geavanceerde DSP-versterker (Digitale Sound Processor).',
-      'Voertuigspecifieke High-End luidsprekerset.',
-      'Onzichtbare, ultra-compacte actieve subwoofer.',
-      'Extreme drielaags ontdreuning van deuren.',
+      'Geavanceerde DSP-versterker (digitale signaalprocessor).',
+      'Hoogwaardige 2-weg luidsprekerset, voertuigspecifiek ingebouwd.',
+      'Onzichtbare, compacte subwoofer, aangestuurd door de DSP-versterker.',
+      'Extreme drielaagse demping van voor- en achterdeuren.',
       'Volledig akoestisch op maat ingemeten.',
       'Accu en laadspanning gemeten, met de waarden op je werkbon.',
     ],
@@ -396,7 +396,7 @@ export const PACKAGES = [
        en een volledige afstemming. De vijf blijft voor de Reference. */
     scores: [
       { label: 'Volume', waarde: 4 },
-      { label: 'Bass', waarde: 4 },
+      { label: 'Bas', waarde: 4 },
       { label: 'Zuiverheid', waarde: 4 },
     ],
   },
@@ -423,7 +423,7 @@ export const PACKAGES = [
     price: '€ 3.695,00',
     bedrag: 3695,
     priceNote: 'Inclusief BTW & Montage',
-    priceExcl: '€ 3.053,- excl. btw',
+    priceExcl: '€ 3.054,- excl. btw',
     /**
      * Het label stond eerst op The OEM+ Executive en zei "Meest gekozen".
      * Twee dingen daaraan veranderd, en het tweede is het belangrijkst:
@@ -443,13 +443,14 @@ export const PACKAGES = [
      */
     populair: true,
     short: 'Ongeëvenaarde audiofiele perfectie voor wie weigert concessies te doen.',
-    body: 'Voor de purist die weigert concessies te doen. Dit pakket wordt volledig rondom jouw voertuig en muzieksmaak ontworpen. We combineren de absolute wereldtop in versterking en luidsprekers met urenlange, specialistische fase-tuning via de laptop. Inclusief maatwerk subwoofer-behuizingen.',
+    body: 'Voor de purist die weigert concessies te doen. Dit pakket wordt volledig rondom jouw voertuig en muzieksmaak ontworpen. We combineren high-end versterking en luidsprekers van Mosconi en Gladen met urenlange, specialistische fasetuning via de laptop. Inclusief een op maat gebouwde subwooferbehuizing.',
     features: [
-      'High-End 8-kanaals versterker met geïntegreerde DSP.',
-      'Absolute wereldtop luidsprekercomponenten.',
-      'Op maat gebouwde en beklede subwoofer-behuizing.',
-      'Totale ontdreuning (buitenschaal, binnenschaal, paneel).',
-      'Urenlange specialistische fase-tuning via laptop.',
+      'High-end versterker met ingebouwde 10-kanaals DSP.',
+      'High-end luidsprekercomponenten met phase plug.',
+      'Speakers achterin voor je passagiers, bewust terughoudend afgestemd.',
+      'Op maat gebouwde en beklede subwooferbehuizing.',
+      'Totale demping: alle deuren, de vloer en de achterklep.',
+      'Urenlange afstelling via de laptop: alles komt tegelijk bij je oren aan.',
       'Accu en laadspanning gemeten, met de waarden op je werkbon.',
     ],
     /* Stond op 'Bespreek maatwerk'. Dat past niet meer: maatwerk is nu het
@@ -459,7 +460,7 @@ export const PACKAGES = [
     duur: 'Twee tot drie dagen, inclusief tuning',
     scores: [
       { label: 'Volume', waarde: 5 },
-      { label: 'Bass', waarde: 5 },
+      { label: 'Bas', waarde: 5 },
       { label: 'Zuiverheid', waarde: 5 },
     ],
   },
@@ -594,8 +595,8 @@ export const PACKAGES = [
     // De oude site toont hier "€ 0,00" — een placeholder van Squarespace.
     price: 'Prijs op aanvraag',
     priceNote: '',
-    short: 'Losse, extreme akoestische isolatie-pakketten voor deuren, vloeren en daken.',
-    body: 'Heb je al een premium audiosysteem (zoals Harman Kardon of Dynaudio) maar stoor je je aan windgeruis, rolgeluiden en rammelende plastic panelen? Wij bieden ook losse, extreme akoestische isolatie-pakketten aan voor deuren, vloeren en daken.',
+    short: 'Losse, extreme akoestische isolatiepakketten voor deuren, vloeren en daken.',
+    body: 'Heb je al een premium audiosysteem (zoals Harman Kardon of Dynaudio) maar stoor je je aan windgeruis, rolgeluiden en rammelende plastic panelen? Wij bieden ook losse, extreme akoestische isolatiepakketten aan voor deuren, vloeren en daken.',
     features: [],
     cta: 'Informeer naar geluidsisolatie',
     duur: 'In overleg — hangt af van wat je aangepakt wilt hebben',

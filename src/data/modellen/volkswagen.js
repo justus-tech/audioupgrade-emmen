@@ -60,7 +60,7 @@ export default [
     matchers: { merk: 'VOLKSWAGEN', model: /POLO/ },
     title: 'VW Polo audio upgrade & CarPlay | Audio Upgrade Emmen',
     description:
-      'Van blikkerig naar vol geluid in je VW Polo. Speakers, deurdemping en draadloos CarPlay met all-in prijs en behoud van fabrieksgarantie.',
+      'Van blikkerig naar vol geluid in je VW Polo. Speakers, deurdemping en draadloos CarPlay met all-inprijs en behoud van fabrieksgarantie.',
     intro:
       'In een Polo zit je dicht op je speakers. Dat is een voordeel dat Volkswagen volledig laat liggen. Het is precies waarom een Polo met de juiste ingrepen boven zijn klasse uit kan spelen.',
     problems: [
@@ -268,7 +268,7 @@ export default [
     matchers: { merk: 'VOLKSWAGEN', model: /^UP/ },
     title: 'VW Up! audio upgrade | Audio Upgrade Emmen',
     description:
-      'Van blikkerig naar vol geluid in je VW Up!. Speakers, deurdemping en minder rolgeluid — met all-in prijs en behoud van fabrieksgarantie.',
+      'Van blikkerig naar vol geluid in je VW Up!. Speakers, deurdemping en minder rolgeluid — met all-inprijs en behoud van fabrieksgarantie.',
     intro:
       'De Up! is gebouwd om goedkoop te zijn, en het geluid is de plek waar dat het duidelijkst te horen is. Het goede nieuws: in zo\'n kleine cabine hoef je weinig te doen voor een groot verschil.',
     problems: [

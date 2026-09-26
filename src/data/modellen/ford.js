@@ -103,7 +103,7 @@ export default [
     matchers: { merk: 'FORD', model: /\bKA\b|\bKA\+/ },
     title: 'Ford Ka audio upgrade | Audio Upgrade Emmen',
     description:
-      'Beter geluid in je Ford Ka. Speakers, akoestische deurdemping en minder rolgeluid, met all-in prijs en garantie behouden.',
+      'Beter geluid in je Ford Ka. Speakers, akoestische deurdemping en minder rolgeluid, met all-inprijs en garantie behouden.',
     intro:
       'De Ka is een stadsauto zonder pretenties, en zo is hij ook uitgerust. Precies daarom valt er met bescheiden middelen veel te winnen.',
     problems: [

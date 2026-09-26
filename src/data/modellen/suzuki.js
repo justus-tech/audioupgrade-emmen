@@ -62,7 +62,7 @@ export default [
     matchers: { merk: 'SUZUKI', model: /ALTO/ },
     title: 'Suzuki Alto audio upgrade | Audio Upgrade Emmen',
     description:
-      'Beter geluid in je Suzuki Alto. Speakers, akoestische deurdemping en minder rolgeluid, met all-in prijs.',
+      'Beter geluid in je Suzuki Alto. Speakers, akoestische deurdemping en minder rolgeluid, met all-inprijs.',
     intro:
       'De Alto is zo licht en zo eenvoudig mogelijk gebouwd. Dat maakt hem zuinig, en het maakt het geluid het eerste onderdeel waar je iets aan wilt doen.',
     problems: [
@@ -146,7 +146,7 @@ export default [
     matchers: { merk: 'SUZUKI', model: /IGNIS/ },
     title: 'Suzuki Ignis audio upgrade | Audio Upgrade Emmen',
     description:
-      'Beter geluid in je Suzuki Ignis. Speakers, akoestische deurdemping en minder rolgeluid, met all-in prijs.',
+      'Beter geluid in je Suzuki Ignis. Speakers, akoestische deurdemping en minder rolgeluid, met all-inprijs.',
     intro:
       'De Ignis is klein, hoog en eigenzinnig vormgegeven. Die rechte, hoge vormen maken hem akoestisch levendiger dan comfortabel is.',
     problems: [
