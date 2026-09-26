@@ -186,22 +186,48 @@ export function icsBestand(afspraken) {
   ].flatMap(vouwOp).join('\r\n') + '\r\n';
 }
 
+/** Hoeveel octetten een teken inneemt. Beschikbaar in de browser én in node. */
+const NAAR_OCTETTEN = new TextEncoder();
+const octetten = (teken) => NAAR_OCTETTEN.encode(teken).length;
+
 /**
  * Lange regels opvouwen.
  *
- * Een regel in een agendabestand mag niet langer zijn dan 75 tekens. Wat
+ * Een regel in een agendabestand mag niet langer zijn dan 75 OCTETTEN. Wat
  * eroverheen gaat komt op de volgende regel, met een spatie ervoor. Doe je
  * dat niet, dan weigeren sommige agenda's het hele bestand.
+ *
+ * OCTETTEN, NIET TEKENS — DAAR GING HET MIS
+ * Hier werd op tekens geteld. Voor gewone letters is dat hetzelfde, maar een
+ * é telt voor twee en de lange streep — voor drie. En juist die streep zet de
+ * app zélf in elke samenvatting: "Inbouw Jan — Saab 9-3 · 92DJHG". Bij een
+ * klant die Renée heet met een Citroën werd een regel van 73 tekens dus 79
+ * octetten, en bij een regel vol accenten liep het op tot 138 — bijna het
+ * dubbele van wat mag.
+ *
+ * Er wordt ook nooit midden in een teken geknipt: de lus loopt per teken, dus
+ * een é of een emoji blijft heel. Knip je er wél doorheen, dan staat er in de
+ * agenda van de klant een vraagteken in zijn eigen naam.
  */
 export function vouwOp(regel) {
   const uit = [];
-  let rest = String(regel);
-  uit.push(rest.slice(0, 73));
-  rest = rest.slice(73);
-  while (rest.length) {
-    uit.push(` ${rest.slice(0, 72)}`);
-    rest = rest.slice(72);
+  /* 73 en niet 75: dat is de marge die deze app altijd al aanhield, en hij
+     kost niets. Een vervolgregel begint met een spatie, dus daar blijft 72
+     over voor de inhoud. */
+  const RUIMTE = 73;
+  let stuk = '';
+  let breed = 0;
+  for (const teken of String(regel)) {
+    const n = octetten(teken);
+    if (breed + n > RUIMTE) {
+      uit.push(stuk);
+      stuk = ' ';
+      breed = 1;
+    }
+    stuk += teken;
+    breed += n;
   }
+  uit.push(stuk);
   return uit;
 }
 
@@ -380,6 +406,10 @@ function plusUren(tijd, uren) {
  * scheelt een hoop gedoe met zomertijd.
  */
 export function icsVoorKlus(item, { duurUren = 8, voorbereiding = {} } = {}) {
+  /* Geen klus of geen dag geprikt: dan is er geen afspraak om te maken. Liever
+     niets teruggeven dan een bestand met een lege datum erin — dat laatste
+     slikt een agenda wél en zet er dan iets raars in. */
+  if (!item || !opMiddernacht(item.datum)) return '';
   const wat = [item.auto, item.kenteken].filter(Boolean).join(' · ');
   const titel = `Inbouw ${item.wie}${wat ? ` — ${wat}` : ''}`;
   const gestempeld = icsNu();

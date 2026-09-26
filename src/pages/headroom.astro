@@ -1367,12 +1367,16 @@ import { APP } from '../data/app.js';
   });
 
   const bewaarBestand = (inhoud, naam, soort) => {
+    /* Een leeg bestand downloaden is erger dan niets: je denkt dat het gelukt
+       is en merkt pas bij de klant dat er niets in staat. */
+    if (!inhoud) return false;
     const adres = URL.createObjectURL(new Blob([inhoud], { type: soort }));
     const link = document.createElement('a');
     link.href = adres;
     link.download = naam;
     link.click();
     URL.revokeObjectURL(adres);
+    return true;
   };
 
   $('#wb-ls-ics').addEventListener('click', () => {

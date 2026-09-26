@@ -2636,3 +2636,118 @@ describe('het merk staat niet twee keer op de papieren', () => {
     assert.equal(agendaItem(offerte).auto, 'Saab 9-3');
   });
 });
+
+/* ================= HET AGENDABESTAND ================= */
+describe('het agendabestand', () => {
+  /**
+   * WAAROM DIT ZO NAUW LUISTERT
+   * Een .ics gaat rechtstreeks de agenda van Justus of de klant in. Klopt er
+   * iets niet aan de opmaak, dan komt er geen foutmelding: de agenda slikt het
+   * bestand half of weigert het stilletjes, en de afspraak staat er gewoon
+   * niet. Dat merk je op de dag zelf.
+   */
+  const octetten = (tekst) => new TextEncoder().encode(tekst).length;
+
+  const KLUS = {
+    nummer: '2026-014',
+    datum: new Date('2026-09-26'),
+    klant: { naam: 'Jan de Vries' },
+    auto: { kenteken: '92DJHG', merk: 'Saab', model: '9-3' },
+    regels: [{
+      id: 'a', omschrijving: 'Speakers', aantal: 1,
+      inkoopCent: 10000, margePct: 60, uren: 4, soort: 'speakers-voor', toebehoren: [],
+    }],
+    inbouwdatum: '2026-10-25', inbouwtijd: '09:00', status: 'verstuurd',
+  };
+
+  /** Elke regel van het bestand nakijken zoals een agenda dat doet. */
+  function keur(tekst) {
+    const klachten = [];
+    const stapel = [];
+    for (const regel of tekst.split('\r\n')) {
+      if (regel === '') continue;
+      if (octetten(regel) > 75) {
+        klachten.push(`te lang (${octetten(regel)} octetten): ${regel.slice(0, 40)}`);
+      }
+      if (regel.startsWith(' ')) continue;
+      if (!/^[A-Z-]+[;:]/.test(regel)) klachten.push(`rare regel: ${regel.slice(0, 40)}`);
+      if (regel.startsWith('BEGIN:')) stapel.push(regel.slice(6));
+      if (regel.startsWith('END:') && stapel.pop() !== regel.slice(4)) {
+        klachten.push(`BEGIN en END lopen niet gelijk bij ${regel}`);
+      }
+      const tijd = regel.match(/^(DTSTART|DTEND|DTSTAMP):(\d{8}T\d{6}Z?)?$/);
+      if (tijd && !tijd[2]) klachten.push(`${tijd[1]} zonder geldige tijd: ${regel}`);
+    }
+    if (stapel.length) klachten.push('een blok is niet afgesloten');
+    return klachten;
+  }
+
+  test('EEN NAAM MET EEN ACCENT MAAKT DE REGELS NIET TE LANG', () => {
+    /**
+     * Hier ging het mis: het opvouwen telde TEKENS, terwijl de norm OCTETTEN
+     * telt. Een é telt voor twee en de lange streep — voor drie, en die streep
+     * zet de app zelf in elke samenvatting: "Inbouw Jan — Saab 9-3 · 92DJHG".
+     * Bij Renée met een Citroën werd een regel van 73 tekens dus 79 octetten.
+     */
+    const ics = icsVoorKlus(agendaItem({
+      ...KLUS,
+      klant: { naam: 'Renée Müller-Oosterhuis' },
+      auto: { kenteken: '92DJHG', merk: 'Citroën', model: 'C4 Picasso Exclusive' },
+    }));
+    assert.deepEqual(keur(ics), []);
+  });
+
+  test('opvouwen knipt nooit midden in een teken', () => {
+    /* Knip je een é doormidden, dan staat er in de agenda van de klant een
+       vraagteken in zijn eigen naam. */
+    for (const proef of [`SUMMARY:${'é'.repeat(80)}`, `X:${'😀'.repeat(40)}`, `A:${'ü'.repeat(37)}`]) {
+      const stukken = vouwOp(proef);
+      stukken.forEach((s) => assert.ok(octetten(s) <= 75, `${octetten(s)} octetten`));
+      assert.ok(!stukken.join('').includes('�'), 'er is een teken doormidden geknipt');
+      assert.equal(ontvouw(stukken.join('\r\n')), proef, 'er mag niets zoekraken');
+    }
+  });
+
+  test('gewone tekst vouwt nog precies zoals hij deed', () => {
+    // Voor letters zonder accent is een teken één octet; daar verandert niets.
+    assert.deepEqual(vouwOp('A'.repeat(73)), ['A'.repeat(73)]);
+    assert.deepEqual(vouwOp('A'.repeat(74)), ['A'.repeat(73), ' A']);
+    assert.deepEqual(vouwOp(''), ['']);
+    assert.deepEqual(vouwOp('SUMMARY:kort'), ['SUMMARY:kort']);
+  });
+
+  test('een bestand met rare invoer blijft geldig', () => {
+    const gevallen = [
+      ['zonder tijd', { inbouwtijd: '' }],
+      ['met een rare tijd', { inbouwtijd: 'kwart over negen' }],
+      ['met leestekens in de naam', { klant: { naam: 'Jansen; & Zn, "de Vries"' } }],
+      ['zonder klantnaam', { klant: {} }],
+      ['met een heel lange naam', {
+        klant: { naam: 'Christiaan-Bernhard van der Heijden-Oosterhuis uit Emmen-Zuidbarge' },
+      }],
+    ];
+    for (const [wat, extra] of gevallen) {
+      const ics = icsVoorKlus(agendaItem({ ...KLUS, ...extra }));
+      assert.deepEqual(keur(ics), [], wat);
+    }
+  });
+
+  test('zonder dag komt er geen bestand, en geen foutmelding', () => {
+    /* De app vraagt al om een datum voordat je op de knop kunt drukken. Dit is
+       het vangnet: liever niets dan een bestand met een lege datum erin, want
+       dat laatste slikt een agenda wél en zet er dan iets raars in. */
+    assert.equal(icsVoorKlus(agendaItem({ ...KLUS, inbouwdatum: '' })), '');
+    assert.equal(icsVoorKlus(agendaItem({ ...KLUS, inbouwdatum: 'geen datum' })), '');
+    assert.equal(icsVoorKlus(null), '');
+    assert.equal(icsLuistersessie({ voornaam: 'Jan', datum: '' }), '');
+    assert.equal(icsLuistersessie({}), '');
+  });
+
+  test('de luistersessie blijft ook met accenten geldig', () => {
+    const ics = icsLuistersessie({
+      voornaam: 'Renée Müller-Oosterhuis', kenteken: '92DJHG',
+      datum: '2026-10-25', tijd: '14:00', duurMinuten: 45,
+    });
+    assert.deepEqual(keur(ics), []);
+  });
+});

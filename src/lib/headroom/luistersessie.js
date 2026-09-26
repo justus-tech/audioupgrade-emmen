@@ -110,6 +110,9 @@ export function bevestiging({
  */
 export function icsLuistersessie(sessie = {}) {
   const { id = 'nieuw', voornaam = '', kenteken = '', datum, tijd = '10:00', duurMinuten = 45 } = sessie;
+  /* Zonder dag is er geen afspraak. De app vraagt er al om voordat je op de
+     knop kunt drukken; dit is het vangnet eronder. */
+  if (!opMiddernacht(datum)) return '';
   const plaat = formatteerKenteken(kenteken);
   const naam = String(voornaam).trim().split(/\s+/)[0] || '';
   const titel = `Luistersessie ${SITE.name}${naam ? ` — ${naam}` : ''}`;
