@@ -57,6 +57,18 @@ import { APP } from '../data/app.js';
 </head>
 <body class="headroom">
 
+{/* HET ALARM ALS OPSLAAN NIET MEER LUKT.
+
+    Staat helemaal bovenaan en blijft bij het scrollen in beeld, want dit mag
+    je op geen enkel tabblad missen. Zie de uitleg bij opslaan(). */}
+<div class="wb-alarm" id="wb-alarm" role="alert" hidden>
+  <div>
+    <strong>Opslaan lukt niet.</strong>
+    <span id="wb-alarm-wat"></span>
+  </div>
+  <button type="button" class="btn solid" id="wb-alarm-kopie">Reservekopie maken</button>
+</div>
+
 <header class="wb-kop">
   <strong>{APP.naam}</strong>
   <span id="wb-nummer">offerte</span>
@@ -830,12 +842,50 @@ import { APP } from '../data/app.js';
     }
   }
 
+  /**
+   * ALLES WEGSCHRIJVEN NAAR DE OPSLAG VAN DE BROWSER.
+   *
+   * WAAROM DIT ZO LUID MELDT ALS HET MISGAAT
+   * Hier stond alleen een regeltje tekst bij het kentekenveld. Dat veld staat
+   * op het tabblad Offerte, en op de andere tabbladen zie je het niet. Zat je
+   * dus onderdelen in te voeren, een auto vast te leggen of je uurtarief te
+   * wijzigen terwijl de opslag vol was, dan werkte het scherm gewoon bij, zei
+   * de app niets, en was alles weg zodra je de app sloot. Nagespeeld: vier
+   * dingen ingevoerd, geen enkele waarschuwing te zien, na het opnieuw openen
+   * alles leeg.
+   *
+   * Nu komt er een balk bovenaan die overal blijft staan tot het weer lukt,
+   * met de enige knop die op dat moment nog helpt: een reservekopie maken.
+   * Dat bestand wordt uit het geheugen opgebouwd en gaat dus wél goed.
+   */
   function opslaan() {
     try {
       localStorage.setItem(SLEUTEL, JSON.stringify(staat));
+      alarmUit();
+      return true;
     } catch (e) {
-      melden('Opslaan lukt niet — staat je browser in privémodus?');
+      /* Een volle opslag en privémodus geven allebei deze fout, en het scheelt
+         nogal wat je eraan doet. Daarom staan ze er allebei. */
+      alarmAan(
+        'Wat je nu invult blijft niet bewaard. Waarschijnlijk is de opslag van je '
+        + 'browser vol, of staat hij in privémodus. Maak eerst een reservekopie — '
+        + 'dan ben je niets kwijt.'
+      );
+      return false;
     }
+  }
+
+  /** De balk aanzetten. Hij blijft staan tot opslaan weer lukt. */
+  function alarmAan(tekst) {
+    const balk = $('#wb-alarm');
+    if (!balk) return;
+    $('#wb-alarm-wat').textContent = tekst;
+    balk.hidden = false;
+  }
+
+  function alarmUit() {
+    const balk = $('#wb-alarm');
+    if (balk) balk.hidden = true;
   }
 
   let staat = laden();
@@ -2410,6 +2460,9 @@ import { APP } from '../data/app.js';
     .join('');
 
   /* ================= RESERVEKOPIE ================= */
+  /* De knop in de alarmbalk doet hetzelfde als die op Instellingen. */
+  $('#wb-alarm-kopie').addEventListener('click', () => $('#wb-export').click());
+
   $('#wb-export').addEventListener('click', () => {
     /* Het merkje 'reservekopie' is belangrijk: daaraan ziet het inlezen dat
        dit bestand ALLES vervangt. Een bestand zonder dat merkje — een
@@ -4184,6 +4237,38 @@ import { APP } from '../data/app.js';
     border-top: 1px solid var(--line);
     font-size: .62rem;
     color: var(--text-dim);
+  }
+
+  /* ================= HET ALARM ================= */
+  /* Oranje op de donkere ondergrond, met zwarte letters erop: dit is de enige
+     plek in de app waar het merkoranje een heel vlak vult, en dat is precies
+     de bedoeling. Uit brand.js, net als de rest. */
+  .wb-alarm {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-size: .9rem;
+    line-height: 1.45;
+  }
+  .wb-alarm[hidden] { display: none; }
+  .wb-alarm strong { display: block; font-family: 'Oswald', sans-serif; letter-spacing: .04em; }
+  /* Op een telefoon vult de knop de breedte, zodat je hem met een duim raakt. */
+  .wb-alarm .btn {
+    width: 100%;
+    background: var(--accent-ink);
+    color: var(--accent);
+    border-color: var(--accent-ink);
+  }
+
+  @media (min-width: 720px) {
+    .wb-alarm { flex-direction: row; align-items: center; justify-content: space-between; }
+    .wb-alarm .btn { width: auto; white-space: nowrap; }
   }
 
   /* Hover alleen waar er echt een muis is. Op een telefoon blijft hover na
