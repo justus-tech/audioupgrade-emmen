@@ -1965,6 +1965,143 @@ describe('Headroom', alsGebouwd, () => {
     await pagina.close();
   });
 
+  /* ================= ALS OPSLAAN NIET LUKT ================= */
+  /**
+   * DE STILSTE MANIER OM ALLES KWIJT TE RAKEN.
+   *
+   * Is de opslag van de browser vol, of staat hij in privémodus, dan mislukt
+   * het wegschrijven. Het scherm werkt wél gewoon bij: je onderdeel staat in
+   * je lijst, je autodossier staat er, je uurtarief is aangepast. Sluit je de
+   * app, dan is het allemaal weg.
+   *
+   * De waarschuwing stond in een regeltje bij het kentekenveld, en dat veld
+   * staat op het tabblad Offerte. Op Onderdelen, Auto's en Instellingen zag je
+   * dus niets. Nagespeeld: vier dingen ingevoerd, nul waarschuwingen, na het
+   * opnieuw openen alles leeg.
+   */
+  async function metVolleOpslag() {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    /* Vanaf het eerste moment: wegschrijven lukt niet. `window.__mag` zet het
+       later weer aan, zodat we ook kunnen zien dat de balk dan verdwijnt. */
+    await pagina.addInitScript(() => {
+      const echt = Storage.prototype.setItem;
+      window.__mag = false;
+      Storage.prototype.setItem = function (sleutel, waarde) {
+        if (sleutel === 'aue-werkbak-v1' && !window.__mag) {
+          const fout = new Error('vol');
+          fout.name = 'QuotaExceededError';
+          throw fout;
+        }
+        return echt.call(this, sleutel, waarde);
+      };
+    });
+    await pagina.goto(paginaUrl('headroom'));
+    await pagina.evaluate(() => document.fonts.ready);
+    return { pagina, fouten };
+  }
+
+  /** Staat de balk er, en staat hij ook echt in beeld? */
+  const alarmTeZien = (pagina) => pagina.evaluate(() => {
+    const balk = document.querySelector('#wb-alarm');
+    if (!balk || !balk.offsetParent) return false;
+    const vak = balk.getBoundingClientRect();
+    return vak.top < 200 && vak.bottom > 0;
+  });
+
+  test('ALS OPSLAAN NIET LUKT STAAT DAT OP ELK TABBLAD', async () => {
+    const { pagina, fouten } = await metVolleOpslag();
+    assert.equal(await alarmTeZien(pagina), false, 'bij het openen hoort er niets te staan');
+
+    await vulCatalogus(pagina);
+    await pagina.click('[data-tab="catalogus"]');
+    assert.equal(await alarmTeZien(pagina), true, 'op Onderdelen hoort de balk te staan');
+
+    const tekst = await pagina.textContent('#wb-alarm');
+    assert.match(tekst, /opslaan lukt niet/i);
+    assert.match(tekst, /vol/i, 'een volle opslag is de waarschijnlijkste oorzaak');
+    assert.match(tekst, /reservekopie/i, 'er hoort te staan wat je nu moet doen');
+
+    /* En op elk ander tabblad ook. Dat was het hele probleem. */
+    for (const tab of ['autos', 'instellingen', 'meting', 'agenda', 'rapport', 'offerte']) {
+      await pagina.click(`[data-tab="${tab}"]`);
+      assert.equal(await alarmTeZien(pagina), true, `op ${tab} staat de balk niet`);
+    }
+
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('de balk verdwijnt zodra opslaan weer lukt', async () => {
+    const { pagina } = await metVolleOpslag();
+    await vulCatalogus(pagina);
+    await pagina.click('[data-tab="catalogus"]');
+    assert.equal(await alarmTeZien(pagina), true);
+
+    await pagina.evaluate(() => { window.__mag = true; });
+    await pagina.fill('#wb-o-naam', 'Subwoofer onder de stoel');
+    await pagina.selectOption('#wb-o-soort', 'subwoofer');
+    await pagina.fill('#wb-o-inkoop', '390,00');
+    await pagina.click('#wb-o-bewaar');
+    await pagina.waitForFunction(() => {
+      const balk = document.querySelector('#wb-alarm');
+      return !balk || !balk.offsetParent;
+    });
+
+    /* Wat eerder niet weggeschreven kon worden zat nog in het geheugen en
+       gaat nu alsnog mee. Er is dus niets kwijt als je ruimte maakt terwijl
+       de app openstaat. */
+    const bewaard = await pagina.evaluate(
+      () => JSON.parse(localStorage.getItem('aue-werkbak-v1')).catalogus.length
+    );
+    assert.equal(bewaard, 2, 'allebei de onderdelen horen er nu in te staan');
+    await pagina.close();
+  });
+
+  test('de knop in de balk maakt een reservekopie', async () => {
+    /* Dit is het enige wat op dat moment nog helpt: het bestand wordt uit het
+       geheugen opgebouwd, dus dat lukt ook als de opslag vol is. */
+    const { pagina } = await metVolleOpslag();
+    await vulCatalogus(pagina);
+    const wacht = pagina.waitForEvent('download');
+    await pagina.click('#wb-alarm-kopie');
+    const bestand = await wacht;
+    assert.match(bestand.suggestedFilename(), /^headroom-\d{4}-\d{2}-\d{2}\.json$/);
+    await pagina.close();
+  });
+
+  test('de balk past op een telefoon van 320 pixels', async () => {
+    const pagina = await browser.newPage({ ...telefoon, viewport: { width: 320, height: 844 } });
+    await pagina.addInitScript(() => {
+      const echt = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (sleutel, waarde) {
+        if (sleutel === 'aue-werkbak-v1') {
+          const fout = new Error('vol');
+          fout.name = 'QuotaExceededError';
+          throw fout;
+        }
+        return echt.call(this, sleutel, waarde);
+      };
+    });
+    await pagina.goto(paginaUrl('headroom?tab=catalogus'));
+    await pagina.evaluate(() => document.fonts.ready);
+    await pagina.fill('#wb-o-naam', 'Speakers voor');
+    await pagina.fill('#wb-o-inkoop', '240,00');
+    await pagina.click('#wb-o-bewaar');
+    await pagina.waitForSelector('#wb-alarm:not([hidden])');
+
+    const overloop = await pagina.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+    );
+    assert.equal(overloop, 0, 'de balk steekt uit');
+    const knop = await pagina.evaluate(
+      () => Math.round(document.querySelector('#wb-alarm-kopie').getBoundingClientRect().height)
+    );
+    assert.ok(knop >= 38, `de knop is maar ${knop} pixels hoog`);
+    await pagina.close();
+  });
+
   /* ================= DE RESERVEKOPIE ================= */
   /**
    * EEN RESERVEKOPIE MOET ALLES TERUGBRENGEN WAT ERIN ZIT.
