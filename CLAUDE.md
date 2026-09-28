@@ -125,6 +125,18 @@ de aanbetalingszin met de echte bedragen erin, controleren dat het totaal klopt
 met wat je hebt afgesproken, en de pdf de naam geven met het offertenummer en het
 kenteken erin. `offerte.voorbeeld.json` laat zien hoe zo'n invulblad eruitziet.
 
+### WhatsApp-berichten ophalen
+
+```bash
+npm run whatsapp -- --map /mnt/project-files/whatsapp
+```
+
+Haalt nieuwe klantberichten op bij de WhatsApp-ontvanger (map
+`whatsapp-ontvanger/`) en zet ze per klant in een gesprek, in de vorm van een
+WhatsApp-export. De ontvanger kan **niets versturen**, en dat moet zo blijven:
+berichten naar klanten stuurt Justus zelf. Hoe hij werkt en hoe je hem aanzet
+staat in `whatsapp-ontvanger/LEESMIJ.md`.
+
 Commando's:
 
 ```bash

@@ -1,0 +1,83 @@
+# Zet de WhatsApp-ontvanger (map whatsapp-ontvanger/) live bij Cloudflare, en
+# vertelt 360dialog waar nieuwe berichten naartoe moeten.
+#
+# Draait vanzelf als er iets in die map verandert, en met de hand via
+# Actions → "WhatsApp-ontvanger publiceren" → Run workflow.
+#
+# Alle sleutels staan als geheim bij GitHub (Settings → Secrets and variables →
+# Actions). Zolang ze er nog niet staan, slaat deze stap zichzelf over in
+# plaats van rood te worden. Welke het zijn staat in whatsapp-ontvanger/LEESMIJ.md.
+
+name: WhatsApp-ontvanger publiceren
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'whatsapp-ontvanger/**'
+      - '.github/workflows/whatsapp-ontvanger.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: whatsapp-ontvanger
+  cancel-in-progress: false
+
+jobs:
+  publiceren:
+    name: Publiceren
+    runs-on: ubuntu-latest
+    env:
+      KAN_PUBLICEREN: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' && secrets.WHATSAPP_WEBHOOK_SLEUTEL != '' && secrets.WHATSAPP_OPHAALSLEUTEL != '' }}
+      KAN_AANMELDEN: ${{ secrets.D360_API_KEY != '' }}
+    steps:
+      - name: Nog niet ingesteld
+        if: env.KAN_PUBLICEREN != 'true'
+        run: echo "::notice::De sleutels voor de WhatsApp-ontvanger staan nog niet bij GitHub. Zie whatsapp-ontvanger/LEESMIJ.md."
+
+      - uses: actions/checkout@v4
+        if: env.KAN_PUBLICEREN == 'true'
+
+      - name: Naar Cloudflare
+        id: cloudflare
+        if: env.KAN_PUBLICEREN == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: '4'
+          workingDirectory: whatsapp-ontvanger
+          command: deploy
+          secrets: |
+            WEBHOOK_SLEUTEL
+            OPHAAL_SLEUTEL
+        env:
+          WEBHOOK_SLEUTEL: ${{ secrets.WHATSAPP_WEBHOOK_SLEUTEL }}
+          OPHAAL_SLEUTEL: ${{ secrets.WHATSAPP_OPHAALSLEUTEL }}
+
+      - name: Adres doorgeven aan 360dialog
+        if: env.KAN_PUBLICEREN == 'true' && env.KAN_AANMELDEN == 'true'
+        env:
+          D360_API_KEY: ${{ secrets.D360_API_KEY }}
+          SLEUTEL: ${{ secrets.WHATSAPP_WEBHOOK_SLEUTEL }}
+          UITVOER: ${{ steps.cloudflare.outputs.command-output }}
+          ADRES: ${{ steps.cloudflare.outputs.deployment-url }}
+        run: |
+          # Het adres van de ontvanger, bv. https://aue-whatsapp.justus.workers.dev
+          if [ -z "$ADRES" ]; then
+            ADRES=$(printf '%s' "$UITVOER" | grep -oE 'https://[a-z0-9.-]+\.workers\.dev' | head -n1)
+          fi
+          if [ -z "$ADRES" ]; then
+            echo "::error::Kon het adres van de ontvanger niet vinden in de uitvoer van Cloudflare."
+            exit 1
+          fi
+          echo "Ontvanger staat op $ADRES"
+          jq -n --arg url "$ADRES/webhook" --arg sleutel "$SLEUTEL" \
+            '{url: $url, headers: {"x-ontvanger-sleutel": $sleutel}}' |
+          curl -fsS -X POST https://waba-v2.360dialog.io/v1/configs/webhook \
+            -H "D360-API-KEY: $D360_API_KEY" \
+            -H 'Content-Type: application/json' \
+            --data-binary @- > /dev/null
+          echo "360dialog stuurt nieuwe berichten nu naar $ADRES/webhook"
