@@ -23,8 +23,17 @@
  * In de map komt:
  *   gesprekken/<nummer>.md   het gesprek met die klant, nieuwe berichten onderaan
  *   stand.json               tot waar we de vorige keer zijn gekomen
+ *
+ * BEWAARTERMIJN
+ * De ontvanger wist berichten na 90 dagen, en deze kopieën moeten dat ook.
+ * Anders klopt de termijn in de privacyverklaring niet. Daarom haalt elke
+ * ophaalronde oudere regels uit de gesprekken, en een gesprek waar niets meer
+ * in staat wordt helemaal gewist. Een andere termijn zet je met
+ * WHATSAPP_BEWAAR_DAGEN; houd die gelijk aan BEWAAR_DAGEN bij de ontvanger.
  */
-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync,
+} from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -60,6 +69,54 @@ export function perKlant(berichten) {
   }
   for (const k of klanten.values()) k.berichten.sort((a, b) => a.tijd - b.tijd);
   return klanten;
+}
+
+const BERICHTREGEL = /^\[(\d{2})-(\d{2})-(\d{4}) (\d{2}):(\d{2})\] /;
+
+/**
+ * Berichten van vóór `grens` (seconden) uit een gesprek halen.
+ *
+ * De kop bovenaan blijft staan. Een bericht dat over meer regels loopt, gaat in
+ * zijn geheel weg of blijft in zijn geheel staan. Geeft `null` terug als er
+ * geen enkel bericht overblijft: dan kan het hele bestand weg.
+ *
+ * De tijd in de regel is Nederlandse tijd; we lezen hem als UTC. Dat scheelt
+ * hoogstens twee uur, en bij een termijn van 90 dagen maakt dat niets uit.
+ */
+export function snoei(inhoud, grens) {
+  const kop = [];
+  const berichten = [];
+  for (const regel of inhoud.replace(/\n$/, '').split('\n')) {
+    const t = BERICHTREGEL.exec(regel);
+    if (t) {
+      const [, dag, maand, jaar, uur, minuut] = t.map(Number);
+      berichten.push({ tijd: Date.UTC(jaar, maand - 1, dag, uur, minuut) / 1000, regels: [regel] });
+    } else if (berichten.length > 0) {
+      berichten.at(-1).regels.push(regel);
+    } else {
+      kop.push(regel);
+    }
+  }
+  const over = berichten.filter((b) => b.tijd >= grens);
+  if (over.length === 0) return null;
+  return `${[...kop, ...over.flatMap((b) => b.regels)].join('\n')}\n`;
+}
+
+/** Alle gesprekken in de map langs, en ouder dan de termijn eruit. */
+function snoeiAlles(map, dagen) {
+  const grens = Date.now() / 1000 - dagen * 24 * 60 * 60;
+  const gesprekken = join(map, 'gesprekken');
+  for (const naam of readdirSync(gesprekken).filter((n) => n.endsWith('.md'))) {
+    const bestand = join(gesprekken, naam);
+    const oud = readFileSync(bestand, 'utf8');
+    const nieuw = snoei(oud, grens);
+    if (nieuw === null) {
+      rmSync(bestand);
+      console.log(`${naam}: alle berichten ouder dan ${dagen} dagen, gesprek gewist.`);
+    } else if (nieuw !== oud) {
+      writeFileSync(bestand, nieuw);
+    }
+  }
 }
 
 function stop(melding) {
@@ -102,10 +159,8 @@ async function main() {
     if (berichten.length < perKeer) break;
   }
 
-  if (nieuw.length === 0) {
-    console.log('Geen nieuwe WhatsApp-berichten.');
-    return;
-  }
+  const dagen = Math.max(1, Number(process.env.WHATSAPP_BEWAAR_DAGEN) || 90);
+  if (nieuw.length === 0) console.log('Geen nieuwe WhatsApp-berichten.');
 
   for (const k of perKlant(nieuw).values()) {
     const bestand = join(map, 'gesprekken', `${k.klant}.md`);
@@ -122,6 +177,7 @@ async function main() {
   // Pas na het wegschrijven de stand bijwerken: gaat er halverwege iets mis,
   // dan halen we het de volgende keer gewoon opnieuw op.
   writeFileSync(standBestand, `${JSON.stringify(stand, null, 2)}\n`);
+  snoeiAlles(map, dagen);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) await main();

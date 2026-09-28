@@ -64,9 +64,23 @@ Laat het daarna aan Claude weten; die test het en zet de ochtendronde aan.
 
 ## Niet vergeten: je privacyverklaring
 
-Klantberichten worden nu automatisch verwerkt door 360dialog en Cloudflare om
-offertes voor te bereiden. Zet dat in je privacyverklaring, met de bewaartermijn
-van 90 dagen.
+Klantberichten gaan nu langs drie bedrijven die ze voor jou verwerken om
+offertes voor te bereiden. Zet ze alle drie in je privacyverklaring:
+
+- **360dialog** (Berlijn) sluit je nummer aan en geeft de berichten door.
+- **Cloudflare** bewaart ze in de ontvanger, in de EU.
+- **Anthropic** (Claude, je AI-assistent) leest de gesprekken. Daarvoor staan ze
+  ook in de projectmap bij Claude. Anthropic is een Amerikaans bedrijf, dus die
+  kopie staat niet gegarandeerd in de EU.
+
+**Bewaartermijn: 90 dagen**, in de ontvanger én in de projectmap: elke keer dat
+`npm run whatsapp` draait, gaan oudere berichten ook daar weg. Dat geldt alleen
+voor wat via de ontvanger binnenkomt. WhatsApp-exports die je zelf in het
+project zet, en de offertes zelf, worden niet vanzelf gewist.
+
+**Verwerkersovereenkomst.** Met alle drie heb je er een nodig. Bij 360dialog en
+Cloudflare hoort die bij hun voorwaarden. Kijk bij Claude of je abonnement er
+een heeft: bij een zakelijk abonnement wel, bij een persoonlijk niet.
 
 ## Voor wie eraan werkt
 
@@ -75,5 +89,7 @@ van 90 dagen.
 - `worker.js` is de ontvanger zelf.
 - `scripts/whatsapp-berichten.mjs` (`npm run whatsapp`) haalt nieuwe berichten
   op en zet ze per klant in een gesprek, in de vorm van een WhatsApp-export.
+  Het wist daar ook berichten ouder dan `WHATSAPP_BEWAAR_DAGEN` (standaard 90);
+  houd die gelijk aan `BEWAAR_DAGEN` in `wrangler.toml`.
 - Lokaal testen: zet `WEBHOOK_SLEUTEL`, `OPHAAL_SLEUTEL` en `LOKAAL=1` in
   `.dev.vars` in deze map en draai `npx wrangler dev`.

@@ -9,7 +9,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { berichtenUit, sleutelKlopt, tekstVan, cijfers } from '../whatsapp-ontvanger/berichten.js';
-import { regelVoor, perKlant, tijdstip } from '../scripts/whatsapp-berichten.mjs';
+import { regelVoor, perKlant, tijdstip, snoei } from '../scripts/whatsapp-berichten.mjs';
 
 const EIGEN = '31644379844';
 const KLANT = '31612345678';
@@ -133,5 +133,29 @@ describe('het gesprek opschrijven', () => {
     assert.deepEqual([...k.keys()], ['A', 'B']);
     assert.equal(k.get('A').naam, 'An');
     assert.deepEqual(k.get('A').berichten.map((b) => b.tekst), ['1', '3']);
+  });
+});
+
+describe('de bewaartermijn van de kopieën', () => {
+  const kop = '# WhatsApp-gesprek met Tonnie (+31612345678)\n\nUitleg.\n\n';
+  const grens = Date.UTC(2026, 6, 1) / 1000;
+
+  test('oude berichten gaan eruit, de kop en nieuwe berichten blijven', () => {
+    const inhoud = `${kop}[30-06-2026 23:00] Tonnie: oud\n[01-07-2026 09:00] Justus: nieuw\n`;
+    assert.equal(snoei(inhoud, grens), `${kop}[01-07-2026 09:00] Justus: nieuw\n`);
+  });
+
+  test('een bericht over meer regels gaat in zijn geheel weg of blijft in zijn geheel', () => {
+    const inhoud = `${kop}[01-06-2026 10:00] Tonnie: regel 1\nregel 2\n[02-07-2026 10:00] Tonnie: a\nb\n`;
+    assert.equal(snoei(inhoud, grens), `${kop}[02-07-2026 10:00] Tonnie: a\nb\n`);
+  });
+
+  test('blijft er niets over, dan kan het hele gesprek weg', () => {
+    assert.equal(snoei(`${kop}[01-01-2026 10:00] Tonnie: oud\n`, grens), null);
+  });
+
+  test('niets te oud: het gesprek blijft precies hetzelfde', () => {
+    const inhoud = `${kop}[05-07-2026 10:00] Tonnie: hoi\n`;
+    assert.equal(snoei(inhoud, grens), inhoud);
   });
 });
