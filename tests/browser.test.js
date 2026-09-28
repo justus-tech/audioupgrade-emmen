@@ -1965,6 +1965,125 @@ describe('Headroom', alsGebouwd, () => {
     await pagina.close();
   });
 
+  /* ================= EEN PRIJSLIJST INLEZEN ================= */
+  /**
+   * DE STILSTE MANIER OM GELD TE VERLIEZEN.
+   *
+   * Wat je zelf intikt gaat langs de controle die "240,00" netjes naar centen
+   * omrekent. Een ingelezen bestand ging daar niet langs: wat erin stond werd
+   * overgenomen zoals het er stond. Een bedrag als "240,00" is dan geen getal,
+   * de rekensom leest er nul in, en dat onderdeel kwam voor € 272,25 op de
+   * offerte in plaats van € 736,89 — zonder dat er ergens iets stond.
+   */
+  async function leesLijst(pagina, catalogus) {
+    const meldingen = [];
+    pagina.on('dialog', (d) => { meldingen.push(d.message()); d.accept(); });
+    await pagina.click('[data-tab="instellingen"]');
+    await pagina.setInputFiles('#wb-import', {
+      name: 'prijslijst.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify({ catalogus })),
+    });
+    await pagina.waitForFunction(
+      () => JSON.parse(localStorage.getItem('aue-werkbak-v1')).catalogus.length > 0
+    );
+    return meldingen.join('\n');
+  }
+
+  test('EEN BEDRAG IN EUROS WORDT OMGEREKEND, NIET GENEGEERD', async () => {
+    const { pagina, fouten } = await openWerkbak();
+    const melding = await leesLijst(pagina, [{
+      omschrijving: 'Gladen RS 165 composet', merk: 'Gladen',
+      artikelnummer: 'GL-RS-165', leverancier: 'Gladen NL',
+      soort: 'speakers-voor', inkoopCent: '240,00', margePct: 60, uren: 3, toebehoren: [],
+    }]);
+
+    const inkoop = await pagina.evaluate(
+      () => JSON.parse(localStorage.getItem('aue-werkbak-v1')).catalogus[0].inkoopCent
+    );
+    assert.equal(inkoop, 24000, '240,00 euro hoort 24000 cent te zijn');
+    assert.match(melding, /in euro's in plaats van in centen/i, 'dit hoort gemeld te worden');
+
+    /* En dan klopt de prijs op de offerte ook: 240 × 1,6 + 3 uur × 75 = 609
+       excl, dus € 736,89 inclusief btw. */
+    await pagina.click('[data-tab="offerte"]');
+    await pagina.evaluate(() => {
+      document.querySelectorAll('#wb-voorkeuren .wb-chip').forEach((c) => {
+        if (!c.classList.contains('aan')) c.click();
+      });
+    });
+    await pagina.click('#wb-onderdelen .wb-toevoeg >> nth=0');
+    assert.equal(await pagina.textContent('#wb-totaal'), '€ 736,89');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een onderdeel zonder leesbare inkoopprijs wordt gemeld', async () => {
+    /* Nul neerzetten mag, maar dan moet je het wel weten: zo'n onderdeel is
+       te goedkoop op een offerte. */
+    const { pagina, fouten } = await openWerkbak();
+    const melding = await leesLijst(pagina, [
+      { omschrijving: 'Met prijs', artikelnummer: 'A1', leverancier: 'X', soort: 'kabels', inkoopCent: 12000, uren: 1 },
+      { omschrijving: 'Zonder prijs', artikelnummer: 'A2', leverancier: 'X', soort: 'overig', uren: 1 },
+    ]);
+    assert.match(melding, /LET OP/);
+    assert.match(melding, /Zonder prijs/, 'er hoort bij te staan welk onderdeel het is');
+    assert.match(melding, /€ 0,00/);
+    /* Netjes enkelvoud bij één onderdeel. */
+    assert.match(melding, /Die staat nu op/);
+    assert.ok(!melding.includes('Die staan nu op'));
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een kaal getal blijft staan zoals het er staat', async () => {
+    /**
+     * "12000" kan 12.000 cent zijn of 12.000 euro, en dat is niet uit te maken.
+     * Het veld heet inkoopCent, dus dat is de eerlijkste lezing — en er wordt
+     * niets over gemeld, want er is niets veranderd.
+     */
+    const { pagina } = await openWerkbak();
+    const melding = await leesLijst(pagina, [
+      { omschrijving: 'Kabelset', artikelnummer: 'K1', leverancier: 'X', soort: 'kabels', inkoopCent: '12000', uren: 1 },
+    ]);
+    const inkoop = await pagina.evaluate(
+      () => JSON.parse(localStorage.getItem('aue-werkbak-v1')).catalogus[0].inkoopCent
+    );
+    assert.equal(inkoop, 12000);
+    assert.ok(!melding.includes('omgerekend'), 'hier valt niets om te rekenen');
+    assert.ok(!melding.includes('LET OP'), 'en er is niets mis');
+    await pagina.close();
+  });
+
+  test('uren met een komma worden gelezen', async () => {
+    const { pagina } = await openWerkbak();
+    await leesLijst(pagina, [
+      { omschrijving: 'Afstellen', artikelnummer: 'U1', leverancier: 'X', soort: 'dsp', inkoopCent: 0, uren: '1,5' },
+    ]);
+    const uren = await pagina.evaluate(
+      () => JSON.parse(localStorage.getItem('aue-werkbak-v1')).catalogus[0].uren
+    );
+    assert.equal(uren, 1.5, 'anderhalf uur hoort 1,5 te zijn en niet 0');
+    await pagina.close();
+  });
+
+  test('wat er verplicht bij hoort gaat langs dezelfde controle', async () => {
+    /* Toebehoren tellen mee in de inkoop, dus een fout bedrag daar kost
+       evenveel marge als een fout bedrag op het onderdeel zelf. */
+    const { pagina } = await openWerkbak();
+    const melding = await leesLijst(pagina, [{
+      omschrijving: 'Speakers met ringen', artikelnummer: 'S1', leverancier: 'X',
+      soort: 'speakers-voor', inkoopCent: 24000, uren: 3,
+      toebehoren: [{ omschrijving: 'Adapterringen', artikelnummer: 'R1', inkoopCent: '25,00', aantal: 2 }],
+    }]);
+    const ring = await pagina.evaluate(
+      () => JSON.parse(localStorage.getItem('aue-werkbak-v1')).catalogus[0].toebehoren[0].inkoopCent
+    );
+    assert.equal(ring, 2500);
+    assert.match(melding, /omgerekend/);
+    await pagina.close();
+  });
+
   /* ================= ALS OPSLAAN NIET LUKT ================= */
   /**
    * DE STILSTE MANIER OM ALLES KWIJT TE RAKEN.

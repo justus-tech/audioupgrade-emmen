@@ -2459,6 +2459,66 @@ import { APP } from '../data/app.js';
     .map((t) => `<a class="btn wb-tabkoppeling" href="?tab=${t.id}">${ontsnap(t.naam)}</a>`)
     .join('');
 
+  /**
+   * EEN INGELEZEN ONDERDEEL NAKIJKEN.
+   *
+   * Wat je zelf intikt gaat door bedragIn() en urenIn() heen, dus dat klopt
+   * altijd. Een ingelezen bestand ging daar niet langs: wat erin stond werd
+   * overgenomen zoals het er stond. Een bedrag als "240,00" is dan geen getal,
+   * de rekensom leest er nul in, en de offerte is honderden euro's te laag.
+   *
+   * WAT HIER WEL EN NIET GERADEN WORDT
+   * Staat er een komma, een euroteken of een punt in, dan is het een bedrag in
+   * euro's — centen zijn hele getallen. Dat rekent naarCent() netjes om, met
+   * dezelfde functie als voor wat je intikt.
+   *
+   * Een kaal getal wordt NIET omgerekend. "12000" kan 12.000 cent zijn of
+   * 12.000 euro, en dat is niet uit te maken. Dan blijft het staan zoals het
+   * er stond — het veld heet inkoopCent, dus dat is de eerlijkste lezing.
+   *
+   * Wat helemaal niet te lezen is, wordt nul, en dát wordt gemeld. Stil een
+   * nul neerzetten is hier het ergste van alles.
+   */
+  function nagekekenOnderdeel(rauw) {
+    const onderdeel = { ...rauw };
+    let gelezen = false;
+    let zonderPrijs = false;
+
+    const bron = rauw.inkoopCent;
+    if (typeof bron === 'number' && Number.isFinite(bron)) {
+      onderdeel.inkoopCent = Math.max(0, Math.round(bron));
+    } else if (typeof bron === 'string' && /[,.€]/.test(bron)) {
+      onderdeel.inkoopCent = bedragIn(bron);
+      gelezen = onderdeel.inkoopCent > 0;
+      zonderPrijs = !gelezen;
+    } else if (typeof bron === 'string' && /^\s*\d+\s*$/.test(bron)) {
+      onderdeel.inkoopCent = Math.max(0, Math.round(Number(bron)));
+    } else {
+      onderdeel.inkoopCent = 0;
+      zonderPrijs = true;
+    }
+
+    /* Uren mogen met een komma: "3,5" is drieënhalf uur. */
+    onderdeel.uren = urenIn(rauw.uren);
+    if (rauw.margePct !== undefined && rauw.margePct !== null && rauw.margePct !== '') {
+      const marge = Number(String(rauw.margePct).replace(',', '.'));
+      if (Number.isFinite(marge)) onderdeel.margePct = marge;
+    }
+
+    /* Wat er verplicht bij hoort telt mee in de inkoop, dus dat gaat langs
+       dezelfde controle. */
+    if (Array.isArray(rauw.toebehoren)) {
+      onderdeel.toebehoren = rauw.toebehoren.map((t) => {
+        const uit = nagekekenOnderdeel(t);
+        if (uit.gelezen) gelezen = true;
+        if (uit.zonderPrijs) zonderPrijs = true;
+        return uit.onderdeel;
+      });
+    }
+
+    return { onderdeel, gelezen, zonderPrijs };
+  }
+
   /* ================= RESERVEKOPIE ================= */
   /* De knop in de alarmbalk doet hetzelfde als die op Instellingen. */
   $('#wb-alarm-kopie').addEventListener('click', () => $('#wb-export').click());
@@ -2576,7 +2636,8 @@ import { APP } from '../data/app.js';
           bekend.add(sleutel);
           return true;
         });
-        staat.catalogus = [...staat.catalogus, ...nieuw];
+        const nagekeken = nieuw.map(nagekekenOnderdeel);
+        staat.catalogus = [...staat.catalogus, ...nagekeken.map((n) => n.onderdeel)];
 
         const dossiers = Array.isArray(gelezen.dossiers) ? gelezen.dossiers : [];
         const bekendeAutos = new Set(
@@ -2609,6 +2670,20 @@ import { APP } from '../data/app.js';
         }
 
         const overgeslagen = aantal - nieuw.length;
+        /**
+         * WAT ER MET DE BEDRAGEN GEBEURDE, EN DAT MOET JE WETEN.
+         *
+         * Een lijst met bedragen als "240,00" in plaats van in hele centen werd
+         * klakkeloos overgenomen. Die inkoop telde daarna als nul, en dat
+         * onderdeel stond voor € 272,25 op de offerte in plaats van € 736,89 —
+         * zonder dat er ergens iets stond. Nagespeeld voordat ik eraan begon.
+         */
+        const gelezenAlsEuro = nagekeken.filter((n) => n.gelezen);
+        const zonderPrijs = nagekeken.filter((n) => n.zonderPrijs);
+        const noem = (rij) => rij.slice(0, 3)
+          .map((n) => n.onderdeel.omschrijving || n.onderdeel.artikelnummer || 'naamloos')
+          .join(', ') + (rij.length > 3 ? `, en nog ${rij.length - 3}` : '');
+
         alert(
           `${telling(nieuw.length, 'onderdeel', 'onderdelen')} toegevoegd` +
           (nieuweAutos.length ? ` en ${telling(nieuweAutos.length, 'auto', "auto's")}` : '') + '.' +
@@ -2616,6 +2691,19 @@ import { APP } from '../data/app.js';
           (overgeslagen
             ? `\n${overgeslagen} ${overgeslagen === 1 ? 'stond' : 'stonden'} er al in en ` +
               `${overgeslagen === 1 ? 'is' : 'zijn'} overgeslagen.`
+            : '') +
+          (gelezenAlsEuro.length
+            ? `\n\nBij ${telling(gelezenAlsEuro.length, 'onderdeel', 'onderdelen')} stond de inkoop `
+              + `in euro's in plaats van in centen. Die heb ik omgerekend: ${noem(gelezenAlsEuro)}. `
+              + `Kijk ${gelezenAlsEuro.length === 1 ? 'die prijs' : 'die prijzen'} even na.`
+            : '') +
+          (zonderPrijs.length
+            ? `\n\nLET OP: bij ${telling(zonderPrijs.length, 'onderdeel', 'onderdelen')} kon ik geen `
+              + `inkoopprijs lezen. ${zonderPrijs.length === 1 ? 'Die staat' : 'Die staan'} nu op `
+              + `€ 0,00 en ${zonderPrijs.length === 1 ? 'is' : 'zijn'} dus te goedkoop op een `
+              + `offerte: ${noem(zonderPrijs)}. Vul `
+              + `${zonderPrijs.length === 1 ? 'hem' : 'ze'} bij Onderdelen aan voordat je `
+              + `${zonderPrijs.length === 1 ? 'hem' : 'ze'} gebruikt.`
             : '')
         );
       }
