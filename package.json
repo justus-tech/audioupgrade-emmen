@@ -11,6 +11,8 @@
     "test:browser": "npm run build && node --test --test-concurrency=1 tests/browser.test.js",
     "prijs": "node scripts/offerteprijs.mjs",
     "offerte": "node scripts/offerte.mjs",
+    "whatsapp": "node scripts/whatsapp-berichten.mjs",
+    "whatsapp:aanmelden": "node scripts/whatsapp-aanmelden.mjs",
     "rdw": "node scripts/rdw-dekking.mjs",
     "schermafdrukken": "node scripts/screenshot.mjs",
     "posters": "node scripts/posters.mjs",

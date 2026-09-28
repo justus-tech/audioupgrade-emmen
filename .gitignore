@@ -31,3 +31,7 @@ posters/
 
 # Lokale instellingen van de editor
 .claude/
+
+# Sleutels en tijdelijke bestanden van de WhatsApp-ontvanger bij het lokaal testen
+.dev.vars
+.wrangler/
