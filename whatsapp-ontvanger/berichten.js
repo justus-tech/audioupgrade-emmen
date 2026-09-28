@@ -17,12 +17,29 @@
  *   history          De oude gesprekken die WhatsApp één keer meestuurt als je
  *                    het nummer aansluit (hoogstens een half jaar terug).
  *
+ * Let op: dit zijn ALLE één-op-één-gesprekken op het zakelijke nummer, dus ook
+ * met leveranciers, vrienden of familie die dat nummer gebruiken. Groepen
+ * komen niet mee.
+ *
  * Alles hier is los te testen zonder Cloudflare; zie tests/whatsapp.test.js.
  */
 
 /** Alleen de cijfers van een telefoonnummer: "+31 6-12" wordt "31612". */
 export function cijfers(nummer) {
   return String(nummer ?? '').replace(/[^0-9]/g, '');
+}
+
+/**
+ * Wie de klant is, als veilige naam voor een bestand.
+ *
+ * Meestal is dat het telefoonnummer. Stuurt WhatsApp in de toekomst alleen een
+ * gebruikers-id (zonder nummer), dan nemen we dat. Er blijven alleen letters,
+ * cijfers, - en _ over, zodat het nooit een pad naar een andere map wordt.
+ */
+export function klantId(waarde) {
+  const tekst = String(waarde ?? '');
+  if (/^[\d\s+()-]+$/.test(tekst)) return cijfers(tekst).slice(0, 64);
+  return tekst.replace(/[^0-9A-Za-z_-]/g, '').slice(0, 64);
 }
 
 /** Hoe lang een tekst mag zijn voordat we hem afkappen. Een roman past niet in een offerte. */
@@ -99,20 +116,20 @@ export function berichtenUit(melding) {
       const v = change?.value ?? {};
       const eigenNummer = cijfers(v.metadata?.display_phone_number);
       const namen = new Map(
-        (v.contacts ?? []).map((c) => [cijfers(c.wa_id), c.profile?.name ?? '']),
+        (v.contacts ?? []).map((c) => [klantId(c.wa_id ?? c.user_id), c.profile?.name ?? '']),
       );
 
       for (const m of v.messages ?? []) {
-        uit.push(bericht(m, 'in', cijfers(m.from), namen));
+        uit.push(bericht(m, 'in', klantId(m.from ?? m.from_user_id), namen));
       }
       for (const m of v.message_echoes ?? []) {
-        uit.push(bericht(m, 'uit', cijfers(m.to), namen));
+        uit.push(bericht(m, 'uit', klantId(m.to ?? m.to_user_id), namen));
       }
       for (const deel of v.history ?? []) {
         for (const draad of deel?.threads ?? []) {
           for (const m of draad?.messages ?? []) {
             const vanMij = eigenNummer !== '' && cijfers(m.from) === eigenNummer;
-            const klant = cijfers(draad.id) || cijfers(vanMij ? m.to : m.from);
+            const klant = klantId(draad.id) || klantId(vanMij ? m.to : m.from);
             uit.push(bericht(m, vanMij ? 'uit' : 'in', klant, namen));
           }
         }
@@ -120,6 +137,37 @@ export function berichtenUit(melding) {
     }
   }
   return uit.filter((b) => b.id !== '' && b.klant !== '');
+}
+
+/**
+ * Is een bericht al ouder dan de bewaartermijn?
+ *
+ * We rekenen vanaf het moment dat het bericht verstuurd is, niet vanaf wanneer
+ * het hier binnenkwam. Anders zou een bericht van een half jaar oud dat bij het
+ * aansluiten meekomt nog eens 90 dagen blijven staan. Een bericht zonder tijd
+ * (0) telt hier niet als oud; dat ruimt de ontvanger op na 90 dagen binnen.
+ */
+export function teOud(tijdSeconden, nuMs, dagen) {
+  return tijdSeconden > 0 && tijdSeconden * 1000 < nuMs - dagen * 24 * 60 * 60 * 1000;
+}
+
+/** De bewaartermijn in dagen, uit de instelling BEWAAR_DAGEN. Minstens 1, standaard 90. */
+export function bewaarDagen(waarde) {
+  return Math.max(1, Number(waarde) || 90);
+}
+
+/**
+ * Van de ruwe tekst van een melding naar de berichten die bewaard moeten worden.
+ * Onleesbare meldingen en berichten die al te oud zijn vallen eruit.
+ */
+export function teBewaren(ruweTekst, nuMs, dagen) {
+  let melding;
+  try {
+    melding = JSON.parse(ruweTekst);
+  } catch {
+    return [];
+  }
+  return berichtenUit(melding).filter((b) => !teOud(b.tijd, nuMs, dagen));
 }
 
 /**

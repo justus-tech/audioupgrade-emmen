@@ -20,5 +20,12 @@ new_sqlite_classes = ["Berichtenbak"]
 
 [vars]
 # Na zoveel dagen worden berichten automatisch gewist (AVG: niet langer
-# bewaren dan nodig). Een offertetraject duurt zelden langer dan drie maanden.
+# bewaren dan nodig), gerekend vanaf het versturen. Een offertetraject duurt
+# zelden langer dan drie maanden. Verander je dit, verander dan ook
+# WHATSAPP_BEWAAR_DAGEN voor het ophaalscript.
 BEWAAR_DAGEN = "90"
+
+# Geen logboek bij Cloudflare. Daar zou anders het adres met de sleutel in
+# terechtkomen, en er horen ook geen klantgegevens in een logboek.
+[observability]
+enabled = false

@@ -131,11 +131,16 @@ kenteken erin. `offerte.voorbeeld.json` laat zien hoe zo'n invulblad eruitziet.
 npm run whatsapp -- --map /mnt/project-files/whatsapp
 ```
 
-Haalt nieuwe klantberichten op bij de WhatsApp-ontvanger (map
-`whatsapp-ontvanger/`) en zet ze per klant in een gesprek, in de vorm van een
-WhatsApp-export. De ontvanger kan **niets versturen**, en dat moet zo blijven:
-berichten naar klanten stuurt Justus zelf. Hoe hij werkt en hoe je hem aanzet
-staat in `whatsapp-ontvanger/LEESMIJ.md`.
+Haalt nieuwe berichten op bij de WhatsApp-ontvanger (map `whatsapp-ontvanger/`)
+en zet ze per persoon in een gesprek, in de vorm van een WhatsApp-export. Alleen
+regels die beginnen met `[tijd] Justus:` zijn van Justus zelf; bij anderen staat
+altijd het nummer achter de naam, en ingesprongen regels horen bij het bericht
+erboven.
+
+De ontvanger kan **niets versturen**, en dat moet zo blijven: berichten stuurt
+Justus zelf. Zet de API-sleutel van 360dialog (die wél kan versturen) dus
+**nooit** in GitHub, Cloudflare, de omgeving van Claude of deze map. Hoe de
+ontvanger werkt en hoe je hem aanzet staat in `whatsapp-ontvanger/LEESMIJ.md`.
 
 Commando's:
 

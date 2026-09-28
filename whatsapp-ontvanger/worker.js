@@ -1,18 +1,22 @@
 /**
- * DE WHATSAPP-ONTVANGER — vangt klantberichten op en bewaart ze in de EU.
+ * DE WHATSAPP-ONTVANGER — vangt WhatsApp-berichten op en bewaart ze in de EU.
  *
  * WAAROM DIT BESTAAT
  * De site zelf heeft geen server (GitHub Pages), dus iets moet 24 uur per dag
  * klaarstaan om een melding van 360dialog aan te nemen. Dat is dit kleine
  * programmaatje bij Cloudflare. Het doet drie dingen en verder niets:
  *
- *   POST /webhook     360dialog meldt een nieuw bericht; wij bewaren het.
- *   GET  /berichten   Claude haalt 's ochtends op wat er nieuw is.
- *   (elke dag)        Berichten ouder dan BEWAAR_DAGEN worden gewist.
+ *   POST /webhook/<sleutel>   360dialog meldt een nieuw bericht; wij bewaren het.
+ *   GET  /berichten           Claude haalt 's ochtends op wat er nieuw is.
+ *   (elke dag)                Berichten ouder dan BEWAAR_DAGEN worden gewist.
+ *
+ * Het gaat om alle één-op-één-gesprekken op het zakelijke nummer, ook met
+ * mensen die geen klant zijn. Groepsgesprekken komen niet mee.
  *
  * WAT HIER BEWUST NIET IN ZIT
- * Versturen. Er is geen enkele manier om via dit programma een bericht naar een
- * klant te sturen. Dat doet Justus zelf vanuit zijn app.
+ * Versturen. Er is geen enkele manier om via dit programma een bericht naar
+ * iemand te sturen, en de sleutel van 360dialog (die dat wel kan) staat hier
+ * nergens. Berichten stuurt Justus zelf vanuit zijn app.
  *
  * WAAR DE BERICHTEN STAAN
  * In één opslagbak (een "Durable Object") die we vastzetten in de EU. Dat staat
@@ -20,12 +24,13 @@
  *
  * DE TWEE SLEUTELS
  * Ze staan nooit in deze map (die is openbaar), maar als geheim bij Cloudflare.
- *   WEBHOOK_SLEUTEL  360dialog stuurt die mee in de kop x-ontvanger-sleutel.
+ *   WEBHOOK_SLEUTEL  Staat achter /webhook/ in het adres dat 360dialog gebruikt.
+ *                    (Meesturen in de kop x-ontvanger-sleutel mag ook.)
  *   OPHAAL_SLEUTEL   Claude stuurt die mee als "Authorization: Bearer …".
  * Ontbreekt een sleutel, dan gaat die deur dicht.
  */
 import { DurableObject } from 'cloudflare:workers';
-import { berichtenUit, sleutelKlopt } from './berichten.js';
+import { bewaarDagen, sleutelKlopt, teBewaren } from './berichten.js';
 
 const DAG_MS = 24 * 60 * 60 * 1000;
 const PER_KEER = 500;
@@ -49,11 +54,28 @@ export class Berichtenbak extends DurableObject {
       media_id  TEXT,
       ontvangen INTEGER NOT NULL
     )`);
+    // Een vaste naam voor deze opslagbak. Wordt de ontvanger ooit opnieuw
+    // opgezet, dan krijgt de nieuwe bak een andere naam en weet het ophaalscript
+    // dat het opnieuw bij volgnr 0 moet beginnen.
+    this.sql.exec('CREATE TABLE IF NOT EXISTS over (sleutel TEXT PRIMARY KEY, waarde TEXT)');
+    this.sql.exec("INSERT OR IGNORE INTO over VALUES ('bak', ?)", crypto.randomUUID());
+    this.bakId = this.sql.exec("SELECT waarde FROM over WHERE sleutel = 'bak'").one().waarde;
   }
 
-  /** Bewaar berichten. Stuurt 360dialog iets twee keer, dan blijft er één over. */
-  async bewaar(berichten) {
+  /**
+   * Een melding van 360dialog verwerken en de berichten bewaren.
+   *
+   * We krijgen de ruwe tekst en lezen die hier pas uit. Hier mag het rekenwerk
+   * langer duren dan in de voorkant, waar Cloudflare op het gratis abonnement
+   * maar 10 milliseconden rekentijd per verzoek geeft. De eerste melding met
+   * een half jaar aan oude gesprekken kan groot zijn.
+   *
+   * Stuurt 360dialog iets twee keer, dan blijft er één over. Berichten die al
+   * ouder zijn dan de bewaartermijn slaan we niet eens op.
+   */
+  async bewaarMelding(ruweTekst) {
     const nu = Date.now();
+    const berichten = teBewaren(ruweTekst, nu, bewaarDagen(this.env.BEWAAR_DAGEN));
     for (const b of berichten) {
       this.sql.exec(
         `INSERT OR IGNORE INTO berichten
@@ -62,26 +84,33 @@ export class Berichtenbak extends DurableObject {
         b.id, b.richting, b.klant, b.naam, b.tijd, b.soort, b.tekst, b.mediaId, nu,
       );
     }
-    if ((await this.ctx.storage.getAlarm()) === null) {
+    if (berichten.length > 0 && (await this.ctx.storage.getAlarm()) === null) {
       await this.ctx.storage.setAlarm(nu + DAG_MS);
     }
   }
 
-  /** Alles na een bepaald volgnummer, oudste eerst. */
+  /** Alles na een bepaald volgnummer, oudste eerst, met de naam van deze bak. */
   lijst(na) {
-    return this.sql
+    const berichten = this.sql
       .exec(
         `SELECT volgnr, id, richting, klant, naam, tijd, soort, tekst, media_id AS mediaId
            FROM berichten WHERE volgnr > ? ORDER BY volgnr LIMIT ?`,
         na, PER_KEER,
       )
       .toArray();
+    return { bak: this.bakId, perKeer: PER_KEER, berichten };
   }
 
-  /** Eén keer per dag: wat ouder is dan de bewaartermijn gaat weg. */
+  /**
+   * Eén keer per dag: wat ouder is dan de bewaartermijn gaat weg. Gerekend
+   * vanaf het versturen (tijd), en voor berichten zonder tijd vanaf binnenkomst.
+   */
   async alarm() {
-    const dagen = Math.max(1, Number(this.env.BEWAAR_DAGEN) || 90);
-    this.sql.exec('DELETE FROM berichten WHERE ontvangen < ?', Date.now() - dagen * DAG_MS);
+    const grensMs = Date.now() - bewaarDagen(this.env.BEWAAR_DAGEN) * DAG_MS;
+    this.sql.exec(
+      'DELETE FROM berichten WHERE ontvangen < ? OR (tijd > 0 AND tijd < ?)',
+      grensMs, Math.floor(grensMs / 1000),
+    );
     await this.ctx.storage.setAlarm(Date.now() + DAG_MS);
   }
 }
@@ -98,26 +127,37 @@ function bak(env) {
   return ruimte.get(ruimte.idFromName('berichten'));
 }
 
+/** Een stuk van het adres terugvertalen; bij rommel geen sleutel. */
+function leesDeel(deel) {
+  try {
+    return decodeURIComponent(deel);
+  } catch {
+    return null;
+  }
+}
+
 export default {
   async fetch(request, env) {
     const { pathname, searchParams } = new URL(request.url);
+    const webhook = pathname.match(/^\/webhook(?:\/([^/]*))?$/);
 
-    if (pathname === '/webhook' && request.method === 'POST') {
-      if (!sleutelKlopt(request.headers.get('x-ontvanger-sleutel'), env.WEBHOOK_SLEUTEL)) {
+    if (webhook && request.method === 'POST') {
+      const gegeven = webhook[1] ? leesDeel(webhook[1])
+        : request.headers.get('x-ontvanger-sleutel');
+      if (!sleutelKlopt(gegeven, env.WEBHOOK_SLEUTEL)) {
         return new Response('geen toegang', { status: 401 });
       }
-      let melding;
-      try {
-        melding = await request.json();
-      } catch {
-        // Onleesbaar: gewoon "ok" zeggen, anders blijft 360dialog het een week
-        // lang opnieuw proberen met dezelfde onleesbare melding.
-        return new Response('ok');
-      }
-      const berichten = berichtenUit(melding);
       // Lukt het bewaren niet, dan geeft dit een fout terug en probeert
       // 360dialog het later opnieuw. Zo raakt er geen bericht kwijt.
-      if (berichten.length > 0) await bak(env).bewaar(berichten);
+      // Een onleesbare melding levert gewoon niets op, en dan zeggen we "ok",
+      // anders blijft 360dialog het een week lang opnieuw proberen.
+      await bak(env).bewaarMelding(await request.text());
+      return new Response('ok');
+    }
+
+    if (webhook && request.method === 'GET') {
+      // Sommige diensten kijken eerst of het adres bestaat. Via GET kan niemand
+      // iets opslaan of lezen, dus dat mag gewoon.
       return new Response('ok');
     }
 
@@ -127,8 +167,7 @@ export default {
         return new Response('geen toegang', { status: 401 });
       }
       const na = Math.max(0, Number.parseInt(searchParams.get('na') ?? '0', 10) || 0);
-      const berichten = await bak(env).lijst(na);
-      return Response.json({ berichten, perKeer: PER_KEER });
+      return Response.json(await bak(env).lijst(na));
     }
 
     if (pathname === '/') {
