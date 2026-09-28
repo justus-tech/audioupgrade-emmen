@@ -1,0 +1,31 @@
+# Instellingen voor de WhatsApp-ontvanger bij Cloudflare.
+# Uitleg over wat dit is en hoe je het aanzet: zie LEESMIJ.md in deze map.
+#
+# Hier staan geen sleutels in. Die zet GitHub bij het publiceren als geheim
+# bij Cloudflare neer (zie .github/workflows/whatsapp-ontvanger.yml).
+
+name = "aue-whatsapp"
+main = "worker.js"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+# De opslagbak voor de berichten. Dat hij in de EU staat, regelt worker.js.
+[[durable_objects.bindings]]
+name = "BAK"
+class_name = "Berichtenbak"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Berichtenbak"]
+
+[vars]
+# Na zoveel dagen worden berichten automatisch gewist (AVG: niet langer
+# bewaren dan nodig), gerekend vanaf het versturen. Een offertetraject duurt
+# zelden langer dan drie maanden. Verander je dit, verander dan ook
+# WHATSAPP_BEWAAR_DAGEN voor het ophaalscript.
+BEWAAR_DAGEN = "90"
+
+# Geen logboek bij Cloudflare. Daar zou anders het adres met de sleutel in
+# terechtkomen, en er horen ook geen klantgegevens in een logboek.
+[observability]
+enabled = false

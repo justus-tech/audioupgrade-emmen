@@ -1,0 +1,101 @@
+# Zet de WhatsApp-ontvanger (map whatsapp-ontvanger/) live bij Cloudflare.
+#
+# Draait vanzelf als er iets in die map verandert, en met de hand via
+# Actions → "WhatsApp-ontvanger publiceren" → Run workflow.
+#
+# De sleutels staan als geheim in de GitHub-omgeving "whatsapp" (Settings →
+# Environments → whatsapp), die alleen vanaf de branch main gebruikt mag worden.
+# Welke het zijn staat in whatsapp-ontvanger/LEESMIJ.md.
+#
+# De API-sleutel van 360dialog staat hier BEWUST NIET. Die kan berichten
+# versturen namens jouw nummer, en hoort alleen in je wachtwoordmanager. Het
+# aanmelden bij 360dialog doe je één keer zelf met `npm run whatsapp:aanmelden`.
+
+name: WhatsApp-ontvanger publiceren
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'whatsapp-ontvanger/**'
+      - '.github/workflows/whatsapp-ontvanger.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: whatsapp-ontvanger
+  cancel-in-progress: false
+
+jobs:
+  publiceren:
+    name: Publiceren
+    runs-on: ubuntu-latest
+    environment: whatsapp
+    steps:
+      - name: Kijken of alles is ingesteld
+        id: controle
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WHATSAPP_WEBHOOK_SLEUTEL: ${{ secrets.WHATSAPP_WEBHOOK_SLEUTEL }}
+          WHATSAPP_OPHAALSLEUTEL: ${{ secrets.WHATSAPP_OPHAALSLEUTEL }}
+        run: |
+          ontbreekt=""
+          for naam in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID WHATSAPP_WEBHOOK_SLEUTEL WHATSAPP_OPHAALSLEUTEL; do
+            if [ -z "${!naam}" ]; then ontbreekt="$ontbreekt $naam"; fi
+          done
+          if [ -z "$ontbreekt" ]; then
+            echo "klaar=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "klaar=false" >> "$GITHUB_OUTPUT"
+          melding="Deze geheimen ontbreken in de omgeving whatsapp:$ontbreekt. Zie whatsapp-ontvanger/LEESMIJ.md."
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            # Met de hand gestart: dan wil je weten dat er niets live is gezet.
+            echo "::error::$melding"
+            exit 1
+          fi
+          echo "::notice::$melding"
+
+      - uses: actions/checkout@v4
+        if: steps.controle.outputs.klaar == 'true'
+
+      # Wrangler 4 heeft minstens Node 22 nodig.
+      - uses: actions/setup-node@v4
+        if: steps.controle.outputs.klaar == 'true'
+        with:
+          node-version: '22'
+
+      - name: Naar Cloudflare
+        id: cloudflare
+        if: steps.controle.outputs.klaar == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: '4.142.0'
+          workingDirectory: whatsapp-ontvanger
+          command: deploy
+          secrets: |
+            WEBHOOK_SLEUTEL
+            OPHAAL_SLEUTEL
+        env:
+          WEBHOOK_SLEUTEL: ${{ secrets.WHATSAPP_WEBHOOK_SLEUTEL }}
+          OPHAAL_SLEUTEL: ${{ secrets.WHATSAPP_OPHAALSLEUTEL }}
+
+      - name: Adres van de ontvanger
+        if: steps.controle.outputs.klaar == 'true'
+        env:
+          UITVOER: ${{ steps.cloudflare.outputs.command-output }}
+          ADRES: ${{ steps.cloudflare.outputs.deployment-url }}
+        run: |
+          if [ -z "$ADRES" ]; then
+            ADRES=$(printf '%s' "$UITVOER" | grep -oE 'https://[a-z0-9.-]+\.workers\.dev' | head -n1)
+          fi
+          if [ -z "$ADRES" ]; then
+            echo "::error::Cloudflare gaf geen workers.dev-adres terug. Open bij Cloudflare één keer Workers & Pages en kies een naam voor je werkadres, en draai deze stap opnieuw."
+            exit 1
+          fi
+          echo "::notice::De ontvanger staat live op $ADRES. Meld hem aan met: npm run whatsapp:aanmelden"
