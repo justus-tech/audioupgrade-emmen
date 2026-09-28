@@ -7,17 +7,18 @@
  * binnengekomen en zet het per persoon onder elkaar in een tekstbestand, in
  * dezelfde vorm als een WhatsApp-export:
  *
- *   [28-09-2026 09:14] Tonnie (+31612345678): Kan de sub ook onder de kofferbakmat?
+ *   [28-09-2026 09:14] +31612345678 (Tonnie): Kan de sub ook onder de kofferbakmat?
  *   [28-09-2026 09:20] Justus: Ja, dat kan. Ik pas de offerte aan.
  *
  * Zo kan Claude er precies mee werken zoals met een export die jij stuurt.
  *
  * WAT JIJ SCHREEF EN WAT DE KLANT SCHREEF
- * Alleen jouw eigen berichten staan er als "Justus:". Bij iedereen anders staat
- * altijd het telefoonnummer achter de naam, en een bericht over meer regels
- * springt vanaf de tweede regel in. Zo kan een klant nooit een regel maken die
- * eruitziet alsof jij iets hebt toegezegd, ook niet als hij zichzelf in WhatsApp
- * "Justus" noemt of een stuk van een oud gesprek plakt.
+ * Alleen jouw eigen berichten staan er als "Justus:". Bij iedereen anders begint
+ * de regel met het telefoonnummer (de naam staat er tussen haakjes achter), en
+ * een bericht over meer regels springt vanaf de tweede regel in. Zo kan een
+ * klant nooit een regel maken die eruitziet alsof jij iets hebt toegezegd, ook
+ * niet als hij zichzelf in WhatsApp "Justus" noemt of een stuk van een oud
+ * gesprek plakt.
  *
  * GEBRUIK
  *
@@ -59,12 +60,23 @@ export function tijdstip(seconden) {
   return `${d.day}-${d.month}-${d.year} ${d.hour}:${d.minute}`;
 }
 
-/** Alle soorten regeleindes, ook de zeldzame die een telefoon soms meestuurt. */
-const REGELEINDE = /\r\n|[\r\n\v\f\u0085\u2028\u2029]/g;
+/**
+ * Alle soorten regeleindes, ook de zeldzame die een telefoon soms meestuurt of
+ * die sommige programma's als nieuwe regel lezen.
+ */
+const REGELEINDE = /\r\n|[\r\n\v\f\x1c-\x1e\u0085\u2028\u2029]/g;
 
-/** Een naam op één regel, zonder tekens die een regel nep kunnen laten lijken. */
+/** Overige onzichtbare stuurtekens: die horen niet in een gesprek. */
+const STUURTEKENS = /[\x00-\x08\x0e-\x1b\x1f\x7f-\x84\x86-\x9f]/g;
+
+/**
+ * Een naam op één regel, met alleen letters, cijfers, spaties en . ' & -.
+ * Geen dubbele punten, ook geen die er alleen zo uitzien, zodat een naam nooit
+ * een regel kan laten lijken op een bericht van iemand anders.
+ */
 function schoneNaam(naam) {
-  return String(naam ?? '').replace(REGELEINDE, ' ').replace(/[:[\]]/g, ' ')
+  return String(naam ?? '').normalize('NFKC')
+    .replace(/[^\p{L}\p{N} .'&-]/gu, ' ')
     .replace(/\s+/g, ' ').trim().slice(0, 60);
 }
 
@@ -76,8 +88,8 @@ function nummer(klant) {
 /** Eén bericht zoals in een WhatsApp-export, met ingesprongen vervolgregels. */
 export function regelVoor(b) {
   const naam = schoneNaam(b.naam);
-  const wie = b.richting === 'uit' ? 'Justus' : (naam ? `${naam} (${nummer(b.klant)})` : nummer(b.klant));
-  const tekst = String(b.tekst ?? '').replace(REGELEINDE, '\n    ');
+  const wie = b.richting === 'uit' ? 'Justus' : (naam ? `${nummer(b.klant)} (${naam})` : nummer(b.klant));
+  const tekst = String(b.tekst ?? '').replace(REGELEINDE, '\n    ').replace(STUURTEKENS, '');
   return `[${tijdstip(b.tijd)}] ${wie}: ${tekst}`;
 }
 
@@ -111,7 +123,7 @@ const MERKTEKEN = /^<!-- ontvanger (\S+) tot (\d+) -->$/;
 export function leesGesprek(inhoud) {
   const kop = [];
   const berichten = [];
-  for (const regel of inhoud.replace(/\n$/, '').split('\n')) {
+  for (const regel of inhoud.replace(/\r\n?/g, '\n').replace(/\n$/, '').split('\n')) {
     const t = BERICHTREGEL.exec(regel);
     if (t) {
       const [, dag, maand, jaar, uur, minuut] = t.map(Number);
@@ -134,10 +146,12 @@ function schrijfGesprek(kop, berichten) {
  *
  * De kop bovenaan blijft staan. Een bericht dat over meer regels loopt, gaat in
  * zijn geheel weg of blijft in zijn geheel staan. Geeft `null` terug als er
- * geen enkel bericht overblijft: dan kan het hele bestand weg.
+ * geen enkel bericht overblijft: dan kan het hele bestand weg. Een bestand waar
+ * nooit een bericht in stond, blijft zoals het is.
  */
 export function snoei(inhoud, grens) {
   const { kop, berichten } = leesGesprek(inhoud);
+  if (berichten.length === 0) return inhoud;
   const over = berichten.filter((b) => b.tijd >= grens);
   if (over.length === 0) return null;
   return schrijfGesprek(kop, over);
@@ -147,8 +161,9 @@ export function snoei(inhoud, grens) {
  * Nieuwe berichten in een gesprek zetten, op de goede plek.
  *
  * Berichten komen niet altijd op volgorde binnen: de geschiedenis bij het
- * aansluiten, of een melding die 360dialog later opnieuw stuurt. Daarom sorteren
- * we het hele gesprek op tijd in plaats van alleen onderaan bij te schrijven.
+ * aansluiten, of een melding die 360dialog later opnieuw stuurt. Daarom voegen
+ * we ze op tijd tussen de berichten die er al staan, in plaats van alleen
+ * onderaan bij te schrijven.
  *
  * In de kop staat een merkteken met de ontvanger en het hoogste volgnummer dat
  * al in dit gesprek staat. Berichten tot en met dat nummer slaan we over, zodat
@@ -164,7 +179,11 @@ export function voegToe(inhoud, kopVoorNieuw, berichten, bak) {
   const [, merkBak, merkTot] = plek === -1 ? [] : MERKTEKEN.exec(kop[plek]);
   const al = merkBak === bak ? Number(merkTot) : 0;
 
-  const nieuw = berichten.filter((b) => b.volgnr > al);
+  // Geen merkteken van deze ontvanger (met de hand bewerkt, of een nieuwe
+  // ontvanger)? Dan slaan we in elk geval berichten over die er precies zo al
+  // in staan.
+  const alGeschreven = new Set(al > 0 ? [] : oud.map((b) => b.regels.join('\n')));
+  const nieuw = berichten.filter((b) => b.volgnr > al && !alGeschreven.has(regelVoor(b)));
   if (nieuw.length === 0) return { inhoud, nieuw };
 
   const merk = `<!-- ontvanger ${bak} tot ${Math.max(al, ...nieuw.map((b) => b.volgnr))} -->`;
@@ -172,14 +191,24 @@ export function voegToe(inhoud, kopVoorNieuw, berichten, bak) {
   else if (kop.at(-1) === '') kop.splice(kop.length - 1, 0, merk);
   else kop.push(merk);
 
-  const erbij = nieuw.map((b) => leesGesprek(regelVoor(b)).berichten[0]);
-  const alles = [...oud, ...erbij].sort((a, b) => a.tijd - b.tijd);
+  // Samenvoegen zoals twee stapels kaarten: het gesprek blijft in zijn eigen
+  // volgorde, de nieuwe berichten in de volgorde waarin ze echt verstuurd zijn,
+  // en we pakken steeds de vroegste. Zo gaat het ook goed in het uur dat bij
+  // het ingaan van de wintertijd twee keer voorkomt.
+  const erbij = [...nieuw].sort((a, b) => a.tijd - b.tijd).map((b) => leesGesprek(regelVoor(b)).berichten[0]);
+  const alles = [];
+  let i = 0;
+  let j = 0;
+  while (i < oud.length || j < erbij.length) {
+    if (j >= erbij.length || (i < oud.length && oud[i].tijd <= erbij[j].tijd)) alles.push(oud[i++]);
+    else alles.push(erbij[j++]);
+  }
   return { inhoud: schrijfGesprek(kop, alles), nieuw };
 }
 
 /** Eerst naar een tijdelijk bestand, dan in één keer op zijn plek: nooit half. */
 function schrijfVeilig(bestand, inhoud) {
-  const tijdelijk = `${bestand}.tmp`;
+  const tijdelijk = `${bestand}.${process.pid}.tmp`;
   writeFileSync(tijdelijk, inhoud);
   renameSync(tijdelijk, bestand);
 }
@@ -190,9 +219,18 @@ export function snoeiAlles(map, dagen, nu = Date.now()) {
   if (!existsSync(gesprekken)) return 0;
   const grens = nu / 1000 - dagen * 24 * 60 * 60;
   let gewist = 0;
-  for (const naam of readdirSync(gesprekken).filter((n) => n.endsWith('.md'))) {
+  for (const naam of readdirSync(gesprekken)) {
     const bestand = join(gesprekken, naam);
+    // Losgebleven tijdelijke bestanden van een afgebroken rondje.
+    if (naam.endsWith('.tmp')) {
+      if (Date.now() - statSync(bestand).mtimeMs > 10 * 60 * 1000) rmSync(bestand, { force: true });
+      continue;
+    }
+    // Alleen gesprekken die dit script zelf heeft gemaakt; notities of een
+    // export die iemand ernaast zet, laten we met rust.
+    if (!/^[0-9A-Za-z_-]{1,64}\.md$/.test(naam)) continue;
     const oud = readFileSync(bestand, 'utf8');
+    if (!leesGesprek(oud).kop.some((r) => MERKTEKEN.test(r))) continue;
     const nieuw = snoei(oud, grens);
     if (nieuw === null) {
       rmSync(bestand);
@@ -217,7 +255,7 @@ export function controleerAntwoord(a) {
   for (const b of a.berichten) {
     if (!/^[0-9A-Za-z_-]{1,64}$/.test(String(b?.klant))) return `ongeldig klantnummer ${JSON.stringify(b?.klant)}`;
     if (!Number.isInteger(b.volgnr) || b.volgnr < 1) return 'ongeldig volgnummer';
-    if (!Number.isInteger(b.tijd) || b.tijd < 0) return 'ongeldige tijd';
+    if (!Number.isInteger(b.tijd) || b.tijd < 1 || b.tijd > 1e11) return 'ongeldige tijd';
     if (b.richting !== 'in' && b.richting !== 'uit') return 'ongeldige richting';
     if (typeof b.tekst !== 'string') return 'bericht zonder tekst';
   }
@@ -262,7 +300,12 @@ function neemSlot(map) {
     if (Date.now() - statSync(slot).mtimeMs < 60 * 60 * 1000) {
       stop('Er loopt al een ophaalrondje (of er is er net een afgebroken). Probeer het straks opnieuw.');
     }
-    writeFileSync(slot, '');
+    rmSync(slot, { force: true });
+    try {
+      closeSync(openSync(slot, 'wx'));
+    } catch {
+      stop('Er loopt al een ophaalrondje. Probeer het straks opnieuw.');
+    }
   }
   return () => rmSync(slot, { force: true });
 }
@@ -273,21 +316,21 @@ async function main() {
   const map = i === -1 ? '/mnt/project-files/whatsapp' : args[i + 1];
   const dagen = Math.max(1, Number(process.env.WHATSAPP_BEWAAR_DAGEN) || 90);
 
-  // Eerst opruimen, vóór alles wat mis kan gaan. Zo geldt de bewaartermijn ook
-  // als de ontvanger uit staat of de sleutel niet meer klopt.
-  const gewist = snoeiAlles(map, dagen);
-  if (gewist > 0) console.log(`${gewist} gesprek(ken) gewist: alles ouder dan ${dagen} dagen.`);
-
-  const adres = process.env.WHATSAPP_ADRES;
-  const sleutel = process.env.WHATSAPP_OPHAALSLEUTEL;
-  if (!adres || !sleutel) stop('WHATSAPP_ADRES en WHATSAPP_OPHAALSLEUTEL moeten allebei ingesteld zijn.');
-  if (!/^https:\/\//.test(adres) && !/^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?(\/|$)/.test(adres)) {
-    stop('WHATSAPP_ADRES moet met https:// beginnen, anders gaat de ophaalsleutel onversleuteld over het internet.');
-  }
-
   mkdirSync(join(map, 'gesprekken'), { recursive: true });
   const laatSlotLos = neemSlot(map);
   try {
+    // Eerst opruimen, vóór alles wat mis kan gaan. Zo geldt de bewaartermijn
+    // ook als de ontvanger uit staat of de sleutel niet meer klopt.
+    const gewist = snoeiAlles(map, dagen);
+    if (gewist > 0) console.log(`${gewist} gesprek(ken) gewist: alles ouder dan ${dagen} dagen.`);
+
+    const adres = process.env.WHATSAPP_ADRES;
+    const sleutel = process.env.WHATSAPP_OPHAALSLEUTEL;
+    if (!adres || !sleutel) stop('WHATSAPP_ADRES en WHATSAPP_OPHAALSLEUTEL moeten allebei ingesteld zijn.');
+    if (!/^https:\/\//.test(adres) && !/^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?(\/|$)/.test(adres)) {
+      stop('WHATSAPP_ADRES moet met https:// beginnen, anders gaat de ophaalsleutel onversleuteld over het internet.');
+    }
+
     const standBestand = join(map, 'stand.json');
     let stand = { bak: null, na: 0 };
     if (existsSync(standBestand)) {
@@ -319,7 +362,7 @@ async function main() {
     for (const k of perKlant(nieuw).values()) {
       const bestand = join(map, 'gesprekken', `${k.klant}.md`);
       const bestaand = existsSync(bestand) ? readFileSync(bestand, 'utf8') : null;
-      const kop = `# WhatsApp-gesprek met ${schoneNaam(k.naam) || 'onbekend'} (${nummer(k.klant)})\n\n`
+      const kop = `# WhatsApp-gesprek met ${nummer(k.klant)} (${schoneNaam(k.naam) || 'naam onbekend'})\n\n`
         + 'Opgehaald via de WhatsApp-ontvanger, op volgorde van tijd.\n'
         + 'Alleen regels die beginnen met "[tijd] Justus:" zijn van Justus zelf; ingesprongen regels horen bij het bericht erboven.\n'
         + "Foto's en spraakberichten staan hier als [foto] of [spraakbericht]; bekijk ze in de app.\n\n";

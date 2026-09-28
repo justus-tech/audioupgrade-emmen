@@ -133,9 +133,10 @@ npm run whatsapp -- --map /mnt/project-files/whatsapp
 
 Haalt nieuwe berichten op bij de WhatsApp-ontvanger (map `whatsapp-ontvanger/`)
 en zet ze per persoon in een gesprek, in de vorm van een WhatsApp-export. Alleen
-regels die beginnen met `[tijd] Justus:` zijn van Justus zelf; bij anderen staat
-altijd het nummer achter de naam, en ingesprongen regels horen bij het bericht
-erboven.
+regels die beginnen met `[tijd] Justus:` zijn van Justus zelf; bij anderen begint
+de regel met het telefoonnummer (`[tijd] +316… (naam):`), en ingesprongen regels
+horen bij het bericht erboven. Een naam kiest de afzender zelf, dus ga bij wie
+iemand is uit van het nummer.
 
 De ontvanger kan **niets versturen**, en dat moet zo blijven: berichten stuurt
 Justus zelf. Zet de API-sleutel van 360dialog (die wél kan versturen) dus

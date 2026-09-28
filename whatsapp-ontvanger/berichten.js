@@ -145,7 +145,7 @@ export function berichtenUit(melding) {
  * We rekenen vanaf het moment dat het bericht verstuurd is, niet vanaf wanneer
  * het hier binnenkwam. Anders zou een bericht van een half jaar oud dat bij het
  * aansluiten meekomt nog eens 90 dagen blijven staan. Een bericht zonder tijd
- * (0) telt hier niet als oud; dat ruimt de ontvanger op na 90 dagen binnen.
+ * krijgt in teBewaren het moment van binnenkomst (zie verzendTijd).
  */
 export function teOud(tijdSeconden, nuMs, dagen) {
   return tijdSeconden > 0 && tijdSeconden * 1000 < nuMs - dagen * 24 * 60 * 60 * 1000;
@@ -154,6 +154,20 @@ export function teOud(tijdSeconden, nuMs, dagen) {
 /** De bewaartermijn in dagen, uit de instelling BEWAAR_DAGEN. Minstens 1, standaard 90. */
 export function bewaarDagen(waarde) {
   return Math.max(1, Number(waarde) || 90);
+}
+
+/**
+ * Een bruikbare verzendtijd in seconden. Ontbreekt de tijd, of klopt hij niet
+ * (in milliseconden, of verder dan een dag in de toekomst), dan nemen we het
+ * moment van binnenkomst. Zo staat er nooit een bericht op 1970 of in 2100, en
+ * wordt alles gewoon na de bewaartermijn gewist.
+ */
+export function verzendTijd(tijdSeconden, nuMs) {
+  const nu = Math.floor(nuMs / 1000);
+  let tijd = Math.floor(Number(tijdSeconden));
+  if (tijd > 1e11) tijd = Math.floor(tijd / 1000);
+  if (!Number.isFinite(tijd) || tijd < 1 || tijd > nu + 24 * 60 * 60) return nu;
+  return tijd;
 }
 
 /**
@@ -167,7 +181,9 @@ export function teBewaren(ruweTekst, nuMs, dagen) {
   } catch {
     return [];
   }
-  return berichtenUit(melding).filter((b) => !teOud(b.tijd, nuMs, dagen));
+  return berichtenUit(melding)
+    .map((b) => ({ ...b, tijd: verzendTijd(b.tijd, nuMs) }))
+    .filter((b) => !teOud(b.tijd, nuMs, dagen));
 }
 
 /**

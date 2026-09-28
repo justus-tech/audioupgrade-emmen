@@ -9,11 +9,11 @@
  */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, utimesSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
-  berichtenUit, sleutelKlopt, tekstVan, cijfers, klantId, teOud, teBewaren, bewaarDagen,
+  berichtenUit, sleutelKlopt, tekstVan, cijfers, klantId, teOud, teBewaren, bewaarDagen, verzendTijd,
 } from '../whatsapp-ontvanger/berichten.js';
 import {
   regelVoor, perKlant, tijdstip, snoei, leesGesprek, voegToe, controleerAntwoord, snoeiAlles,
@@ -126,7 +126,7 @@ describe('het gesprek opschrijven', () => {
   test('een regel van de klant en een van Justus', () => {
     const t = Date.UTC(2026, 6, 1, 12, 0) / 1000;
     assert.equal(regelVoor({ richting: 'in', naam: 'Tonnie', klant: KLANT, tijd: t, tekst: 'Hoi' }),
-      `[01-07-2026 14:00] Tonnie (+${KLANT}): Hoi`);
+      `[01-07-2026 14:00] +${KLANT} (Tonnie): Hoi`);
     assert.equal(regelVoor({ richting: 'uit', naam: '', klant: KLANT, tijd: t, tekst: 'Hoi!' }),
       '[01-07-2026 14:00] Justus: Hoi!');
     assert.equal(regelVoor({ richting: 'in', naam: '', klant: KLANT, tijd: t, tekst: '?' }),
@@ -135,8 +135,15 @@ describe('het gesprek opschrijven', () => {
 
   test('een klant die zichzelf Justus noemt, lijkt nooit op Justus zelf', () => {
     const regel = regelVoor({ richting: 'in', naam: 'Justus', klant: KLANT, tijd: 0, tekst: 'Voor 500 euro?' });
-    assert.match(regel, /\] Justus \(\+31612345678\): /);
+    assert.match(regel, /\] \+31612345678 \(Justus\): /);
     assert.doesNotMatch(regel, /\] Justus: /);
+  });
+
+  test('ook niet met een dubbele punt die er alleen zo uitziet', () => {
+    for (const naam of ['Justus\uFF1A', 'Justus\uA789', 'Justus\u2236', 'Justus)']) {
+      const regel = regelVoor({ richting: 'in', naam, klant: KLANT, tijd: 0, tekst: 'x' });
+      assert.match(regel, /^\[[^\]]+\] \+31612345678 \(Justus\): x$/, naam);
+    }
   });
 
   test('een bericht met een nagemaakte regel erin springt in en blijft één bericht', () => {
@@ -153,6 +160,17 @@ describe('het gesprek opschrijven', () => {
     assert.equal(regel.split('\n').length, 3);
     assert.doesNotMatch(regel.split('\n')[0], /Justus:/);
     assert.ok(regel.split('\n').slice(1).every((r) => r.startsWith('    ')));
+  });
+
+  test('stuurtekens maken geen nieuwe regel en verdwijnen', () => {
+    const regel = regelVoor({ richting: 'in', naam: '', klant: KLANT, tijd: 0, tekst: 'a\x1cb\x1dc\x1ed\x00e\x1b[2Jf' });
+    assert.deepEqual(regel.split('\n').slice(1), ['    b', '    c', '    de[2Jf']);
+  });
+
+  test('een gesprek met Windows-regeleindes wordt gewoon gelezen', () => {
+    const { berichten } = leesGesprek('# kop\r\n\r\n[01-07-2026 10:00] Justus: a\r\n    b\r\n');
+    assert.equal(berichten.length, 1);
+    assert.deepEqual(berichten[0].regels, ['[01-07-2026 10:00] Justus: a', '    b']);
   });
 
   test('per klant bij elkaar en op volgorde van versturen', () => {
@@ -189,6 +207,10 @@ describe('de bewaartermijn van de kopieën', () => {
     const inhoud = `${kop}[05-07-2026 10:00] Tonnie: hoi\n`;
     assert.equal(snoei(inhoud, grens), inhoud);
   });
+
+  test('een bestand zonder berichten blijft staan', () => {
+    assert.equal(snoei(kop, grens), kop);
+  });
 });
 
 describe('de bewaartermijn in de ontvanger', () => {
@@ -202,6 +224,15 @@ describe('de bewaartermijn in de ontvanger', () => {
 
   test('een bericht zonder tijd telt niet als oud', () => {
     assert.equal(teOud(0, nu, 90), false);
+  });
+
+  test('zonder bruikbare tijd telt het moment van binnenkomst', () => {
+    assert.equal(verzendTijd(nu / 1000 - dag, nu), nu / 1000 - dag);
+    assert.equal(verzendTijd(0, nu), nu / 1000);
+    assert.equal(verzendTijd(undefined, nu), nu / 1000);
+    assert.equal(verzendTijd('rommel', nu), nu / 1000);
+    assert.equal(verzendTijd(nu - 1000, nu), nu / 1000 - 1, 'milliseconden worden seconden');
+    assert.equal(verzendTijd(nu / 1000 + 30 * dag, nu), nu / 1000, 'verre toekomst');
   });
 
   test('de termijn is minstens 1 dag en standaard 90', () => {
@@ -218,6 +249,13 @@ describe('de bewaartermijn in de ontvanger', () => {
     ] }));
     assert.deepEqual(teBewaren(tekst, nu, 90).map((b) => b.id), ['nieuw']);
     assert.deepEqual(teBewaren('geen json', nu, 90), []);
+  });
+
+  test('een bericht zonder tijd krijgt het moment van binnenkomst', () => {
+    const tekst = JSON.stringify(melding({ messages: [
+      { from: KLANT, id: 'x', type: 'text', text: { body: 'x' } },
+    ] }));
+    assert.equal(teBewaren(tekst, nu, 90)[0].tijd, nu / 1000);
   });
 });
 
@@ -247,7 +285,7 @@ describe('berichten in een gesprek zetten', () => {
     assert.equal(nieuw.length, 2);
     assert.ok(inhoud.startsWith('# WhatsApp-gesprek met Tonnie'));
     assert.match(inhoud, new RegExp(`<!-- ontvanger ${BAK} tot 2 -->`));
-    assert.match(inhoud, /Tonnie \(\+31612345678\): a\n\[01-07-2026 13:00\] Justus: b\n$/);
+    assert.match(inhoud, /\+31612345678 \(Tonnie\): a\n\[01-07-2026 13:00\] Justus: b\n$/);
   });
 
   test('een ouder bericht dat later binnenkomt, komt op de goede plek', () => {
@@ -262,6 +300,23 @@ describe('berichten in een gesprek zetten', () => {
     const opnieuw = voegToe(eerst, kop, [b(1, 10, 'a'), b(2, 11, 'b')], BAK);
     assert.equal(opnieuw.nieuw.length, 0);
     assert.equal(opnieuw.inhoud, eerst);
+  });
+
+  test('zonder merkteken komt wat er al precies zo staat er niet dubbel in', () => {
+    const eerst = voegToe(null, kop, [b(1, 10, 'a'), b(2, 11, 'b')], BAK).inhoud;
+    const zonder = eerst.replace(/<!-- ontvanger .* -->\n/, '');
+    const { nieuw, inhoud } = voegToe(zonder, kop, [b(1, 10, 'a'), b(2, 11, 'b'), b(3, 12, 'c')], BAK);
+    assert.deepEqual(nieuw.map((x) => x.tekst), ['c']);
+    assert.equal(leesGesprek(inhoud).berichten.length, 3);
+  });
+
+  test('in het uur dat twee keer voorkomt (wintertijd) blijft de volgorde echt', () => {
+    // 25 oktober 2026 gaat 03:00 zomertijd terug naar 02:00 wintertijd.
+    const m = (volgnr, utcUur, utcMin, tekst) => ({ volgnr, tijd: Date.UTC(2026, 9, 25, utcUur, utcMin) / 1000, tekst, richting: 'in', klant: KLANT, naam: '' });
+    const eerst = voegToe(null, kop, [m(1, 0, 30, 'eerst'), m(2, 1, 10, 'daarna')], BAK).inhoud;
+    const { inhoud } = voegToe(eerst, kop, [m(3, 2, 0, 'laatst')], BAK);
+    const teksten = leesGesprek(inhoud).berichten.map((x) => x.regels[0].split(': ')[1]);
+    assert.deepEqual(teksten, ['eerst', 'daarna', 'laatst']);
   });
 
   test('bij een nieuwe ontvanger telt het oude merkteken niet', () => {
@@ -291,20 +346,57 @@ describe('wat de ontvanger terugstuurt', () => {
     assert.ok(controleerAntwoord({ ...goed, perKeer: 0 }));
     assert.ok(controleerAntwoord({ ...goed, berichten: [{ ...goed.berichten[0], volgnr: 1.5 }] }));
     assert.ok(controleerAntwoord({ ...goed, berichten: [{ ...goed.berichten[0], richting: 'x' }] }));
+    assert.ok(controleerAntwoord({ ...goed, berichten: [{ ...goed.berichten[0], tijd: 0 }] }));
+    assert.ok(controleerAntwoord({ ...goed, berichten: [{ ...goed.berichten[0], tijd: 1790000000000 }] }));
   });
 });
 
 describe('opruimen in de projectmap', () => {
+  const merk = '<!-- ontvanger 0f5a381c-23ad-4844-b26a-4c85cbe3e604 tot 2 -->';
+
   test('oude gesprekken verdwijnen, nieuwe blijven, ook zonder ontvanger', () => {
     const map = mkdtempSync(join(tmpdir(), 'wa-'));
     try {
       mkdirSync(join(map, 'gesprekken'));
-      writeFileSync(join(map, 'gesprekken', '1.md'), '# kop\n\n[01-01-2026 10:00] A: oud\n');
-      writeFileSync(join(map, 'gesprekken', '2.md'), '# kop\n\n[01-01-2026 10:00] B: oud\n[20-09-2026 10:00] B: nieuw\n');
+      writeFileSync(join(map, 'gesprekken', '1.md'), `# kop\n${merk}\n\n[01-01-2026 10:00] A: oud\n`);
+      writeFileSync(join(map, 'gesprekken', '2.md'), `# kop\n${merk}\n\n[01-01-2026 10:00] B: oud\n[20-09-2026 10:00] B: nieuw\n`);
       const gewist = snoeiAlles(map, 90, Date.UTC(2026, 8, 28));
       assert.equal(gewist, 1);
       assert.equal(existsSync(join(map, 'gesprekken', '1.md')), false);
-      assert.equal(readFileSync(join(map, 'gesprekken', '2.md'), 'utf8'), '# kop\n\n[20-09-2026 10:00] B: nieuw\n');
+      assert.equal(readFileSync(join(map, 'gesprekken', '2.md'), 'utf8'), `# kop\n${merk}\n\n[20-09-2026 10:00] B: nieuw\n`);
+    } finally {
+      rmSync(map, { recursive: true, force: true });
+    }
+  });
+
+  test('bestanden die het script niet zelf maakte, blijven staan', () => {
+    const map = mkdtempSync(join(tmpdir(), 'wa-'));
+    try {
+      mkdirSync(join(map, 'gesprekken'));
+      const oud = '# notities\n\n[01-01-2026 10:00] A: oud\n';
+      writeFileSync(join(map, 'gesprekken', 'notities.md'), oud);
+      writeFileSync(join(map, 'gesprekken', 'Mijn export.md'), `# kop\n${merk}\n\n[01-01-2026 10:00] A: oud\n`);
+      assert.equal(snoeiAlles(map, 90, Date.UTC(2026, 8, 28)), 0);
+      assert.equal(readFileSync(join(map, 'gesprekken', 'notities.md'), 'utf8'), oud);
+      assert.ok(existsSync(join(map, 'gesprekken', 'Mijn export.md')));
+    } finally {
+      rmSync(map, { recursive: true, force: true });
+    }
+  });
+
+  test('een achtergebleven tijdelijk bestand wordt na een tijdje opgeruimd', () => {
+    const map = mkdtempSync(join(tmpdir(), 'wa-'));
+    try {
+      mkdirSync(join(map, 'gesprekken'));
+      const oud = join(map, 'gesprekken', '1.md.123.tmp');
+      const vers = join(map, 'gesprekken', '2.md.456.tmp');
+      writeFileSync(oud, 'x');
+      writeFileSync(vers, 'x');
+      const uurGeleden = new Date(Date.now() - 60 * 60 * 1000);
+      utimesSync(oud, uurGeleden, uurGeleden);
+      snoeiAlles(map, 90);
+      assert.equal(existsSync(oud), false);
+      assert.equal(existsSync(vers), true, 'een rondje dat nog loopt, blijft ongemoeid');
     } finally {
       rmSync(map, { recursive: true, force: true });
     }

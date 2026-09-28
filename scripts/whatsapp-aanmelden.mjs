@@ -19,8 +19,9 @@
  *   2. je eerste eigen sleutel       (WHATSAPP_WEBHOOK_SLEUTEL bij GitHub)
  *   3. de API-sleutel van 360dialog  (uit de 360dialog Hub)
  *
- * Eerst controleert het of de ontvanger die sleutel accepteert. Pas daarna
- * meldt het het adres aan, en laat het zien wat 360dialog nu heeft staan.
+ * Het vraagt alles eerst. Dan controleert het of de ontvanger die sleutel
+ * accepteert, en pas daarna meldt het het adres aan en laat het zien wat
+ * 360dialog nu heeft staan.
  */
 import { realpathSync } from 'node:fs';
 import { createInterface } from 'node:readline';
@@ -61,11 +62,16 @@ export function verberg(url) {
 }
 
 async function main() {
+  // Sleutels typ of plak je zelf, zodat ze nergens in een bestand of in de
+  // geschiedenis van de terminal belanden.
+  if (!process.stdin.isTTY) stop('Start dit in een terminal en typ of plak de antwoorden zelf.');
   console.log('De ontvanger aanmelden bij 360dialog. Er wordt niets opgeslagen.\n');
   const adres = (await vraag('Adres van de ontvanger (https://…workers.dev): ')).replace(/\/+$/, '');
   if (!/^https:\/\/[a-z0-9.-]+$/i.test(adres)) stop('Dat is geen geldig adres. Het begint met https:// en eindigt op workers.dev.');
   const sleutel = await vraag('Je eerste eigen sleutel (WHATSAPP_WEBHOOK_SLEUTEL): ', true);
   if (sleutel.length < 20) stop('Die sleutel is te kort. Gebruik dezelfde lange sleutel als bij GitHub.');
+  const apiSleutel = await vraag('API-sleutel van 360dialog: ', true);
+  if (!apiSleutel) stop('Geen API-sleutel ingevuld. Er is niets aangemeld.');
   const url = webhookAdres(adres, sleutel);
 
   // 1. Accepteert de ontvanger deze sleutel? Een lege melding bewaart niets.
@@ -80,17 +86,20 @@ async function main() {
   console.log('✓ De ontvanger accepteert de sleutel.');
 
   // 2. Aanmelden bij 360dialog.
-  const apiSleutel = await vraag('API-sleutel van 360dialog: ', true);
-  if (!apiSleutel) stop('Geen API-sleutel ingevuld. Er is niets aangemeld.');
   const kop = { 'D360-API-KEY': apiSleutel, 'content-type': 'application/json' };
-  const aanmelding = await fetch(D360, { method: 'POST', headers: kop, body: JSON.stringify({ url }) });
+  let aanmelding;
+  try {
+    aanmelding = await fetch(D360, { method: 'POST', headers: kop, body: JSON.stringify({ url }) });
+  } catch (fout) {
+    stop(`360dialog is niet bereikbaar (${fout.cause?.code ?? fout.message}). Er is niets aangemeld.`);
+  }
   if (!aanmelding.ok) {
     stop(`360dialog weigerde de aanmelding: ${aanmelding.status} ${(await aanmelding.text()).slice(0, 300)}`);
   }
 
   // 3. Nakijken wat 360dialog nu heeft staan.
-  const nu = await fetch(D360, { headers: kop });
-  const staat = nu.ok ? (await nu.json().catch(() => ({}))).url : null;
+  const nu = await fetch(D360, { headers: kop }).catch(() => null);
+  const staat = nu?.ok ? (await nu.json().catch(() => ({}))).url : null;
   if (staat && staat !== url) stop(`360dialog heeft een ander adres staan: ${verberg(staat)}. Probeer het opnieuw of kijk in de Hub.`);
   console.log(`✓ Aangemeld. 360dialog stuurt nieuwe berichten nu naar ${verberg(url)}`);
   console.log('\nStuur jezelf vanaf een ander nummer een WhatsApp en laat het Claude weten; die kijkt of het binnenkomt.');

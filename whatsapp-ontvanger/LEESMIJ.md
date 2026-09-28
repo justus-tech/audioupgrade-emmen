@@ -34,13 +34,16 @@ Groepsgesprekken komen niet mee.
 - **Een paar functies gaan uit:** verzendlijsten (broadcast), verdwijnende
   berichten, eenmalig bekijken en live locatie delen.
 - **Oude gesprekken:** bij het aansluiten kan WhatsApp hoogstens het laatste
-  half jaar meesturen.
+  half jaar meesturen. Of dat bij jou ook gebeurt, zie je pas na het
+  aansluiten; Claude kijkt het voor je na. Komen ze niet mee, dan werkt alles
+  vanaf dat moment gewoon, en zet je een oud gesprek dat nodig is als export in
+  het project, zoals nu.
 
 ## Eén keer instellen
 
 Doe dit in deze volgorde: eerst de ontvanger klaarzetten, dan pas je nummer
-aansluiten. Zo mist hij niets, ook niet de oude gesprekken die bij het
-aansluiten één keer meekomen.
+aansluiten. Zo mist hij niets van wat er vanaf dan binnenkomt, en ook niet de
+oude gesprekken als WhatsApp die meestuurt.
 
 Een sleutel is een lange geheime tekst. Plak die alleen op de plekken die
 hieronder staan, nooit in een bestand in deze map (die staat openbaar op GitHub).
@@ -84,8 +87,9 @@ hieronder staan, nooit in een bestand in deze map (die staat openbaar op GitHub)
    ```
 
    Het vraagt het adres uit stap 4, je eerste eigen sleutel en de API-sleutel
-   van 360dialog. Het kijkt eerst of de ontvanger de sleutel accepteert, meldt
-   hem dan aan en vergeet de API-sleutel weer. Doe dit binnen 24 uur na stap 5,
+   van 360dialog, en pas daarna gaat het aan de slag. Het kijkt eerst of de
+   ontvanger de sleutel accepteert, meldt hem dan aan en vergeet de API-sleutel
+   weer. Doe dit binnen 24 uur na stap 5,
    anders kunnen de oude gesprekken verloren gaan.
 7. **Claude toegang geven.** Zet in de instellingen van je Claude-project, bij
    de omgeving:
@@ -95,7 +99,8 @@ hieronder staan, nooit in een bestand in deze map (die staat openbaar op GitHub)
      `https://`) en `WHATSAPP_OPHAALSLEUTEL` (je tweede eigen sleutel).
 
 Stuur jezelf daarna vanaf een ander nummer een WhatsApp en laat het Claude weten.
-Die kijkt of het binnenkomt en zet de ochtendronde aan.
+Die kijkt of het binnenkomt, of de oude gesprekken zijn meegekomen, en zet de
+ochtendronde aan.
 
 ## Niet vergeten: je privacyverklaring
 
@@ -135,7 +140,8 @@ gebruikt mogen worden om Claude te verbeteren, en zet dat uit.
   `/webhook/<WEBHOOK_SLEUTEL>`; de sleutel in het adres is de toegang.
 - `scripts/whatsapp-berichten.mjs` (`npm run whatsapp`) haalt nieuwe berichten
   op en zet ze per persoon in een gesprek, in de vorm van een WhatsApp-export,
-  op volgorde van tijd. Het wist daar ook berichten ouder dan
+  op volgorde van tijd. Het raakt alleen gesprekken aan die het zelf heeft
+  gemaakt (met het merkteken `<!-- ontvanger … -->` in de kop). Het wist daar ook berichten ouder dan
   `WHATSAPP_BEWAAR_DAGEN` (standaard 90); houd die gelijk aan `BEWAAR_DAGEN` in
   `wrangler.toml`.
 - `scripts/whatsapp-aanmelden.mjs` (`npm run whatsapp:aanmelden`) meldt de
