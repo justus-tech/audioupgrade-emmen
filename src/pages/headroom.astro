@@ -4152,7 +4152,21 @@ import { APP } from '../data/app.js';
    */
   .mr-blad {
     box-sizing: border-box;
-    min-height: 295mm;
+    /**
+     * VASTE HOOGTE, GEEN MINIMUM — EN DAT IS HET HELE PUNT.
+     *
+     * Met een minimumhoogte mag het blad meegroeien met wat erop staat. De
+     * twee schermafbeeldingen krijgen `flex: 1` om samen de ruimte te vullen,
+     * maar groeien mag hier ook, dus bij een schermafbeelding die hoger is dan
+     * breed werd het blad 1805 pixels in plaats van 1123 — bijna anderhalf
+     * vel. De printer maakte er dan vier vellen van terwijl er "1 / 3"
+     * onderaan stond.
+     *
+     * Met een vaste hoogte krimpen de plaatjes wél, en `object-fit: contain`
+     * zorgt dat er niets van wordt afgesneden: ze worden kleiner, niet
+     * bijgeknipt.
+     */
+    height: 295mm;
     padding: 14mm 15mm 12mm;
     display: flex;
     flex-direction: column;
@@ -4271,12 +4285,44 @@ import { APP } from '../data/app.js';
   .mr-handtekening span { font-size: .74rem; color: var(--text-dim); }
   .mr-meetkop { margin-top: 4px; }
 
-  /* De twee grafieken vullen samen het blad: even hoog, over de volle breedte. */
-  .mr-beeld { margin: 0 0 10px; flex: 1; display: flex; flex-direction: column; min-height: 0; }
-  .mr-beeld img {
+  /**
+   * DE TWEE GRAFIEKEN: EVEN HOOG, OVER DE VOLLE BREEDTE.
+   *
+   * Met een vaste hoogte, en niet met `flex: 1`. Dat laatste laat de hoogte
+   * afhangen van de vorm van de schermafbeelding: bij een vierkante of staande
+   * afbeelding werd het blad hoger dan een vel en maakte de printer er een
+   * extra pagina van, terwijl er onderaan nog "1 / 3" stond. Nu is de plek van
+   * elke grafiek precies even groot, wat voor plaatje je er ook in zet, en
+   * zorgt `object-fit: contain` dat er niets wordt afgesneden.
+   *
+   * De rekensom: een blad is 295 mm hoog, de rand boven en onder kost 26 mm,
+   * en de kop, de titel, de uitleg en de voetregel samen ongeveer 60 mm. Wat
+   * overblijft, gedeeld door twee, is de ruimte per grafiek.
+   */
+  /**
+   * DE PLEK VOOR ELKE GRAFIEK IS VAST, EN DAT IS HET HELE PUNT.
+   *
+   * Eerst deelden de twee grafieken de overgebleven ruimte met `flex: 1`. Dan
+   * hangt de hoogte van het blad af van de vórm van de schermafbeelding: bij
+   * een vierkante of staande afbeelding werd het blad hoger dan een vel, en
+   * maakte de printer er een extra pagina van terwijl er onderaan nog "1 / 3"
+   * stond. Je hield dan vier vellen in je hand met een nummering die niet
+   * klopt.
+   *
+   * Nu is de plek per grafiek even groot, wat je er ook in zet. De maat is
+   * nagemeten: een blad van 295 mm, min 26 mm rand en min 92 mm voor de kop,
+   * de titel, de uitleg, de bijschriften en de voetregel, gedeeld door twee.
+   *
+   * `object-fit: contain` maakt het plaatje kleiner in plaats van het bij te
+   * knippen. Een grafiek waarvan de onderkant eraf is, is geen meting meer.
+   */
+  .mr-beeld { margin: 0 0 10px; display: flex; flex-direction: column; }
+  .mr-beeld img, .mr-beeld .mr-leeg {
     width: 100%;
-    flex: 1;
-    min-height: 0;
+    height: calc((295mm - 26mm - 92mm) / 2);
+    box-sizing: border-box;
+  }
+  .mr-beeld img {
     object-fit: contain;
     border: 1px solid var(--line);
   }
@@ -4289,7 +4335,6 @@ import { APP } from '../data/app.js';
     color: var(--text-dim);
   }
   .mr-leeg {
-    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
