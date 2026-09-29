@@ -1965,6 +1965,108 @@ describe('Headroom', alsGebouwd, () => {
     await pagina.close();
   });
 
+  /* ================= HET MEETRAPPORT OP PAPIER ================= */
+  test('EEN STAANDE SCHERMAFBEELDING PAST OP ÉÉN VEL', async () => {
+    /**
+     * WAT ER MISGING
+     * De twee grafieken verdeelden de overgebleven ruimte met `flex: 1`, en
+     * het blad had een mínimumhoogte. Daardoor hing de hoogte van het blad af
+     * van de vorm van de schermafbeelding. Bij een staande afbeelding werd
+     * blad 2 geen 1115 maar 2483 pixels, en bij een heel smalle 5877 — de
+     * printer maakte er zes of negen vellen van, terwijl er onderaan nog
+     * "2 / 3" stond. Je hield dan een rapport in je hand met een nummering die
+     * nergens op sloeg, en dat geef je aan een klant mee.
+     *
+     * Nu heeft het blad een vaste hoogte en de plek per grafiek ook, dus wat
+     * voor plaatje je er ook in zet: één blad is één vel.
+     */
+    const pagina = await browser.newPage({ viewport: { width: 794, height: 1123 } });
+    pagina.on('dialog', (d) => d.accept());
+    await pagina.goto(paginaUrl('headroom?tab=meting'));
+    await pagina.evaluate(() => document.fonts.ready);
+    await pagina.evaluate(() => { window.print = () => {}; });
+
+    /** Een plaatje van een gegeven vorm, als svg. */
+    const plaatje = (breed, hoog) => Buffer.from(
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${breed} ${hoog}">`
+      + `<rect width="${breed}" height="${hoog}" fill="#223344"/></svg>`
+    );
+
+    await pagina.fill('#mr-klant', 'Jan de Vries');
+    await pagina.fill('#mr-kenteken', '92DJHG');
+    await pagina.fill('#mr-auto', 'Saab 9-3');
+
+    for (const [breed, hoog] of [[800, 300], [600, 600], [600, 900], [400, 1600], [2000, 200]]) {
+      for (const veld of ['voorBeeld', 'naBeeld']) {
+        await pagina.setInputFiles(`[data-beeld="${veld}"]`, {
+          name: 'meting.svg', mimeType: 'image/svg+xml', buffer: plaatje(breed, hoog),
+        });
+      }
+      await pagina.waitForFunction(() => document.querySelector('#mr-print').disabled === false);
+      await pagina.click('#mr-print');
+
+      await pagina.emulateMedia({ media: 'print' });
+      await pagina.evaluate(() => document.fonts.ready);
+      const maten = await pagina.evaluate(() => {
+        const meet = document.createElement('div');
+        meet.style.height = '297mm';
+        document.body.appendChild(meet);
+        const vel = meet.getBoundingClientRect().height;
+        meet.remove();
+        return {
+          vel,
+          bladen: [...document.querySelectorAll('.mr-blad')]
+            .map((b) => Math.round(b.getBoundingClientRect().height)),
+        };
+      });
+      await pagina.emulateMedia({ media: 'screen' });
+
+      assert.equal(maten.bladen.length, 3, 'het geluidsrapport hoort drie bladen te zijn');
+      maten.bladen.forEach((hoogte, i) => {
+        assert.ok(
+          hoogte <= maten.vel,
+          `bij een plaatje van ${breed}x${hoog} is blad ${i + 1} ${hoogte} pixels, `
+          + `en een vel is er maar ${Math.round(maten.vel)}`
+        );
+      });
+    }
+    await pagina.close();
+  });
+
+  test('de voetregel telt evenveel bladen als er zijn', async () => {
+    /* Staat er "1 / 3" op en komen er vier vellen uit, dan klopt er niets van
+       — en dat merk je pas als het rapport al bij de klant ligt. */
+    const { pagina, fouten } = await openWerkbak();
+    pagina.on('dialog', (d) => d.accept());
+    await pagina.click('[data-tab="meting"]');
+    await pagina.evaluate(() => { window.print = () => {}; });
+    const PIXEL = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+    await pagina.fill('#mr-klant', 'Jan de Vries');
+    await pagina.fill('#mr-kenteken', '92DJHG');
+    for (const veld of ['voorBeeld', 'naBeeld']) {
+      await pagina.setInputFiles(`[data-beeld="${veld}"]`, {
+        name: `${veld}.png`, mimeType: 'image/png', buffer: Buffer.from(PIXEL, 'base64'),
+      });
+    }
+    await pagina.waitForFunction(() => document.querySelector('#mr-print').disabled === false);
+    await pagina.click('#mr-print');
+
+    const voeten = await pagina.evaluate(() => [...document.querySelectorAll('.mr-voet')]
+      .map((v) => v.textContent.replace(/\s+/g, ' ').trim().split(' ').slice(-3).join(' ')));
+    assert.deepEqual(voeten, ['1 / 3', '2 / 3', '3 / 3']);
+
+    /* En met de fasebladen erbij worden het er vier, ook in de voetregel. */
+    await pagina.setInputFiles('[data-beeld="faseVoor"]', {
+      name: 'fase.png', mimeType: 'image/png', buffer: Buffer.from(PIXEL, 'base64'),
+    });
+    await pagina.click('#mr-print');
+    const meerVoeten = await pagina.evaluate(() => [...document.querySelectorAll('.mr-voet')]
+      .map((v) => v.textContent.replace(/\s+/g, ' ').trim().split(' ').slice(-3).join(' ')));
+    assert.deepEqual(meerVoeten, ['1 / 4', '2 / 4', '3 / 4', '4 / 4']);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
   /* ================= EEN PRIJSLIJST INLEZEN ================= */
   /**
    * DE STILSTE MANIER OM GELD TE VERLIEZEN.
