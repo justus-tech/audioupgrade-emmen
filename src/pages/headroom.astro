@@ -754,6 +754,9 @@ import { APP } from '../data/app.js';
     factuurnummer, kortingNaarExcl, datumNl, soortenIn,
   } from '../lib/headroom/rekenen.js';
   import { offertePdf, pdfBestandsnaam } from '../lib/headroom/offerte-pdf.js';
+  import {
+    herroepingPdf, herroepingBestandsnaam, hoortErBij,
+  } from '../lib/headroom/herroeping.js';
   import { werkbonPdf, werkbonBestandsnaam } from '../lib/headroom/werkbon.js';
   import { factuurPdf, factuurBestandsnaam } from '../lib/headroom/factuur.js';
   import {
@@ -2959,31 +2962,56 @@ import { APP } from '../data/app.js';
     const naam = pdfBestandsnaam(compleet);
     const bestand = new File([blob], naam, { type: 'application/pdf' });
 
+    /* Bij een consument op afstand hoort het modelformulier voor herroeping
+       erbij. Het gaat als tweede bestand mee, niet als extra pagina achter
+       de offerte: de klant moet het kunnen invullen en terugsturen zonder
+       onze offerte erbij te slepen. Zie herroeping.js. */
+    const bestanden = [bestand];
+    if (hoortErBij(compleet)) {
+      const formulier = herroepingPdf(compleet).naarBlob();
+      bestanden.push(new File([formulier], herroepingBestandsnaam(compleet), {
+        type: 'application/pdf',
+      }));
+    }
+
     const auto = autoNaam(offerte.auto?.merk, offerte.auto?.model);
     const bericht = `Hoi${offerte.klant?.naam ? ` ${offerte.klant.naam.split(' ')[0]}` : ''}, ` +
       `hierbij de offerte${auto ? ` voor je ${auto}` : ''}. ` +
       `Vragen? App gerust terug. Groet, Justus — ${SITE.name}`;
 
     /* Op de telefoon opent dit het deelvenster: daar staat WhatsApp tussen
-       en gaat de pdf als bijlage mee. Dat is de kortste weg van werkbank
-       naar klant. */
-    if (navigator.canShare?.({ files: [bestand] })) {
+       en gaan de pdf's als bijlage mee. Dat is de kortste weg van werkbank
+       naar klant.
+       Niet elk toestel wil meer dan één bestand tegelijk delen. Lukt dat
+       niet, dan deelt hij de offerte en laten we het formulier alsnog
+       downloaden — nooit allebei via dezelfde weg, want dan staat de
+       offerte twee keer bij de klant. */
+    const teDelen = navigator.canShare?.({ files: bestanden })
+      ? bestanden
+      : (navigator.canShare?.({ files: [bestand] }) ? [bestand] : []);
+    let gedeeld = [];
+    if (teDelen.length) {
       try {
-        await navigator.share({ files: [bestand], text: bericht });
-        bewaarNaVersturen();
-        return;
+        await navigator.share({ files: teDelen, text: bericht });
+        gedeeld = teDelen;
       } catch (err) {
-        /* Afgebroken door de gebruiker: dan gewoon downloaden. */
+        /* Afgebroken door de gebruiker: dan gaat alles als download. */
       }
     }
 
-    const adres = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = adres;
-    link.download = naam;
-    link.click();
-    URL.revokeObjectURL(adres);
+    const resteert = bestanden.filter((stuk) => !gedeeld.includes(stuk));
+    for (const stuk of resteert) {
+      const adres = URL.createObjectURL(stuk);
+      const link = document.createElement('a');
+      link.href = adres;
+      link.download = stuk.name;
+      link.click();
+      URL.revokeObjectURL(adres);
+    }
     bewaarNaVersturen();
+    /* Is er al gedeeld, dan is het bericht ook al mee de deur uit; dan
+       hoeft WhatsApp hieronder niet nog eens open. */
+    if (gedeeld.length) return;
 
     const nummer = String(offerte.klant?.telefoon || '').replace(/[^0-9]/g, '');
     /* 0612... wordt 31612...: wa.me wil het landnummer en geen nul vooraan. */

@@ -98,6 +98,14 @@ export function kernpunten({
       'Omdat we dit op afstand afspreken heb je 14 dagen bedenktijd: je mag de overeenkomst ' +
       'binnen die termijn zonder opgaaf van reden ontbinden.'
     );
+    /* De wet wil dat het modelformulier meegaat, niet alleen dat je de
+       bedenktijd noemt. Het blad zit als losse pdf bij de offerte; hier
+       staat waarom de klant het ziet, en dat hij het niet hoeft te
+       gebruiken. Zie herroeping.js. */
+    punten.push(
+      'Het modelformulier voor herroeping zit bij deze offerte. Gebruiken hoeft niet: een ' +
+      'berichtje per e-mail of WhatsApp binnen de termijn is net zo geldig.'
+    );
     if (startDirect) {
       punten.push(
         'Je vraagt ons uitdrukkelijk om al binnen die 14 dagen te beginnen. Zeg je daarna ' +

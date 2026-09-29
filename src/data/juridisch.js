@@ -84,6 +84,7 @@ export const ALGEMENE_VOORWAARDEN = {
         'Het herroepingsrecht vervalt zodra de dienst volledig is uitgevoerd, mits met de uitvoering is begonnen op uitdrukkelijk verzoek van de Klant en de Klant heeft erkend dat hij zijn herroepingsrecht verliest zodra de Werkzaamheden zijn afgerond.',
         'Het herroepingsrecht geldt niet voor producten die volgens specificaties van de Klant zijn vervaardigd of duidelijk voor een specifiek persoon zijn bestemd, zoals op maat gebouwde subwooferbehuizingen en showbouw.',
         `Herroepen kan door dit binnen de termijn te melden via ${SITE.email} of WhatsApp. Reeds betaalde bedragen worden binnen 14 dagen na de melding terugbetaald, onder aftrek van het in dit artikel bedoelde evenredige bedrag.`,
+        'Bij elke offerte die op afstand aan een consument wordt uitgebracht ontvangt de Klant het wettelijke modelformulier voor herroeping als bijlage. Het gebruik van dat formulier is niet verplicht: iedere ondubbelzinnige verklaring binnen de termijn volstaat.',
       ],
     },
     {
