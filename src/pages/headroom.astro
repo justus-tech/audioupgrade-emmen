@@ -910,6 +910,42 @@ import { APP } from '../data/app.js';
     return { n, nummer: offertenummer(n) };
   }
 
+  /** Elk factuurnummer dat ooit de deur uit is, uit alle bewaarde offertes. */
+  function vergevenFactuurnummers() {
+    const uit = new Set();
+    for (const eerder of staat.offertes) {
+      for (const f of eerder.facturen || []) if (f.nummer) uit.add(f.nummer);
+      /* Opslag van vóór de lijst: daar stond alleen de aanbetaling in. */
+      if (eerder.factuur?.nummer) uit.add(eerder.factuur.nummer);
+    }
+    return uit;
+  }
+
+  /**
+   * HET EERSTVOLGENDE FACTUURNUMMER DAT NOG NIET VERGEVEN IS.
+   *
+   * WAAROM DIT NODIG IS
+   * De teller alleen is niet genoeg. Zet je een reservekopie van vorige maand
+   * terug, dan gaat de teller mee terug — en dan krijgt de volgende klant een
+   * nummer dat al bij iemand anders op de deurmat ligt. Nagespeeld: na het
+   * terugzetten van een oudere kopie kreeg de volgende factuur 2026-F002,
+   * precies het nummer dat een andere klant al had. Twee facturen met
+   * hetzelfde nummer en verschillende bedragen is een probleem voor de
+   * boekhouding: een factuurnummer hoort eenmalig te zijn.
+   *
+   * Hetzelfde kan gebeuren als je het nummer in Instellingen met de hand
+   * verzet, of als je op twee apparaten factureert.
+   *
+   * Dus: de teller is het uitgangspunt, maar een nummer dat al vergeven is
+   * wordt overgeslagen — precies zoals vrijNummer dat voor de offertes doet.
+   */
+  function vrijFactuurnummer(datum = new Date()) {
+    let n = Math.max(1, Math.round(Number(staat.instellingen.factuurVolgnummer) || 1));
+    const bezet = vergevenFactuurnummers();
+    while (bezet.has(factuurnummer(n, datum))) n += 1;
+    return { n, nummer: factuurnummer(n, datum) };
+  }
+
   const nieuweOfferte = () => ({
     /* Een eigen kenmerk dat je nergens ziet. Het zichtbare offertenummer is
        niet geschikt om offertes uit elkaar te houden: dat wordt pas vastgelegd
@@ -2592,13 +2628,31 @@ import { APP } from '../data/app.js';
           telling((gelezen.offertes || []).length, 'offerte', 'offertes'),
           telling((gelezen.dossiers || []).length, 'auto', "auto's"),
         ].join(', ');
+        /**
+         * EEN OUDERE KOPIE KAN FACTUURNUMMERS LATEN TERUGLOPEN.
+         *
+         * De app slaat geen nummer twee keer uit als hij de factuur kent. Maar
+         * een kopie van vóór die factuur kent hem juist niet: dan is hij uit de
+         * lijst verdwenen en kan hetzelfde nummer opnieuw de deur uit. Dat kan
+         * de app niet voorkomen — hij weet niet wat hij niet weet. Wel kan hij
+         * het zeggen op het enige moment waarop het nog uitmaakt.
+         */
+        const tellerNu = Number(staat.instellingen.factuurVolgnummer) || 1;
+        const tellerStraks = Number(gelezen.instellingen?.factuurVolgnummer) || 1;
+        const terug = tellerStraks < tellerNu
+          ? `\n\nLET OP: de factuurteller gaat van ${tellerNu} terug naar ${tellerStraks}. `
+            + 'Facturen die je daarna hebt verstuurd staan straks niet meer in de app, '
+            + 'en dan kan zo\'n nummer opnieuw vergeven worden. Twee facturen met hetzelfde '
+            + 'nummer mag niet. Zet de teller daarna zelf goed bij Instellingen.'
+          : '';
+
         const zeker = confirm(
           'Dit is een volledige reservekopie.\n\n' +
           `Je hebt nu:  ${nu}\n` +
           `In dit bestand:  ${straks}\n\n` +
           `Alles wat nu in ${APP.naam} staat wordt vervangen door wat er in dit ` +
-          'bestand staat. Wat er nu is en niet in het bestand zit, is daarna weg.\n\n' +
-          'Doorgaan?'
+          'bestand staat. Wat er nu is en niet in het bestand zit, is daarna weg.' +
+          terug + '\n\nDoorgaan?'
         );
         if (!zeker) { e.target.value = ''; return; }
         staat = {
@@ -2867,6 +2921,9 @@ import { APP } from '../data/app.js';
         eerder.nummer,
         eerder.klant?.naam, eerder.klant?.bedrijf,
         eerder.auto?.kenteken, eerder.auto?.merk, eerder.auto?.model,
+        /* Ook op factuurnummer, want daar belt een klant over. */
+        ...(eerder.facturen || []).map((f) => f.nummer),
+        eerder.factuur?.nummer,
       ].filter(Boolean).join(' ').toLowerCase();
       return hooiberg.includes(zoek);
     });
@@ -2885,14 +2942,21 @@ import { APP } from '../data/app.js';
       const status = eerder.status || 'concept';
       const af = status === 'betaald' || status === 'gefactureerd';
 
+      /* De factuurnummers erbij, zodat je ze kunt opzoeken als een klant
+         erover belt. Een klus kan er twee hebben: een aanbetaling en een
+         eindfactuur. */
+      const facturen = (eerder.facturen || []).map((f) => f.nummer).filter(Boolean);
+      if (!facturen.length && eerder.factuur?.nummer) facturen.push(eerder.factuur.nummer);
+
       const rij = document.createElement('div');
       rij.className = 'wb-regel';
       rij.innerHTML = `
         <div class="wb-regel-kop">
           <span>${ontsnap(eerder.nummer)} · ${ontsnap(wie)}
             <small>${ontsnap(eerder.auto?.kenteken || '')} ${ontsnap(
-        [eerder.auto?.merk, eerder.auto?.model].filter(Boolean).join(' ')
+        autoNaam(eerder.auto?.merk, eerder.auto?.model)
       )}</small>
+            ${facturen.length ? `<small>Factuur ${ontsnap(facturen.join(' en '))}</small>` : ''}
           </span>
           <strong>${euro(eerder.zakelijk ? t.exclCent : t.inclCent)}</strong>
         </div>
@@ -3037,7 +3101,7 @@ import { APP } from '../data/app.js';
     }
 
     const datum = new Date();
-    const nummer = factuurnummer(staat.instellingen.factuurVolgnummer, datum);
+    const { n: factuurTeller, nummer } = vrijFactuurnummer(datum);
     const doc = factuurPdf(offerte, staat.instellingen, {
       soort: factuurSoort, nummer, datum, percentage: pct,
     });
@@ -3057,7 +3121,7 @@ import { APP } from '../data/app.js';
     if (navigator.canShare?.({ files: [bestand] })) {
       try {
         await navigator.share({ files: [bestand], text: bericht });
-        naFactuur(nummer, teBetalenCent);
+        naFactuur(nummer, teBetalenCent, factuurTeller);
         return;
       } catch (err) {
         /* Afgebroken: dan gewoon downloaden. */
@@ -3069,7 +3133,7 @@ import { APP } from '../data/app.js';
     link.download = naam;
     link.click();
     URL.revokeObjectURL(adres);
-    naFactuur(nummer, teBetalenCent);
+    naFactuur(nummer, teBetalenCent, factuurTeller);
   });
 
   /**
@@ -3079,7 +3143,7 @@ import { APP } from '../data/app.js';
    * keer bestaan. Het nummer en het bedrag blijven bij de offerte staan, zodat
    * je bij de eindfactuur weet wat er al betaald is.
    */
-  function naFactuur(nummer, bedragCent) {
+  function naFactuur(nummer, bedragCent, teller) {
     /**
      * Alleen een AANBETALING wordt onthouden als "al betaald". Een eindfactuur
      * of een factuur ineens sluit de klus af; zou die ook in offerte.factuur
@@ -3088,9 +3152,23 @@ import { APP } from '../data/app.js';
     if (factuurSoort === 'aanbetaling') {
       offerte.factuur = { nummer, inclCent: bedragCent, datum: new Date().toISOString() };
     }
+    /**
+     * ELKE FACTUUR WORDT ONTHOUDEN, OOK DE EINDFACTUUR.
+     *
+     * Dat gebeurde niet: alleen een aanbetaling bleef staan. Van een
+     * eindfactuur en van een factuur ineens wist de app achteraf niets meer —
+     * van drie verstuurde facturen kon hij er één terugvinden. Belt een klant
+     * over factuur 2026-F003, dan kon je die nergens opzoeken, en de app kon
+     * ook niet zien welke nummers al vergeven waren.
+     */
+    offerte.facturen = [
+      ...(offerte.facturen || []),
+      { nummer, soort: factuurSoort, inclCent: bedragCent, datum: new Date().toISOString() },
+    ];
     offerte.status = factuurSoort === 'aanbetaling' ? 'aanbetaald' : 'gefactureerd';
-    staat.instellingen.factuurVolgnummer =
-      (Number(staat.instellingen.factuurVolgnummer) || 1) + 1;
+    /* Vanaf het nummer dat we net gebruikt hebben verder tellen, niet vanaf de
+       oude stand: die kan achterlopen na een teruggezette reservekopie. */
+    staat.instellingen.factuurVolgnummer = teller + 1;
     bewaarOfferte();
     opslaan();
     tekenInstellingen();
