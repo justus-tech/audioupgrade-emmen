@@ -120,11 +120,22 @@ export function herroepingPdf(offerte = {}) {
 
   doc.lijn(LINKS, y, RECHTS, y, KLEUR.lijnZacht);
   y += 18;
+  /* Deze alinea stond er onvoorwaardelijk: binnen 14 dagen terugbetalen, met
+     als enige aftrekpost het evenredige bedrag. Daarmee gaf dit blad twee
+     dingen weg die de wet wél geeft. Dat we mogen wachten tot de apparatuur
+     terug is — en bij een ingebouwde installatie is dat het enige echte
+     drukmiddel. En de waardevermindering van apparatuur die in- en weer
+     uitgebouwd is, die hier als aftrekpost ontbrak. Een formulier dat gunstiger
+     is dan de voorwaarden achterop telt, want de klant mag de voor hem
+     gunstigste tekst kiezen. Zie artikel 4. */
   const toelichting =
     'U hoeft dit formulier niet te gebruiken: een eigen, ondubbelzinnige mededeling per e-mail ' +
     `of WhatsApp binnen de termijn is net zo geldig. Stuur het naar ${SITE.email} of via ` +
     'WhatsApp. Reeds betaalde bedragen worden binnen 14 dagen na uw melding terugbetaald, onder ' +
-    'aftrek van het evenredige bedrag dat in artikel 4 van onze algemene voorwaarden staat.';
+    'aftrek van het evenredige bedrag en de waardevermindering die in artikel 4 van onze ' +
+    'algemene voorwaarden staan. Is de apparatuur in uw voertuig gemonteerd, dan mogen wij met ' +
+    'de terugbetaling wachten tot wij die terug hebben of tot u het voertuig daarvoor in de ' +
+    'werkplaats heeft aangeboden.';
   for (const stuk of breekAf(toelichting, RECHTS - LINKS, 9)) {
     doc.tekst(stuk, LINKS, y, { grootte: 9, kleur: KLEUR.zacht });
     y += 12.5;

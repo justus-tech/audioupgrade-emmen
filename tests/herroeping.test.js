@@ -14,6 +14,11 @@ import {
 } from '../src/lib/headroom/herroeping.js';
 import { kernpunten, volledigeVoorwaarden } from '../src/lib/headroom/voorwaarden.js';
 import { SITE, ADRES } from '../src/data/site.js';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, writeFileSync, readdirSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const OFFERTE = {
   nummer: '2026-145',
@@ -160,5 +165,205 @@ describe('de bestandsnaam', () => {
 
   test('blijft een geldige naam zonder nummer', () => {
     assert.equal(herroepingBestandsnaam({}), 'modelformulier-herroeping.pdf');
+  });
+});
+
+/**
+ * WAT DE KLANT BIJ HERROEPING WÉL EN NIET BETAALT.
+ *
+ * Artikel 4 zei twee dingen die niet klopten. Dat de klant bij ontbinding de
+ * "speciaal voor het Voertuig bestelde onderdelen" betaalt — die gaan terug en
+ * dat geld gaat terug. En dat het verrichte werk "tegen het geldende uurtarief"
+ * wordt afgerekend — er staat geen uurtarief op de offerte, en de wet rekent
+ * het evenredige deel over de overeengekomen totaalprijs.
+ *
+ * Allebei die fouten zijn informatie over het herroepingsrecht, en onjuiste
+ * informatie daarover kost drie dingen tegelijk: de termijn loopt op tot
+ * twaalf maanden, de aanspraak op waardevermindering vervalt, en voor het
+ * verrichte werk is helemaal niets verschuldigd. Deze tests houden ze eruit.
+ */
+const alleVoorwaarden = () =>
+  volledigeVoorwaarden().artikelen.flatMap((a) => a.punten).join(' ');
+
+const artikel4 = () =>
+  volledigeVoorwaarden().artikelen
+    .find((a) => /Artikel 4/.test(a.kop)).punten.join(' ');
+
+describe('wat de klant bij herroeping betaalt', () => {
+  test('de onderdelen gaan terug en worden niet betaald', () => {
+    const tekst = artikel4();
+    assert.match(tekst, /gaan de geleverde onderdelen terug naar Audio Upgrade Emmen/);
+    assert.match(tekst, /gaat het daarvoor betaalde bedrag terug naar de Klant/);
+    /* De oude formulering mag nergens meer staan. */
+    assert.doesNotMatch(tekst, /speciaal voor het Voertuig bestelde onderdelen/);
+  });
+
+  test('het werk wordt niet tegen een uurtarief afgerekend', () => {
+    const tekst = artikel4();
+    assert.doesNotMatch(tekst, /tegen het geldende uurtarief/);
+    assert.match(tekst, /evenredig is aan dat gedeelte van de verbintenis/);
+    assert.match(tekst, /berekend over de voor deze opdracht overeengekomen totaalprijs/);
+    assert.match(tekst, /geen uurtarief en geen urenopgave/);
+  });
+
+  test('zonder verzoek of met onjuiste informatie is er niets verschuldigd', () => {
+    /* Dit staat erin omdat het de wet is, niet omdat het ons gunstig is: het
+       is precies de sanctie die het oude lid 4 over ons afriep. */
+    /* De bijlage strijkt **vet** weg, dus hier staat "niets" zonder sterretjes. */
+    assert.match(artikel4(), /niet of onjuist geïnformeerd, dan is hij voor de Werkzaamheden niets verschuldigd/);
+  });
+
+  test('de waardevermindering staat erin, en de voorwaarde eraan ook', () => {
+    const tekst = artikel4();
+    assert.match(tekst, /aansprakelijk voor de waardevermindering van de geleverde onderdelen/);
+    assert.match(tekst, /aard, de kenmerken en de werking ervan vast te stellen/);
+    /* Hij vervalt als de klant niet vooraf is geïnformeerd. Dat hoort erbij,
+       anders staat er alleen wat ons uitkomt. */
+    assert.match(tekst, /niet vooraf over zijn herroepingsrecht geïnformeerd, dan is hij deze waardevermindering niet verschuldigd/);
+  });
+
+  test('het recht om met terugbetalen te wachten is niet weggegeven', () => {
+    /* Bij een ingebouwde installatie is dit het enige echte drukmiddel. Artikel
+       4 beloofde eerder onvoorwaardelijk binnen 14 dagen te betalen. */
+    assert.match(artikel4(), /mag Audio Upgrade Emmen met de terugbetaling wachten/);
+    /* En het formulier mag het niet alsnog weggeven: de klant mag de voor hem
+       gunstigste tekst kiezen. */
+    assert.match(tekstVan(OFFERTE), /mogen wij met de terugbetaling wachten/);
+    assert.match(tekstVan(OFFERTE), /waardevermindering/);
+  });
+
+  test('de kosten van het terugbrengen staan erin', () => {
+    /* Verplichte informatie vooraf. Staat ze er niet, dan draagt Justus die
+       kosten zelf. */
+    assert.match(artikel4(), /rechtstreekse kosten van het terugbrengen draagt de Klant/);
+    const punten = kernpunten({ opAfstand: true, zakelijk: false }).join(' ');
+    assert.match(punten, /het rijden naar de werkplaats is voor jou/);
+  });
+});
+
+describe('de 25% van artikel 9 botst niet meer met de bedenktijd', () => {
+  test('artikel 4 zet artikel 9, 10 en 5 buiten toepassing', () => {
+    const tekst = artikel4();
+    assert.match(tekst, /Artikel 9 over annulering en no-show blijft dan buiten toepassing/);
+    assert.match(tekst, /stallingskosten uit artikel 10/);
+    assert.match(tekst, /vrijgave tegen volledige betaling uit artikel 5/);
+  });
+
+  test('ook een afzegging zonder het woord herroepen telt', () => {
+    assert.match(artikel4(), /ook wanneer hij het woord herroepen niet gebruikt/);
+  });
+
+  test('de voorkant belooft niet twee dingen tegelijk', () => {
+    /* Bij een consument op afstand staat de 25%-regel met voorbehoud op het
+       blad; anders onverkort. Zonder dat voorbehoud leest de klant dat
+       afzeggen hem 25% kost terwijl hij dan niets verschuldigd is. */
+    const metRecht = kernpunten({ opAfstand: true, zakelijk: false }).join(' ');
+    assert.match(metRecht, /25%/);
+    assert.match(metRecht, /brengen we die 25% niet in rekening/);
+
+    for (const geval of [{ opAfstand: true, zakelijk: true }, { opAfstand: false }]) {
+      const zonder = kernpunten(geval).join(' ');
+      assert.match(zonder, /25%/);
+      assert.doesNotMatch(zonder, /niet in rekening/);
+    }
+  });
+});
+
+describe('de punten op de voorkant zeggen hetzelfde als artikel 4', () => {
+  test('het startvinkje belooft niet dat de klant de onderdelen betaalt', () => {
+    const punten = kernpunten({ opAfstand: true, zakelijk: false, startDirect: true }).join(' ');
+    assert.match(punten, /gaan de onderdelen terug en krijg je dat geld terug/);
+    assert.match(punten, /evenredig deel van het afgesproken bedrag/);
+    assert.match(punten, /waardevermindering/);
+    assert.match(punten, /Een uurtarief rekenen we niet/);
+    /* De oude belofte mag nergens meer staan. */
+    assert.doesNotMatch(punten, /onderdelen die\s+speciaal voor jouw auto zijn besteld/);
+    assert.doesNotMatch(punten, /speciaal voor jouw auto zijn besteld/);
+  });
+
+  test('zonder startvinkje blijft dat punt weg', () => {
+    const punten = kernpunten({ opAfstand: true, zakelijk: false }).join(' ');
+    assert.doesNotMatch(punten, /uitdrukkelijk om te beginnen/);
+  });
+
+  test('een voorgedrukt vinkje geldt niet als verzoek van de klant', () => {
+    /* Daarom staat `startDirect` standaard uit en moet het verzoek van de klant
+       zelf komen. Zou de app het vinkje vanzelf aanzetten, dan beweert de
+       offerte iets wat de klant nooit heeft gevraagd. */
+    assert.match(artikel4(), /voorgedrukt vinkje of een standaardinstelling geldt niet als verzoek/);
+  });
+});
+
+describe('het maatwerk is niet opgerekt', () => {
+  test('apparatuur uit het assortiment is geen maatwerk', () => {
+    const tekst = artikel4();
+    assert.match(tekst, /geldt uitdrukkelijk niet voor apparatuur uit het assortiment/);
+    assert.match(tekst, /Uitzoeken, samenstellen of inkopen is geen vervaardigen/);
+  });
+
+  test('de demping loopt via de waardevermindering, niet via een uitzondering', () => {
+    /* De uitzondering voor onherroepelijk vermengde zaken is hier niet gebruikt:
+       verlijmd butyl wordt bestanddeel en niet "vermengd", en een artikel bouwen
+       op een uitzondering die niet past kost meer dan het oplevert. */
+    const tekst = artikel4();
+    assert.match(tekst, /Ook voor de deurdemping en het ontdreuningsmateriaal kan de Klant ontbinden/);
+    assert.match(tekst, /ten hoogste de waarde van het materiaal zelf/);
+    assert.doesNotMatch(tekst, /onherroepelijk vermengd/);
+  });
+});
+
+describe('alle voorwaarden samen', () => {
+  test('de twee foute beloftes staan in geen enkel artikel meer', () => {
+    /* Niet alleen in artikel 4 kijken: zou een van deze zinnen ooit in een ander
+       artikel opduiken, dan is het effect hetzelfde. */
+    const alles = alleVoorwaarden();
+    assert.doesNotMatch(alles, /speciaal voor het Voertuig bestelde onderdelen/);
+    assert.doesNotMatch(alles, /reeds verrichte werk tegen het geldende uurtarief/);
+  });
+
+  test('artikel 4 gaat voor, en de wet gaat voor artikel 4', () => {
+    const tekst = artikel4();
+    assert.match(tekst, /ook niet langs artikel 2/);
+    assert.match(tekst, /wijkt het daarvan op enig punt ten nadele van de Klant af, dan geldt de wet/);
+  });
+});
+
+/**
+ * HET OFFERTESCRIPT MOET HET FORMULIER OOK MAKEN.
+ *
+ * De deelknop in de app deed dat al, `npm run offerte` niet. Dan verstuur je een
+ * offerte die op de voorkant zegt dat het formulier erbij zit terwijl er één
+ * bestand uit het script rolt — en juist die bijlage is wat de wet vraagt.
+ * Daarom draaien deze twee tests het echte script, in een tijdelijke map.
+ */
+describe('het offertescript levert de bijlage mee', () => {
+  const script = fileURLToPath(new URL('../scripts/offerte.mjs', import.meta.url));
+
+  function draai(extra) {
+    const map = mkdtempSync(join(tmpdir(), 'offerte-'));
+    const blad = join(map, 'invoer.json');
+    writeFileSync(blad, JSON.stringify({
+      nummer: '2026-900',
+      datum: '2026-10-01',
+      klant: { naam: 'Testklant' },
+      auto: { kenteken: 'XX99XX', merk: 'Ford', model: 'Focus' },
+      regels: [{ omschrijving: 'Werk', incl: '345,00' }],
+      verwachtTotaalIncl: '345,00',
+      ...extra,
+    }));
+    execFileSync(process.execPath, [script, '--invoer', blad, '--uit', map], { encoding: 'utf8' });
+    return readdirSync(map).filter((n) => n.endsWith('.pdf')).sort();
+  }
+
+  test('bij een consument op afstand komen er twee bestanden uit', () => {
+    const bestanden = draai({ opAfstand: true });
+    assert.equal(bestanden.length, 2, bestanden.join(', '));
+    assert.match(bestanden[1], /^offerte-2026-900-XX99XX\.pdf$/);
+    assert.match(bestanden[0], /^modelformulier-herroeping-2026-900\.pdf$/);
+  });
+
+  test('zonder herroepingsrecht blijft het bij de offerte alleen', () => {
+    assert.deepEqual(draai({ opAfstand: false }), ['offerte-2026-900-XX99XX.pdf']);
+    assert.deepEqual(draai({ opAfstand: true, zakelijk: true }), ['offerte-2026-900-XX99XX.pdf']);
   });
 });
