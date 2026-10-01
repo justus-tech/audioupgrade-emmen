@@ -1024,6 +1024,56 @@ describe('huisregels van Justus', alsGebouwd, () => {
     assert.deepEqual(overtreders, [], 'gebruik href={pad("/...")}');
   });
 
+  test('elk hover-effect zit in @media (hover: hover)', () => {
+    /**
+     * WAAROM DEZE REGEL BESTAAT
+     * Op een telefoon blijft :hover na een tik plakken: de knop of de link
+     * waar je net op tikte houdt zijn hover-kleur, en ziet er daarna uit
+     * alsof hij leeg of uitgeschakeld is. 99% van de bezoekers zit op een
+     * telefoon, dus dat is niet het randgeval maar het normale geval.
+     *
+     * :focus-visible mag er wel buiten staan: dat is voor wie met het
+     * toetsenbord navigeert, en dat kan op elk apparaat.
+     */
+    const bronMap = fileURLToPath(new URL('../src/', import.meta.url));
+    const overtreders = [];
+
+    /**
+     * Commentaar eruit, maar wél met evenveel regels, zodat het regelnummer
+     * in de melding blijft kloppen. Zonder dit sloeg de test aan op de uitleg
+     * boven de regel zelf, waarin het woord :hover gewoon voorkomt.
+     */
+    const zonderCommentaar = (tekst) => tekst
+      .replace(/\/\*[\s\S]*?\*\//g, (blok) => '\n'.repeat((blok.match(/\n/g) || []).length))
+      .replace(/(^|[^:])\/\/.*$/gm, '$1');
+
+    const kijk = (pad) => {
+      const regels = zonderCommentaar(readFileSync(pad, 'utf8')).split('\n');
+      let binnenHover = null;
+      let diepte = 0;
+      regels.forEach((regel, i) => {
+        if (binnenHover === null && /@media[^{]*\(\s*hover\s*:\s*hover\s*\)/.test(regel)) {
+          binnenHover = diepte;
+        }
+        if (regel.includes(':hover') && binnenHover === null) {
+          overtreders.push(`${relative(bronMap, pad)}:${i + 1}  ${regel.trim().slice(0, 60)}`);
+        }
+        diepte += (regel.match(/\{/g) || []).length - (regel.match(/\}/g) || []).length;
+        if (binnenHover !== null && diepte <= binnenHover) binnenHover = null;
+      });
+    };
+
+    const loop = (map) => {
+      for (const naam of readdirSync(map)) {
+        const pad = join(map, naam);
+        if (statSync(pad).isDirectory()) { loop(pad); continue; }
+        if (/\.(astro|css)$/.test(naam)) kijk(pad);
+      }
+    };
+    loop(bronMap);
+    assert.deepEqual(overtreders, [], 'zet dit hover-effect in @media (hover: hover)');
+  });
+
   test('de kleuren komen uit brand.js en niet uit losse hexcodes', () => {
     // Uitzondering: de kentekenplaat en het logo. Dat zijn nagebootste
     // voorwerpen (geborsteld aluminium), geen vlakken van de site.

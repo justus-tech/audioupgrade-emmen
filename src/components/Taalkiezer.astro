@@ -65,7 +65,7 @@ const { taal, sleutel = null } = Astro.props;
      het als één schakelaar met drie standen — net als de knop ernaast. */
   .taalkiezer a + a { border-left: 1px solid var(--line); }
 
-  .taalkiezer a:hover { color: var(--text); }
+  @media (hover: hover) { .taalkiezer a:hover { color: var(--text); } }
 
   /* De taal waar je nu in zit. Oranje vlak in plaats van alleen een kleurtje:
      bij drie kleine woordjes naast elkaar is een kleurverschil te subtiel om
