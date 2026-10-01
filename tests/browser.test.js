@@ -934,13 +934,26 @@ describe('Headroom', alsGebouwd, () => {
     await pagina.close();
   });
 
-  /* Verzamelt alles wat er in `ms` naar beneden komt. waitForEvent('download')
-     pakt alleen de eerste, en juist het tweede bestand is hier het punt. */
-  async function downloads(pagina, doen, ms = 1500) {
+  /* Verzamelt de bestanden die naar beneden komen. waitForEvent('download')
+     pakt alleen de eerste, en juist het tweede bestand is hier het punt.
+
+     Niet een vaste tijd afwachten en dan tellen: op een trage machine is het
+     tweede bestand er dan nog niet en faalt de test op de machine in plaats
+     van op de code. Daarom wachten we tot `verwacht` bestanden binnen zijn,
+     en daarna nog kort of er onverwacht een extra achteraan komt. Dat laatste
+     moet een tijdje blijven, anders zegt de test "precies één bestand" zonder
+     ernaar gekeken te hebben. */
+  async function downloads(pagina, doen, verwacht, ms = 20000) {
     const namen = [];
-    pagina.on('download', (d) => namen.push(d.suggestedFilename()));
+    let binnen;
+    const genoeg = new Promise((los) => { binnen = los; });
+    pagina.on('download', (d) => {
+      namen.push(d.suggestedFilename());
+      if (namen.length >= verwacht) binnen();
+    });
     await doen();
-    await pagina.waitForTimeout(ms);
+    await Promise.race([genoeg, pagina.waitForTimeout(ms)]);
+    await pagina.waitForTimeout(750);
     return namen;
   }
 
@@ -952,7 +965,7 @@ describe('Headroom', alsGebouwd, () => {
     await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
     assert.equal(await pagina.isChecked('#wb-op-afstand'), true, 'op afstand staat niet aan');
 
-    const namen = await downloads(pagina, () => pagina.click('#wb-pdf'));
+    const namen = await downloads(pagina, () => pagina.click('#wb-pdf'), 2);
     assert.equal(namen.length, 2, `er kwamen ${namen.length} bestanden: ${namen.join(', ')}`);
     assert.match(namen[0], /^offerte-/);
     assert.match(namen[1], /^modelformulier-herroeping-\d{4}-\d{3}\.pdf$/);
@@ -973,7 +986,7 @@ describe('Headroom', alsGebouwd, () => {
       await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
       await zetKlaar(pagina);
 
-      const namen = await downloads(pagina, () => pagina.click('#wb-pdf'));
+      const namen = await downloads(pagina, () => pagina.click('#wb-pdf'), 1);
       assert.deepEqual(namen.map((n) => n.replace(/\d{4}-\d{3}/, 'nr')), ['offerte-nr.pdf']);
       await pagina.close();
     }
