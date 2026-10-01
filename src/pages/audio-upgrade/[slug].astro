@@ -310,11 +310,16 @@ const dienstSchema = {
     font-size: .74rem;
     transition: border-color .15s ease, color .15s ease;
   }
-  .verwant a:hover,
   .verwant a:focus-visible { border-color: var(--accent); color: var(--accent-text); }
 
   .eyebrow-link { text-decoration: none; }
-  .eyebrow-link:hover { text-decoration: underline; }
+
+  /* Hover alleen waar er een muis is; focus blijft overal staan, want daar
+     navigeert iemand met het toetsenbord op. */
+  @media (hover: hover) {
+    .verwant a:hover { border-color: var(--accent); color: var(--accent-text); }
+    .eyebrow-link:hover { text-decoration: underline; }
+  }
   .generaties { color: var(--text-dim); font-size: .95rem; margin-top: .6em; }
 
   .jouw-auto {

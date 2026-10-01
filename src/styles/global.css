@@ -226,7 +226,7 @@ header.site .wrap {
   color: var(--text);
   transition: color .2s;
 }
-.logo:hover { color: var(--accent-text); }
+@media (hover: hover) { .logo:hover { color: var(--accent-text); } }
 .logo-text span { color: var(--accent-text); }
 
 /* Het beeldmerk zit in de footer boven de bedrijfsnaam. */
@@ -253,7 +253,7 @@ nav.main a::after,
   transform: translateY(-50%);
 }
 .logo { position: relative; }
-nav.main a:hover { color: var(--text); }
+@media (hover: hover) { nav.main a:hover { color: var(--text); } }
 nav.main a[aria-current="page"] { color: var(--text); border-bottom-color: var(--accent); }
 
 /* ---- knop voor licht en donker ----
@@ -449,7 +449,7 @@ details summary {
   display: flex; justify-content: space-between; align-items: center;
   transition: color .2s;
 }
-details summary:hover { color: var(--accent-text); }
+@media (hover: hover) { details summary:hover { color: var(--accent-text); } }
 details summary::after { content: "+"; font-size: 1.3rem; color: var(--accent-text); }
 details[open] summary::after { content: "–"; }
 details p { padding-top: 12px; }
@@ -521,7 +521,7 @@ footer.site a {
   display: inline-block; padding: 5px 0;
   color: var(--text-dim); transition: color .2s;
 }
-footer.site a:hover { color: var(--accent-text); }
+@media (hover: hover) { footer.site a:hover { color: var(--accent-text); } }
 footer.site .legal { font-size: .82rem; }
 /* De bedrijfsnummers zijn de minst interessante regel van de site; de
    juridische links erboven moeten het eerst opvallen. */
