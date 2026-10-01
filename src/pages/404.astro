@@ -109,8 +109,8 @@ const ingangen = [
     text-decoration: none;
     transition: border-color .15s ease;
   }
-  .ingangen a:hover,
   .ingangen a:focus-visible { border-color: var(--accent); }
+  @media (hover: hover) { .ingangen a:hover { border-color: var(--accent); } }
   .ingangen strong {
     display: block;
     font-family: 'Oswald', sans-serif;

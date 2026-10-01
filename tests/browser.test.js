@@ -2010,6 +2010,130 @@ describe('Headroom', alsGebouwd, () => {
     await pagina.close();
   });
 
+  /* ================= FACTUURNUMMERS ================= */
+  /**
+   * EEN FACTUURNUMMER MAG MAAR ÉÉN KEER BESTAAN.
+   *
+   * Twee klanten met hetzelfde factuurnummer en verschillende bedragen is een
+   * probleem voor de boekhouding. De teller alleen is daar niet genoeg voor:
+   * die kan teruglopen door een teruggezette reservekopie of door een typefout
+   * in Instellingen.
+   */
+  async function metPrijslijst() {
+    const { pagina, fouten } = await openWerkbak();
+    pagina.on('dialog', (d) => d.accept());
+    await pagina.click('[data-tab="instellingen"]');
+    await pagina.fill('#wb-i-uurtarief', '75,00');
+    await pagina.fill('#wb-i-iban', 'NL00BANK0123456789');
+    await vulCatalogus(pagina);
+    return { pagina, fouten };
+  }
+
+  /** Eén klus van begin tot factuur. Levert de gebruikte factuurnummers op. */
+  async function factureer(pagina, naam, soorten) {
+    await pagina.click('[data-tab="offerte"]');
+    await pagina.click('#wb-nieuw');
+    await pagina.waitForFunction(() => document.querySelector('#wb-naam').value === '');
+    await pagina.fill('#wb-naam', naam);
+    await pagina.fill('#wb-adres', 'Hoofdstraat 1, 7811 AA Emmen');
+    await pagina.click('#wb-onderdelen .wb-toevoeg >> nth=0');
+    const uit = [];
+    for (const soort of soorten) {
+      await pagina.click(`[data-factuur="${soort}"]`);
+      const wacht = pagina.waitForEvent('download');
+      await pagina.click('#wb-factuur');
+      const bestand = await wacht;
+      uit.push(bestand.suggestedFilename().replace('factuur-', '').replace('.pdf', ''));
+    }
+    return uit;
+  }
+
+  test('ELKE FACTUUR WORDT ONTHOUDEN, OOK DE EINDFACTUUR', async () => {
+    /* Hier bleef alleen de aanbetaling staan. Van drie verstuurde facturen kon
+       de app er één terugvinden; belde een klant over de eindfactuur, dan kon
+       je hem nergens opzoeken. */
+    const { pagina, fouten } = await metPrijslijst();
+    const [aanbetaling, eind] = await factureer(pagina, 'Jan Bakker', ['aanbetaling', 'eind']);
+    assert.notEqual(aanbetaling, eind);
+
+    const bewaard = await pagina.evaluate(() => {
+      const o = JSON.parse(localStorage.getItem('aue-werkbak-v1')).offertes[0];
+      return (o.facturen || []).map((f) => `${f.nummer}|${f.soort}`);
+    });
+    assert.deepEqual(bewaard, [`${aanbetaling}|aanbetaling`, `${eind}|eind`]);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een factuurnummer is terug te vinden in je offertes', async () => {
+    const { pagina } = await metPrijslijst();
+    const [nummer] = await factureer(pagina, 'Sanne de Vries', ['volledig']);
+    await pagina.fill('#wb-zoek', nummer);
+    await pagina.waitForFunction(
+      (n) => document.querySelector('#wb-bewaard').textContent.includes(n), nummer
+    );
+    const lijst = await pagina.textContent('#wb-bewaard');
+    assert.match(lijst, /Sanne de Vries/);
+    await pagina.close();
+  });
+
+  test('EEN TERUGGEZETTE TELLER GEEFT GEEN DUBBEL NUMMER', async () => {
+    /**
+     * Nagespeeld: drie facturen versturen, dan de teller in Instellingen met de
+     * hand terugzetten naar 1. De volgende factuur kreeg dan opnieuw het
+     * nummer van de eerste.
+     */
+    const { pagina, fouten } = await metPrijslijst();
+    const gehad = [];
+    for (const naam of ['Jan Bakker', 'Sanne de Vries', 'Piet Jansen']) {
+      gehad.push(...await factureer(pagina, naam, ['volledig']));
+    }
+
+    await pagina.click('[data-tab="instellingen"]');
+    await pagina.fill('#wb-i-factuurnummer', '1');
+    /* Uit het veld klikken, want de instelling wordt pas weggeschreven als je
+       hem verlaat. */
+    await pagina.click('#wb-i-uurtarief');
+    await pagina.waitForFunction(
+      () => Number(JSON.parse(localStorage.getItem('aue-werkbak-v1'))
+        .instellingen.factuurVolgnummer) === 1
+    );
+
+    const [naTerugzetten] = await factureer(pagina, 'Kees de Boer', ['volledig']);
+    assert.ok(!gehad.includes(naTerugzetten), `${naTerugzetten} was al vergeven aan iemand anders`);
+
+    const alle = await pagina.evaluate(() => JSON.parse(localStorage.getItem('aue-werkbak-v1'))
+      .offertes.flatMap((o) => (o.facturen || []).map((f) => f.nummer)));
+    assert.equal(new Set(alle).size, alle.length, `dubbel nummer: ${alle.join(', ')}`);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een oudere reservekopie waarschuwt dat de teller terugloopt', async () => {
+    /* Dit is het enige geval dat de app niet kan tegenhouden: een factuur die
+       in de kopie niet voorkomt, kent hij niet. Dan moet hij het wel zéggen. */
+    const { pagina } = await metPrijslijst();
+    await factureer(pagina, 'Jan Bakker', ['volledig']);
+    const kopie = await pagina.evaluate(() => JSON.stringify({
+      soort: 'reservekopie', ...JSON.parse(localStorage.getItem('aue-werkbak-v1')),
+    }));
+    await factureer(pagina, 'Sanne de Vries', ['volledig']);
+
+    const gezegd = [];
+    pagina.removeAllListeners('dialog');
+    pagina.on('dialog', (d) => { gezegd.push(d.message()); d.accept(); });
+    await pagina.click('[data-tab="instellingen"]');
+    await pagina.setInputFiles('#wb-import', {
+      name: 'headroom.json', mimeType: 'application/json', buffer: Buffer.from(kopie),
+    });
+    await pagina.waitForFunction(() => document.querySelector('#wb-naam').value !== 'Sanne de Vries');
+
+    const alles = gezegd.join('\n');
+    assert.match(alles, /factuurteller gaat van 3 terug naar 2/);
+    assert.match(alles, /opnieuw vergeven/);
+    await pagina.close();
+  });
+
   /* ================= HET MEETRAPPORT OP PAPIER ================= */
   test('EEN STAANDE SCHERMAFBEELDING PAST OP ÉÉN VEL', async () => {
     /**
