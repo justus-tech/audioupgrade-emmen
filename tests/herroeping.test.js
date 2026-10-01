@@ -67,6 +67,35 @@ describe('wanneer het formulier meegaat', () => {
     assert.doesNotMatch(zonder, /modelformulier/i);
   });
 
+  test('de offerte zegt wanneer de 14 dagen ingaan', () => {
+    /* Niet vanaf de afspraak maar vanaf de ontvangst van de auto: een klus
+       is onderdelen plus montage, en dan gelden alleen de regels voor
+       consumentenkoop (art. 6:230g lid 2 BW). Stond er iets anders, dan is
+       dat onjuiste informatie en rekt de termijn op tot twaalf maanden. */
+    const punten = kernpunten({ opAfstand: true, zakelijk: false }).join(' ');
+    assert.match(punten, /gaan in op de dag nadat je je auto/);
+    assert.doesNotMatch(punten, /dag na het sluiten van de overeenkomst/);
+  });
+
+  test('de voorwaarden zetten het beginmoment uit elkaar', () => {
+    const alles = volledigeVoorwaarden().artikelen
+      .flatMap((a) => a.punten).join(' ');
+    assert.match(alles, /6:230g lid 2/, 'de grondslag ontbreekt');
+    assert.match(alles, /nadat de Klant het Voertuig met de gemonteerde apparatuur heeft ontvangen/);
+    /* De dienstregel mag er staan, maar alleen voor werk zonder onderdelen. */
+    assert.match(alles, /uitsluitend een dienst zonder levering van onderdelen/);
+  });
+
+  test('het vervallen bij een afgeronde dienst spreekt het beginmoment niet tegen', () => {
+    /* Zou het recht vervallen zodra het werk af is, dan zou het bij een klus
+       met onderdelen nooit beginnen — precies het omgekeerde van wat lid 3
+       zegt. Die uitzondering hoort alleen bij werk zonder onderdelen. */
+    const alles = volledigeVoorwaarden().artikelen
+      .flatMap((a) => a.punten).join(' ');
+    assert.match(alles, /uitsluitend een dienst zonder levering van onderdelen, dan vervalt/);
+    assert.doesNotMatch(alles, /Het herroepingsrecht vervalt zodra de dienst volledig is uitgevoerd/);
+  });
+
   test('de voorwaarden beloven het formulier ook', () => {
     const alles = volledigeVoorwaarden().artikelen
       .flatMap((a) => a.punten).join(' ');

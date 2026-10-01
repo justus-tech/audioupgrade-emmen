@@ -94,9 +94,23 @@ export function kernpunten({
   /* De bedenktijd is een consumentenrecht. Bij een zakelijke klant bestaat
      hij niet, ook niet als je het per WhatsApp afspreekt. */
   if (opAfstand && !zakelijk) {
+    /* WANNEER DIE 14 DAGEN INGAAN.
+       Een klus van Justus is onderdelen én montage in één opdracht. Daarvoor
+       gelden volgens art. 6:230g lid 2 BW alleen de regels voor
+       consumentenkoop, en dan loopt de termijn vanaf de ontvangst van de
+       zaak (6:230o lid 1 sub b) — hier dus vanaf het moment dat de klant
+       zijn auto met de apparatuur erin terugkrijgt, niet vanaf de dag van
+       de afspraak. Dat scheelt weken, en te weinig of verkeerde informatie
+       hierover rekt de termijn op tot twaalf maanden.
+       Eén zin voor allebei de gevallen: gaat het bij uitzondering om werk
+       zonder nieuwe onderdelen, dan begint de termijn eerder (bij de
+       afspraak), en geeft deze zin de klant dus meer tijd dan de wet eist.
+       Te veel geven mag; te weinig informeren niet. Het precieze
+       onderscheid staat in artikel 4 van de voorwaarden achterop. */
     punten.push(
       'Omdat we dit op afstand afspreken heb je 14 dagen bedenktijd: je mag de overeenkomst ' +
-      'binnen die termijn zonder opgaaf van reden ontbinden.'
+      'zonder opgaaf van reden ontbinden. Die 14 dagen gaan in op de dag nadat je je auto ' +
+      'met de nieuwe apparatuur erin terugkrijgt.'
     );
     /* De wet wil dat het modelformulier meegaat, niet alleen dat je de
        bedenktijd noemt. Het blad zit als losse pdf bij de offerte; hier
