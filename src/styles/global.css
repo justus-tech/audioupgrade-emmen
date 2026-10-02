@@ -108,7 +108,15 @@
 }
 .overslaan:focus { top: 12px; }
 
-html { scroll-behavior: smooth; }
+/* Zacht naar een anker toe scrollen, maar alleen voor wie beweging niet heeft
+   uitgezet. Zet iemand in zijn telefoon "minder beweging" aan, dan is dat geen
+   smaakkwestie: van een pagina die onder je duim wegglijdt word je misselijk
+   als je daar gevoelig voor bent. De homepage is ruim 11.000 pixels hoog, dus
+   een sprong naar de voet was anders een lange vlucht. Verder in dit bestand
+   wordt die keuze al overal gerespecteerd; hier was hij vergeten. */
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
 
 body {
   background: var(--bg);
@@ -636,6 +644,14 @@ section, .schets-blok, [id] { scroll-margin-top: 104px; }
   html:not(.js-reveal) .wa-zwevend { opacity: 1; transform: none; pointer-events: auto; }
   /* Ruimte onderaan, anders dekt de knop de laatste footerregel af. */
   footer.site { padding-bottom: 96px; }
+}
+
+/* Dezelfde keuze voor de zwevende knop: hij komt normaal van onderen omhoog
+   geschoven, en dat is precies de beweging waar "minder beweging" over gaat.
+   Hij vloeit dan alleen in, op zijn plek. Zichtbaar blijft hij altijd — het is
+   de belangrijkste knop van de site. */
+@media (max-width: 700px) and (prefers-reduced-motion: reduce) {
+  .wa-zwevend { transform: none; transition: opacity .3s ease; }
 }
 
 /* Kaart zonder scorebalkjes (Akoestische Isolatie): niet meerekken met de
