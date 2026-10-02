@@ -241,7 +241,12 @@ const los = pakkettenVan(LOSSE_OPTIES);
 
     blok.hidden = false;
     melding.textContent = '';
-    blok.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    /* Zacht naar het antwoord toe scrollen, behalve als de bezoeker in zijn
+       telefoon "minder beweging" heeft aangezet. Dan springt hij er direct
+       naartoe. Zelfde keuze als in global.css; een 'smooth' hier zou die
+       keuze overrulen. */
+    const stilZetten = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    blok.scrollIntoView({ behavior: stilZetten ? 'auto' : 'smooth', block: 'start' });
 
     try {
       // `slug` erbij, zodat een modelpagina kan zien of dit kenteken bij
