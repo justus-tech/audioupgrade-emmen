@@ -250,6 +250,15 @@ zijn telt de naam. Tik je op een klant, dan zie je drie tabs: **Gegevens**,
 **Offertes** en **Bedrading**. Vanuit een offerte of schema spring je naar het
 tabblad Offerte of Bedrading om te bewerken.
 
+Bovenaan de klantenlijst staat **Vandaag opvolgen**: offertes waar na vijf
+dagen niets op gehoord is, facturen die na twee weken nog openstaan, klussen
+die ingebouwd zijn maar nog op aanbetaald staan, en drie weken na een betaalde
+inbouw de vraag hoe het bevalt. Met één tik opent WhatsApp met het bericht er
+al in; versturen doe je zelf. De regels staan in `src/lib/headroom/opvolgen.js`.
+Het getal op het tabblad Klanten zegt hoeveel er klaarstaat. Per klant kun je
+bellen, appen of meteen een nieuwe offerte beginnen met de klant en zijn auto
+erin, en de hele lijst gaat als bestand voor Excel mee.
+
 ### Het bedradingsplan
 
 Het tabblad **Bedrading** tekent voor de offerte waar je aan werkt twee

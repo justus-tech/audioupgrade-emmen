@@ -76,7 +76,7 @@ import { APP } from '../data/app.js';
 
 <nav class="wb-tabs" aria-label="Onderdelen">
   <button type="button" class="wb-tab aan" data-tab="offerte">Offerte</button>
-  <button type="button" class="wb-tab" data-tab="klanten">Klanten</button>
+  <button type="button" class="wb-tab" data-tab="klanten">Klanten<span class="kl-teller" id="kl-teller" hidden></span></button>
   <button type="button" class="wb-tab" data-tab="bedrading">Bedrading</button>
   <button type="button" class="wb-tab" data-tab="agenda">Agenda<span class="wb-bel" id="wb-agenda-bel" hidden></span></button>
   <button type="button" class="wb-tab" data-tab="rapport">Rapport</button>
@@ -290,11 +290,13 @@ import { APP } from '../data/app.js';
         Iedereen voor wie je een offerte hebt bewaard. Offertes met hetzelfde
         telefoonnummer of e-mailadres staan onder één klant.
       </p>
+      <div id="kl-opvolgen"></div>
       <div class="wb-kaart">
         <label class="wb-breed wb-zoeken">Zoeken
           <input type="search" id="kl-zoek" placeholder="naam, telefoon, kenteken of offertenummer" />
         </label>
         <div id="kl-lijst"></div>
+        <button type="button" class="btn wb-vol" id="kl-csv">Klantenlijst downloaden voor Excel</button>
       </div>
     </div>
 
@@ -302,6 +304,7 @@ import { APP } from '../data/app.js';
       <button type="button" class="wb-link" id="kl-terug">← Alle klanten</button>
       <h1 class="wb-h" id="kl-naam"></h1>
       <p class="wb-uitleg" id="kl-sub"></p>
+      <div class="kl-acties" id="kl-acties"></div>
       <div class="wb-schakel wb-drie kl-tabs" role="tablist" aria-label="Klant">
         <button type="button" class="wb-keuze aan" role="tab" data-kltab="gegevens">Gegevens</button>
         <button type="button" class="wb-keuze" role="tab" data-kltab="offertes">Offertes</button>
@@ -970,6 +973,7 @@ import { APP } from '../data/app.js';
   } from '../lib/headroom/meetrapport.js';
   import { MODELS } from '../data/models.js';
   import { klantenUit, klantPast, zoekKlant } from '../lib/headroom/klanten.js';
+  import { opvolgLijst, klantenCsv, waLink } from '../lib/headroom/opvolgen.js';
   import {
     STATUSSEN as BD_STATUSSEN, SOORTEN_COMPONENT, KABELSOORT_NAAM, planUitOfferte, bouwPlan, nieuwComponent,
     verdeelAansturing, stuurders, stroomSchema, audioSchema, zoekDing, bedradingHtml, komma,
@@ -1503,6 +1507,9 @@ import { APP } from '../data/app.js';
    * kwijt zodra je daarna de inbouwdatum verzette.
    */
   function werkBij(nummer, veranderingen) {
+    /* Onthouden sinds wanneer iets op deze status staat: daaraan ziet de
+       opvolglijst bij Klanten of een klant al te lang niets gehoord heeft. */
+    if (veranderingen.status) veranderingen = { ...veranderingen, statusSinds: new Date().toISOString() };
     const bewaard = staat.offertes.find((o) => o.nummer === nummer);
     if (bewaard) Object.assign(bewaard, veranderingen);
     if (offerte.nummer === nummer) Object.assign(offerte, veranderingen);
@@ -3220,6 +3227,7 @@ import { APP } from '../data/app.js';
    */
   function tekenOpgeslagen() {
     tekenBewaard();
+    tekenOpvolgTeller();
     tekenAgenda();
     tekenGoogleAgenda();
     tekenRapport();
@@ -3482,6 +3490,7 @@ import { APP } from '../data/app.js';
       { nummer, soort: factuurSoort, inclCent: bedragCent, datum: new Date().toISOString() },
     ];
     offerte.status = factuurSoort === 'aanbetaling' ? 'aanbetaald' : 'gefactureerd';
+    offerte.statusSinds = new Date().toISOString();
     /* Vanaf het nummer dat we net gebruikt hebben verder tellen, niet vanaf de
        oude stand: die kan achterlopen na een teruggezette reservekopie. */
     staat.instellingen.factuurVolgnummer = teller + 1;
@@ -3527,7 +3536,10 @@ import { APP } from '../data/app.js';
    * klant een eigen nummer en kun je een offerte altijd terugvinden.
    */
   function bewaarNaVersturen() {
-    if (!offerte.status || offerte.status === 'concept') offerte.status = 'verstuurd';
+    if (!offerte.status || offerte.status === 'concept') {
+      offerte.status = 'verstuurd';
+      offerte.statusSinds = new Date().toISOString();
+    }
     /* De teller schuift niet meer hier op maar in bewaarOfferte, en alleen als
        de offerte er nog niet stond. Deed hij het hier ook, dan sprong hij bij
        elke verstuurde offerte twee nummers verder. */
@@ -4027,7 +4039,7 @@ import { APP } from '../data/app.js';
     const klant = klGekozen ? zoekKlant(klanten, klGekozen) : null;
     $('#kl-lijst-vak').hidden = !!klant;
     $('#kl-klant').hidden = !klant;
-    if (!klant) { tekenKlantenlijst(klanten); return; }
+    if (!klant) { tekenOpvolgen(); tekenKlantenlijst(klanten); return; }
     tekenKlant(klant);
   }
 
@@ -4048,6 +4060,12 @@ import { APP } from '../data/app.js';
 
   function tekenKlant(klant) {
     $('#kl-naam').textContent = klant.bedrijf || klant.naam || 'Zonder naam';
+    const tel = String(klant.telefoon || '').replace(/[^0-9+]/g, '');
+    $('#kl-acties').innerHTML = [
+      klant.telefoon ? `<a class="btn" href="tel:${ontsnap(tel)}">Bellen</a>` : '',
+      klant.telefoon ? `<a class="btn" href="${ontsnap(waLink(klant.telefoon, `Hoi ${String(klant.naam || '').split(' ')[0]}, `.replace(' , ', ', ')))}" target="_blank" rel="noopener">WhatsApp</a>` : '',
+      '<button type="button" class="btn solid" data-actie="nieuw">Nieuwe offerte</button>',
+    ].join('');
     $('#kl-sub').textContent = [klant.bedrijf ? klant.naam : '', `${klant.offertes.length} ${klant.offertes.length === 1 ? 'offerte' : 'offertes'}`, `laatst ${klDatum(klant.laatst)}`].filter(Boolean).join(' · ');
     $$('[data-kltab]').forEach((k) => {
       k.classList.toggle('aan', k.dataset.kltab === klTab);
@@ -4137,6 +4155,103 @@ import { APP } from '../data/app.js';
     if (!knop) return;
     const eerder = staat.offertes.find((o) => o.id === knop.dataset.open);
     if (eerder) openOfferte(eerder, knop.dataset.naar);
+  });
+
+  /* ================= OPVOLGEN =================
+     Wie je vandaag een bericht stuurt. De regels staan in
+     src/lib/headroom/opvolgen.js. */
+  const opvolgPunten = () => opvolgLijst(staat.offertes, { instellingen: staat.instellingen, bedrijf: SITE.name });
+
+  /** Het rondje op het tabblad Klanten: zo zie je vanaf elk scherm dat er iets wacht. */
+  function tekenOpvolgTeller() {
+    const n = opvolgPunten().length;
+    const teller = $('#kl-teller');
+    teller.hidden = !n;
+    teller.textContent = n ? String(n) : '';
+    teller.setAttribute('aria-label', `${n} om op te volgen`);
+  }
+
+  function tekenOpvolgen() {
+    const punten = opvolgPunten();
+    tekenOpvolgTeller();
+    $('#kl-opvolgen').innerHTML = punten.length
+      ? `<div class="wb-kaart kl-opvolg">
+          <span class="eyebrow">Vandaag opvolgen</span>
+          ${punten.map((p, i) => `<div class="kl-punt" data-punt="${i}">
+            <div class="kl-punt-kop">
+              <span><strong>${ontsnap(p.titel)}</strong> · ${ontsnap(p.wie)}<small>${ontsnap(p.uitleg)}</small></span>
+            </div>
+            <div class="kl-punt-knoppen">
+              ${p.bericht ? `<button type="button" class="btn solid" data-opvolg="wa" data-i="${i}">WhatsApp</button>` : `<button type="button" class="btn solid" data-opvolg="open" data-i="${i}">Openen</button>`}
+              ${p.bericht ? `<button type="button" class="wb-link" data-opvolg="open" data-i="${i}">Offerte</button>` : ''}
+              <button type="button" class="wb-link" data-opvolg="klaar" data-i="${i}">${p.soort === 'nazorg' ? 'Niet nodig' : 'Later'}</button>
+            </div>
+          </div>`).join('')}
+          <p class="wb-uitleg">WhatsApp opent met het bericht er al in; jij drukt zelf op versturen. Daarna verdwijnt het punt een week van de lijst${punten.some((p) => p.soort === 'nazorg') ? ', en nazorg vraag je maar één keer' : ''}.</p>
+        </div>`
+      : '';
+  }
+
+  /** Onthoud dat je dit punt hebt opgevolgd, in de bewaarde offerte zelf. */
+  function markeerOpgevolgd(id, soort) {
+    const nu = new Date().toISOString();
+    for (const o of [staat.offertes.find((x) => x.id === id), offerte.id === id ? offerte : null]) {
+      if (o) o.opgevolgd = { ...(o.opgevolgd || {}), [soort]: nu };
+    }
+    opslaan();
+    tekenKlanten();
+  }
+
+  $('#kl-opvolgen').addEventListener('click', (e) => {
+    const knop = e.target.closest('[data-opvolg]');
+    if (!knop) return;
+    const p = opvolgPunten()[Number(knop.dataset.i)];
+    if (!p) return;
+    if (knop.dataset.opvolg === 'wa') {
+      window.open(waLink(p.offerte.klant?.telefoon, p.bericht), '_blank');
+      markeerOpgevolgd(p.offerte.id, p.soort);
+    } else if (knop.dataset.opvolg === 'klaar') {
+      markeerOpgevolgd(p.offerte.id, p.soort);
+    } else {
+      openOfferte(p.offerte, 'offerte');
+    }
+  });
+
+  /* De klantenlijst als bestand: een reservekopie die je ook in Excel opent,
+     of om je klanten eens te mailen. */
+  $('#kl-csv').addEventListener('click', () => {
+    const klanten = klantenUit(staat.offertes, staat.instellingen);
+    if (!klanten.length) { alert('Er staan nog geen klanten in je lijst.'); return; }
+    const blob = new Blob([klantenCsv(klanten)], { type: 'text/csv;charset=utf-8' });
+    const adres = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = adres;
+    link.download = `klanten-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(adres);
+  });
+
+  /** Een nieuwe offerte met de klant en zijn laatste auto er al in. */
+  function nieuweOfferteVoor(klant) {
+    const voor = offerte.id;
+    $('#wb-nieuw').click();
+    /* Niet doorgegaan: de vraag of je je werk kwijt wilt is met nee beantwoord. */
+    if (offerte.id === voor) return;
+    const laatste = klant.offertes[0] || {};
+    offerte.klant = { naam: klant.naam, bedrijf: klant.bedrijf, telefoon: klant.telefoon, email: klant.email, adres: klant.adres };
+    offerte.zakelijk = !!laatste.zakelijk;
+    offerte.auto = JSON.parse(JSON.stringify(laatste.auto || {}));
+    vulFormulierUitOfferte();
+    tekenAlles();
+    toonTab('offerte', { inGeschiedenis: true });
+  }
+
+  $('#kl-acties').addEventListener('click', (e) => {
+    const knop = e.target.closest('[data-actie]');
+    if (!knop) return;
+    const klant = zoekKlant(klantenUit(staat.offertes, staat.instellingen), klGekozen);
+    if (!klant) return;
+    if (knop.dataset.actie === 'nieuw') nieuweOfferteVoor(klant);
   });
 
   /* ================= BEDRADINGSPLAN =================
@@ -5641,6 +5756,32 @@ import { APP } from '../data/app.js';
   .kl-mini-kop { margin: 8px 0 0; font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--text-dim); }
   .kl-plan .wb-uitleg strong { font-weight: 600; }
   @media (min-width: 1000px) { .kl-schemas { grid-template-columns: repeat(3, 1fr); } }
+  .kl-teller {
+    display: inline-block;
+    min-width: 18px;
+    margin-left: 6px;
+    padding: 1px 5px;
+    border-radius: 9px;
+    background: var(--accent);
+    color: var(--bg);
+    font-size: .7rem;
+    line-height: 16px;
+    letter-spacing: 0;
+    text-align: center;
+    vertical-align: 2px;
+  }
+  .kl-teller[hidden] { display: none; }
+  .kl-acties { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 14px; }
+  .kl-acties .btn { width: 100%; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; }
+  .kl-acties .btn.solid { grid-column: 1 / -1; }
+  .kl-opvolg { border-color: var(--accent); }
+  .kl-punt { padding: 12px 0; border-top: 1px solid var(--line); }
+  .kl-punt:first-of-type { border-top: 0; }
+  .kl-punt strong { font-weight: 600; }
+  .kl-punt small { display: block; color: var(--text-dim); font-size: .8rem; overflow-wrap: anywhere; }
+  .kl-punt-knoppen { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin-top: 10px; }
+  .kl-punt-knoppen .btn { flex: 1 1 100%; margin: 0; text-align: center; }
+  @media (min-width: 700px) { .kl-punt-knoppen .btn { flex: 0 0 auto; } }
 </style>
 </body>
 </html>
