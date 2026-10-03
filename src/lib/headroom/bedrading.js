@@ -398,6 +398,151 @@ export function kanalenVoor(c, versterker) {
   return c.type === 'compo' && c.actief ? 4 : 2;
 }
 
+/* ================= DE AUTO ZELF: PLEK, MATEN EN LENGTES =================
+   Waar elk onderdeel echt zit, in deze auto. Daaruit volgt de lengte van
+   elke kabel: langs de dorpel, door de deur, door het schutbord. De maten
+   van de auto komen van de RDW (lengte, breedte, wielbasis); staan die er
+   niet, dan rekent het plan met een gemiddelde auto en zegt het dat erbij.
+
+   Coördinaten zijn fracties van de auto: x van de voorbumper (0) naar de
+   achterbumper (1), y van links (0, de bestuurderskant) naar rechts (1). */
+
+export const LOCATIES = [
+  { id: 'motorruimte-links', naam: 'Motorruimte links', x: 0.12, y: 0.25 },
+  { id: 'motorruimte-rechts', naam: 'Motorruimte rechts', x: 0.12, y: 0.75 },
+  { id: 'dashboard', naam: 'Dashboard, midden', x: 0.31, y: 0.5 },
+  { id: 'dashboard-hoeken', naam: 'Dashboardhoeken / A-stijlen', x: 0.29, y: 0.1, paar: true },
+  { id: 'handschoenenkastje', naam: 'Achter het handschoenenkastje', x: 0.32, y: 0.76 },
+  { id: 'deuren-voor', naam: 'Voordeuren', x: 0.4, y: 0.03, paar: true },
+  { id: 'middenconsole', naam: 'Middenconsole', x: 0.42, y: 0.5 },
+  { id: 'onder-stoel-bestuurder', naam: 'Onder de bestuurdersstoel', x: 0.46, y: 0.28 },
+  { id: 'onder-stoel-passagier', naam: 'Onder de passagiersstoel', x: 0.46, y: 0.72 },
+  { id: 'deuren-achter', naam: 'Achterdeuren', x: 0.6, y: 0.03, paar: true },
+  { id: 'achterbank', naam: 'Onder of achter de achterbank', x: 0.64, y: 0.5 },
+  { id: 'hoedenplank', naam: 'Hoedenplank', x: 0.77, y: 0.24, paar: true },
+  { id: 'kofferbak-achterwand', naam: 'Kofferbak, tegen de achterbank', x: 0.78, y: 0.5 },
+  { id: 'kofferbak-links', naam: 'Kofferbak, zijpaneel links', x: 0.86, y: 0.1 },
+  { id: 'kofferbak-rechts', naam: 'Kofferbak, zijpaneel rechts', x: 0.86, y: 0.9 },
+  { id: 'kofferbak-vloer', naam: 'Kofferbakvloer', x: 0.87, y: 0.5 },
+  { id: 'reservewielkuip', naam: 'Reservewielkuip', x: 0.92, y: 0.5 },
+];
+
+const locatie = (id) => LOCATIES.find((l) => l.id === id) || null;
+const inMotorruimte = (id) => String(id || '').startsWith('motorruimte');
+
+/** Een gemiddelde hatchback, voor als de RDW de maten niet geeft. */
+export const GEMIDDELDE_AUTO = { lengte: 430, breedte: 180, wielbasis: 265 };
+
+/**
+ * De maten van deze auto in centimeters. Wat je zelf in het plan hebt
+ * ingevuld gaat voor, dan wat de RDW gaf, dan het gemiddelde.
+ */
+export function autoMaten(auto = {}, plan = {}) {
+  const uit = {};
+  let geschat = false;
+  for (const sleutel of ['lengte', 'breedte', 'wielbasis']) {
+    const eigen = getal(plan.maten?.[sleutel]);
+    const rdw = getal(auto?.[sleutel]);
+    uit[sleutel] = eigen ?? rdw ?? GEMIDDELDE_AUTO[sleutel];
+    if (!eigen && !rdw) geschat = true;
+  }
+  return { ...uit, geschat, inrichting: auto?.inrichting || '' };
+}
+
+/** Waar een onderdeel standaard komt als je niets kiest. */
+export function standaardPlek(c, plan) {
+  const amps = plan.componenten.filter((x) => x.soort === 'versterker');
+  switch (c.soort) {
+    case 'bron': return 'dashboard';
+    case 'fabrieksversterker': return 'kofferbak-links';
+    case 'dsp': return 'onder-stoel-passagier';
+    case 'versterker': return ['kofferbak-achterwand', 'kofferbak-vloer', 'kofferbak-rechts', 'kofferbak-links'][Math.max(0, amps.indexOf(c)) % 4];
+    case 'speakers': return { voor: 'deuren-voor', achter: 'deuren-achter', center: 'dashboard' }[c.positie] || 'deuren-voor';
+    case 'subwoofer': return 'kofferbak-vloer';
+    default: return 'kofferbak-vloer';
+  }
+}
+
+/** De vaste onderdelen van de stroomkant: die staan niet in de lijst componenten. */
+export const VASTE_ONDERDELEN = [
+  { id: 'accu', naam: 'Accu' },
+  { id: 'hoofdzekering', naam: 'Hoofdzekering' },
+  { id: 'verdeelblok', naam: 'Zekeringverdeelblok' },
+  { id: 'massapunt', naam: 'Massapunt' },
+];
+
+/** De inbouwgegevens van één ding: plek, exacte plaats, afmetingen. */
+export function inbouwVan(plan, id) {
+  const c = plan.componenten.find((x) => x.id === id);
+  if (c) return c;
+  return (plan.plekken && plan.plekken[id]) || {};
+}
+
+/** De plek (een id uit LOCATIES) van elk ding in het plan, ook de vaste. */
+export function plekkenVan(plan) {
+  const verbruiker = plan.componenten.find((c) => c.soort === 'versterker' || c.soort === 'dsp');
+  const accuStandaard = { motorruimte: 'motorruimte-links', kofferbak: 'kofferbak-rechts', interieur: 'onder-stoel-passagier' }[plan.accu?.plek || 'motorruimte'] || 'motorruimte-links';
+  const plekVan = (id) => {
+    const eigen = inbouwVan(plan, id).plek;
+    if (eigen && locatie(eigen)) return eigen;
+    const c = plan.componenten.find((x) => x.id === id);
+    if (c) return standaardPlek(c, plan);
+    if (id === 'accu' || id === 'accumassa') return accuStandaard;
+    if (id === 'hoofdzekering') return plekVan('accu');
+    if (id === 'verdeelblok' || id === 'massapunt') return verbruiker ? plekVan(verbruiker.id) : 'kofferbak-vloer';
+    return 'kofferbak-vloer';
+  };
+  return plekVan;
+}
+
+/** De punten van een plek: één, of twee bij een paar (links en rechts). */
+export function puntenVan(plekId) {
+  const l = locatie(plekId) || locatie('kofferbak-vloer');
+  return l.paar ? [[l.x, l.y], [l.x, 1 - l.y]] : [[l.x, l.y]];
+}
+
+/**
+ * De route van een kabel en zijn lengte in meters.
+ *
+ * `kant` is waar hij langs loopt: de plus langs de linkerdorpel, signaal en
+ * remote langs de rechter. Zo liggen ze nooit naast elkaar en hoor je geen
+ * brom. `direct` is voor korte stukjes, zoals massa en takken.
+ *
+ * Er komt een halve meter bij voor omhoog en omlaag naar de montageplek, en
+ * nog eens veertig centimeter als hij door het schutbord moet.
+ */
+export function routeTussen(van, naar, kant, maten) {
+  const L = maten.lengte / 100;
+  const B = maten.breedte / 100;
+  const a = puntenVan(van);
+  const b = puntenVan(naar);
+  const paren = b.length === 2 ? b.map((pb, i) => [a[Math.min(i, a.length - 1)], pb])
+    : a.length === 2 ? a.map((pa) => [pa, b[0]]) : [[a[0], b[0]]];
+  let langste = 0;
+  const routes = paren.map(([pa, pb]) => {
+    let punten;
+    /* Vlak bij elkaar, bijvoorbeeld allebei in de kofferbak: dan niet eerst
+       naar de dorpel en terug, maar rechtstreeks. */
+    const dichtbij = a.length === 1 && b.length === 1 && Math.abs(pa[0] - pb[0]) < 0.2;
+    if (kant === 'direct' || dichtbij) {
+      punten = [pa, [pa[0], pb[1]], pb];
+    } else {
+      /* Een paar loopt elk langs zijn eigen kant; de rest langs de dorpel. */
+      const ys = b.length === 2 || a.length === 2 ? (pb[1] < 0.5 || pa[1] < 0.5 ? 0.07 : 0.93) : (kant === 'links' ? 0.07 : 0.93);
+      punten = [pa, [pa[0], ys], [pb[0], ys], pb];
+    }
+    let m = 0;
+    for (let i = 1; i < punten.length; i += 1) {
+      m += Math.abs(punten[i][0] - punten[i - 1][0]) * L + Math.abs(punten[i][1] - punten[i - 1][1]) * B;
+    }
+    if (m > 0.05) m += 0.5;
+    if (inMotorruimte(van) !== inMotorruimte(naar)) m += 0.4;
+    langste = Math.max(langste, m);
+    return punten;
+  });
+  return { routes, lengteM: Math.ceil(langste * 2) / 2 };
+}
+
 /* ================= DE UITKOMST =================
    bouwPlan() maakt van het plan de dingen die je ziet: knopen (onderdelen),
    kabels en zekeringen, elk met de waarden en de uitleg voor de popup. */
@@ -419,9 +564,18 @@ const STANDAARD_LENGTE = {
 /** Waar een onderdeel zit: voorin bij het dashboard of achterin bij de versterkers. */
 const zitVoorin = (c) => c.soort === 'bron' || c.soort === 'fabrieksversterker';
 
-export function bouwPlan(plan, { dossier = null } = {}) {
+export function bouwPlan(plan, { dossier = null, auto = {} } = {}) {
   const p = plan && Array.isArray(plan.componenten) ? plan : leegPlan();
   const koper = KOPER[p.koper] ? p.koper : 'ofc';
+  const maten = autoMaten(auto, p);
+  const plekVan = plekkenVan(p);
+  /* De routes door de auto, per kabel. De tekening van de auto tekent ze. */
+  const routes = {};
+  const route = (id, van, naar, kant, minimaal = 0.5) => {
+    const r = routeTussen(plekVan(van), plekVan(naar), kant, maten);
+    routes[id] = r.routes;
+    return Math.max(minimaal, r.lengteM);
+  };
   const lengteVan = (id, standaard) => getal(p.lengtes?.[id]) ?? standaard;
   const knopen = [];
   const kabels = [];
@@ -456,7 +610,8 @@ export function bouwPlan(plan, { dossier = null } = {}) {
   const nieuwStroom = verbruikers.some((v) => v.c.status !== 'bestaand');
   const statusStroom = nieuwStroom ? 'nieuw' : 'bestaand';
   const accuPlek = p.accu?.plek || 'motorruimte';
-  const voedingLengte = lengteVan('plus-voeding', STANDAARD_LENGTE.voeding[accuPlek] ?? 5);
+  const eersteVerbruiker = p.componenten.find((c) => c.soort === 'dsp' || c.soort === 'versterker');
+  const voedingLengte = lengteVan('plus-voeding', route('plus-voeding', 'hoofdzekering', verbruikers.length > 1 ? 'verdeelblok' : (eersteVerbruiker?.id || 'verdeelblok'), 'links', 1));
 
   for (const v of onbekend) {
     meld('fout', `Van ${v.c.naam || 'de versterker'} weet het plan het vermogen niet. Vul kanalen en watt per kanaal in, of de zekering die in de versterker zit; tot dan is zijn kabel niet te berekenen.`, v.c.id);
@@ -527,7 +682,7 @@ export function bouwPlan(plan, { dossier = null } = {}) {
 
     kabels.push({
       id: 'plus-accu', soort: 'plus', van: 'accu', naar: 'hoofdzekering', laag: 'stroom', status: statusStroom,
-      maat, lengteM: lengteVan('plus-accu', STANDAARD_LENGTE.accuZekering), aantal: 1,
+      maat, lengteM: lengteVan('plus-accu', route('plus-accu', 'accu', 'hoofdzekering', 'direct', STANDAARD_LENGTE.accuZekering)), aantal: 1,
       naam: 'Pluspool naar hoofdzekering',
       rijen: [['Dikte', maat ? voedingNaam(maat) : 'nog niet te berekenen'], ['Lengte', 'zo kort mogelijk']],
       uitleg: [`Dit stuk is onbeveiligd. Houd het onder de ${HOOFDZEKERING_MAX_CM} cm en leg het zo dat het nergens kan schuren.`],
@@ -571,8 +726,8 @@ export function bouwPlan(plan, { dossier = null } = {}) {
 
     verbruikers.forEach((v, i) => {
       const c = v.c;
-      const takLengte = lengteVan(`plus-${c.id}`, STANDAARD_LENGTE.tak);
-      const massaLengte = lengteVan(`massa-${c.id}`, STANDAARD_LENGTE.massa);
+      const takLengte = lengteVan(`plus-${c.id}`, route(`plus-${c.id}`, 'verdeelblok', c.id, 'direct', STANDAARD_LENGTE.tak));
+      const massaLengte = lengteVan(`massa-${c.id}`, route(`massa-${c.id}`, c.id, 'massapunt', 'direct', STANDAARD_LENGTE.massa));
       const zekA = v.vast ?? kiesZekering(v.ontwerpA || 0);
       let takMaat = null;
       if (v.ontwerpA) {
@@ -769,9 +924,7 @@ export function bouwPlan(plan, { dossier = null } = {}) {
   for (const doel of [...dsps, ...amps]) {
     const { van, soort } = signaalVan(doel);
     const achter = !zitVoorin(van);
-    const lengte = lengteVan(`sig-${doel.id}`, soort === 'rca'
-      ? (achter ? STANDAARD_LENGTE.rcaAchter : STANDAARD_LENGTE.rcaVanVoor)
-      : STANDAARD_LENGTE.hoogVanVoor);
+    const lengte = lengteVan(`sig-${doel.id}`, route(`sig-${doel.id}`, van.id, doel.id, achter ? 'direct' : 'rechts', 1));
     const paren = Math.max(1, Math.ceil((Number(doel.soort === 'dsp' ? 4 : (doel.dsp ? 4 : Math.min(4, Number(doel.kanalen) || 2))) || 2) / 2));
     kabels.push({
       id: `sig-${doel.id}`, soort, van: van.id, naar: doel.id, laag: 'audio',
@@ -795,7 +948,7 @@ export function bouwPlan(plan, { dossier = null } = {}) {
   for (const doel of remoteNodig) {
     const van = doel === regelaarRemote ? bron : remoteVan;
     if (!van) continue;
-    const lengte = lengteVan(`remote-${doel.id}`, zitVoorin(van) ? STANDAARD_LENGTE.remoteVanVoor : STANDAARD_LENGTE.remoteAchter);
+    const lengte = lengteVan(`remote-${doel.id}`, route(`remote-${doel.id}`, van.id, doel.id, zitVoorin(van) ? 'rechts' : 'direct', 1));
     kabels.push({
       id: `remote-${doel.id}`, soort: 'remote', van: van.id, naar: doel.id, laag: 'stroom',
       status: doel.status === 'bestaand' ? 'bestaand' : 'nieuw', maat: { mm2: 0.75, awg: '18' },
@@ -820,7 +973,7 @@ export function bouwPlan(plan, { dossier = null } = {}) {
     gebruikt.set(door.id, (gebruikt.get(door.id) || 0) + k);
     const isSub = s.soort === 'subwoofer';
     const z = isSub ? eindImpedantie(s) : getal(s.ohm);
-    const lengte = lengteVan(`spk-${s.id}`, isSub ? STANDAARD_LENGTE.sub : (STANDAARD_LENGTE.speaker[s.positie] ?? 4));
+    const lengte = lengteVan(`spk-${s.id}`, route(`spk-${s.id}`, door.id, s.id, 'rechts', isSub ? 1 : 1.5));
     const watt = isAmp ? (getal(door.wattPerKanaal) || 0) * (isSub && k === 2 ? 2 : 1) : 0;
     const fabrieksDraad = !isAmp;
     const maat = fabrieksDraad ? null : kiesLuidspreker({ watt, ohm: z, lengteM: lengte, koper });
@@ -889,10 +1042,27 @@ export function bouwPlan(plan, { dossier = null } = {}) {
   for (const ding of [...knopen, ...kabels]) {
     ding.waarschuwingen = waarschuwingen.filter((w) => w.bij === ding.id);
   }
+  /* Waar alles zit en hoe de kabels lopen, voor de tekening van de auto. */
+  for (const k of kabels) {
+    k.routes = routes[k.id] || null;
+    k.lengteZelf = getal(p.lengtes?.[k.id]) != null;
+    if (k.lengteAanpasbaar && k.lengteM) {
+      k.rijen.push(['Lengte komt uit', k.lengteZelf ? 'zelf ingevuld' : `de maten van de auto${maten.geschat ? ' (geschat: maten onbekend)' : ''}`]);
+    }
+  }
+  for (const k of knopen) {
+    const plek = plekVan(k.id === 'accumassa' ? 'accu' : k.id);
+    const info = inbouwVan(p, k.id);
+    k.plek = plek;
+    k.rijen.push(['Plek in de auto', locatie(plek)?.naam || plek]);
+    if (info.notitie) k.rijen.push(['Exacte plaats', info.notitie]);
+    if (info.afmeting) k.rijen.push(['Afmetingen', `${info.afmeting} mm`]);
+  }
 
   return {
     knopen, kabels, zekeringen, waarschuwingen,
     stroom: { totaalA, volStroomA, verbruikers: verbruikers.length, onbekend: onbekend.length },
+    maten,
     kabellijst: kabellijst(kabels),
   };
 }
@@ -1113,6 +1283,96 @@ export function audioSchema(uitkomst) {
   return schema('audio', uitkomst, rijen);
 }
 
+/**
+ * DE AUTO VAN BOVEN, met elk onderdeel op zijn plek.
+ *
+ * Getekend op de echte verhouding van deze auto: lengte, breedte en de
+ * plaats van de assen uit de wielbasis. De neus wijst naar boven, links in
+ * de tekening is links in de auto (de bestuurderskant).
+ *
+ * Elk onderdeel is een genummerd rondje; het nummer staat ook in de lijst
+ * eronder. Kabels lopen zoals ze getrokken worden: plus langs links, signaal
+ * langs rechts.
+ */
+export function inbouwSchema(uitkomst, plan = {}) {
+  const maten = uitkomst.maten || autoMaten({}, plan);
+  const H = 540;
+  const autoH = 500;
+  const autoW = Math.min(300, autoH * (maten.breedte / maten.lengte));
+  const x0 = (BREED - autoW) / 2;
+  const y0 = 20;
+  /* Van fractie in de auto naar een punt in de tekening. */
+  const naar = ([fx, fy]) => [x0 + fy * autoW, y0 + fx * autoH];
+  const overhangVoor = Math.max(0.1, ((maten.lengte - maten.wielbasis) / maten.lengte) * 0.45);
+  const voorAs = y0 + overhangVoor * autoH;
+  const achterAs = voorAs + (maten.wielbasis / maten.lengte) * autoH;
+  const wiel = (y, kant) => `<rect class="bd-wiel" x="${kant ? x0 + autoW - 4 : x0 - 10}" y="${y - 26}" width="14" height="52" rx="5"/>`;
+  const rx = autoW * 0.22;
+  const lijn = (f, klasse = 'bd-auto-lijn') => `<line class="${klasse}" x1="${x0 + 6}" x2="${x0 + autoW - 6}" y1="${y0 + f * autoH}" y2="${y0 + f * autoH}"/>`;
+  const tekstZone = (f, t) => `<text class="bd-zone-tekst" x="${BREED / 2}" y="${y0 + f * autoH}">${t}</text>`;
+
+  let svg = `<g class="bd-auto">`
+    + wiel(voorAs, 0) + wiel(voorAs, 1) + wiel(achterAs, 0) + wiel(achterAs, 1)
+    + `<rect class="bd-romp" x="${x0}" y="${y0}" width="${autoW}" height="${autoH}" rx="${rx}"/>`
+    + lijn(0.235, 'bd-schutbord')
+    + `<path class="bd-ruit" d="M${x0 + 10} ${y0 + 0.3 * autoH} Q${BREED / 2} ${y0 + 0.25 * autoH} ${x0 + autoW - 10} ${y0 + 0.3 * autoH}"/>`
+    + `<rect class="bd-stoel" x="${x0 + autoW * 0.14}" y="${y0 + 0.4 * autoH}" width="${autoW * 0.28}" height="${autoH * 0.13}" rx="6"/>`
+    + `<rect class="bd-stoel" x="${x0 + autoW * 0.58}" y="${y0 + 0.4 * autoH}" width="${autoW * 0.28}" height="${autoH * 0.13}" rx="6"/>`
+    + `<rect class="bd-stoel" x="${x0 + autoW * 0.14}" y="${y0 + 0.6 * autoH}" width="${autoW * 0.72}" height="${autoH * 0.1}" rx="6"/>`
+    + lijn(0.73)
+    + tekstZone(0.06, 'MOTORRUIMTE')
+    + tekstZone(0.255, 'SCHUTBORD')
+    + tekstZone(0.97, 'KOFFERBAK')
+    + `</g>`;
+
+  /* De kabels, elk met een klein beetje eigen ruimte zodat ze naast
+     elkaar lopen en niet over elkaar. */
+  let kabelsSvgTekst = '';
+  const zichtbaar = uitkomst.kabels.filter((k) => k.routes && k.soort !== 'fabriek');
+  zichtbaar.forEach((k, i) => {
+    const schuif = ((i % 7) - 3) * 0.008;
+    const d = k.routes.map((punten) => punten.map((pt, j) => {
+      const [x, y] = naar([pt[0], pt[1] + (j > 0 && j < punten.length - 1 ? schuif : 0)]);
+      return `${j ? 'L' : 'M'}${Math.round(x * 10) / 10} ${Math.round(y * 10) / 10}`;
+    }).join(' ')).join(' ');
+    const naam = `${KABELSOORT_NAAM[k.soort] || ''}: ${k.naam}`;
+    kabelsSvgTekst += `<g class="bd-kabel bd-k-${k.soort} bd-${k.status}${k.advies ? ' bd-advies' : ''}" data-ding="kabel:${ontsnap(k.id)}" tabindex="0" role="button" aria-label="${ontsnap(naam)}">`
+      + `<path class="bd-raak" d="${d}"/><path class="bd-lijn" d="${d}"/></g>`;
+  });
+
+  /* De onderdelen. Staan er meer op één plek, dan schuiven ze een stukje
+     uit elkaar. */
+  const lijst = inbouwLijst(uitkomst);
+  const opPlek = new Map();
+  let punten = '';
+  for (const item of lijst) {
+    for (const pt of puntenVan(item.plek)) {
+      const sleutel = pt.join(',');
+      const n = opPlek.get(sleutel) || 0;
+      opPlek.set(sleutel, n + 1);
+      const [x, y] = naar(pt);
+      const dx = [0, 20, -20][n % 3];
+      const dy = Math.floor(n / 3) * 20;
+      punten += `<g class="bd-punt bd-${item.status}" data-ding="knoop:${ontsnap(item.id)}" tabindex="0" role="button" aria-label="${ontsnap(`${item.nr}. ${item.naam}`)}">`
+        + `<circle cx="${x + dx}" cy="${y + dy}" r="9"/><text x="${x + dx}" y="${y + dy + 3.5}">${item.nr}</text></g>`;
+    }
+  }
+
+  return `<svg class="bd-schema bd-inbouw" viewBox="0 0 ${BREED} ${H}" width="100%" role="img" aria-label="Inbouw in de auto" xmlns="http://www.w3.org/2000/svg">`
+    + '<title>Inbouw in de auto, van boven</title>'
+    + svg + kabelsSvgTekst + punten + '</svg>';
+}
+
+/** De genummerde lijst onder de tekening: elk onderdeel met zijn plek. */
+export function inbouwLijst(uitkomst) {
+  const volgorde = ['accu', 'zekering', 'verdeelblok', 'massa', 'bron', 'fabrieksversterker', 'dsp', 'versterker', 'speakers', 'subwoofer'];
+  return uitkomst.knopen
+    .filter((k) => k.id !== 'accumassa')
+    .slice()
+    .sort((a, b) => volgorde.indexOf(a.soort) - volgorde.indexOf(b.soort))
+    .map((k, i) => ({ id: k.id, nr: i + 1, naam: k.naam, soort: k.soort, status: k.status, plek: k.plek }));
+}
+
 /** Alle dingen in de tekening op hun id, om de popup te vullen. */
 export function zoekDing(uitkomst, sleutel) {
   const [soort, id] = String(sleutel || '').split(':');
@@ -1151,5 +1411,20 @@ export function bedradingHtml(uitkomst, plan, offerte = {}) {
     + `<div class="bd-blad-schemas"><div><h3>Stroom</h3>${stroomSchema(uitkomst, plan)}</div><div><h3>Audio</h3>${audioSchema(uitkomst)}</div></div>`
     + `<h3>Kabels klaarleggen</h3>${kabels}<h3>Zekeringen</h3>${zek}<h3>Let op</h3>${letOp}`
     + `<p class="bd-blad-sub">Grijs = bestaand · oranje = nieuw · oranje gestippeld = vervangen. Gestippelde kabel = fabrieksbedrading die blijft.</p>`
+    + `</div>`
+    + `<div class="bd-blad bd-blad-auto">`
+    + `<h2>Inbouw in de auto</h2>`
+    + `<p class="bd-blad-sub">${komma(uitkomst.maten.lengte / 100, 2)} × ${komma(uitkomst.maten.breedte / 100, 2)} m, wielbasis ${komma(uitkomst.maten.wielbasis / 100, 2)} m${uitkomst.maten.geschat ? ' (geschat)' : ''}</p>`
+    + `<div class="bd-blad-schemas"><div>${inbouwSchema(uitkomst, plan)}</div><div>`
+    + `<table>${rij(['Nr', 'Onderdeel', 'Plek', 'Maten (mm)'], true)}${inbouwLijst(uitkomst).map((item) => {
+      const info = inbouwVan(plan, item.id);
+      const plek = [LOCATIES.find((l) => l.id === item.plek)?.naam, info.notitie].filter(Boolean).join(' — ');
+      return rij([String(item.nr), item.naam, plek, info.afmeting || '—']);
+    }).join('')}</table></div></div>`
+    + `<h3>Kabellengtes</h3><table>${rij(['Kabel', 'Dikte', 'Stuks', 'Meter per stuk'], true)}${uitkomst.kabels.filter((k) => k.lengteAanpasbaar && k.lengteM).map((k) => rij([
+      k.naam,
+      k.soort === 'speaker' ? luidsprekerNaam(k.maat) : k.soort === 'rca' ? 'RCA' : k.soort === 'hoog' ? 'hoog niveau' : k.soort === 'remote' ? '0,75 mm²' : voedingNaam(k.maat),
+      String(k.aantal || 1), `${komma(k.lengteM)} m`,
+    ])).join('')}</table>`
     + `</div>`;
 }

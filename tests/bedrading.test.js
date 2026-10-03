@@ -12,7 +12,8 @@ import {
   VOEDING, ZEKERINGEN, kiesZekering, kiesVoeding, kiesLuidspreker, verlies,
   subImpedantie, eindImpedantie, versterkerStroom, leesVermogen, leesSpoelen,
   leegPlan, nieuwComponent, planUitOfferte, bouwPlan, stroomSchema, audioSchema,
-  zoekDing, bedradingHtml, kabellijst,
+  zoekDing, bedradingHtml, kabellijst, autoMaten, routeTussen, inbouwSchema, inbouwLijst,
+  plekkenVan, GEMIDDELDE_AUTO,
 } from '../src/lib/headroom/bedrading.js';
 
 /** Een plan met een 4-kanaals versterker, een monoblok en een sub. */
@@ -291,5 +292,90 @@ describe('de kabellijst', () => {
     ]);
     assert.equal(lijst.length, 1);
     assert.equal(lijst[0].klaarleggen, 8, '5,3 m plus een meter per stuk, naar boven afgerond');
+  });
+});
+
+describe('de inbouw in deze auto', () => {
+  const GOLF = { lengte: 426, breedte: 179, wielbasis: 262 };
+
+  test('de maten: eigen invoer, dan de RDW, dan een gemiddelde (en dat staat erbij)', () => {
+    assert.deepEqual(
+      { ...autoMaten(GOLF, {}), inrichting: undefined },
+      { ...GOLF, geschat: false, inrichting: undefined },
+    );
+    assert.equal(autoMaten(GOLF, { maten: { lengte: 500 } }).lengte, 500);
+    const leeg = autoMaten({}, {});
+    assert.equal(leeg.lengte, GEMIDDELDE_AUTO.lengte);
+    assert.equal(leeg.geschat, true);
+  });
+
+  test('een langere auto geeft een langere voedingskabel', () => {
+    const kort = routeTussen('motorruimte-links', 'kofferbak-vloer', 'links', { lengte: 380, breedte: 170 });
+    const lang = routeTussen('motorruimte-links', 'kofferbak-vloer', 'links', { lengte: 500, breedte: 190 });
+    assert.ok(lang.lengteM > kort.lengteM);
+  });
+
+  test('door het schutbord kost extra kabel', () => {
+    const maten = { lengte: 430, breedte: 180 };
+    const door = routeTussen('motorruimte-links', 'dashboard', 'links', maten).lengteM;
+    const binnen = routeTussen('handschoenenkastje', 'dashboard', 'links', maten).lengteM;
+    assert.ok(door > binnen);
+  });
+
+  test('speakers in twee deuren: elk een eigen route, de langste telt', () => {
+    const r = routeTussen('kofferbak-achterwand', 'deuren-voor', 'rechts', { lengte: 430, breedte: 180 });
+    assert.equal(r.routes.length, 2);
+  });
+
+  test('de lengte in het plan komt uit de auto, tenzij je hem zelf invult', () => {
+    const plan = standaardPlan();
+    const kort = bouwPlan(plan, { auto: { lengte: 380, breedte: 170, wielbasis: 240 } });
+    const lang = bouwPlan(plan, { auto: { lengte: 510, breedte: 195, wielbasis: 300 } });
+    const voeding = (u) => u.kabels.find((k) => k.id === 'plus-voeding').lengteM;
+    assert.ok(voeding(lang) > voeding(kort));
+    plan.lengtes['plus-voeding'] = 3;
+    assert.equal(voeding(bouwPlan(plan, { auto: GOLF })), 3);
+  });
+
+  test('accu in de kofferbak: de voedingskabel wordt kort', () => {
+    const plan = standaardPlan();
+    const voor = bouwPlan(plan, { auto: GOLF }).kabels.find((k) => k.id === 'plus-voeding').lengteM;
+    plan.accu.plek = 'kofferbak';
+    const achter = bouwPlan(plan, { auto: GOLF }).kabels.find((k) => k.id === 'plus-voeding').lengteM;
+    assert.ok(achter < voor, `${achter} m achterin tegen ${voor} m voorin`);
+  });
+
+  test('de verdeler en het massapunt komen bij de versterkers', () => {
+    const plan = standaardPlan();
+    const plek = plekkenVan(plan);
+    const amp = plan.componenten.find((c) => c.soort === 'versterker');
+    assert.equal(plek('verdeelblok'), plek(amp.id));
+    assert.equal(plek('massapunt'), plek(amp.id));
+  });
+
+  test('elk onderdeel staat genummerd in de auto en is aan te tikken', () => {
+    const plan = standaardPlan();
+    const u = bouwPlan(plan, { auto: GOLF });
+    const svg = inbouwSchema(u, plan);
+    for (const item of inbouwLijst(u)) {
+      assert.ok(svg.includes(`data-ding="knoop:${item.id}"`), `${item.naam} staat niet in de auto`);
+    }
+    for (const ding of [...svg.matchAll(/data-ding="([^"]+)"/g)].map((m) => m[1])) {
+      assert.ok(zoekDing(u, ding), `geen popup voor ${ding}`);
+    }
+    // Op de verhouding van de auto: een Golf is ongeveer 2,4 keer zo lang als breed.
+    const romp = svg.match(/class="bd-romp" x="[^"]+" y="[^"]+" width="([^"]+)" height="([^"]+)"/);
+    assert.ok(Math.abs(Number(romp[2]) / Number(romp[1]) - 426 / 179) < 0.05);
+  });
+
+  test('plek en afmetingen komen in de popup', () => {
+    const plan = standaardPlan();
+    const amp = plan.componenten.find((c) => c.soort === 'versterker');
+    Object.assign(amp, { plek: 'onder-stoel-passagier', notitie: 'op twee rubbers', afmeting: '250 × 180 × 50' });
+    const knoop = bouwPlan(plan, { auto: GOLF }).knopen.find((k) => k.id === amp.id);
+    const tekst = knoop.rijen.flat().join(' ');
+    assert.match(tekst, /passagiersstoel/);
+    assert.match(tekst, /op twee rubbers/);
+    assert.match(tekst, /250 × 180 × 50 mm/);
   });
 });

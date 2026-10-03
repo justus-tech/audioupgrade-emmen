@@ -3501,7 +3501,7 @@ describe('het bedradingsplan', alsGebouwd, () => {
 
   test('een tik op een kabel geeft dikte, zekering en lengte, en de lengte rekent mee', async () => {
     const { pagina, fouten } = await openPlan();
-    await pagina.locator('[data-ding="kabel:plus-voeding"]').dispatchEvent('click');
+    await pagina.locator('#bd-stroom [data-ding="kabel:plus-voeding"]').dispatchEvent('click');
     await pagina.waitForSelector('#bd-popup[open]');
     assert.match(await pagina.textContent('#bd-popup'), /2 AWG/);
     assert.match(await pagina.textContent('#bd-popup'), /125 A/);
@@ -3523,6 +3523,25 @@ describe('het bedradingsplan', alsGebouwd, () => {
     assert.match(await pagina.textContent('#bd-popup'), /72 A/);
     await pagina.click('#bd-popup-aanpassen');
     assert.equal(await pagina.getAttribute(`#bd-c-${id.split(':')[1]}`, 'open'), '');
+    await pagina.close();
+  });
+
+  test('de auto van boven: een andere plek geeft een andere kabellengte', async () => {
+    const { pagina, fouten } = await openPlan();
+    assert.ok(await pagina.locator('#bd-auto .bd-romp').count(), 'de auto staat er niet');
+    const lengte = () => pagina.inputValue('[data-lengte="plus-voeding"]');
+    const voor = await lengte();
+    // De accu naar de kofferbak: dan is de voedingskabel ineens kort.
+    const accu = pagina.locator('#bd-plekken details[data-plek="accu"]');
+    await accu.locator('summary').click();
+    await accu.locator('[data-inbouw="plek"]').selectOption('kofferbak-rechts');
+    assert.notEqual(await lengte(), voor);
+    assert.ok(Number((await lengte()).replace(',', '.')) < Number(voor.replace(',', '.')));
+    // Een eigen lengte gaat voor de berekening.
+    await pagina.fill('[data-lengte="plus-voeding"]', '6');
+    await pagina.press('[data-lengte="plus-voeding"]', 'Tab');
+    assert.equal(await lengte(), '6');
+    assert.deepEqual(fouten, []);
     await pagina.close();
   });
 

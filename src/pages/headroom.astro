@@ -325,6 +325,34 @@ import { APP } from '../data/app.js';
       </ul>
     </div>
 
+    <div class="wb-kaart">
+      <span class="eyebrow">Inbouw</span>
+      <h2 class="wb-h3">Waar alles in de auto komt</h2>
+      <p class="bd-maten" id="bd-maten"></p>
+      <div class="bd-tekening bd-tekening-auto" id="bd-auto"></div>
+      <ul class="bd-legenda" aria-label="Legenda inbouw">
+        <li><i class="bd-streep bd-k-plus"></i>Plus, langs links</li>
+        <li><i class="bd-streep bd-k-rca"></i>Signaal, langs rechts</li>
+        <li><i class="bd-streep bd-k-speaker"></i>Naar de speakers</li>
+      </ul>
+      <h2 class="wb-h3">Plek en afmetingen</h2>
+      <p class="wb-uitleg">
+        Het nummer staat ook in de tekening. Kies de plek, en schrijf erbij waar
+        hij precies komt: daar rekenen de kabellengtes mee.
+      </p>
+      <div id="bd-plekken"></div>
+    </div>
+
+    <div class="wb-kaart">
+      <span class="eyebrow">Kabellengtes</span>
+      <p class="wb-uitleg">
+        Uitgerekend uit de maten van de auto en de plek van elk onderdeel, met
+        een halve meter voor omhoog en omlaag. Meet je het anders, vul het dan in;
+        dikte en zekering rekenen meteen mee.
+      </p>
+      <div id="bd-lengtes"></div>
+    </div>
+
     <div class="wb-kaart" id="bd-let-kaart">
       <span class="eyebrow">Let op</span>
       <div id="bd-let"></div>
@@ -348,8 +376,17 @@ import { APP } from '../data/app.js';
     </div>
 
     <div class="wb-kaart">
-      <span class="eyebrow">Accu en kabelloop</span>
+      <span class="eyebrow">De auto en de accu</span>
       <div class="wb-veldrij">
+        <label>Lengte auto (cm)
+          <input type="text" id="bd-maat-lengte" inputmode="numeric" />
+        </label>
+        <label>Breedte (cm)
+          <input type="text" id="bd-maat-breedte" inputmode="numeric" />
+        </label>
+        <label>Wielbasis (cm)
+          <input type="text" id="bd-maat-wielbasis" inputmode="numeric" />
+        </label>
         <label>Accu zit in
           <select id="bd-accu-plek">
             <option value="motorruimte">motorruimte</option>
@@ -368,8 +405,8 @@ import { APP } from '../data/app.js';
         </label>
       </div>
       <p class="wb-uitleg">
-        De lengtes staan op wat gebruikelijk is. Tik op een kabel in de tekening om
-        zijn lengte aan te passen; dikte en zekering rekenen meteen mee.
+        De maten komen van de RDW zodra je het kenteken opzoekt. Laat ze leeg om die
+        te gebruiken.
       </p>
     </div>
 
@@ -905,6 +942,7 @@ import { APP } from '../data/app.js';
   import {
     STATUSSEN as BD_STATUSSEN, SOORTEN_COMPONENT, KABELSOORT_NAAM, planUitOfferte, bouwPlan, nieuwComponent,
     verdeelAansturing, stuurders, stroomSchema, audioSchema, zoekDing, bedradingHtml, komma,
+    inbouwSchema, inbouwLijst, inbouwVan, LOCATIES, autoMaten, voedingNaam, luidsprekerNaam,
   } from '../lib/headroom/bedrading.js';
   /* Dezelfde schrijfwijze als de site: de RDW levert "GOLF VII 1.4 TSI" en dat
      moet "Golf VII 1.4 TSI" worden, niet "Golf Vii 1.4 Tsi". */
@@ -1286,6 +1324,12 @@ import { APP } from '../data/app.js';
         model: kapitaliseer(auto.handelsbenaming),
         bouwjaar: jaar,
         kleur: kapitaliseer(auto.eerste_kleur).toLowerCase(),
+        /* De maten in centimeters, voor de tekening van de auto in het
+           bedradingsplan en de kabellengtes die daaruit volgen. */
+        lengte: Number(auto.lengte) || '',
+        breedte: Number(auto.breedte) || '',
+        wielbasis: Number(auto.wielbasis) || '',
+        inrichting: auto.inrichting || '',
       };
       vulAutoVelden();
       toonAutoVelden(true);
@@ -3926,6 +3970,7 @@ import { APP } from '../data/app.js';
   let bdOpen = null;
   /* Welke onderdelen je hebt opengeklapt. Na opnieuw tekenen blijven ze open. */
   const bdOpengeklapt = new Set();
+  const bdPlekOpen = new Set();
 
   /** Regels op de offerte die een onderdeel zijn maar nog niet in het plan staan. */
   function regelsNietInPlan(plan) {
@@ -4006,7 +4051,7 @@ import { APP } from '../data/app.js';
 
   function tekenBedrading() {
     const plan = huidigPlan();
-    const uitkomst = bouwPlan(plan, { dossier: huidigDossier().dossier });
+    const uitkomst = bouwPlan(plan, { dossier: huidigDossier().dossier, auto: offerte.auto });
 
     const auto = [offerte.auto?.merk, offerte.auto?.model].filter(Boolean).join(' ');
     $('#bd-voor').innerHTML = (auto || offerte.klant?.naam)
@@ -4036,6 +4081,49 @@ import { APP } from '../data/app.js';
         uitkomst.zekeringen.map((z) => `<tr><td>${z.waardeA ? `${z.waardeA} A` : '—'}</td><td>${ontsnap(z.type)}</td><td>${ontsnap(z.plek)}<br><small>${ontsnap(z.beschermt)}</small></td></tr>`).join('')
       }</tbody></table>`
       : '<p class="wb-leeg">Geen nieuwe zekeringen: er komt geen versterker bij.</p>';
+
+    /* ---- de inbouw in de auto ---- */
+    const maten = uitkomst.maten;
+    const rdwMaat = (k) => Number(offerte.auto?.[k]) || '';
+    $('#bd-maten').innerHTML = `${komma(maten.lengte / 100, 2)} m lang · ${komma(maten.breedte / 100, 2)} m breed · wielbasis ${komma(maten.wielbasis / 100, 2)} m`
+      + (maten.geschat
+        ? '<br><span class="bd-geschat">Geschat: de maten van deze auto zijn niet bekend. Zoek het kenteken op of vul ze in bij De auto en de accu.</span>'
+        : `<br><span>${plan.maten && Object.values(plan.maten).some(Boolean) ? 'zelf ingevuld' : 'van de RDW'}</span>`);
+    $('#bd-auto').innerHTML = inbouwSchema(uitkomst, plan);
+    const plekOpties = (gekozen) => LOCATIES.map((l) => `<option value="${l.id}"${l.id === gekozen ? ' selected' : ''}>${ontsnap(l.naam)}</option>`).join('');
+    /* Open blijft open na opnieuw tekenen, net als bij de onderdelen. */
+    $$('#bd-plekken details').forEach((d) => {
+      if (d.open) bdPlekOpen.add(d.dataset.plek); else bdPlekOpen.delete(d.dataset.plek);
+    });
+    $('#bd-plekken').innerHTML = inbouwLijst(uitkomst).map((item) => {
+      const info = inbouwVan(plan, item.id);
+      const plekNaam = LOCATIES.find((l) => l.id === item.plek)?.naam || '';
+      const extra = [info.notitie, info.afmeting ? `${info.afmeting} mm` : ''].filter(Boolean).join(' · ');
+      return `<details class="bd-plek" data-plek="${item.id}"${bdPlekOpen.has(item.id) ? ' open' : ''}>
+        <summary class="bd-plek-kop"><span class="bd-nr bd-${item.status}">${item.nr}</span><span><strong>${ontsnap(item.naam)}</strong><small>${ontsnap(plekNaam)}${extra ? ` · ${ontsnap(extra)}` : ''}</small></span></summary>
+        <div class="wb-veldrij">
+          <label class="wb-breed">Plek<select data-inbouw="plek" data-id="${item.id}">${plekOpties(item.plek)}</select></label>
+          <label class="wb-breed">Exacte plaats<input type="text" data-inbouw="notitie" data-id="${item.id}" value="${ontsnap(info.notitie || '')}" placeholder="bijv. op het montagebord, 5 cm van de wielkast" /></label>
+          <label class="wb-breed">Afmetingen L × B × H (mm)<input type="text" data-inbouw="afmeting" data-id="${item.id}" value="${ontsnap(info.afmeting || '')}" placeholder="bijv. 300 × 180 × 55" /></label>
+        </div>
+      </details>`;
+    }).join('');
+    const lengteKabels = uitkomst.kabels.filter((k) => k.lengteAanpasbaar && k.lengteM);
+    $('#bd-lengtes').innerHTML = lengteKabels.length
+      ? `<table class="bd-tabel bd-lengte-tabel"><thead><tr><th>Kabel</th><th>Dikte</th><th>Meter</th></tr></thead><tbody>${
+        lengteKabels.map((k) => {
+          const dikte = k.soort === 'speaker' ? luidsprekerNaam(k.maat)
+            : k.soort === 'rca' ? 'RCA' : k.soort === 'hoog' ? 'hoog niveau' : k.soort === 'remote' ? '0,75 mm²' : voedingNaam(k.maat);
+          return `<tr><td><span class="bd-stip bd-k-${k.soort}"></span>${ontsnap(k.naam)}${k.aantal > 1 ? ` <small>(${k.aantal}×)</small>` : ''}${k.lengteZelf ? ' <small>· zelf</small>' : ''}</td>`
+            + `<td>${ontsnap(dikte)}</td>`
+            + `<td><input type="text" inputmode="decimal" class="bd-meter" data-lengte="${k.id}" value="${komma(k.lengteM)}" aria-label="Lengte ${ontsnap(k.naam)} in meters" /></td></tr>`;
+        }).join('')
+      }</tbody></table>`
+      : '<p class="wb-leeg">Er komen geen nieuwe kabels bij.</p>';
+    for (const k of ['lengte', 'breedte', 'wielbasis']) {
+      $(`#bd-maat-${k}`).value = plan.maten?.[k] || '';
+      $(`#bd-maat-${k}`).placeholder = rdwMaat(k) ? `${rdwMaat(k)} (RDW)` : 'onbekend';
+    }
 
     $('#bd-accu-plek').value = plan.accu?.plek || 'motorruimte';
     $('#bd-accu-ah').value = plan.accu?.ah || '';
@@ -4075,12 +4163,46 @@ import { APP } from '../data/app.js';
 
   function openPopup(sleutel) {
     bdOpen = sleutel;
-    vulPopup(sleutel, bouwPlan(huidigPlan(), { dossier: huidigDossier().dossier }));
+    vulPopup(sleutel, bouwPlan(huidigPlan(), { dossier: huidigDossier().dossier, auto: offerte.auto }));
     const venster = $('#bd-popup');
     if (!venster.open) venster.showModal();
   }
 
-  ['#bd-stroom', '#bd-audio'].forEach((kies) => {
+  /* ---- plek, maten en lengtes ---- */
+  $('#bd-plekken').addEventListener('change', (e) => {
+    const veld = e.target.dataset.inbouw;
+    const id = e.target.dataset.id;
+    if (!veld || !id) return;
+    const plan = huidigPlan();
+    const c = plan.componenten.find((x) => x.id === id);
+    const waarde = e.target.value.trim();
+    if (c) c[veld] = waarde;
+    else plan.plekken = { ...(plan.plekken || {}), [id]: { ...((plan.plekken || {})[id] || {}), [veld]: waarde } };
+    bdWijzig();
+  });
+  $('#bd-lengtes').addEventListener('change', (e) => {
+    const id = e.target.dataset.lengte;
+    if (!id) return;
+    const plan = huidigPlan();
+    const n = Number(String(e.target.value).replace(',', '.'));
+    plan.lengtes = { ...(plan.lengtes || {}) };
+    if (Number.isFinite(n) && n > 0) plan.lengtes[id] = Math.min(30, n);
+    else delete plan.lengtes[id];
+    bdWijzig();
+  });
+  ['lengte', 'breedte', 'wielbasis'].forEach((k) => {
+    $(`#bd-maat-${k}`).addEventListener('change', (e) => {
+      const plan = huidigPlan();
+      const n = Number(String(e.target.value).replace(/[^0-9]/g, ''));
+      plan.maten = { ...(plan.maten || {}) };
+      /* Een auto is tussen de 1 en 8 meter. Daarbuiten is het een typefout. */
+      if (n >= 100 && n <= 800) plan.maten[k] = n;
+      else delete plan.maten[k];
+      bdWijzig();
+    });
+  });
+
+  ['#bd-stroom', '#bd-audio', '#bd-auto'].forEach((kies) => {
     const vak = $(kies);
     vak.addEventListener('click', (e) => {
       const ding = e.target.closest('[data-ding]');
@@ -4196,7 +4318,7 @@ import { APP } from '../data/app.js';
 
   $('#bd-print').addEventListener('click', () => {
     const plan = huidigPlan();
-    $('#wb-print').innerHTML = bedradingHtml(bouwPlan(plan, { dossier: huidigDossier().dossier }), plan, offerte);
+    $('#wb-print').innerHTML = bedradingHtml(bouwPlan(plan, { dossier: huidigDossier().dossier, auto: offerte.auto }), plan, offerte);
     window.print();
   });
 
@@ -5247,6 +5369,61 @@ import { APP } from '../data/app.js';
   .bd-blad th, .bd-blad td { padding: 1.5mm 2mm 1.5mm 0; border-bottom: .3mm solid var(--line-strong); text-align: left; vertical-align: top; }
   .bd-blad .bd-knoop rect { fill: var(--bg); }
   .bd-blad .bd-label { stroke: var(--bg); }
+
+  /* ---- de auto van boven ---- */
+  .bd-maten { margin: 0 0 6px; color: var(--text); font-size: .9rem; }
+  .bd-maten span { color: var(--text-dim); font-size: .8rem; }
+  .bd-maten .bd-geschat { color: var(--accent-text); }
+  .bd-romp { fill: var(--panel); stroke: var(--teken-lijn); stroke-width: 1.5; }
+  .bd-wiel { fill: var(--teken-vul); }
+  .bd-stoel { fill: var(--teken-vlak); stroke: var(--teken-lijn); stroke-width: 1; }
+  .bd-ruit { fill: none; stroke: var(--teken-lijn); stroke-width: 1.2; }
+  .bd-auto-lijn { stroke: var(--teken-lijn); stroke-width: 1; }
+  .bd-schutbord { stroke: var(--line-strong); stroke-width: 1.2; stroke-dasharray: 4 3; }
+  .bd-zone-tekst { font-size: 7px; letter-spacing: .12em; fill: var(--text-dim); text-anchor: middle; }
+  .bd-inbouw .bd-kabel .bd-lijn { stroke-width: 2; }
+  .bd-inbouw .bd-k-plus .bd-lijn, .bd-inbouw .bd-k-massa .bd-lijn { stroke-width: 2.6; }
+  .bd-punt { cursor: pointer; }
+  .bd-punt circle { fill: var(--bg); stroke: var(--text-dim); stroke-width: 1.6; }
+  .bd-punt.bd-nieuw circle { stroke: var(--accent); stroke-width: 2; }
+  .bd-punt.bd-vervangen circle { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 3 2; }
+  .bd-punt text { font-size: 9px; font-weight: 700; fill: var(--text); text-anchor: middle; }
+  .bd-punt.bd-gekozen circle, .bd-punt:focus-visible circle { stroke-width: 3.4; }
+
+  .bd-plek { padding: 4px 0; border-top: 1px solid var(--line); border-bottom: 0; }
+  .bd-plek[open] { padding-bottom: 12px; }
+  .bd-plek > summary.bd-plek-kop {
+    display: flex; align-items: center; gap: 10px; min-height: 48px;
+    color: var(--text); font-family: inherit; text-transform: none; letter-spacing: 0; font-size: .95rem;
+  }
+  .bd-plek-kop > span:last-child { flex: 1; min-width: 0; }
+  .bd-plek-kop strong { display: block; overflow-wrap: anywhere; }
+  .bd-plek-kop small { display: block; color: var(--text-dim); font-size: .78rem; }
+  .bd-plek summary::-webkit-details-marker { display: none; }
+  .bd-nr {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--text-dim);
+    border-radius: 50%;
+    font-size: .75rem;
+    font-weight: 700;
+  }
+  .bd-nr.bd-nieuw, .bd-nr.bd-vervangen { border-color: var(--accent); }
+  .bd-nr.bd-vervangen { border-style: dashed; }
+  .bd-lengte-tabel td:last-child { width: 72px; }
+  .bd-meter { width: 100%; min-width: 0; box-sizing: border-box; }
+  .bd-stip { display: inline-block; width: 10px; height: 3px; margin-right: 6px; vertical-align: middle; background: var(--text-dim); }
+  .bd-stip.bd-k-plus { background: var(--kabel-plus); }
+  .bd-stip.bd-k-massa { background: var(--kabel-massa); }
+  .bd-stip.bd-k-remote { background: var(--kabel-remote); }
+  .bd-stip.bd-k-rca, .bd-stip.bd-k-hoog { background: var(--kabel-signaal); }
+  .bd-stip.bd-k-speaker { background: var(--kabel-speaker); }
+  .bd-blad-auto { break-before: page; }
+  .bd-blad-auto .bd-schema { max-height: 200mm; width: auto; margin: 0 auto; }
 </style>
 </body>
 </html>

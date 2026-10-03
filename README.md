@@ -264,6 +264,16 @@ Wat de app zelf uitrekent, en waarom:
 | **Subwoofer** | de eindimpedantie uit de spoelen en de schakeling, getoetst aan wat de versterker aankan. |
 | **Kanalen** | of een versterker genoeg kanalen heeft voor wat hij aanstuurt. |
 
+**Inbouw in de auto.** Onder de schema's staat de auto van boven, getekend op
+de lengte, breedte en wielbasis die de RDW bij het kenteken geeft. Elk
+onderdeel staat er genummerd op zijn plek in, en de kabels lopen zoals je ze
+trekt: plus langs links, signaal en remote langs rechts. Per onderdeel kies je
+de plek, schrijf je de exacte plaats erbij en de afmetingen. De kabellengtes
+rekent de app uit die plekken en de maten van de auto, met een halve meter
+voor omhoog en omlaag en veertig centimeter extra door het schutbord. Meet je
+het anders, vul de lengte dan zelf in. Geeft de RDW geen maten, dan rekent hij
+met een gemiddelde auto en zegt hij dat erbij.
+
 **De app verzint het vermogen niet.** Staat het niet in de naam op de offerte
 ("4x100W", "D4"), dan vul je het in bij *Wat zit erin*. Tot dan staat er bij die
 kabel "nog niet te berekenen" in plaats van een gok. Met **Plan afdrukken**
