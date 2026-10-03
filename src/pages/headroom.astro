@@ -63,7 +63,7 @@ import { APP } from '../data/app.js';
     je op geen enkel tabblad missen. Zie de uitleg bij opslaan(). */}
 <div class="wb-alarm" id="wb-alarm" role="alert" hidden>
   <div>
-    <strong>Opslaan lukt niet.</strong>
+    <strong id="wb-alarm-kop">Opslaan lukt niet.</strong>
     <span id="wb-alarm-wat"></span>
   </div>
   <button type="button" class="btn solid" id="wb-alarm-kopie">Reservekopie maken</button>
@@ -790,6 +790,13 @@ import { APP } from '../data/app.js';
   /* Deze naam verandert NIET mee met de naam van de app. Zie de
      waarschuwing in src/data/app.js. */
   const SLEUTEL = APP.opslagSleutel;
+  /* Waar onleesbare opslag heen gaat. Eigen sleutel, zodat het normale
+     opslaan er nooit overheen schrijft. */
+  const SLEUTEL_ONLEESBAAR = `${SLEUTEL}-onleesbaar`;
+  /* De ruwe tekst die niet te lezen was, zolang dit tabblad open staat. */
+  let onleesbaar = null;
+  /* Wat de knop in de oranje balk doet. Hangt af van wat er mis is. */
+  let alarmDoe = null;
 
   /**
    * Offertes uit de opslag of uit een reservekopie een kenmerk geven.
@@ -818,11 +825,56 @@ import { APP } from '../data/app.js';
     rapporten: [],
   });
 
-  function laden() {
+  /**
+   * ONLEESBARE OPSLAG WORDT OPZIJGEZET, NIET OVERSCHREVEN.
+   *
+   * WAAROM DIT ER IS
+   * Hier stond een `catch` die bij elke leesfout gewoon een lege app teruggaf.
+   * Dat ziet er onschuldig uit, maar het is het gevaarlijkste pad in de hele
+   * app: je ziet een leeg scherm, je typt één ding — en dat ene ding wordt
+   * weggeschreven óver de gegevens die niet gelezen konden worden. Daarmee is
+   * wat er stond definitief weg.
+   *
+   * Nagespeeld met een opslag die achteraan was afgeknipt, zoals een
+   * afgebroken schrijfactie dat doet: twee offertes erin, de app startte leeg
+   * zonder één woord uitleg, en na alleen het uurtarief wijzigen waren beide
+   * offertes onherroepelijk verdwenen.
+   *
+   * Nu gaat de ruwe tekst eerst naar een eigen sleutel, waar niets eroverheen
+   * schrijft, en komt dezelfde oranje balk omhoog die een volle opslag ook
+   * geeft — met een knop om die tekst als bestand te bewaren.
+   */
+  function bewaarOnleesbaar(rauw) {
+    onleesbaar = rauw;
     try {
-      const rauw = localStorage.getItem(SLEUTEL);
-      if (!rauw) return leegteStaat();
+      /* Is er al eerder iets gered, dan staat dat dichter bij het origineel.
+         Dat laten we staan: een tweede poging mag de eerste niet verdringen. */
+      if (localStorage.getItem(SLEUTEL_ONLEESBAAR) === null) {
+        localStorage.setItem(SLEUTEL_ONLEESBAAR, rauw);
+      }
+    } catch (e) {
+      /* Opslag vol of dicht. De tekst zit nog in het geheugen, dus de knop in
+         de balk kan hem nog steeds als bestand aanbieden. */
+    }
+  }
+
+  function laden() {
+    let rauw = null;
+    try {
+      rauw = localStorage.getItem(SLEUTEL);
+    } catch (e) {
+      /* Opslag helemaal dicht (privémodus). Er is niets om te redden. */
+      return leegteStaat();
+    }
+    if (!rauw) return leegteStaat();
+    try {
       const gelezen = JSON.parse(rauw);
+      /* Een echte offertebak is altijd een object. Staat er een lijst, een
+         getal of los stuk tekst, dan is het niet onze opslag en mag het niet
+         als "leeg" worden afgedaan. */
+      if (!gelezen || typeof gelezen !== 'object' || Array.isArray(gelezen)) {
+        throw new Error('dit is geen offertebak');
+      }
       return {
         instellingen: { ...STANDAARD_INSTELLINGEN, ...(gelezen.instellingen || {}) },
         catalogus: Array.isArray(gelezen.catalogus) ? gelezen.catalogus : [],
@@ -837,7 +889,9 @@ import { APP } from '../data/app.js';
         rapporten: Array.isArray(gelezen.rapporten) ? gelezen.rapporten : [],
       };
     } catch (e) {
-      /* Kapotte of geblokkeerde opslag mag de app niet stilzetten. */
+      /* Er stond wél iets, maar het is niet te lezen. Opzijzetten en melden;
+         de app gaat leeg verder zodat je kunt blijven werken. */
+      bewaarOnleesbaar(rauw);
       return leegteStaat();
     }
   }
@@ -875,17 +929,63 @@ import { APP } from '../data/app.js';
     }
   }
 
-  /** De balk aanzetten. Hij blijft staan tot opslaan weer lukt. */
-  function alarmAan(tekst) {
+  /**
+   * De balk aanzetten. Blijft staan tot hij zelf wordt uitgezet.
+   *
+   * Er zijn twee gevallen die er allebei thuishoren, en ze vragen een ander
+   * woord en een andere knop: opslaan dat niet lukt (maak een reservekopie),
+   * en opslag die niet te lezen is (haal de oude gegevens binnen). Daarom
+   * staat de kop en het knoplabel hier niet vast.
+   */
+  function alarmAan(tekst, { kop = 'Opslaan lukt niet.', knop = null, doe = null } = {}) {
     const balk = $('#wb-alarm');
     if (!balk) return;
+    $('#wb-alarm-kop').textContent = kop;
     $('#wb-alarm-wat').textContent = tekst;
+    const deKnop = $('#wb-alarm-kopie');
+    deKnop.textContent = knop || 'Reservekopie maken';
+    alarmDoe = doe;
     balk.hidden = false;
   }
 
   function alarmUit() {
+    /* Een onleesbare opslag lost zichzelf niet op doordat opslaan weer lukt.
+       Was de opslag ondertussen ook vol, dan stond daar de melding daarover;
+       die is nu achterhaald, dus zetten we de juiste melding terug in plaats
+       van de balk weg te halen. */
+    if (onleesbaar) { meldOnleesbaar(); return; }
     const balk = $('#wb-alarm');
     if (balk) balk.hidden = true;
+  }
+
+  /** De melding over onleesbare opslag, zodra het scherm er klaar voor is. */
+  function meldOnleesbaar() {
+    if (!onleesbaar) return;
+    alarmAan(
+      'De app is leeg begonnen. Weggegooid is er niets: je oude gegevens staan '
+      + 'apart en worden niet overschreven. Haal ze hieronder binnen en bewaar '
+      + 'dat bestand.',
+      {
+        kop: 'Je bewaarde werk is niet te lezen.',
+        knop: 'Oude gegevens binnenhalen',
+        doe: haalOnleesbaarBinnen,
+      },
+    );
+  }
+
+  /** De ruwe tekst als bestand aanbieden, precies zoals hij in de opslag stond. */
+  function haalOnleesbaarBinnen() {
+    if (!onleesbaar) return;
+    const blob = new Blob([onleesbaar], { type: 'application/json' });
+    const adres = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = adres;
+    const nu = new Date();
+    const twee = (n) => String(n).padStart(2, '0');
+    const vandaag = `${nu.getFullYear()}-${twee(nu.getMonth() + 1)}-${twee(nu.getDate())}`;
+    link.download = `${APP.naam.toLowerCase()}-onleesbaar-${vandaag}.json`;
+    link.click();
+    URL.revokeObjectURL(adres);
   }
 
   let staat = laden();
@@ -2557,7 +2657,11 @@ import { APP } from '../data/app.js';
 
   /* ================= RESERVEKOPIE ================= */
   /* De knop in de alarmbalk doet hetzelfde als die op Instellingen. */
-  $('#wb-alarm-kopie').addEventListener('click', () => $('#wb-export').click());
+  $('#wb-alarm-kopie').addEventListener('click', () => {
+    /* Standaard een reservekopie; bij onleesbare opslag de ruwe tekst. */
+    if (alarmDoe) alarmDoe();
+    else $('#wb-export').click();
+  });
 
   $('#wb-export').addEventListener('click', () => {
     /* Het merkje 'reservekopie' is belangrijk: daaraan ziet het inlezen dat
@@ -3682,6 +3786,8 @@ import { APP } from '../data/app.js';
   /* Was je ergens mee bezig toen de telefoon het tabblad afsloot? Dan sta je
      weer precies waar je was. */
   haalWerkTerug();
+  /* Pas hier, want nu staat het scherm er en is de balk te vullen. */
+  meldOnleesbaar();
 
   tekenAfspraken();
   tekenAlles();
