@@ -240,6 +240,16 @@ dat zo'n auto op de brug staat, herkent de app hem aan het kenteken en staat
 alles al ingevuld. Vul bij de bouwjaren de jaren van de **generatie** in (een
 Golf 7 liep van 2013 tot 2020), niet het bouwjaar van de auto die er nu staat.
 
+### De klantenlijst
+
+Op het tabblad **Klanten** staat iedereen voor wie je een offerte hebt bewaard.
+Er is geen aparte lijst om bij te houden: de klanten worden opgebouwd uit de
+offertes zelf (`src/lib/headroom/klanten.js`). Offertes met hetzelfde
+telefoonnummer of e-mailadres komen onder één klant; alleen als die er niet
+zijn telt de naam. Tik je op een klant, dan zie je drie tabs: **Gegevens**,
+**Offertes** en **Bedrading**. Vanuit een offerte of schema spring je naar het
+tabblad Offerte of Bedrading om te bewerken.
+
 ### Het bedradingsplan
 
 Het tabblad **Bedrading** tekent voor de offerte waar je aan werkt twee

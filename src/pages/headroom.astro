@@ -76,6 +76,7 @@ import { APP } from '../data/app.js';
 
 <nav class="wb-tabs" aria-label="Onderdelen">
   <button type="button" class="wb-tab aan" data-tab="offerte">Offerte</button>
+  <button type="button" class="wb-tab" data-tab="klanten">Klanten</button>
   <button type="button" class="wb-tab" data-tab="bedrading">Bedrading</button>
   <button type="button" class="wb-tab" data-tab="agenda">Agenda<span class="wb-bel" id="wb-agenda-bel" hidden></span></button>
   <button type="button" class="wb-tab" data-tab="rapport">Rapport</button>
@@ -278,6 +279,35 @@ import { APP } from '../data/app.js';
         <input type="search" id="wb-zoek" placeholder="naam, kenteken of nummer" />
       </label>
       <div id="wb-bewaard"></div>
+    </div>
+  </section>
+
+  <!-- ================= KLANTEN ================= -->
+  <section class="wb-paneel" data-paneel="klanten" hidden>
+    <div id="kl-lijst-vak">
+      <h1 class="wb-h">Klanten</h1>
+      <p class="wb-uitleg">
+        Iedereen voor wie je een offerte hebt bewaard. Offertes met hetzelfde
+        telefoonnummer of e-mailadres staan onder één klant.
+      </p>
+      <div class="wb-kaart">
+        <label class="wb-breed wb-zoeken">Zoeken
+          <input type="search" id="kl-zoek" placeholder="naam, telefoon, kenteken of offertenummer" />
+        </label>
+        <div id="kl-lijst"></div>
+      </div>
+    </div>
+
+    <div id="kl-klant" hidden>
+      <button type="button" class="wb-link" id="kl-terug">← Alle klanten</button>
+      <h1 class="wb-h" id="kl-naam"></h1>
+      <p class="wb-uitleg" id="kl-sub"></p>
+      <div class="wb-schakel wb-drie kl-tabs" role="tablist" aria-label="Klant">
+        <button type="button" class="wb-keuze aan" role="tab" data-kltab="gegevens">Gegevens</button>
+        <button type="button" class="wb-keuze" role="tab" data-kltab="offertes">Offertes</button>
+        <button type="button" class="wb-keuze" role="tab" data-kltab="bedrading">Bedrading</button>
+      </div>
+      <div id="kl-inhoud"></div>
     </div>
   </section>
 
@@ -939,6 +969,7 @@ import { APP } from '../data/app.js';
     leegRapport, rapportnummer, rapportenVoor, ontbreekt, meetrapportHtml,
   } from '../lib/headroom/meetrapport.js';
   import { MODELS } from '../data/models.js';
+  import { klantenUit, klantPast, zoekKlant } from '../lib/headroom/klanten.js';
   import {
     STATUSSEN as BD_STATUSSEN, SOORTEN_COMPONENT, KABELSOORT_NAAM, planUitOfferte, bouwPlan, nieuwComponent,
     verdeelAansturing, stuurders, stroomSchema, audioSchema, zoekDing, bedradingHtml, komma,
@@ -1280,6 +1311,7 @@ import { APP } from '../data/app.js';
     /* Het plan hoort bij de offerte waar je nu aan werkt. Die kan sinds de
        vorige keer veranderd zijn, dus elke keer opnieuw tekenen. */
     if (doel === 'bedrading') { tekenBedrading(); bewaarConcept(); }
+    if (doel === 'klanten') tekenKlanten();
     window.scrollTo({ top: 0 });
 
     const adres = `${location.pathname}?tab=${doel}`;
@@ -3953,6 +3985,160 @@ import { APP } from '../data/app.js';
     vulMeting();
   }
 
+  /* ================= KLANTEN =================
+     De lijst bouwt zich op uit de bewaarde offertes; zie
+     src/lib/headroom/klanten.js waarom er geen aparte klantenlijst is. */
+  let klGekozen = null;
+  let klTab = 'gegevens';
+
+  const klDatum = (d) => (d ? new Date(d).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
+  const klPrijs = (o) => {
+    const t = totalen(o.regels || [], staat.instellingen, o.kortingExclCent || 0);
+    return euro(o.zakelijk ? t.exclCent : t.inclCent);
+  };
+
+  /**
+   * Een bewaarde offerte openen op een tabblad.
+   *
+   * Een echte kopie, zodat een wijziging pas in je lijst komt als je bewaart.
+   * En eerst vragen als er werk open staat dat nergens bewaard is — net als
+   * bij Nieuwe offerte.
+   */
+  function openOfferte(eerder, tab) {
+    const bewaard = staat.offertes.some((o) => o.id === offerte.id);
+    if (offerte.id !== eerder.id && !bewaard && heeftInhoud(offerte)) {
+      const weg = confirm(
+        'De offerte waar je nu aan werkt staat nog niet in je lijst. Open je deze, dan is '
+        + 'wat je daar hebt ingevuld weg.\n\nToch openen?'
+      );
+      if (!weg) return;
+    }
+    const kopie = JSON.parse(JSON.stringify(eerder));
+    offerte = { ...kopie, datum: new Date(kopie.datum) };
+    voorkeuren = new Set(soortenIn(offerte.regels || []));
+    $$('#wb-voorkeuren .wb-chip').forEach((c) => c.classList.toggle('aan', voorkeuren.has(c.dataset.soort)));
+    vulFormulierUitOfferte();
+    tekenAlles();
+    toonTab(tab, { inGeschiedenis: true });
+  }
+
+  function tekenKlanten() {
+    const klanten = klantenUit(staat.offertes, staat.instellingen);
+    const klant = klGekozen ? zoekKlant(klanten, klGekozen) : null;
+    $('#kl-lijst-vak').hidden = !!klant;
+    $('#kl-klant').hidden = !klant;
+    if (!klant) { tekenKlantenlijst(klanten); return; }
+    tekenKlant(klant);
+  }
+
+  function tekenKlantenlijst(klanten) {
+    const zoek = $('#kl-zoek').value;
+    const gevonden = klanten.filter((k) => klantPast(k, zoek));
+    if (!klanten.length) {
+      $('#kl-lijst').innerHTML = '<p class="wb-leeg">Nog geen klanten. Bewaar een offerte met een naam of telefoonnummer, dan staat de klant hier.</p>';
+      return;
+    }
+    $('#kl-lijst').innerHTML = `<p class="wb-uitleg">${zoek.trim() ? `${gevonden.length} van de ${klanten.length} klanten` : `${klanten.length} ${klanten.length === 1 ? 'klant' : 'klanten'}`}</p>`
+      + gevonden.map((k) => `<button type="button" class="kl-rij" data-klant="${ontsnap(k.id)}">
+          <span><strong>${ontsnap(k.bedrijf || k.naam || 'Zonder naam')}</strong>
+            <small>${ontsnap([k.bedrijf ? k.naam : '', k.telefoon, k.autos.map((a) => a.kenteken || a.naam).join(', ')].filter(Boolean).join(' · '))}</small></span>
+          <em>${k.offertes.length} ${k.offertes.length === 1 ? 'offerte' : 'offertes'}<small>${ontsnap(klDatum(k.laatst))}</small></em>
+        </button>`).join('');
+  }
+
+  function tekenKlant(klant) {
+    $('#kl-naam').textContent = klant.bedrijf || klant.naam || 'Zonder naam';
+    $('#kl-sub').textContent = [klant.bedrijf ? klant.naam : '', `${klant.offertes.length} ${klant.offertes.length === 1 ? 'offerte' : 'offertes'}`, `laatst ${klDatum(klant.laatst)}`].filter(Boolean).join(' · ');
+    $$('[data-kltab]').forEach((k) => {
+      k.classList.toggle('aan', k.dataset.kltab === klTab);
+      k.setAttribute('aria-selected', k.dataset.kltab === klTab ? 'true' : 'false');
+    });
+    const vak = $('#kl-inhoud');
+
+    if (klTab === 'gegevens') {
+      const tel = String(klant.telefoon || '').replace(/[^0-9+]/g, '');
+      const rijen = [
+        ['Naam', klant.naam],
+        ['Bedrijf', klant.bedrijf],
+        ['Telefoon', klant.telefoon ? `<a href="tel:${ontsnap(tel)}">${ontsnap(klant.telefoon)}</a>` : ''],
+        ['E-mail', klant.email ? `<a href="mailto:${ontsnap(klant.email)}">${ontsnap(klant.email)}</a>` : ''],
+        ['Adres', klant.adres],
+        ["Auto's", klant.autos.map((a) => [a.kenteken, a.naam].filter(Boolean).join(' · ')).join('<br>')],
+        ['Doorgegaan', klant.omzetCent ? `${euro(klant.omzetCent)} incl. btw` : 'nog niets aanbetaald'],
+      ];
+      vak.innerHTML = `<div class="wb-kaart"><table class="bd-tabel bd-waarden"><tbody>${
+        rijen.map(([k, v]) => `<tr><th>${k}</th><td>${k === 'Telefoon' || k === 'E-mail' || k === "Auto's" ? (v || '—') : ontsnap(v || '—')}</td></tr>`).join('')
+      }</tbody></table>
+      <p class="wb-uitleg">Gegevens wijzig je op de offerte zelf: open de nieuwste bij Offertes, pas aan en bewaar.</p></div>`;
+      return;
+    }
+
+    if (klTab === 'offertes') {
+      vak.innerHTML = klant.offertes.map((o) => `<div class="wb-kaart kl-offerte">
+          <div class="wb-regel-kop">
+            <span>${ontsnap(o.nummer)} · ${ontsnap(klDatum(o.datum))}
+              <small>${ontsnap([o.auto?.kenteken, autoNaam(o.auto?.merk, o.auto?.model)].filter(Boolean).join(' · '))}</small>
+              <small>${ontsnap((o.regels || []).map((r) => r.omschrijving).filter(Boolean).slice(0, 3).join(', '))}${(o.regels || []).length > 3 ? ' …' : ''}</small>
+            </span>
+            <strong>${klPrijs(o)}</strong>
+          </div>
+          <div class="wb-regel-rij">
+            <span class="wb-status${['betaald', 'gefactureerd'].includes(o.status) ? ' af' : ''}">${ontsnap(o.status || 'concept')}</span>
+            <button type="button" class="wb-link" data-open="${ontsnap(o.id)}" data-naar="offerte">Offerte openen</button>
+            <button type="button" class="wb-link" data-open="${ontsnap(o.id)}" data-naar="bedrading">Bedrading</button>
+          </div>
+        </div>`).join('');
+      return;
+    }
+
+    /* Bedrading: per offerte de drie tekeningen. Om te kijken; bewerken
+       doe je op het tabblad Bedrading, waar de knop je heen brengt. */
+    vak.innerHTML = klant.offertes.map((o) => {
+      const plan = o.bedrading && Array.isArray(o.bedrading.componenten) ? o.bedrading : planUitOfferte(o, null);
+      const u = bouwPlan(plan, { auto: o.auto });
+      const auto = [o.auto?.kenteken, autoNaam(o.auto?.merk, o.auto?.model)].filter(Boolean).join(' · ');
+      const fouten = u.waarschuwingen.filter((w) => w.ernst === 'fout').length;
+      return `<div class="wb-kaart kl-plan">
+        <span class="eyebrow">Offerte ${ontsnap(o.nummer)}</span>
+        <h2 class="wb-h3">${ontsnap(auto || 'Auto niet ingevuld')}</h2>
+        <p class="wb-uitleg">${o.bedrading ? '' : 'Nog niet aangepast: opgebouwd uit de offerte. '}${
+          u.zekeringen.length ? `Hoofdzekering ${u.zekeringen[0].waardeA ? `${u.zekeringen[0].waardeA} A` : 'nog te berekenen'} · ` : ''
+        }${u.kabellijst.length} soorten kabel${fouten ? ` · <strong class="bd-w-fout">${fouten} ${fouten === 1 ? 'punt klopt' : 'punten kloppen'} niet</strong>` : ''}</p>
+        <div class="kl-schemas">
+          <div><h3 class="kl-mini-kop">Stroom</h3><div class="bd-tekening">${stroomSchema(u, plan)}</div></div>
+          <div><h3 class="kl-mini-kop">Audio</h3><div class="bd-tekening">${audioSchema(u)}</div></div>
+          <div><h3 class="kl-mini-kop">In de auto</h3><div class="bd-tekening">${inbouwSchema(u, plan)}</div></div>
+        </div>
+        <button type="button" class="btn wb-vol" data-open="${ontsnap(o.id)}" data-naar="bedrading">Bedrading openen en aanpassen</button>
+      </div>`;
+    }).join('');
+  }
+
+  $('#kl-zoek').addEventListener('input', tekenKlanten);
+  $('#kl-lijst').addEventListener('click', (e) => {
+    const rij = e.target.closest('[data-klant]');
+    if (!rij) return;
+    klGekozen = rij.dataset.klant;
+    klTab = 'gegevens';
+    tekenKlanten();
+    window.scrollTo({ top: 0 });
+  });
+  $('#kl-terug').addEventListener('click', () => {
+    klGekozen = null;
+    tekenKlanten();
+    window.scrollTo({ top: 0 });
+  });
+  $$('[data-kltab]').forEach((knop) => knop.addEventListener('click', () => {
+    klTab = knop.dataset.kltab;
+    tekenKlanten();
+  }));
+  $('#kl-inhoud').addEventListener('click', (e) => {
+    const knop = e.target.closest('[data-open]');
+    if (!knop) return;
+    const eerder = staat.offertes.find((o) => o.id === knop.dataset.open);
+    if (eerder) openOfferte(eerder, knop.dataset.naar);
+  });
+
   /* ================= BEDRADINGSPLAN =================
      Het rekenwerk en de tekening staan in src/lib/headroom/bedrading.js.
      Hier staat alleen wat er op het scherm gebeurt: het plan hoort bij de
@@ -5424,6 +5610,37 @@ import { APP } from '../data/app.js';
   .bd-stip.bd-k-speaker { background: var(--kabel-speaker); }
   .bd-blad-auto { break-before: page; }
   .bd-blad-auto .bd-schema { max-height: 200mm; width: auto; margin: 0 auto; }
+
+  /* ================= KLANTEN ================= */
+  .kl-rij {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-height: 60px;
+    padding: 12px 0;
+    border: 0;
+    border-top: 1px solid var(--line);
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .kl-rij > span { flex: 1; min-width: 0; }
+  .kl-rij strong { display: block; overflow-wrap: anywhere; }
+  .kl-rij small { display: block; color: var(--text-dim); font-size: .8rem; overflow-wrap: anywhere; }
+  .kl-rij em { flex: none; font-style: normal; text-align: right; font-size: .85rem; color: var(--accent-text); }
+  .kl-rij em small { text-align: right; }
+  @media (hover: hover) { .kl-rij:hover strong { color: var(--accent-text); } }
+  .kl-tabs { margin: 4px 0 14px; }
+  .kl-offerte .wb-regel-kop small { display: block; color: var(--text-dim); }
+  .kl-offerte .wb-regel-rij { flex-wrap: wrap; gap: 4px 16px; align-items: center; }
+  .kl-schemas { display: grid; gap: 12px; }
+  .kl-mini-kop { margin: 8px 0 0; font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--text-dim); }
+  .kl-plan .wb-uitleg strong { font-weight: 600; }
+  @media (min-width: 1000px) { .kl-schemas { grid-template-columns: repeat(3, 1fr); } }
 </style>
 </body>
 </html>
