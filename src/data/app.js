@@ -42,6 +42,7 @@ export const APP = {
  */
 export const TABBLADEN = [
   { id: 'offerte', naam: 'Offerte', wat: 'Een nieuwe offerte maken' },
+  { id: 'bedrading', naam: 'Bedrading', wat: 'Stroom- en audioschema van de klus' },
   { id: 'agenda', naam: 'Agenda', wat: 'Wat er aankomt en wanneer je moet bestellen' },
   { id: 'rapport', naam: 'Rapport', wat: 'Hoe je draait en wat er nog moet binnenkomen' },
   { id: 'catalogus', naam: 'Onderdelen', wat: 'Je leveranciersprijzen' },

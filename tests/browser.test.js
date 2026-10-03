@@ -3453,3 +3453,89 @@ describe('instellingen uit een aangeleverd bestand', alsGebouwd, () => {
     await pagina.close();
   });
 });
+
+describe('het bedradingsplan', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+
+  /** Een offerte met CarPlay, twee versterkers, een sub en speakers voor. */
+  const CONCEPT = {
+    id: 'bd1', nummer: '2026-021', datum: '2026-10-03T10:00:00.000Z', zakelijk: false,
+    klant: { naam: 'Henk' }, auto: { kenteken: '92DJHG', merk: 'Volkswagen', model: 'Golf', bouwjaar: '2017' },
+    regels: [
+      { id: 'r1', soort: 'carplay', omschrijving: 'Alpine iLX-705D', aantal: 1, inkoopCent: 0, uren: 0 },
+      { id: 'r2', soort: 'versterker', omschrijving: 'Musway M4 4x100W', aantal: 1, inkoopCent: 0, uren: 0 },
+      { id: 'r3', soort: 'versterker', omschrijving: 'JL monoblok 800W', aantal: 1, inkoopCent: 0, uren: 0 },
+      { id: 'r4', soort: 'subwoofer', omschrijving: 'JL 12W3v3-D4', aantal: 1, inkoopCent: 0, uren: 0 },
+      { id: 'r5', soort: 'speakers-voor', omschrijving: 'Gladen composet', aantal: 1, inkoopCent: 0, uren: 0 },
+    ],
+    opmerking: '', inbouwdatum: '', inbouwtijd: '09:00', afgevinkt: [],
+  };
+
+  async function openPlan() {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    await pagina.addInitScript((concept) => {
+      if (localStorage.getItem('aue-werkbak-v1')) return;
+      localStorage.setItem('aue-werkbak-v1', JSON.stringify({
+        instellingen: {}, catalogus: [], offertes: [], dossiers: [], sessies: [], rapporten: [], concept,
+      }));
+    }, CONCEPT);
+    await pagina.goto(paginaUrl('headroom?tab=bedrading'));
+    return { pagina, fouten };
+  }
+
+  test('bouwt zich op uit de offerte, met beide tekeningen', async () => {
+    const { pagina, fouten } = await openPlan();
+    assert.equal(await pagina.isVisible('[data-paneel="bedrading"]'), true);
+    assert.ok(await pagina.locator('#bd-stroom [data-ding="knoop:hoofdzekering"]').count());
+    assert.ok(await pagina.locator('#bd-audio [data-ding^="kabel:spk-"]').count() >= 2);
+    assert.match(await pagina.textContent('#bd-zekeringen'), /125 A/);
+    const over = await pagina.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+    );
+    assert.equal(over, 0, 'de pagina schuift zijwaarts op een telefoon');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een tik op een kabel geeft dikte, zekering en lengte, en de lengte rekent mee', async () => {
+    const { pagina, fouten } = await openPlan();
+    await pagina.locator('[data-ding="kabel:plus-voeding"]').dispatchEvent('click');
+    await pagina.waitForSelector('#bd-popup[open]');
+    assert.match(await pagina.textContent('#bd-popup'), /2 AWG/);
+    assert.match(await pagina.textContent('#bd-popup'), /125 A/);
+    // Accu in de kofferbak, anderhalve meter: dan mag het dunner.
+    await pagina.fill('#bd-popup-lengte', '1,5');
+    await pagina.press('#bd-popup-lengte', 'Tab');
+    await pagina.waitForFunction(() => /4 AWG/.test(document.querySelector('#bd-popup').textContent));
+    await pagina.click('#bd-popup-sluit');
+    assert.equal(await pagina.isVisible('#bd-popup'), false);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een tik op een onderdeel en dan Aanpassen opent het juiste blok', async () => {
+    const { pagina } = await openPlan();
+    const id = await pagina.locator('#bd-audio [data-ding^="knoop:"]', { hasText: 'monoblok' }).first().getAttribute('data-ding');
+    await pagina.locator(`#bd-audio [data-ding="${id}"]`).click();
+    await pagina.waitForSelector('#bd-popup[open]');
+    assert.match(await pagina.textContent('#bd-popup'), /72 A/);
+    await pagina.click('#bd-popup-aanpassen');
+    assert.equal(await pagina.getAttribute(`#bd-c-${id.split(':')[1]}`, 'open'), '');
+    await pagina.close();
+  });
+
+  test('een sub onder de impedantie van de versterker wordt rood, en het blijft bewaard', async () => {
+    const { pagina } = await openPlan();
+    const sub = pagina.locator('.bd-onderdeel', { hasText: '12W3v3' });
+    await sub.locator('summary').click();
+    await sub.locator('[data-veld="aantal"]').selectOption('2');
+    await sub.locator('[data-veld="ohmPerSpoel"]').selectOption('2');
+    assert.match(await pagina.textContent('#bd-let'), /Klopt niet.*0,5 Ω/s);
+    // Na opnieuw openen staat het er nog: het plan zit in de offerte.
+    await pagina.reload();
+    assert.match(await pagina.textContent('#bd-let'), /0,5 Ω/);
+    await pagina.close();
+  });
+});

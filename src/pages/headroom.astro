@@ -76,6 +76,7 @@ import { APP } from '../data/app.js';
 
 <nav class="wb-tabs" aria-label="Onderdelen">
   <button type="button" class="wb-tab aan" data-tab="offerte">Offerte</button>
+  <button type="button" class="wb-tab" data-tab="bedrading">Bedrading</button>
   <button type="button" class="wb-tab" data-tab="agenda">Agenda<span class="wb-bel" id="wb-agenda-bel" hidden></span></button>
   <button type="button" class="wb-tab" data-tab="rapport">Rapport</button>
   <button type="button" class="wb-tab" data-tab="catalogus">Onderdelen</button>
@@ -278,6 +279,130 @@ import { APP } from '../data/app.js';
       </label>
       <div id="wb-bewaard"></div>
     </div>
+  </section>
+
+  <!-- ================= BEDRADING ================= -->
+  <section class="wb-paneel" data-paneel="bedrading" hidden>
+    <h1 class="wb-h">Bedradingsplan</h1>
+    <p class="wb-uitleg">
+      Stroom en audio van de offerte waar je aan werkt: wat er al in de auto zit,
+      wat erbij komt, en hoe dik elke kabel en hoe groot elke zekering moet.
+      <strong>Tik op een kabel, zekering of onderdeel</strong> voor de waarden en de uitleg.
+    </p>
+
+    <div class="wb-kaart">
+      <span class="eyebrow">Voor welke klus</span>
+      <p class="bd-voor" id="bd-voor"></p>
+      <div id="bd-nieuwe-regels"></div>
+    </div>
+
+    <div class="wb-kaart">
+      <span class="eyebrow">Stroom</span>
+      <h2 class="wb-h3">Van accu tot massapunt</h2>
+      <div class="bd-tekening" id="bd-stroom"></div>
+      <ul class="bd-legenda" aria-label="Legenda stroom">
+        <li><i class="bd-streep bd-k-plus"></i>Plus</li>
+        <li><i class="bd-streep bd-k-massa"></i>Massa</li>
+        <li><i class="bd-streep bd-k-remote"></i>Remote</li>
+        <li><i class="bd-blokje bd-zekering"></i>Zekering</li>
+      </ul>
+    </div>
+
+    <div class="wb-kaart">
+      <span class="eyebrow">Audio</span>
+      <h2 class="wb-h3">Van bron tot speaker</h2>
+      <div class="bd-tekening" id="bd-audio"></div>
+      <ul class="bd-legenda" aria-label="Legenda audio">
+        <li><i class="bd-streep bd-k-rca"></i>RCA</li>
+        <li><i class="bd-streep bd-k-hoog"></i>Hoog niveau</li>
+        <li><i class="bd-streep bd-k-speaker"></i>Luidspreker</li>
+        <li><i class="bd-streep bd-k-fabriek"></i>Fabriek, blijft</li>
+      </ul>
+      <ul class="bd-legenda" aria-label="Legenda status">
+        <li><i class="bd-blokje bd-bestaand"></i>Bestaand</li>
+        <li><i class="bd-blokje bd-nieuw"></i>Nieuw</li>
+        <li><i class="bd-blokje bd-vervangen"></i>Vervangen</li>
+      </ul>
+    </div>
+
+    <div class="wb-kaart" id="bd-let-kaart">
+      <span class="eyebrow">Let op</span>
+      <div id="bd-let"></div>
+    </div>
+
+    <div class="wb-kaart">
+      <span class="eyebrow">Wat zit erin</span>
+      <p class="wb-uitleg">
+        Zet per onderdeel of het er al in zit, nieuw is of iets vervangt. Vul het
+        vermogen in waar het niet uit de naam te halen was: daar rekent de
+        kabeldikte mee.
+      </p>
+      <div id="bd-onderdelen"></div>
+      <div class="bd-erbij">
+        <button type="button" class="btn" data-erbij="versterker">+ Versterker</button>
+        <button type="button" class="btn" data-erbij="subwoofer">+ Subwoofer</button>
+        <button type="button" class="btn" data-erbij="speakers">+ Speakers</button>
+        <button type="button" class="btn" data-erbij="dsp">+ DSP</button>
+        <button type="button" class="btn" data-erbij="fabrieksversterker">+ Fabrieksversterker</button>
+      </div>
+    </div>
+
+    <div class="wb-kaart">
+      <span class="eyebrow">Accu en kabelloop</span>
+      <div class="wb-veldrij">
+        <label>Accu zit in
+          <select id="bd-accu-plek">
+            <option value="motorruimte">motorruimte</option>
+            <option value="kofferbak">kofferbak</option>
+            <option value="interieur">interieur / onder stoel</option>
+          </select>
+        </label>
+        <label>Accu (Ah)
+          <input type="text" id="bd-accu-ah" inputmode="numeric" placeholder="70" />
+        </label>
+        <label class="wb-breed">Soort kabel
+          <select id="bd-koper">
+            <option value="ofc">OFC (puur koper)</option>
+            <option value="cca">CCA (koperbeklede aluminium)</option>
+          </select>
+        </label>
+      </div>
+      <p class="wb-uitleg">
+        De lengtes staan op wat gebruikelijk is. Tik op een kabel in de tekening om
+        zijn lengte aan te passen; dikte en zekering rekenen meteen mee.
+      </p>
+    </div>
+
+    <div class="wb-kaart">
+      <span class="eyebrow">Kabels klaarleggen</span>
+      <div id="bd-kabels"></div>
+      <p class="wb-uitleg">Alleen wat er nieuw bij komt, met een meter speling per kabel.</p>
+    </div>
+
+    <div class="wb-kaart">
+      <span class="eyebrow">Zekeringen</span>
+      <div id="bd-zekeringen"></div>
+    </div>
+
+    <div class="wb-kaart">
+      <button type="button" class="btn solid wb-vol" id="bd-print">Plan afdrukken</button>
+      <p class="wb-uitleg">
+        Het printvenster komt op. Kies je printer, of &quot;opslaan als pdf&quot; om het
+        plan bij de werkbon te leggen.
+      </p>
+      <button type="button" class="btn wb-vol" id="bd-opnieuw">Opnieuw opbouwen uit de offerte</button>
+    </div>
+
+    <dialog class="bd-popup" id="bd-popup" aria-labelledby="bd-popup-titel">
+      <div class="bd-popup-kop">
+        <div>
+          <span class="eyebrow" id="bd-popup-soort"></span>
+          <h2 class="wb-h3" id="bd-popup-titel"></h2>
+        </div>
+        <button type="button" class="bd-sluit" id="bd-popup-sluit" aria-label="Sluiten">×</button>
+      </div>
+      <div id="bd-popup-inhoud"></div>
+    </dialog>
   </section>
 
   <!-- ================= CATALOGUS ================= -->
@@ -777,6 +902,10 @@ import { APP } from '../data/app.js';
     leegRapport, rapportnummer, rapportenVoor, ontbreekt, meetrapportHtml,
   } from '../lib/headroom/meetrapport.js';
   import { MODELS } from '../data/models.js';
+  import {
+    STATUSSEN as BD_STATUSSEN, SOORTEN_COMPONENT, KABELSOORT_NAAM, planUitOfferte, bouwPlan, nieuwComponent,
+    verdeelAansturing, stuurders, stroomSchema, audioSchema, zoekDing, bedradingHtml, komma,
+  } from '../lib/headroom/bedrading.js';
   /* Dezelfde schrijfwijze als de site: de RDW levert "GOLF VII 1.4 TSI" en dat
      moet "Golf VII 1.4 TSI" worden, niet "Golf Vii 1.4 Tsi". */
   import { kapitaliseer } from '../lib/match.js';
@@ -1110,6 +1239,9 @@ import { APP } from '../data/app.js';
     const doel = bestaat ? naam : 'offerte';
     $$('.wb-tab').forEach((k) => k.classList.toggle('aan', k.dataset.tab === doel));
     $$('.wb-paneel').forEach((p) => { p.hidden = p.dataset.paneel !== doel; });
+    /* Het plan hoort bij de offerte waar je nu aan werkt. Die kan sinds de
+       vorige keer veranderd zijn, dus elke keer opnieuw tekenen. */
+    if (doel === 'bedrading') { tekenBedrading(); bewaarConcept(); }
     window.scrollTo({ top: 0 });
 
     const adres = `${location.pathname}?tab=${doel}`;
@@ -2915,8 +3047,12 @@ import { APP } from '../data/app.js';
   );
 
   function bewaarConcept() {
+    /* Een echte kopie, geen verwijzing. Met alleen { ...offerte } deelden het
+       concept en de offerte hetzelfde bedradingsplan: een wijziging daarin
+       veranderde het concept dus al mee, de vergelijking hieronder zag
+       "niets veranderd" en er werd niets weggeschreven. */
     const nieuwConcept = heeftInhoud(offerte)
-      ? { ...offerte, datum: offerte.datum.toISOString() }
+      ? JSON.parse(JSON.stringify({ ...offerte, datum: offerte.datum.toISOString() }))
       : null;
     /* Niets veranderd? Dan ook niet schrijven. Anders staat de app bij elke
        toetsaanslag de hele opslag opnieuw weg te zetten. */
@@ -3773,6 +3909,297 @@ import { APP } from '../data/app.js';
     vulMeting();
   }
 
+  /* ================= BEDRADINGSPLAN =================
+     Het rekenwerk en de tekening staan in src/lib/headroom/bedrading.js.
+     Hier staat alleen wat er op het scherm gebeurt: het plan hoort bij de
+     offerte waar je aan werkt en wordt met die offerte bewaard. */
+
+  /** Het plan van deze offerte. Is er nog geen, dan bouwt hij er een uit de regels. */
+  function huidigPlan() {
+    if (!offerte.bedrading || !Array.isArray(offerte.bedrading.componenten)) {
+      offerte.bedrading = planUitOfferte(offerte, huidigDossier().dossier);
+    }
+    return offerte.bedrading;
+  }
+
+  /** Waar het in de popup om gaat, zodat hij na een wijziging blijft staan. */
+  let bdOpen = null;
+  /* Welke onderdelen je hebt opengeklapt. Na opnieuw tekenen blijven ze open. */
+  const bdOpengeklapt = new Set();
+
+  /** Regels op de offerte die een onderdeel zijn maar nog niet in het plan staan. */
+  function regelsNietInPlan(plan) {
+    const erin = new Set(plan.componenten.map((c) => c.regelId).filter(Boolean));
+    const telt = ['carplay', 'dsp', 'versterker', 'subwoofer', 'speakers-voor', 'speakers-achter'];
+    return (offerte.regels || []).filter((r) =>
+      r.id && !erin.has(r.id) && [r.soort, ...(r.soorten || [])].some((s) => telt.includes(s)));
+  }
+
+  function bdWijzig() {
+    verdeelAansturing(huidigPlan());
+    bewaarConcept();
+    tekenBedrading();
+  }
+
+  const statusKnoppen = (c) => `<div class="wb-schakel wb-drie" role="group" aria-label="Status">${
+    BD_STATUSSEN.map((s) => `<button type="button" class="wb-keuze${c.status === s.id ? ' aan' : ''}" data-c="${c.id}" data-status="${s.id}">${s.naam}</button>`).join('')
+  }</div>`;
+  const veld = (c, sleutel, naam, extra = '') =>
+    `<label>${naam}<input type="text" data-c="${c.id}" data-veld="${sleutel}" value="${ontsnap(c[sleutel] ?? '')}" ${extra} /></label>`;
+  const keuze = (c, sleutel, naam, opties, breed = false) =>
+    `<label${breed ? ' class="wb-breed"' : ''}>${naam}<select data-c="${c.id}" data-veld="${sleutel}">${
+      opties.map(([waarde, tekst]) => `<option value="${ontsnap(waarde)}"${String(c[sleutel] ?? '') === String(waarde) ? ' selected' : ''}>${ontsnap(tekst)}</option>`).join('')
+    }</select></label>`;
+  const vink = (c, sleutel, naam, uitleg) =>
+    `<label class="wb-vink wb-breed"><input type="checkbox" data-c="${c.id}" data-veld="${sleutel}"${c[sleutel] ? ' checked' : ''} /><span>${naam}<em>${uitleg}</em></span></label>`;
+
+  function onderdeelVelden(c, plan) {
+    const door = () => keuze(c, 'door', 'Aangestuurd door',
+      stuurders(plan).map((s) => [s.id, s.naam || SOORTEN_COMPONENT[s.soort]]), true);
+    switch (c.soort) {
+      case 'bron': return vink(c, 'rca', 'Heeft voorversterkeruitgangen (RCA)', 'Een nieuwe radio meestal wel, een fabrieksradio bijna nooit.')
+        + vink(c, 'remote', 'Heeft een remote-draad', 'De blauw-witte draad die de versterkers aanzet.');
+      case 'dsp': return keuze(c, 'ingang', 'Ingang', [['hoog', 'hoog niveau'], ['rca', 'RCA'], ['optisch', 'optisch']]);
+      case 'versterker': return keuze(c, 'kanalen', 'Kanalen', [['', 'kies'], ['1', '1 (mono)'], ['2', '2'], ['4', '4'], ['5', '5'], ['6', '6'], ['8', '8']])
+        + veld(c, 'wattPerKanaal', 'Watt RMS per kanaal', 'inputmode="numeric" placeholder="100"')
+        + keuze(c, 'klasse', 'Klasse', [['D', 'D'], ['AB', 'A/B']])
+        + keuze(c, 'minOhm', 'Laagste impedantie', [['1', '1 Ω'], ['2', '2 Ω'], ['4', '4 Ω']])
+        + veld(c, 'zekeringIntern', 'Zekering in de versterker (A)', 'inputmode="numeric" placeholder="bijv. 60"')
+        + vink(c, 'dsp', 'Met ingebouwde DSP', 'Dan komt het signaal rechtstreeks van de radio.');
+      case 'speakers': return keuze(c, 'positie', 'Plek', [['voor', 'voor'], ['achter', 'achter'], ['center', 'center']])
+        + keuze(c, 'type', 'Soort', [['compo', 'composet'], ['coax', 'coaxiaal'], ['breedband', 'breedband']])
+        + keuze(c, 'ohm', 'Impedantie', [['2', '2 Ω'], ['4', '4 Ω'], ['8', '8 Ω']])
+        + door()
+        + (c.type === 'compo' ? vink(c, 'actief', 'Actief gefilterd', 'Woofer en tweeter elk op een eigen kanaal van de DSP-versterker.') : '');
+      case 'subwoofer': return keuze(c, 'aantal', 'Aantal', [['1', '1'], ['2', '2'], ['3', '3'], ['4', '4']])
+        + keuze(c, 'spoelen', 'Spoelen', [['', 'kies'], ['1', 'enkel (SVC)'], ['2', 'dubbel (DVC)']])
+        + keuze(c, 'ohmPerSpoel', 'Per spoel', [['', 'kies'], ['1', '1 Ω'], ['2', '2 Ω'], ['4', '4 Ω']])
+        + (Number(c.spoelen) === 2 ? keuze(c, 'schakeling', 'Spoelen geschakeld', [['parallel', 'parallel'], ['serie', 'in serie']]) : '')
+        + door();
+      default: return '';
+    }
+  }
+
+  function tekenOnderdelenBd(plan, uitkomst) {
+    /* Eerst kijken wat er nu openstaat. Het toggle-bericht komt pas na een
+       tik binnen; kies je meteen iets in een keuzelijst, dan was hij er nog
+       niet en klapte het blok onder je duim dicht. */
+    $$('#bd-onderdelen details').forEach((d) => {
+      if (d.open) bdOpengeklapt.add(d.dataset.c); else bdOpengeklapt.delete(d.dataset.c);
+    });
+    $('#bd-onderdelen').innerHTML = plan.componenten.map((c) => {
+      const fout = uitkomst.waarschuwingen.some((w) => w.bij === c.id && w.ernst === 'fout');
+      return `<details class="bd-onderdeel" id="bd-c-${c.id}" data-c="${c.id}"${bdOpengeklapt.has(c.id) ? ' open' : ''}>
+        <summary>
+          <span><small>${SOORTEN_COMPONENT[c.soort] || ''}</small>${ontsnap(c.naam || SOORTEN_COMPONENT[c.soort])}</span>
+          <em class="bd-tag bd-${c.status}">${BD_STATUSSEN.find((s) => s.id === c.status)?.naam || ''}</em>${fout ? '<em class="bd-tag bd-tag-fout">!</em>' : ''}
+        </summary>
+        ${statusKnoppen(c)}
+        <div class="wb-veldrij">
+          <label class="wb-breed">Naam<input type="text" data-c="${c.id}" data-veld="naam" value="${ontsnap(c.naam || '')}" /></label>
+          ${onderdeelVelden(c, plan)}
+        </div>
+        ${c.soort === 'bron' ? '' : `<button type="button" class="wb-link" data-c="${c.id}" data-weg>Weghalen uit het plan</button>`}
+      </details>`;
+    }).join('');
+  }
+
+  function tekenBedrading() {
+    const plan = huidigPlan();
+    const uitkomst = bouwPlan(plan, { dossier: huidigDossier().dossier });
+
+    const auto = [offerte.auto?.merk, offerte.auto?.model].filter(Boolean).join(' ');
+    $('#bd-voor').innerHTML = (auto || offerte.klant?.naam)
+      ? `<strong>${ontsnap(auto || 'Auto nog niet ingevuld')}</strong>${offerte.auto?.kenteken ? ` · ${ontsnap(offerte.auto.kenteken)}` : ''}${offerte.klant?.naam ? ` · ${ontsnap(offerte.klant.naam)}` : ''}<br><span>Offerte ${ontsnap(offerte.nummer)}</span>`
+      : 'Nog geen auto of klant op de offerte. Het plan werkt toch; het komt bij de offerte te staan zodra je die invult.';
+    const los = regelsNietInPlan(plan);
+    $('#bd-nieuwe-regels').innerHTML = los.length
+      ? `<p class="wb-uitleg">Op de offerte staat ${los.length === 1 ? 'een regel' : `${los.length} regels`} die nog niet in het plan ${los.length === 1 ? 'staat' : 'staan'}: ${los.map((r) => ontsnap(r.omschrijving)).join(', ')}.</p><button type="button" class="btn wb-vol" id="bd-regels-erbij">In het plan zetten</button>`
+      : '';
+
+    $('#bd-stroom').innerHTML = stroomSchema(uitkomst, plan);
+    $('#bd-audio').innerHTML = audioSchema(uitkomst);
+
+    const ernstNaam = { fout: 'Klopt niet', let: 'Let op', info: 'Goed om te weten' };
+    $('#bd-let').innerHTML = uitkomst.waarschuwingen.length
+      ? `<ul class="bd-lijst">${uitkomst.waarschuwingen.map((w) =>
+        `<li class="bd-w-${w.ernst}"><strong>${ernstNaam[w.ernst]}</strong> ${ontsnap(w.tekst)}</li>`).join('')}</ul>`
+      : '<p class="wb-uitleg">Alles klopt: elke kabel past bij zijn zekering en elke speaker bij zijn versterker.</p>';
+
+    $('#bd-kabels').innerHTML = uitkomst.kabellijst.length
+      ? `<table class="bd-tabel"><thead><tr><th>Kabel</th><th>Dikte</th><th>Pak</th></tr></thead><tbody>${
+        uitkomst.kabellijst.map((g) => `<tr><td>${KABELSOORT_NAAM[g.soort] || g.soort}</td><td>${ontsnap(g.maat)}</td><td>${g.klaarleggen} m</td></tr>`).join('')
+      }</tbody></table>`
+      : '<p class="wb-leeg">Er komt geen nieuwe kabel bij.</p>';
+    $('#bd-zekeringen').innerHTML = uitkomst.zekeringen.length
+      ? `<table class="bd-tabel"><thead><tr><th>Waarde</th><th>Soort</th><th>Waar</th></tr></thead><tbody>${
+        uitkomst.zekeringen.map((z) => `<tr><td>${z.waardeA ? `${z.waardeA} A` : '—'}</td><td>${ontsnap(z.type)}</td><td>${ontsnap(z.plek)}<br><small>${ontsnap(z.beschermt)}</small></td></tr>`).join('')
+      }</tbody></table>`
+      : '<p class="wb-leeg">Geen nieuwe zekeringen: er komt geen versterker bij.</p>';
+
+    $('#bd-accu-plek').value = plan.accu?.plek || 'motorruimte';
+    $('#bd-accu-ah').value = plan.accu?.ah || '';
+    $('#bd-koper').value = plan.koper || 'ofc';
+    tekenOnderdelenBd(plan, uitkomst);
+
+    if (bdOpen && $('#bd-popup').open) vulPopup(bdOpen, uitkomst);
+    return uitkomst;
+  }
+
+  /* ---- de popup ---- */
+  const DING_SOORT = {
+    accu: 'Accu', zekering: 'Zekering', verdeelblok: 'Verdeelblok', massa: 'Massa',
+    plus: 'Pluskabel', remote: 'Remote', rca: 'RCA-kabel', hoog: 'Hoog niveau', fabriek: 'Fabrieksbedrading',
+    speaker: 'Luidsprekerkabel', ...SOORTEN_COMPONENT,
+  };
+
+  function vulPopup(sleutel, uitkomst) {
+    const ding = zoekDing(uitkomst, sleutel);
+    if (!ding) { $('#bd-popup').close(); return; }
+    const status = BD_STATUSSEN.find((s) => s.id === ding.status);
+    $('#bd-popup-soort').textContent = [DING_SOORT[ding.soort] || '', status?.naam].filter(Boolean).join(' · ');
+    $('#bd-popup-titel').textContent = ding.naam;
+    const isOnderdeel = huidigPlan().componenten.some((c) => c.id === ding.id) && sleutel.startsWith('knoop:');
+    $('#bd-popup-inhoud').innerHTML =
+      (ding.waarschuwingen || []).map((w) => `<p class="bd-w-${w.ernst} bd-melding">${ontsnap(w.tekst)}</p>`).join('')
+      + `<table class="bd-tabel bd-waarden"><tbody>${(ding.rijen || []).map(([k, v]) => `<tr><th>${ontsnap(k)}</th><td>${ontsnap(v)}</td></tr>`).join('')}</tbody></table>`
+      + (ding.lengteAanpasbaar
+        ? `<label class="bd-lengte">Lengte in meters${ding.aantal > 1 ? ' (per kabel)' : ''}<input type="text" inputmode="decimal" id="bd-popup-lengte" value="${komma(ding.lengteM)}" /></label>`
+        : '')
+      + (ding.uitleg || []).map((t) => `<p class="wb-uitleg">${ontsnap(t)}</p>`).join('')
+      + (status ? `<p class="bd-status-uitleg"><em class="bd-tag bd-${ding.status}">${status.naam}</em> ${status.uitleg}</p>` : '')
+      + (isOnderdeel ? `<button type="button" class="btn wb-vol" id="bd-popup-aanpassen" data-c="${ding.id}">Aanpassen</button>` : '');
+    $$('.bd-gekozen').forEach((el) => el.classList.remove('bd-gekozen'));
+    $$(`[data-ding="${sleutel}"]`).forEach((el) => el.classList.add('bd-gekozen'));
+  }
+
+  function openPopup(sleutel) {
+    bdOpen = sleutel;
+    vulPopup(sleutel, bouwPlan(huidigPlan(), { dossier: huidigDossier().dossier }));
+    const venster = $('#bd-popup');
+    if (!venster.open) venster.showModal();
+  }
+
+  ['#bd-stroom', '#bd-audio'].forEach((kies) => {
+    const vak = $(kies);
+    vak.addEventListener('click', (e) => {
+      const ding = e.target.closest('[data-ding]');
+      if (ding) openPopup(ding.dataset.ding);
+    });
+    vak.addEventListener('keydown', (e) => {
+      const ding = e.target.closest('[data-ding]');
+      if (ding && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openPopup(ding.dataset.ding); }
+    });
+  });
+
+  $('#bd-popup-sluit').addEventListener('click', () => $('#bd-popup').close());
+  /* Tik naast het venster om het te sluiten, zoals je op een telefoon gewend bent. */
+  $('#bd-popup').addEventListener('click', (e) => { if (e.target === e.currentTarget) e.currentTarget.close(); });
+  $('#bd-popup').addEventListener('close', () => {
+    bdOpen = null;
+    $$('.bd-gekozen').forEach((el) => el.classList.remove('bd-gekozen'));
+  });
+  $('#bd-popup').addEventListener('change', (e) => {
+    if (e.target.id !== 'bd-popup-lengte' || !bdOpen) return;
+    const id = bdOpen.split(':')[1];
+    const plan = huidigPlan();
+    const n = Number(String(e.target.value).replace(',', '.'));
+    plan.lengtes = { ...(plan.lengtes || {}) };
+    if (Number.isFinite(n) && n > 0) plan.lengtes[id] = Math.min(30, n);
+    else delete plan.lengtes[id];
+    bdWijzig();
+  });
+  $('#bd-popup').addEventListener('click', (e) => {
+    const knop = e.target.closest('#bd-popup-aanpassen');
+    if (!knop) return;
+    $('#bd-popup').close();
+    const blok = $(`#bd-c-${knop.dataset.c}`);
+    if (!blok) return;
+    blok.open = true;
+    bdOpengeklapt.add(knop.dataset.c);
+    blok.scrollIntoView({ block: 'start' });
+  });
+
+  /* ---- de onderdelen aanpassen ---- */
+  const bdOnderdeel = (id) => huidigPlan().componenten.find((c) => c.id === id);
+  $('#bd-onderdelen').addEventListener('toggle', (e) => {
+    const id = e.target.dataset?.c;
+    if (!id) return;
+    if (e.target.open) bdOpengeklapt.add(id); else bdOpengeklapt.delete(id);
+  }, true);
+  $('#bd-onderdelen').addEventListener('change', (e) => {
+    const c = bdOnderdeel(e.target.dataset.c);
+    if (!c || !e.target.dataset.veld) return;
+    c[e.target.dataset.veld] = e.target.type === 'checkbox' ? e.target.checked : e.target.value.trim();
+    bdWijzig();
+  });
+  $('#bd-onderdelen').addEventListener('click', (e) => {
+    const knop = e.target.closest('button[data-c]');
+    if (!knop) return;
+    const plan = huidigPlan();
+    if (knop.dataset.status) {
+      const c = bdOnderdeel(knop.dataset.c);
+      if (c) c.status = knop.dataset.status;
+    } else if (knop.hasAttribute('data-weg')) {
+      plan.componenten = plan.componenten.filter((c) => c.id !== knop.dataset.c);
+    }
+    bdWijzig();
+  });
+  $$('[data-erbij]').forEach((knop) => knop.addEventListener('click', () => {
+    const c = nieuwComponent(huidigPlan(), knop.dataset.erbij);
+    bdOpengeklapt.add(c.id);
+    bdWijzig();
+    $(`#bd-c-${c.id}`)?.scrollIntoView({ block: 'center' });
+  }));
+
+  $('#bd-accu-plek').addEventListener('change', (e) => {
+    const plan = huidigPlan();
+    plan.accu = { ...(plan.accu || {}), plek: e.target.value };
+    /* Een andere plek is een andere kabellengte. Een eigen lengte van de
+       vorige plek klopt dan niet meer. */
+    if (plan.lengtes) delete plan.lengtes['plus-voeding'];
+    bdWijzig();
+  });
+  $('#bd-accu-ah').addEventListener('change', (e) => {
+    const plan = huidigPlan();
+    plan.accu = { ...(plan.accu || {}), ah: e.target.value.replace(/[^0-9]/g, '') };
+    bdWijzig();
+  });
+  $('#bd-koper').addEventListener('change', (e) => {
+    huidigPlan().koper = e.target.value;
+    bdWijzig();
+  });
+
+  $('#bd-nieuwe-regels').addEventListener('click', (e) => {
+    if (!e.target.closest('#bd-regels-erbij')) return;
+    const plan = huidigPlan();
+    const vers = planUitOfferte({ regels: regelsNietInPlan(plan) }, huidigDossier().dossier);
+    for (const c of vers.componenten) {
+      if (c.soort === 'bron') {
+        if (c.status === 'vervangen') Object.assign(plan.componenten[0], { status: c.status, naam: c.naam, rca: c.rca, remote: c.remote, regelId: c.regelId });
+        continue;
+      }
+      if (!c.regelId) continue;
+      const { id, ...rest } = c;
+      nieuwComponent(plan, c.soort, { ...rest, door: '' });
+    }
+    bdWijzig();
+  });
+
+  $('#bd-opnieuw').addEventListener('click', () => {
+    const weg = confirm('Het plan wordt opnieuw opgebouwd uit de regels op de offerte. Wat je hier zelf hebt aangepast, is dan weg.\n\nDoorgaan?');
+    if (!weg) return;
+    offerte.bedrading = planUitOfferte(offerte, huidigDossier().dossier);
+    bdOpengeklapt.clear();
+    bdWijzig();
+  });
+
+  $('#bd-print').addEventListener('click', () => {
+    const plan = huidigPlan();
+    $('#wb-print').innerHTML = bedradingHtml(bouwPlan(plan, { dossier: huidigDossier().dossier }), plan, offerte);
+    window.print();
+  });
+
   /* ================= STARTEN ================= */
   tekenPakketknoppen();
   tekenCatalogus();
@@ -4618,6 +5045,208 @@ import { APP } from '../data/app.js';
     .wb-knoprij { flex-direction: row; flex-wrap: wrap; }
     .wb-knoprij .btn, .wb-knoprij .wb-tabkoppeling { flex: 1 1 200px; }
   }
+
+  /* ================= BEDRADINGSPLAN ================= */
+  .bd-voor { margin: 0; color: var(--text-dim); }
+  .bd-voor strong { color: var(--text); }
+  .bd-tekening {
+    margin: 10px -6px 0;
+    padding: 4px 0;
+    border-radius: var(--radius);
+    background: var(--bg);
+  }
+  .bd-schema { display: block; width: 100%; height: auto; overflow: visible; }
+  .bd-schema text { font-family: 'Inter', system-ui, sans-serif; pointer-events: none; }
+  .bd-knoop rect { fill: var(--panel); stroke: var(--text-dim); stroke-width: 1.4; }
+  .bd-knoop.bd-nieuw rect { stroke: var(--accent); stroke-width: 1.8; }
+  .bd-knoop.bd-vervangen rect { stroke: var(--accent); stroke-width: 1.8; stroke-dasharray: 5 3; }
+  .bd-kop { font-size: 7px; letter-spacing: .08em; fill: var(--text-dim); font-weight: 600; }
+  .bd-naam { font-size: 10px; fill: var(--text); font-weight: 600; }
+  .bd-waarde { font-size: 8.5px; fill: var(--text-dim); }
+  .bd-nieuw .bd-waarde, .bd-vervangen .bd-waarde { fill: var(--accent-text); }
+  .bd-fout { fill: var(--kabel-plus); }
+  .bd-fout-teken { fill: var(--bg); font-size: 9px; font-weight: 700; text-anchor: middle; }
+
+  .bd-kabel .bd-lijn { fill: none; stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+  /* Een strook van 18 pixels die je niet ziet maar wel raakt: een kabel van
+     twee pixels breed raak je anders nooit met je duim. */
+  .bd-kabel .bd-raak { fill: none; stroke: transparent; stroke-width: 18; pointer-events: stroke; }
+  .bd-k-plus .bd-lijn { stroke: var(--kabel-plus); stroke-width: 3.4; }
+  .bd-k-massa .bd-lijn { stroke: var(--kabel-massa); stroke-width: 3.4; }
+  .bd-k-remote .bd-lijn { stroke: var(--kabel-remote); stroke-width: 1.4; }
+  .bd-k-rca .bd-lijn { stroke: var(--kabel-signaal); }
+  .bd-k-hoog .bd-lijn { stroke: var(--kabel-signaal); stroke-dasharray: 6 3; }
+  .bd-k-speaker .bd-lijn { stroke: var(--kabel-speaker); }
+  .bd-k-fabriek .bd-lijn { stroke: var(--text-dim); }
+  .bd-kabel.bd-bestaand .bd-lijn { stroke-dasharray: 2 4; opacity: .75; }
+  .bd-kabel.bd-advies .bd-lijn { stroke-dasharray: 7 4; opacity: 1; }
+  .bd-zek rect { fill: var(--bg); stroke: var(--kabel-plus); stroke-width: 1.6; }
+  .bd-zek { cursor: pointer; }
+  .bd-label {
+    font-size: 8px;
+    fill: var(--text);
+    paint-order: stroke;
+    stroke: var(--bg);
+    stroke-width: 3px;
+    stroke-linejoin: round;
+  }
+  .bd-zone text { font-size: 7px; letter-spacing: .1em; fill: var(--text-dim); }
+  .bd-zone line { stroke: var(--line-strong); stroke-dasharray: 4 4; }
+  [data-ding] { cursor: pointer; }
+  [data-ding]:focus { outline: none; }
+  [data-ding]:focus-visible rect, .bd-gekozen rect { stroke-width: 3; }
+  [data-ding]:focus-visible .bd-lijn, .bd-gekozen .bd-lijn { stroke-width: 5; opacity: 1; }
+  @media (hover: hover) {
+    .bd-knoop:hover rect { stroke-width: 2.6; }
+    .bd-kabel:hover .bd-lijn { stroke-width: 4.5; }
+  }
+
+  .bd-legenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: .78rem;
+    color: var(--text-dim);
+  }
+  .bd-legenda li { display: inline-flex; align-items: center; gap: 6px; }
+  .bd-streep { display: inline-block; width: 22px; height: 0; border-top: 3px solid; }
+  .bd-streep.bd-k-plus { border-color: var(--kabel-plus); }
+  .bd-streep.bd-k-massa { border-color: var(--kabel-massa); }
+  .bd-streep.bd-k-remote { border-color: var(--kabel-remote); border-top-width: 2px; }
+  .bd-streep.bd-k-rca { border-color: var(--kabel-signaal); }
+  .bd-streep.bd-k-hoog { border-color: var(--kabel-signaal); border-top-style: dashed; }
+  .bd-streep.bd-k-speaker { border-color: var(--kabel-speaker); }
+  .bd-streep.bd-k-fabriek { border-color: var(--text-dim); border-top-style: dotted; }
+  .bd-blokje { display: inline-block; width: 16px; height: 11px; border: 2px solid var(--text-dim); border-radius: 3px; }
+  .bd-blokje.bd-zekering { border-color: var(--kabel-plus); width: 10px; }
+  .bd-blokje.bd-nieuw { border-color: var(--accent); }
+  .bd-blokje.bd-vervangen { border-color: var(--accent); border-style: dashed; }
+
+  .bd-lijst { margin: 0; padding: 0; list-style: none; }
+  .bd-lijst li { padding: 9px 0; border-bottom: 1px solid var(--line); color: var(--text-dim); font-size: .9rem; }
+  .bd-lijst li:last-child { border-bottom: 0; }
+  .bd-lijst strong { display: block; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; }
+  .bd-w-fout strong, p.bd-w-fout { color: var(--kabel-plus); }
+  .bd-w-let strong { color: var(--accent-text); }
+  .bd-w-info strong { color: var(--text); }
+  .bd-melding {
+    margin: 0 0 10px;
+    padding: 10px 12px;
+    border-left: 3px solid currentColor;
+    background: var(--bg);
+    font-size: .88rem;
+  }
+  p.bd-w-let, p.bd-w-info { color: var(--text); }
+  p.bd-w-let { border-left-color: var(--accent); }
+
+  .bd-tabel { width: 100%; border-collapse: collapse; font-size: .86rem; }
+  .bd-tabel th, .bd-tabel td {
+    padding: 8px 6px 8px 0;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+    vertical-align: top;
+    color: var(--text);
+  }
+  .bd-tabel thead th {
+    font-size: .68rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+  .bd-tabel small { color: var(--text-dim); }
+  .bd-waarden th { width: 44%; color: var(--text-dim); font-weight: 400; }
+
+  .bd-onderdeel {
+    border-top: 1px solid var(--line);
+    padding: 4px 0;
+    /* De kopbalk en de tabbladen staan vast bovenin. Zonder deze ruimte
+       schuift "Aanpassen" het blok er precies onder. */
+    scroll-margin-top: 130px;
+  }
+  .bd-onderdeel summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 48px;
+    cursor: pointer;
+    list-style: none;
+  }
+  .bd-onderdeel summary::-webkit-details-marker { display: none; }
+  .bd-onderdeel summary > span { flex: 1; min-width: 0; color: var(--text); overflow-wrap: anywhere; }
+  .bd-onderdeel summary small {
+    display: block;
+    font-size: .66rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .bd-onderdeel[open] { padding-bottom: 12px; }
+  .bd-onderdeel .wb-schakel { margin-top: 4px; }
+  .bd-tag {
+    flex: none;
+    padding: 3px 7px;
+    border: 1px solid var(--text-dim);
+    border-radius: 999px;
+    font-size: .68rem;
+    font-style: normal;
+    color: var(--text-dim);
+  }
+  .bd-tag.bd-nieuw, .bd-tag.bd-vervangen { border-color: var(--accent); color: var(--accent-text); }
+  .bd-tag.bd-vervangen { border-style: dashed; }
+  .bd-tag-fout { border-color: var(--kabel-plus); color: var(--kabel-plus); }
+  .bd-erbij { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+  .bd-erbij .btn { padding-left: 6px; padding-right: 6px; font-size: .78rem; }
+
+  /* De popup. Op een telefoon schuift hij van onderen op, waar je duim al is. */
+  .bd-popup {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 560px;
+    max-height: 86vh;
+    margin: auto auto 0;
+    padding: 16px 16px calc(20px + env(safe-area-inset-bottom));
+    border: 0;
+    border-radius: 16px 16px 0 0;
+    background: var(--panel);
+    color: var(--text);
+    overflow-y: auto;
+  }
+  .bd-popup::backdrop { background: var(--schaduw); }
+  @media (min-width: 700px) {
+    .bd-popup { margin: auto; border-radius: 16px; }
+  }
+  .bd-popup-kop { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+  .bd-popup-kop .wb-h3 { margin: 2px 0 0; overflow-wrap: anywhere; }
+  .bd-sluit {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--line-strong);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text);
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .bd-lengte { margin: 12px 0 4px; }
+  .bd-status-uitleg { font-size: .85rem; color: var(--text-dim); }
+
+  /* Op papier: de twee tekeningen naast elkaar op één A4. */
+  .bd-blad { box-sizing: border-box; padding: 12mm; font-size: 9pt; }
+  .bd-blad h2 { margin: 0 0 2mm; font-size: 15pt; }
+  .bd-blad h3 { margin: 5mm 0 2mm; font-size: 10pt; text-transform: uppercase; letter-spacing: .08em; }
+  .bd-blad-sub { margin: 0; color: var(--text-dim) !important; }
+  .bd-blad-schemas { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; break-inside: avoid; }
+  .bd-blad .bd-schema { max-height: 150mm; }
+  .bd-blad table { width: 100%; border-collapse: collapse; }
+  .bd-blad th, .bd-blad td { padding: 1.5mm 2mm 1.5mm 0; border-bottom: .3mm solid var(--line-strong); text-align: left; vertical-align: top; }
+  .bd-blad .bd-knoop rect { fill: var(--bg); }
+  .bd-blad .bd-label { stroke: var(--bg); }
 </style>
 </body>
 </html>

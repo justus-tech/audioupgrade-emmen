@@ -240,6 +240,36 @@ dat zo'n auto op de brug staat, herkent de app hem aan het kenteken en staat
 alles al ingevuld. Vul bij de bouwjaren de jaren van de **generatie** in (een
 Golf 7 liep van 2013 tot 2020), niet het bouwjaar van de auto die er nu staat.
 
+### Het bedradingsplan
+
+Het tabblad **Bedrading** tekent voor de offerte waar je aan werkt twee
+schema's: de **stroom** (accu, hoofdzekering, verdeelblok, versterkers,
+massapunt) en de **audio** (bron, DSP, versterkers, speakers, sub). Het plan
+bouwt zich op uit de regels op de offerte en het autodossier: de CarPlay
+vervangt de radio, de versterker en de sub komen erbij, een fabrieksversterker
+uit het dossier blijft zitten. Per onderdeel zet je **bestaand**, **nieuw** of
+**vervangen**; in de tekening is dat grijs, oranje of oranje gestippeld.
+
+**Tik op een kabel, zekering of onderdeel** en je krijgt een venster met de
+dikte, de lengte, de zekering, het spanningsverlies en waarom het zo moet. Pas
+je daar de lengte aan, dan rekenen dikte en zekering meteen mee.
+
+Wat de app zelf uitrekent, en waarom:
+
+| | |
+|---|---|
+| **Zekering** | de kleinste die je kunt kopen en die de stroom doorlaat, en nooit groter dan de kabel aankan. Een zekering beschermt de kabel, niet de versterker. |
+| **Kabeldikte** | dik genoeg voor die zekering, en dik genoeg om over de lengte niet te veel spanning te verliezen. Een lange kabel wordt dus dikker. |
+| **Massa** | altijd even dik als de plus ernaast. |
+| **Subwoofer** | de eindimpedantie uit de spoelen en de schakeling, getoetst aan wat de versterker aankan. |
+| **Kanalen** | of een versterker genoeg kanalen heeft voor wat hij aanstuurt. |
+
+**De app verzint het vermogen niet.** Staat het niet in de naam op de offerte
+("4x100W", "D4"), dan vul je het in bij *Wat zit erin*. Tot dan staat er bij die
+kabel "nog niet te berekenen" in plaats van een gok. Met **Plan afdrukken**
+krijg je beide schema's, de kabels om klaar te leggen en alle zekeringen op één
+A4.
+
 ### De aanbetalingsfactuur
 
 Onder de offerte staat **Aanbetaling**. Vul een percentage in — of laat het leeg
