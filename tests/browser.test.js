@@ -2404,6 +2404,120 @@ describe('Headroom', alsGebouwd, () => {
     await pagina.close();
   });
 
+  /**
+   * ONLEESBARE OPSLAG — HET GEVAARLIJKSTE PAD IN DE APP.
+   *
+   * Een leesfout gaf eerst gewoon een lege app terug, zonder één woord uitleg.
+   * Je ziet dan een leeg scherm, je typt één ding, en dat wordt weggeschreven
+   * over de gegevens die niet gelezen konden worden. Nagespeeld met een opslag
+   * die achteraan was afgeknipt: twee offertes erin, na alleen het uurtarief
+   * wijzigen waren ze allebei weg.
+   *
+   * De tegenhanger is net zo belangrijk: een gezonde opslag mag hier niets van
+   * merken. Een valse waarschuwing bij het opstarten is zijn eigen probleem.
+   */
+  const MET_OFFERTES = JSON.stringify({
+    instellingen: { uurtariefCent: 7500 },
+    offertes: [
+      { id: 'o1', nummer: '25-001', kenteken: 'XX-123-Y', klant: { naam: 'Jansen' } },
+      { id: 'o2', nummer: '25-002', kenteken: 'ZZ-999-A', klant: { naam: 'De Vries' } },
+    ],
+  });
+
+  /** De app openen met een bepaalde inhoud in de opslag. */
+  async function metOpslag(inhoud) {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    await pagina.goto(paginaUrl('headroom'));
+    await pagina.evaluate(([i]) => localStorage.setItem('aue-werkbak-v1', i), [inhoud]);
+    await pagina.reload();
+    await pagina.evaluate(() => document.fonts.ready);
+    return { pagina, fouten };
+  }
+
+  for (const [wat, inhoud] of [
+    ['achteraan afgeknipt', MET_OFFERTES.slice(0, Math.floor(MET_OFFERTES.length * 0.8))],
+    ['geen json', '{dit is geen json'],
+    ['los stukje tekst', '""'],
+    ['een lijst in plaats van een bak', '[1,2,3]'],
+  ]) {
+    test(`onleesbare opslag (${wat}) wordt opzijgezet en niet overschreven`, async () => {
+      const { pagina, fouten } = await metOpslag(inhoud);
+
+      assert.equal(await alarmTeZien(pagina), true, 'hier hoort de balk te staan');
+      assert.match(
+        await pagina.textContent('#wb-alarm-kop'),
+        /niet te lezen/i,
+        'de kop moet zeggen wat er mis is, niet dat opslaan niet lukt',
+      );
+
+      /* Eén onschuldige handeling. Die schreef de oude gegevens eerst weg. */
+      await pagina.click('[data-tab="instellingen"]');
+      await pagina.fill('#wb-i-uurtarief', '80');
+      await pagina.click('[data-tab="offerte"]');
+
+      const opzij = await pagina.evaluate(
+        () => localStorage.getItem('aue-werkbak-v1-onleesbaar')
+      );
+      assert.equal(opzij, inhoud, 'de ruwe tekst hoort onaangeroerd apart te staan');
+
+      /* En de balk blijft staan: dit lost zichzelf niet op doordat het
+         opslaan daarna weer lukt. */
+      assert.equal(await alarmTeZien(pagina), true, 'de melding hoort te blijven staan');
+      assert.deepEqual(fouten, []);
+      await pagina.close();
+    });
+  }
+
+  test('de knop biedt de onleesbare gegevens aan zoals ze waren', async () => {
+    const stuk = MET_OFFERTES.slice(0, 120);
+    const { pagina } = await metOpslag(stuk);
+    const wacht = pagina.waitForEvent('download');
+    await pagina.click('#wb-alarm-kopie');
+    const bestand = await wacht;
+    assert.match(bestand.suggestedFilename(), /^headroom-onleesbaar-\d{4}-\d{2}-\d{2}\.json$/);
+
+    const stroom = await bestand.createReadStream();
+    let tekst = '';
+    for await (const stuk2 of stroom) tekst += stuk2;
+    assert.equal(tekst, stuk, 'er mag niets aan de tekst veranderd zijn');
+    await pagina.close();
+  });
+
+  for (const [wat, inhoud] of [
+    ['een gewone opslag met offertes', MET_OFFERTES],
+    ['een vrijwel lege maar geldige opslag', '{}'],
+    ['een opslag met alleen instellingen', '{"instellingen":{"uurtariefCent":8500}}'],
+  ]) {
+    test(`${wat} geeft geen valse waarschuwing`, async () => {
+      const { pagina, fouten } = await metOpslag(inhoud);
+      assert.equal(await alarmTeZien(pagina), false, 'hier hoort niets te staan');
+      const opzij = await pagina.evaluate(
+        () => localStorage.getItem('aue-werkbak-v1-onleesbaar')
+      );
+      assert.equal(opzij, null, 'er hoort niets opzijgezet te zijn');
+      assert.deepEqual(fouten, []);
+      await pagina.close();
+    });
+  }
+
+  test('een tweede leesfout verdringt de eerste redding niet', async () => {
+    /* De eerste redding staat het dichtst bij het origineel. Open je de app
+       daarna nog eens, dan mag die niet door een nieuwere poging worden
+       overschreven. */
+    const eerste = MET_OFFERTES.slice(0, 150);
+    const { pagina } = await metOpslag(eerste);
+    await pagina.evaluate(() => localStorage.setItem('aue-werkbak-v1', '{kapot opnieuw'));
+    await pagina.reload();
+    await pagina.evaluate(() => document.fonts.ready);
+    const opzij = await pagina.evaluate(
+      () => localStorage.getItem('aue-werkbak-v1-onleesbaar')
+    );
+    assert.equal(opzij, eerste, 'de eerste redding hoort te blijven staan');
+    await pagina.close();
+  });
+
   test('de knop in de balk maakt een reservekopie', async () => {
     /* Dit is het enige wat op dat moment nog helpt: het bestand wordt uit het
        geheugen opgebouwd, dus dat lukt ook als de opslag vol is. */
