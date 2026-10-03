@@ -38,6 +38,33 @@ const LICHT_EXTRA = {
 };
 
 /**
+ * DE KABELKLEUREN VAN HET BEDRADINGSPLAN.
+ *
+ * Net als de kentekenplaat een bewuste uitzondering op de vijf kleuren: een
+ * plus is rood en een remote blauw, in elke werkplaats en op elke kabelrol.
+ * Teken je ze in huisstijloranje, dan pakt iemand bij de inbouw de
+ * verkeerde draad. Ze staan alleen in de tekening in Headroom.
+ *
+ * Per stand een eigen tint, zodat ze op zwart én op wit papier goed te zien
+ * zijn. De massa is gewoon wit op zwart en zwart op wit: dat blijft in het
+ * palet.
+ */
+const KABEL = {
+  donker: {
+    plus: '#ff4d4d',
+    remote: '#5b9dff',
+    signaal: '#4cc38a',
+    speaker: '#c9a2ff',
+  },
+  licht: {
+    plus: '#c62828',
+    remote: '#1f5fd0',
+    signaal: '#1e7d4f',
+    speaker: '#6b3fd1',
+  },
+};
+
+/**
  * Wat elke kleur op de site betekent. Gebruik deze namen, niet de kale codes:
  * dan blijft duidelijk waaróm een kleur ergens staat.
  */
@@ -61,6 +88,11 @@ export const BRAND = {
   tekenDiep: 'rgba(18, 18, 18, .8)',
   tekenGloed: '.22',
   tekstOpFoto: PALETTE.white,
+  kabelPlus: KABEL.donker.plus,
+  kabelMassa: PALETTE.white,
+  kabelRemote: KABEL.donker.remote,
+  kabelSignaal: KABEL.donker.signaal,
+  kabelSpeaker: KABEL.donker.speaker,
 };
 
 /**
@@ -106,6 +138,11 @@ export const LICHT = {
   // Een foto blijft donker, ook in de lichte stand. De tekst erop dus ook
   // altijd licht — anders staat er zwart op zwart.
   tekstOpFoto: PALETTE.white,
+  kabelPlus: KABEL.licht.plus,
+  kabelMassa: PALETTE.black,
+  kabelRemote: KABEL.licht.remote,
+  kabelSignaal: KABEL.licht.signaal,
+  kabelSpeaker: KABEL.licht.speaker,
 };
 
 /** Voor terugwaartse compatibiliteit met code die LINES importeert. */
@@ -140,6 +177,11 @@ function naarVariabelen(set) {
     `--teken-diep: ${set.tekenDiep}`,
     `--teken-gloed: ${set.tekenGloed}`,
     `--tekst-op-foto: ${set.tekstOpFoto}`,
+    `--kabel-plus: ${set.kabelPlus}`,
+    `--kabel-massa: ${set.kabelMassa}`,
+    `--kabel-remote: ${set.kabelRemote}`,
+    `--kabel-signaal: ${set.kabelSignaal}`,
+    `--kabel-speaker: ${set.kabelSpeaker}`,
   ].join('; ');
 }
 
