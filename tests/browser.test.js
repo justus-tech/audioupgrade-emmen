@@ -2050,8 +2050,8 @@ describe('Headroom', alsGebouwd, () => {
        hem verlaat. */
     await pagina.click('#wb-i-uurtarief');
     await pagina.waitForFunction(
-      () => Number(JSON.parse(localStorage.getItem('aue-werkbak-v1'))
-        .instellingen.factuurVolgnummer) === 1
+      () => Number(JSON.parse(localStorage.getItem('aue-werkbak-v1') || 'null')
+        ?.instellingen?.factuurVolgnummer) === 1
     );
 
     const [naTerugzetten] = await factureer(pagina, 'Kees de Boer', ['volledig']);
@@ -2210,8 +2210,16 @@ describe('Headroom', alsGebouwd, () => {
       mimeType: 'application/json',
       buffer: Buffer.from(JSON.stringify({ catalogus })),
     });
+    /* Wachten tot de lijst er echt staat. Let op het verschil tussen "nog niet
+       opgeslagen" en "opgeslagen maar nog leeg": zolang de app nog niets heeft
+       weggeschreven geeft localStorage null, en dan is JSON.parse(null) ook
+       null. Las je daar meteen .catalogus uit, dan brak deze controle af met
+       een foutmelding in plaats van nog een keer te kijken — en waitForFunction
+       stopt bij een foutmelding meteen. Op een snelle machine stond de lijst er
+       al bij de eerste blik en viel dat nooit op; op een drukke machine viel de
+       test om. */
     await pagina.waitForFunction(
-      () => JSON.parse(localStorage.getItem('aue-werkbak-v1')).catalogus.length > 0
+      () => (JSON.parse(localStorage.getItem('aue-werkbak-v1') || 'null')?.catalogus || []).length > 0
     );
     return meldingen.join('\n');
   }
@@ -2578,7 +2586,7 @@ describe('Headroom', alsGebouwd, () => {
     await a.fill('#mr-klant', 'Jan Bakker');
     await a.fill('#mr-kenteken', '11AB22');
     await a.waitForFunction(() =>
-      (JSON.parse(localStorage.getItem('aue-werkbak-v1')).meting || {}).kenteken === '11AB22'
+      (JSON.parse(localStorage.getItem('aue-werkbak-v1') || 'null')?.meting || {}).kenteken === '11AB22'
     );
     const kopie = await a.evaluate(() => JSON.stringify({
       soort: 'reservekopie', ...JSON.parse(localStorage.getItem('aue-werkbak-v1')),
