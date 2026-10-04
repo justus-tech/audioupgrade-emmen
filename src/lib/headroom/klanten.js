@@ -17,10 +17,43 @@
  */
 import { totalen, STANDAARD_INSTELLINGEN } from './rekenen.js';
 
-/** 06-12345678, +31 6 1234 5678 en 0031612345678 zijn hetzelfde nummer. */
+/**
+ * 06-12345678, +31 6 1234 5678 en 0031612345678 zijn hetzelfde nummer.
+ *
+ * WAAROM HIER NIET DE LAATSTE NEGEN CIJFERS STAAN
+ * Dat stond er eerst, en voor Nederlandse nummers klopt het: na de nul zijn
+ * dat er precies negen. Maar Emmen ligt een kwartier van de grens en de site
+ * staat ook in het Duits. Een Duits mobiel nummer is langer: een netprefix
+ * van drie cijfers (151, 160, 171, 176) en daarachter acht cijfers. Van
+ * +49 151 23456789 blijven als laatste negen alleen "123456789" over — de
+ * prefix valt eraf. +49 171 23456789 geeft dan hetzelfde, en twee
+ * verschillende Duitse klanten werden één.
+ *
+ * Nagespeeld met vijf Duitse nummers: er bleven drie klanten over in plaats
+ * van vijf, en bij de samengevoegde klant stond de omzet van drie mensen
+ * opgeteld, met de naam en het nummer van de laatste.
+ *
+ * Daarom vergelijken we nu het hele nummer inclusief landnummer.
+ */
 export function kaalNummer(telefoon) {
-  const cijfers = String(telefoon || '').replace(/[^0-9]/g, '');
-  return cijfers.length >= 9 ? cijfers.slice(-9) : '';
+  const rauw = String(telefoon || '');
+  const cijfers = rauw.replace(/[^0-9]/g, '');
+  if (cijfers.length < 9) return '';
+  /* Internationaal genoteerd: wat er staat is landnummer + nummer. */
+  if (rauw.trim().startsWith('+')) return cijfers;
+  if (cijfers.startsWith('00')) return cijfers.slice(2);
+  /* Nationaal genoteerd. De nul vooraan hoort bij het kengetal en niet bij
+     het nummer zelf, dus die gaat eraf. */
+  const zonderNul = cijfers.startsWith('0') ? cijfers.slice(1) : cijfers;
+  /* Negen cijfers na de nul is een Nederlands nummer. Dan weten we het
+     landnummer, en matcht 06-… met +31 6…. Is het langer, dan is het geen
+     Nederlands nummer en laten we het staan zoals het getypt is: gokken op
+     een land levert juist weer verkeerde paren op. Gevolg is dat iemand die
+     zijn Duitse nummer de ene keer als 0151… en de andere keer als +49 151…
+     opgeeft, twee keer in de lijst staat. Dat is hinderlijk, maar het is de
+     veilige kant: twee keer dezelfde klant zie je en kun je rechtzetten,
+     twee klanten in één verbergt er een. */
+  return zonderNul.length === 9 ? `31${zonderNul}` : zonderNul;
 }
 
 const kaal = (t) => String(t || '').trim().toLowerCase().replace(/\s+/g, ' ');
