@@ -240,6 +240,56 @@ dat zo'n auto op de brug staat, herkent de app hem aan het kenteken en staat
 alles al ingevuld. Vul bij de bouwjaren de jaren van de **generatie** in (een
 Golf 7 liep van 2013 tot 2020), niet het bouwjaar van de auto die er nu staat.
 
+### De klantenlijst
+
+Op het tabblad **Klanten** staat iedereen voor wie je een offerte hebt bewaard.
+Er is geen aparte lijst om bij te houden: de klanten worden opgebouwd uit de
+offertes zelf (`src/lib/headroom/klanten.js`). Offertes met hetzelfde
+telefoonnummer of e-mailadres komen onder één klant; alleen als die er niet
+zijn telt de naam. Tik je op een klant, dan zie je drie tabs: **Gegevens**,
+**Offertes** en **Bedrading**. Vanuit een offerte of schema spring je naar het
+tabblad Offerte of Bedrading om te bewerken.
+
+### Het bedradingsplan
+
+Het tabblad **Bedrading** tekent voor de offerte waar je aan werkt twee
+schema's: de **stroom** (accu, hoofdzekering, verdeelblok, versterkers,
+massapunt) en de **audio** (bron, DSP, versterkers, speakers, sub). Het plan
+bouwt zich op uit de regels op de offerte en het autodossier: de CarPlay
+vervangt de radio, de versterker en de sub komen erbij, een fabrieksversterker
+uit het dossier blijft zitten. Per onderdeel zet je **bestaand**, **nieuw** of
+**vervangen**; in de tekening is dat grijs, oranje of oranje gestippeld.
+
+**Tik op een kabel, zekering of onderdeel** en je krijgt een venster met de
+dikte, de lengte, de zekering, het spanningsverlies en waarom het zo moet. Pas
+je daar de lengte aan, dan rekenen dikte en zekering meteen mee.
+
+Wat de app zelf uitrekent, en waarom:
+
+| | |
+|---|---|
+| **Zekering** | de kleinste die je kunt kopen en die de stroom doorlaat, en nooit groter dan de kabel aankan. Een zekering beschermt de kabel, niet de versterker. |
+| **Kabeldikte** | dik genoeg voor die zekering, en dik genoeg om over de lengte niet te veel spanning te verliezen. Een lange kabel wordt dus dikker. |
+| **Massa** | altijd even dik als de plus ernaast. |
+| **Subwoofer** | de eindimpedantie uit de spoelen en de schakeling, getoetst aan wat de versterker aankan. |
+| **Kanalen** | of een versterker genoeg kanalen heeft voor wat hij aanstuurt. |
+
+**Inbouw in de auto.** Onder de schema's staat de auto van boven, getekend op
+de lengte, breedte en wielbasis die de RDW bij het kenteken geeft. Elk
+onderdeel staat er genummerd op zijn plek in, en de kabels lopen zoals je ze
+trekt: plus langs links, signaal en remote langs rechts. Per onderdeel kies je
+de plek, schrijf je de exacte plaats erbij en de afmetingen. De kabellengtes
+rekent de app uit die plekken en de maten van de auto, met een halve meter
+voor omhoog en omlaag en veertig centimeter extra door het schutbord. Meet je
+het anders, vul de lengte dan zelf in. Geeft de RDW geen maten, dan rekent hij
+met een gemiddelde auto en zegt hij dat erbij.
+
+**De app verzint het vermogen niet.** Staat het niet in de naam op de offerte
+("4x100W", "D4"), dan vul je het in bij *Wat zit erin*. Tot dan staat er bij die
+kabel "nog niet te berekenen" in plaats van een gok. Met **Plan afdrukken**
+krijg je beide schema's, de kabels om klaar te leggen en alle zekeringen op één
+A4.
+
 ### De aanbetalingsfactuur
 
 Onder de offerte staat **Aanbetaling**. Vul een percentage in — of laat het leeg

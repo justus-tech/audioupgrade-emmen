@@ -3453,3 +3453,182 @@ describe('instellingen uit een aangeleverd bestand', alsGebouwd, () => {
     await pagina.close();
   });
 });
+
+describe('het bedradingsplan', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+
+  /** Een offerte met CarPlay, twee versterkers, een sub en speakers voor. */
+  const CONCEPT = {
+    id: 'bd1', nummer: '2026-021', datum: '2026-10-03T10:00:00.000Z', zakelijk: false,
+    klant: { naam: 'Henk' }, auto: { kenteken: '92DJHG', merk: 'Volkswagen', model: 'Golf', bouwjaar: '2017' },
+    regels: [
+      { id: 'r1', soort: 'carplay', omschrijving: 'Alpine iLX-705D', aantal: 1, inkoopCent: 0, uren: 0 },
+      { id: 'r2', soort: 'versterker', omschrijving: 'Musway M4 4x100W', aantal: 1, inkoopCent: 0, uren: 0 },
+      { id: 'r3', soort: 'versterker', omschrijving: 'JL monoblok 800W', aantal: 1, inkoopCent: 0, uren: 0 },
+      { id: 'r4', soort: 'subwoofer', omschrijving: 'JL 12W3v3-D4', aantal: 1, inkoopCent: 0, uren: 0 },
+      { id: 'r5', soort: 'speakers-voor', omschrijving: 'Gladen composet', aantal: 1, inkoopCent: 0, uren: 0 },
+    ],
+    opmerking: '', inbouwdatum: '', inbouwtijd: '09:00', afgevinkt: [],
+  };
+
+  async function openPlan() {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    await pagina.addInitScript((concept) => {
+      if (localStorage.getItem('aue-werkbak-v1')) return;
+      localStorage.setItem('aue-werkbak-v1', JSON.stringify({
+        instellingen: {}, catalogus: [], offertes: [], dossiers: [], sessies: [], rapporten: [], concept,
+      }));
+    }, CONCEPT);
+    await pagina.goto(paginaUrl('headroom?tab=bedrading'));
+    return { pagina, fouten };
+  }
+
+  test('bouwt zich op uit de offerte, met beide tekeningen', async () => {
+    const { pagina, fouten } = await openPlan();
+    assert.equal(await pagina.isVisible('[data-paneel="bedrading"]'), true);
+    assert.ok(await pagina.locator('#bd-stroom [data-ding="knoop:hoofdzekering"]').count());
+    assert.ok(await pagina.locator('#bd-audio [data-ding^="kabel:spk-"]').count() >= 2);
+    assert.match(await pagina.textContent('#bd-zekeringen'), /125 A/);
+    const over = await pagina.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+    );
+    assert.equal(over, 0, 'de pagina schuift zijwaarts op een telefoon');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een tik op een kabel geeft dikte, zekering en lengte, en de lengte rekent mee', async () => {
+    const { pagina, fouten } = await openPlan();
+    await pagina.locator('#bd-stroom [data-ding="kabel:plus-voeding"]').dispatchEvent('click');
+    await pagina.waitForSelector('#bd-popup[open]');
+    assert.match(await pagina.textContent('#bd-popup'), /2 AWG/);
+    assert.match(await pagina.textContent('#bd-popup'), /125 A/);
+    // Accu in de kofferbak, anderhalve meter: dan mag het dunner.
+    await pagina.fill('#bd-popup-lengte', '1,5');
+    await pagina.press('#bd-popup-lengte', 'Tab');
+    await pagina.waitForFunction(() => /4 AWG/.test(document.querySelector('#bd-popup').textContent));
+    await pagina.click('#bd-popup-sluit');
+    assert.equal(await pagina.isVisible('#bd-popup'), false);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een tik op een onderdeel en dan Aanpassen opent het juiste blok', async () => {
+    const { pagina } = await openPlan();
+    const id = await pagina.locator('#bd-audio [data-ding^="knoop:"]', { hasText: 'monoblok' }).first().getAttribute('data-ding');
+    await pagina.locator(`#bd-audio [data-ding="${id}"]`).click();
+    await pagina.waitForSelector('#bd-popup[open]');
+    assert.match(await pagina.textContent('#bd-popup'), /72 A/);
+    await pagina.click('#bd-popup-aanpassen');
+    assert.equal(await pagina.getAttribute(`#bd-c-${id.split(':')[1]}`, 'open'), '');
+    await pagina.close();
+  });
+
+  test('de auto van boven: een andere plek geeft een andere kabellengte', async () => {
+    const { pagina, fouten } = await openPlan();
+    assert.ok(await pagina.locator('#bd-auto .bd-romp').count(), 'de auto staat er niet');
+    const lengte = () => pagina.inputValue('[data-lengte="plus-voeding"]');
+    const voor = await lengte();
+    // De accu naar de kofferbak: dan is de voedingskabel ineens kort.
+    const accu = pagina.locator('#bd-plekken details[data-plek="accu"]');
+    await accu.locator('summary').click();
+    await accu.locator('[data-inbouw="plek"]').selectOption('kofferbak-rechts');
+    assert.notEqual(await lengte(), voor);
+    assert.ok(Number((await lengte()).replace(',', '.')) < Number(voor.replace(',', '.')));
+    // Een eigen lengte gaat voor de berekening.
+    await pagina.fill('[data-lengte="plus-voeding"]', '6');
+    await pagina.press('[data-lengte="plus-voeding"]', 'Tab');
+    assert.equal(await lengte(), '6');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een sub onder de impedantie van de versterker wordt rood, en het blijft bewaard', async () => {
+    const { pagina } = await openPlan();
+    const sub = pagina.locator('.bd-onderdeel', { hasText: '12W3v3' });
+    await sub.locator('summary').click();
+    await sub.locator('[data-veld="aantal"]').selectOption('2');
+    await sub.locator('[data-veld="ohmPerSpoel"]').selectOption('2');
+    assert.match(await pagina.textContent('#bd-let'), /Klopt niet.*0,5 Ω/s);
+    // Na opnieuw openen staat het er nog: het plan zit in de offerte.
+    await pagina.reload();
+    assert.match(await pagina.textContent('#bd-let'), /0,5 Ω/);
+    await pagina.close();
+  });
+});
+
+describe('de klantenlijst', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+  const regel = { id: 'r1', soort: 'versterker', omschrijving: 'Musway M4 4x100W', aantal: 1, inkoopCent: 0, uren: 0 };
+  const OFFERTES = [
+    { id: 'k1', nummer: '2026-030', datum: '2026-09-01T10:00:00.000Z', zakelijk: false, status: 'betaald',
+      klant: { naam: 'Henk', telefoon: '06-12345678' }, auto: { kenteken: '92DJHG', merk: 'Volkswagen', model: 'Golf' },
+      regels: [regel], opmerking: '', inbouwdatum: '', inbouwtijd: '09:00', afgevinkt: [] },
+    { id: 'k2', nummer: '2026-031', datum: '2026-10-01T10:00:00.000Z', zakelijk: false, status: 'concept',
+      klant: { naam: 'Henk de Vries', telefoon: '+31 6 1234 5678' }, auto: { kenteken: '92DJHG', merk: 'Volkswagen', model: 'Golf' },
+      regels: [regel], opmerking: '', inbouwdatum: '', inbouwtijd: '09:00', afgevinkt: [] },
+    { id: 'k3', nummer: '2026-032', datum: '2026-08-01T10:00:00.000Z', zakelijk: false, status: 'concept',
+      klant: { naam: 'Piet', email: 'piet@voorbeeld.nl' }, auto: {},
+      regels: [], opmerking: '', inbouwdatum: '', inbouwtijd: '09:00', afgevinkt: [] },
+  ];
+
+  async function openKlanten() {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    await pagina.addInitScript((offertes) => {
+      if (localStorage.getItem('aue-werkbak-v1')) return;
+      localStorage.setItem('aue-werkbak-v1', JSON.stringify({
+        instellingen: {}, catalogus: [], offertes, dossiers: [], sessies: [], rapporten: [],
+      }));
+    }, OFFERTES);
+    await pagina.goto(paginaUrl('headroom?tab=klanten'));
+    return { pagina, fouten };
+  }
+
+  test('voegt offertes per klant samen en zoekt', async () => {
+    const { pagina, fouten } = await openKlanten();
+    assert.equal(await pagina.locator('#kl-lijst .kl-rij').count(), 2);
+    assert.match(await pagina.textContent('#kl-lijst .kl-rij >> nth=0'), /Henk de Vries[\s\S]*2 offertes/);
+    await pagina.fill('#kl-zoek', 'piet');
+    assert.equal(await pagina.locator('#kl-lijst .kl-rij').count(), 1);
+    const over = await pagina.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+    );
+    assert.equal(over, 0, 'de pagina schuift zijwaarts op een telefoon');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een klant heeft losse tabs, en van daaruit open je offerte of bedrading', async () => {
+    const { pagina, fouten } = await openKlanten();
+    await pagina.click('#kl-lijst .kl-rij >> nth=0');
+    assert.equal(await pagina.isVisible('#kl-lijst-vak'), false);
+    assert.match(await pagina.textContent('#kl-inhoud'), /92DJHG/);
+    await pagina.click('[data-kltab="offertes"]');
+    assert.equal(await pagina.locator('#kl-inhoud .kl-offerte').count(), 2);
+    await pagina.click('[data-kltab="bedrading"]');
+    assert.ok(await pagina.locator('#kl-inhoud [data-ding="knoop:hoofdzekering"]').count() >= 2);
+    const over = await pagina.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+    );
+    assert.equal(over, 0, 'de schema\'s schuiven de pagina zijwaarts');
+
+    await pagina.click('#kl-inhoud [data-open="k1"][data-naar="bedrading"]');
+    assert.equal(await pagina.isVisible('[data-paneel="bedrading"]'), true);
+    assert.match(await pagina.textContent('#bd-voor'), /2026-030/);
+
+    await pagina.click('[data-tab="klanten"]');
+    assert.equal(await pagina.isVisible('#kl-klant'), true, 'terug bij dezelfde klant');
+    await pagina.click('[data-kltab="offertes"]');
+    await pagina.click('#kl-inhoud [data-open="k2"][data-naar="offerte"]');
+    assert.equal(await pagina.inputValue('#wb-naam'), 'Henk de Vries');
+    await pagina.click('[data-tab="klanten"]');
+    await pagina.click('#kl-terug');
+    assert.equal(await pagina.isVisible('#kl-lijst-vak'), true);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+});
