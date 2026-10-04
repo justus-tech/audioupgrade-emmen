@@ -12,10 +12,45 @@ const o = (id, datum, klant, extra = {}) => ({ id, nummer: id, datum, klant, reg
 
 describe('de klantenlijst', () => {
   test('een telefoonnummer is hetzelfde, hoe je het ook schrijft', () => {
-    assert.equal(kaalNummer('06-12345678'), '612345678');
-    assert.equal(kaalNummer('+31 6 1234 5678'), '612345678');
-    assert.equal(kaalNummer('0031612345678'), '612345678');
+    /* Het gaat om de gelijkheid, niet om de precieze vorm van de sleutel:
+       daarom hier vergelijken en niet één getal uitschrijven. */
+    const nl = kaalNummer('06-12345678');
+    assert.equal(nl, '31612345678', 'met landnummer erbij');
+    assert.equal(kaalNummer('+31 6 1234 5678'), nl);
+    assert.equal(kaalNummer('0031612345678'), nl);
+    assert.equal(kaalNummer('+31612345678'), nl);
+    /* Een vast nummer uit Emmen net zo. */
+    assert.equal(kaalNummer('0591-123456'), kaalNummer('+31 591 123456'));
     assert.equal(kaalNummer('1234'), '');
+  });
+
+  test('twee Duitse nummers zijn twee klanten en niet één', () => {
+    /**
+     * WAAROM DEZE TEST BESTAAT
+     * De sleutel was "de laatste negen cijfers". Voor Nederland klopt dat,
+     * maar een Duits mobiel nummer heeft een netprefix van drie cijfers en
+     * daarachter acht. Van +49 151 23456789 bleef alleen "123456789" over, en
+     * +49 171 23456789 gaf precies hetzelfde. Emmen ligt een kwartier van de
+     * grens en de site staat in het Duits, dus dit is geen randgeval.
+     *
+     * Nagespeeld: vijf Duitse nummers gaven drie klanten, en bij de
+     * samengevoegde stond de omzet van drie mensen opgeteld onder de naam en
+     * het nummer van de laatste.
+     */
+    const nummers = ['+49 151 23456789', '+49 171 23456789', '+49 160 23456789', '+49 176 23456789'];
+    const sleutels = nummers.map(kaalNummer);
+    assert.equal(new Set(sleutels).size, nummers.length, 'elk nummer hoort zijn eigen sleutel te hebben');
+
+    const regels = [{ omschrijving: 'DSP', vastExclCent: 100000 }];
+    const klanten = klantenUit(nummers.map((telefoon, i) => ({
+      id: `d${i}`, nummer: `25-10${i}`, datum: `2026-09-0${i + 1}`, status: 'betaald',
+      klant: { naam: `Klant ${i}`, telefoon }, regels,
+    })));
+    assert.equal(klanten.length, nummers.length, 'vier Duitse klanten blijven vier klanten');
+    for (const k of klanten) {
+      assert.equal(k.offertes.length, 1, `${k.naam} hoort één offerte te hebben`);
+      assert.equal(k.omzetCent, 121000, `${k.naam} hoort niet de omzet van een ander te tonen`);
+    }
   });
 
   test('offertes met hetzelfde nummer zijn één klant', () => {
