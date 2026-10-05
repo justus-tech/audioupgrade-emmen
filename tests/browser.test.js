@@ -825,9 +825,12 @@ describe('Headroom', alsGebouwd, () => {
   }
 
   /** Zet één onderdeel in de catalogus, zoals Justus dat één keer doet. */
-  async function vulCatalogus(pagina, { inkoop = '240,00', marge = '60', uren = '3' } = {}) {
+  async function vulCatalogus(
+    pagina,
+    { inkoop = '240,00', marge = '60', uren = '3', naam = 'Premium 2-weg composet voor' } = {},
+  ) {
     await pagina.click('[data-tab="catalogus"]');
-    await pagina.fill('#wb-o-naam', 'Premium 2-weg composet voor');
+    await pagina.fill('#wb-o-naam', naam);
     await pagina.selectOption('#wb-o-soort', 'speakers-voor');
     await pagina.fill('#wb-o-inkoop', inkoop);
     await pagina.fill('#wb-o-marge', marge);
@@ -2470,6 +2473,202 @@ describe('Headroom', alsGebouwd, () => {
     await pagina.close();
   });
 
+  /**
+   * ONLEESBARE OPSLAG — HET GEVAARLIJKSTE PAD IN DE APP.
+   *
+   * Een leesfout gaf eerst gewoon een lege app terug, zonder één woord uitleg.
+   * Je ziet dan een leeg scherm, je typt één ding, en dat wordt weggeschreven
+   * over de gegevens die niet gelezen konden worden. Nagespeeld met een opslag
+   * die achteraan was afgeknipt: twee offertes erin, na alleen het uurtarief
+   * wijzigen waren ze allebei weg.
+   *
+   * De tegenhanger is net zo belangrijk: een gezonde opslag mag hier niets van
+   * merken. Een valse waarschuwing bij het opstarten is zijn eigen probleem.
+   */
+  const MET_OFFERTES = JSON.stringify({
+    instellingen: { uurtariefCent: 7500 },
+    offertes: [
+      { id: 'o1', nummer: '25-001', kenteken: 'XX-123-Y', klant: { naam: 'Jansen' } },
+      { id: 'o2', nummer: '25-002', kenteken: 'ZZ-999-A', klant: { naam: 'De Vries' } },
+    ],
+  });
+
+  /** De app openen met een bepaalde inhoud in de opslag. */
+  async function metOpslag(inhoud) {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    await pagina.goto(paginaUrl('headroom'));
+    await pagina.evaluate(([i]) => localStorage.setItem('aue-werkbak-v1', i), [inhoud]);
+    await pagina.reload();
+    await pagina.evaluate(() => document.fonts.ready);
+    return { pagina, fouten };
+  }
+
+  for (const [wat, inhoud] of [
+    ['achteraan afgeknipt', MET_OFFERTES.slice(0, Math.floor(MET_OFFERTES.length * 0.8))],
+    ['geen json', '{dit is geen json'],
+    ['los stukje tekst', '""'],
+    ['een lijst in plaats van een bak', '[1,2,3]'],
+  ]) {
+    test(`onleesbare opslag (${wat}) wordt opzijgezet en niet overschreven`, async () => {
+      const { pagina, fouten } = await metOpslag(inhoud);
+
+      assert.equal(await alarmTeZien(pagina), true, 'hier hoort de balk te staan');
+      assert.match(
+        await pagina.textContent('#wb-alarm-kop'),
+        /niet te lezen/i,
+        'de kop moet zeggen wat er mis is, niet dat opslaan niet lukt',
+      );
+
+      /* Eén onschuldige handeling. Die schreef de oude gegevens eerst weg. */
+      await pagina.click('[data-tab="instellingen"]');
+      await pagina.fill('#wb-i-uurtarief', '80');
+      await pagina.click('[data-tab="offerte"]');
+
+      const opzij = await pagina.evaluate(
+        () => localStorage.getItem('aue-werkbak-v1-onleesbaar')
+      );
+      assert.equal(opzij, inhoud, 'de ruwe tekst hoort onaangeroerd apart te staan');
+
+      /* En de balk blijft staan: dit lost zichzelf niet op doordat het
+         opslaan daarna weer lukt. */
+      assert.equal(await alarmTeZien(pagina), true, 'de melding hoort te blijven staan');
+      assert.deepEqual(fouten, []);
+      await pagina.close();
+    });
+  }
+
+  /**
+   * TWEE TABBLADEN TEGELIJK — HET STILSTE VERLIES.
+   *
+   * Elke keer opslaan schrijft de hele bak weg. Staat Headroom twee keer open,
+   * dan heeft elk tabblad zijn eigen momentopname in het geheugen, en schrijft
+   * wie het laatst opslaat zijn oude versie over het werk van de ander. De
+   * snelkoppelingen op het beginscherm openen per tabblad een eigen venster,
+   * dus dit gebeurt zomaar.
+   *
+   * Nagespeeld: in het ene tabblad een onderdeel neergezet, in het andere een
+   * ander onderdeel, en na elke keer opslaan was het onderdeel van de ander
+   * weg. Geen melding, niets te herstellen.
+   */
+  async function tweeTabbladen() {
+    const context = await browser.newContext({ ...telefoon, acceptDownloads: true });
+    const open = async () => {
+      const p = await context.newPage();
+      await p.goto(paginaUrl('headroom'));
+      await p.evaluate(() => document.fonts.ready);
+      return p;
+    };
+    return { context, a: await open(), b: await open() };
+  }
+
+  const onderdelenInOpslag = (pagina) => pagina.evaluate(
+    () => (JSON.parse(localStorage.getItem('aue-werkbak-v1') || 'null')?.catalogus || [])
+      .map((o) => o.omschrijving)
+  );
+
+  test('het tweede tabblad overschrijft het eerste niet meer', async () => {
+    const { context, a, b } = await tweeTabbladen();
+
+    await vulCatalogus(a, { naam: 'Gladen Mosconi 165 voorin' });
+    await a.waitForFunction(
+      () => (JSON.parse(localStorage.getItem('aue-werkbak-v1') || 'null')?.catalogus || []).length > 0
+    );
+
+    /* De browser tikt het andere tabblad aan zodra er één opslaat, dus daar
+       hoort de melding te staan voordat je er iets probeert te bewaren. */
+    await b.waitForSelector('#wb-alarm:not([hidden])');
+    assert.match(await b.textContent('#wb-alarm-kop'), /nog ergens open/i);
+
+    /* En nu doet hij in het tweede tabblad alsnog iets. */
+    await vulCatalogus(b, { naam: 'Musway D8V3 versterker' });
+    const over = await onderdelenInOpslag(b);
+    assert.deepEqual(over, ['Gladen Mosconi 165 voorin'], 'het werk van het eerste tabblad hoort te blijven staan');
+    assert.equal(await b.locator('#wb-alarm').isVisible(), true, 'de melding hoort te blijven staan');
+
+    /* Wat in dit tabblad staat is niet kwijt: de reservekopie komt uit het
+       geheugen, dus die bevat juist wat er niet weggeschreven kon worden. */
+    const wacht = b.waitForEvent('download');
+    await b.click('#wb-alarm-kopie');
+    const bestand = await wacht;
+    const stroom = await bestand.createReadStream();
+    let tekst = '';
+    for await (const stuk of stroom) tekst += stuk;
+    const kopie = JSON.parse(tekst);
+    assert.ok(
+      (kopie.catalogus || []).some((o) => /Musway/.test(o.omschrijving || '')),
+      'de reservekopie hoort het werk van dit tabblad te bevatten',
+    );
+    await context.close();
+  });
+
+  test('één tabblad merkt hier niets van', async () => {
+    /* De tegenhanger: een valse melding bij normaal gebruik zou erger zijn
+       dan het probleem. Drie keer opslaan, en na vernieuwen nog een keer. */
+    const { pagina, fouten } = await openWerkbak();
+    await vulCatalogus(pagina, { naam: 'Eerste onderdeel' });
+    await vulCatalogus(pagina, { naam: 'Tweede onderdeel' });
+    assert.equal(await pagina.locator('#wb-alarm').isVisible(), false, 'hier hoort niets te staan');
+
+    await pagina.reload();
+    await pagina.evaluate(() => document.fonts.ready);
+    await vulCatalogus(pagina, { naam: 'Derde na vernieuwen' });
+    const over = await onderdelenInOpslag(pagina);
+    assert.equal(over.length, 3, 'alle drie de onderdelen horen bewaard te zijn');
+    assert.equal(await pagina.locator('#wb-alarm').isVisible(), false, 'ook na vernieuwen niets');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('de knop biedt de onleesbare gegevens aan zoals ze waren', async () => {
+    const stuk = MET_OFFERTES.slice(0, 120);
+    const { pagina } = await metOpslag(stuk);
+    const wacht = pagina.waitForEvent('download');
+    await pagina.click('#wb-alarm-kopie');
+    const bestand = await wacht;
+    assert.match(bestand.suggestedFilename(), /^headroom-onleesbaar-\d{4}-\d{2}-\d{2}\.json$/);
+
+    const stroom = await bestand.createReadStream();
+    let tekst = '';
+    for await (const stuk2 of stroom) tekst += stuk2;
+    assert.equal(tekst, stuk, 'er mag niets aan de tekst veranderd zijn');
+    await pagina.close();
+  });
+
+  for (const [wat, inhoud] of [
+    ['een gewone opslag met offertes', MET_OFFERTES],
+    ['een vrijwel lege maar geldige opslag', '{}'],
+    ['een opslag met alleen instellingen', '{"instellingen":{"uurtariefCent":8500}}'],
+  ]) {
+    test(`${wat} geeft geen valse waarschuwing`, async () => {
+      const { pagina, fouten } = await metOpslag(inhoud);
+      assert.equal(await alarmTeZien(pagina), false, 'hier hoort niets te staan');
+      const opzij = await pagina.evaluate(
+        () => localStorage.getItem('aue-werkbak-v1-onleesbaar')
+      );
+      assert.equal(opzij, null, 'er hoort niets opzijgezet te zijn');
+      assert.deepEqual(fouten, []);
+      await pagina.close();
+    });
+  }
+
+  test('een tweede leesfout verdringt de eerste redding niet', async () => {
+    /* De eerste redding staat het dichtst bij het origineel. Open je de app
+       daarna nog eens, dan mag die niet door een nieuwere poging worden
+       overschreven. */
+    const eerste = MET_OFFERTES.slice(0, 150);
+    const { pagina } = await metOpslag(eerste);
+    await pagina.evaluate(() => localStorage.setItem('aue-werkbak-v1', '{kapot opnieuw'));
+    await pagina.reload();
+    await pagina.evaluate(() => document.fonts.ready);
+    const opzij = await pagina.evaluate(
+      () => localStorage.getItem('aue-werkbak-v1-onleesbaar')
+    );
+    assert.equal(opzij, eerste, 'de eerste redding hoort te blijven staan');
+    await pagina.close();
+  });
+
   test('de knop in de balk maakt een reservekopie', async () => {
     /* Dit is het enige wat op dat moment nog helpt: het bestand wordt uit het
        geheugen opgebouwd, dus dat lukt ook als de opslag vol is. */
@@ -3394,6 +3593,185 @@ describe('instellingen uit een aangeleverd bestand', alsGebouwd, () => {
     await lees(pagina, LIJST);
     await pagina.click('[data-tab="instellingen"]');
     assert.equal(await pagina.inputValue('#wb-i-iban'), 'NL00 EIGEN 0000 0000 00');
+    await pagina.close();
+  });
+});
+
+describe('het bedradingsplan', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+
+  /** Een offerte met CarPlay, twee versterkers, een sub en speakers voor. */
+  const CONCEPT = {
+    id: 'bd1', nummer: '2026-021', datum: '2026-10-03T10:00:00.000Z', zakelijk: false,
+    klant: { naam: 'Henk' }, auto: { kenteken: '92DJHG', merk: 'Volkswagen', model: 'Golf', bouwjaar: '2017' },
+    regels: [
+      { id: 'r1', soort: 'carplay', omschrijving: 'Alpine iLX-705D', aantal: 1, inkoopCent: 0, uren: 0 },
+      { id: 'r2', soort: 'versterker', omschrijving: 'Musway M4 4x100W', aantal: 1, inkoopCent: 0, uren: 0 },
+      { id: 'r3', soort: 'versterker', omschrijving: 'JL monoblok 800W', aantal: 1, inkoopCent: 0, uren: 0 },
+      { id: 'r4', soort: 'subwoofer', omschrijving: 'JL 12W3v3-D4', aantal: 1, inkoopCent: 0, uren: 0 },
+      { id: 'r5', soort: 'speakers-voor', omschrijving: 'Gladen composet', aantal: 1, inkoopCent: 0, uren: 0 },
+    ],
+    opmerking: '', inbouwdatum: '', inbouwtijd: '09:00', afgevinkt: [],
+  };
+
+  async function openPlan() {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    await pagina.addInitScript((concept) => {
+      if (localStorage.getItem('aue-werkbak-v1')) return;
+      localStorage.setItem('aue-werkbak-v1', JSON.stringify({
+        instellingen: {}, catalogus: [], offertes: [], dossiers: [], sessies: [], rapporten: [], concept,
+      }));
+    }, CONCEPT);
+    await pagina.goto(paginaUrl('headroom?tab=bedrading'));
+    return { pagina, fouten };
+  }
+
+  test('bouwt zich op uit de offerte, met beide tekeningen', async () => {
+    const { pagina, fouten } = await openPlan();
+    assert.equal(await pagina.isVisible('[data-paneel="bedrading"]'), true);
+    assert.ok(await pagina.locator('#bd-stroom [data-ding="knoop:hoofdzekering"]').count());
+    assert.ok(await pagina.locator('#bd-audio [data-ding^="kabel:spk-"]').count() >= 2);
+    assert.match(await pagina.textContent('#bd-zekeringen'), /125 A/);
+    const over = await pagina.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+    );
+    assert.equal(over, 0, 'de pagina schuift zijwaarts op een telefoon');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een tik op een kabel geeft dikte, zekering en lengte, en de lengte rekent mee', async () => {
+    const { pagina, fouten } = await openPlan();
+    await pagina.locator('#bd-stroom [data-ding="kabel:plus-voeding"]').dispatchEvent('click');
+    await pagina.waitForSelector('#bd-popup[open]');
+    assert.match(await pagina.textContent('#bd-popup'), /2 AWG/);
+    assert.match(await pagina.textContent('#bd-popup'), /125 A/);
+    // Accu in de kofferbak, anderhalve meter: dan mag het dunner.
+    await pagina.fill('#bd-popup-lengte', '1,5');
+    await pagina.press('#bd-popup-lengte', 'Tab');
+    await pagina.waitForFunction(() => /4 AWG/.test(document.querySelector('#bd-popup').textContent));
+    await pagina.click('#bd-popup-sluit');
+    assert.equal(await pagina.isVisible('#bd-popup'), false);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een tik op een onderdeel en dan Aanpassen opent het juiste blok', async () => {
+    const { pagina } = await openPlan();
+    const id = await pagina.locator('#bd-audio [data-ding^="knoop:"]', { hasText: 'monoblok' }).first().getAttribute('data-ding');
+    await pagina.locator(`#bd-audio [data-ding="${id}"]`).click();
+    await pagina.waitForSelector('#bd-popup[open]');
+    assert.match(await pagina.textContent('#bd-popup'), /72 A/);
+    await pagina.click('#bd-popup-aanpassen');
+    assert.equal(await pagina.getAttribute(`#bd-c-${id.split(':')[1]}`, 'open'), '');
+    await pagina.close();
+  });
+
+  test('de auto van boven: een andere plek geeft een andere kabellengte', async () => {
+    const { pagina, fouten } = await openPlan();
+    assert.ok(await pagina.locator('#bd-auto .bd-romp').count(), 'de auto staat er niet');
+    const lengte = () => pagina.inputValue('[data-lengte="plus-voeding"]');
+    const voor = await lengte();
+    // De accu naar de kofferbak: dan is de voedingskabel ineens kort.
+    const accu = pagina.locator('#bd-plekken details[data-plek="accu"]');
+    await accu.locator('summary').click();
+    await accu.locator('[data-inbouw="plek"]').selectOption('kofferbak-rechts');
+    assert.notEqual(await lengte(), voor);
+    assert.ok(Number((await lengte()).replace(',', '.')) < Number(voor.replace(',', '.')));
+    // Een eigen lengte gaat voor de berekening.
+    await pagina.fill('[data-lengte="plus-voeding"]', '6');
+    await pagina.press('[data-lengte="plus-voeding"]', 'Tab');
+    assert.equal(await lengte(), '6');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een sub onder de impedantie van de versterker wordt rood, en het blijft bewaard', async () => {
+    const { pagina } = await openPlan();
+    const sub = pagina.locator('.bd-onderdeel', { hasText: '12W3v3' });
+    await sub.locator('summary').click();
+    await sub.locator('[data-veld="aantal"]').selectOption('2');
+    await sub.locator('[data-veld="ohmPerSpoel"]').selectOption('2');
+    assert.match(await pagina.textContent('#bd-let'), /Klopt niet.*0,5 Ω/s);
+    // Na opnieuw openen staat het er nog: het plan zit in de offerte.
+    await pagina.reload();
+    assert.match(await pagina.textContent('#bd-let'), /0,5 Ω/);
+    await pagina.close();
+  });
+});
+
+describe('de klantenlijst', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+  const regel = { id: 'r1', soort: 'versterker', omschrijving: 'Musway M4 4x100W', aantal: 1, inkoopCent: 0, uren: 0 };
+  const OFFERTES = [
+    { id: 'k1', nummer: '2026-030', datum: '2026-09-01T10:00:00.000Z', zakelijk: false, status: 'betaald',
+      klant: { naam: 'Henk', telefoon: '06-12345678' }, auto: { kenteken: '92DJHG', merk: 'Volkswagen', model: 'Golf' },
+      regels: [regel], opmerking: '', inbouwdatum: '', inbouwtijd: '09:00', afgevinkt: [] },
+    { id: 'k2', nummer: '2026-031', datum: '2026-10-01T10:00:00.000Z', zakelijk: false, status: 'concept',
+      klant: { naam: 'Henk de Vries', telefoon: '+31 6 1234 5678' }, auto: { kenteken: '92DJHG', merk: 'Volkswagen', model: 'Golf' },
+      regels: [regel], opmerking: '', inbouwdatum: '', inbouwtijd: '09:00', afgevinkt: [] },
+    { id: 'k3', nummer: '2026-032', datum: '2026-08-01T10:00:00.000Z', zakelijk: false, status: 'concept',
+      klant: { naam: 'Piet', email: 'piet@voorbeeld.nl' }, auto: {},
+      regels: [], opmerking: '', inbouwdatum: '', inbouwtijd: '09:00', afgevinkt: [] },
+  ];
+
+  async function openKlanten() {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    await pagina.addInitScript((offertes) => {
+      if (localStorage.getItem('aue-werkbak-v1')) return;
+      localStorage.setItem('aue-werkbak-v1', JSON.stringify({
+        instellingen: {}, catalogus: [], offertes, dossiers: [], sessies: [], rapporten: [],
+      }));
+    }, OFFERTES);
+    await pagina.goto(paginaUrl('headroom?tab=klanten'));
+    return { pagina, fouten };
+  }
+
+  test('voegt offertes per klant samen en zoekt', async () => {
+    const { pagina, fouten } = await openKlanten();
+    assert.equal(await pagina.locator('#kl-lijst .kl-rij').count(), 2);
+    assert.match(await pagina.textContent('#kl-lijst .kl-rij >> nth=0'), /Henk de Vries[\s\S]*2 offertes/);
+    await pagina.fill('#kl-zoek', 'piet');
+    assert.equal(await pagina.locator('#kl-lijst .kl-rij').count(), 1);
+    const over = await pagina.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+    );
+    assert.equal(over, 0, 'de pagina schuift zijwaarts op een telefoon');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een klant heeft losse tabs, en van daaruit open je offerte of bedrading', async () => {
+    const { pagina, fouten } = await openKlanten();
+    await pagina.click('#kl-lijst .kl-rij >> nth=0');
+    assert.equal(await pagina.isVisible('#kl-lijst-vak'), false);
+    assert.match(await pagina.textContent('#kl-inhoud'), /92DJHG/);
+    await pagina.click('[data-kltab="offertes"]');
+    assert.equal(await pagina.locator('#kl-inhoud .kl-offerte').count(), 2);
+    await pagina.click('[data-kltab="bedrading"]');
+    assert.ok(await pagina.locator('#kl-inhoud [data-ding="knoop:hoofdzekering"]').count() >= 2);
+    const over = await pagina.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+    );
+    assert.equal(over, 0, 'de schema\'s schuiven de pagina zijwaarts');
+
+    await pagina.click('#kl-inhoud [data-open="k1"][data-naar="bedrading"]');
+    assert.equal(await pagina.isVisible('[data-paneel="bedrading"]'), true);
+    assert.match(await pagina.textContent('#bd-voor'), /2026-030/);
+
+    await pagina.click('[data-tab="klanten"]');
+    assert.equal(await pagina.isVisible('#kl-klant'), true, 'terug bij dezelfde klant');
+    await pagina.click('[data-kltab="offertes"]');
+    await pagina.click('#kl-inhoud [data-open="k2"][data-naar="offerte"]');
+    assert.equal(await pagina.inputValue('#wb-naam'), 'Henk de Vries');
+    await pagina.click('[data-tab="klanten"]');
+    await pagina.click('#kl-terug');
+    assert.equal(await pagina.isVisible('#kl-lijst-vak'), true);
+    assert.deepEqual(fouten, []);
     await pagina.close();
   });
 });

@@ -1074,6 +1074,66 @@ describe('huisregels van Justus', alsGebouwd, () => {
     assert.deepEqual(overtreders, [], 'zet dit hover-effect in @media (hover: hover)');
   });
 
+  test('beweging blijft uit als de bezoeker daarom vraagt', () => {
+    /**
+     * WAAROM DEZE REGEL BESTAAT
+     * Zet iemand op zijn telefoon "minder beweging" aan, dan is dat geen
+     * smaakkwestie: wie gevoelig is voor bewegingsziekte wordt misselijk van
+     * een pagina die onder zijn duim wegglijdt. De homepage is ruim 11.000
+     * pixels hoog, dus een sprong naar de voet is een lange vlucht.
+     *
+     * Het verschijnen bij scrollen stond al goed. Het zachte scrollen zelf
+     * was vergeten, op twee plekken: `scroll-behavior` in de CSS en een
+     * vastgezette `behavior: 'smooth'` in de kenteken-check. Die laatste is
+     * de vervelendste, want JavaScript wint van de CSS.
+     *
+     * De werkbak (headroom) valt hierbuiten: dat is het eigen gereedschap van
+     * Justus en geen bezoekerspagina.
+     */
+    const bronMap = fileURLToPath(new URL('../src/', import.meta.url));
+    const overtreders = [];
+
+    const zonderCommentaar = (tekst) => tekst
+      .replace(/\/\*[\s\S]*?\*\//g, (blok) => '\n'.repeat((blok.match(/\n/g) || []).length))
+      .replace(/(^|[^:])\/\/.*$/gm, '$1');
+
+    /* Staat de regel binnen een @media die naar prefers-reduced-motion kijkt?
+       Dan is hij afgeschermd en mag hij blijven staan. */
+    const kijk = (pad) => {
+      const regels = zonderCommentaar(readFileSync(pad, 'utf8')).split('\n');
+      let binnenStil = null;
+      let diepte = 0;
+      regels.forEach((regel, i) => {
+        if (binnenStil === null && /@media[^{]*prefers-reduced-motion/.test(regel)) {
+          binnenStil = diepte;
+        }
+        const zacht = /scroll-behavior\s*:\s*smooth/.test(regel)
+                      || /behavior\s*:\s*['"]smooth['"]/.test(regel);
+        if (zacht && binnenStil === null) {
+          overtreders.push(`${relative(bronMap, pad)}:${i + 1}  ${regel.trim().slice(0, 60)}`);
+        }
+        diepte += (regel.match(/\{/g) || []).length - (regel.match(/\}/g) || []).length;
+        if (binnenStil !== null && diepte <= binnenStil) binnenStil = null;
+      });
+    };
+
+    const loop = (map) => {
+      for (const naam of readdirSync(map)) {
+        const pad = join(map, naam);
+        if (statSync(pad).isDirectory()) { loop(pad); continue; }
+        if (naam === 'headroom.astro') continue;
+        if (/\.(astro|css|js)$/.test(naam)) kijk(pad);
+      }
+    };
+    loop(bronMap);
+
+    assert.deepEqual(
+      overtreders,
+      [],
+      'zacht scrollen moet achter prefers-reduced-motion staan, of met matchMedia gecontroleerd worden',
+    );
+  });
+
   test('de kleuren komen uit brand.js en niet uit losse hexcodes', () => {
     // Uitzondering: de kentekenplaat en het logo. Dat zijn nagebootste
     // voorwerpen (geborsteld aluminium), geen vlakken van de site.

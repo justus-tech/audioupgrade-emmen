@@ -7,7 +7,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "test": "npm run build && node --test --test-reporter=spec --test-concurrency=1 \"tests/*.test.js\"",
-    "test:snel": "node --test --test-reporter=spec tests/match.test.js tests/voertuig.test.js tests/matchers.test.js tests/data.test.js tests/huisstijl.test.js",
+    "test:snel": "node --test --test-reporter=spec tests/match.test.js tests/voertuig.test.js tests/matchers.test.js tests/data.test.js tests/huisstijl.test.js tests/bedrading.test.js tests/klanten.test.js",
     "test:browser": "npm run build && node --test --test-reporter=spec --test-concurrency=1 tests/browser.test.js",
     "prijs": "node scripts/offerteprijs.mjs",
     "offerte": "node scripts/offerte.mjs",
