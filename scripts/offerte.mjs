@@ -28,6 +28,9 @@ import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { offertePdf, pdfBestandsnaam } from '../src/lib/headroom/offerte-pdf.js';
 import {
+  herroepingPdf, herroepingBestandsnaam, hoortErBij,
+} from '../src/lib/headroom/herroeping.js';
+import {
   STANDAARD_INSTELLINGEN, geldigTot, totalen, aanbetaling, euro, naarCent,
 } from '../src/lib/headroom/rekenen.js';
 import { btwTerugrekenen, splitsExact, euroKort } from '../src/lib/headroom/prijsbepaling.js';
@@ -156,11 +159,25 @@ function main() {
   }
 
   const uit = vlag('uit') || invoer.uit || WORTEL;
+  const map = uit.replace(/\/$/, '');
   const bestand = invoer.bestand || pdfBestandsnaam(offerte);
-  writeFileSync(`${uit.replace(/\/$/, '')}/${bestand}`, Buffer.from(offertePdf(offerte, STANDAARD_INSTELLINGEN).naarBytes()));
+  writeFileSync(`${map}/${bestand}`, Buffer.from(offertePdf(offerte, STANDAARD_INSTELLINGEN).naarBytes()));
+
+  /* Het modelformulier hoort erbij bij een consument op afstand, en de offerte
+     zegt op de voorkant dat het meegaat. De deelknop in de app deed dat al,
+     dit script niet: dan verstuur je een offerte die iets belooft wat er niet
+     bij zit, en juist die belofte is wat de wet van je vraagt. Eén bron voor
+     de vraag of het erbij hoort: hoortErBij() uit herroeping.js, dezelfde die
+     de app gebruikt. */
+  let formulier = null;
+  if (hoortErBij(offerte)) {
+    formulier = herroepingBestandsnaam(offerte);
+    writeFileSync(`${map}/${formulier}`, Buffer.from(herroepingPdf(offerte).naarBytes()));
+  }
 
   const a = aanbetaling(offerte.regels, STANDAARD_INSTELLINGEN, Number(invoer.aanbetalingPct ?? 40), offerte.kortingExclCent);
   console.log(`${bestand}`);
+  if (formulier) console.log(`${formulier}`);
   console.log(`  offerte      ${offerte.nummer}`);
   console.log(`  totaal       ${euro(t.inclCent)} incl. btw`);
   if (offerte.kortingExclCent) console.log(`  korting      ${euro(t.kortingInclCent)} incl. btw`);

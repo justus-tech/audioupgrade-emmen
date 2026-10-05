@@ -67,6 +67,13 @@ export function kernpunten({
   const prijzen = zakelijk
     ? 'Alle genoemde prijzen zijn all-in: inclusief montage. De btw staat er apart bij.'
     : 'Alle genoemde prijzen zijn all-in: inclusief montage en btw.';
+  /* Heeft deze klant een bedenktijd? Dat bepaalt niet alleen of de
+     bedenktijdregels erbij komen, maar ook dat de 25%-regel hieronder niet
+     onvoorwaardelijk mag worden opgeschreven: binnen de bedenktijd gelden de
+     regels van artikel 4 en niet die van artikel 9. Stonden die twee
+     onvoorwaardelijk naast elkaar op één blad, dan leest de klant dat
+     afzeggen hem 25% kost terwijl hij op dat moment niets verschuldigd is. */
+  const herroeping = opAfstand && !zakelijk;
 
   if (soort === 'offerte') {
     if (geldigTot) punten.push(`Deze offerte is geldig tot en met ${geldigTot}.`);
@@ -79,7 +86,11 @@ export function kernpunten({
   punten.push(
     `Afzeggen of verzetten kan kosteloos tot ${annuleerDagen} dagen voor de afgesproken dag. ` +
     `Daarna brengen we 25% van het offertebedrag in rekening voor de gereserveerde tijd en ` +
-    'de al bestelde onderdelen.'
+    'de al bestelde onderdelen.' +
+    (herroeping
+      ? ' Zeg je af binnen je bedenktijd hieronder, dan geldt dat niet: dan gelden alleen de' +
+        ' regels van die bedenktijd en brengen we die 25% niet in rekening.'
+      : '')
   );
 
   punten.push(
@@ -93,16 +104,53 @@ export function kernpunten({
 
   /* De bedenktijd is een consumentenrecht. Bij een zakelijke klant bestaat
      hij niet, ook niet als je het per WhatsApp afspreekt. */
-  if (opAfstand && !zakelijk) {
+  if (herroeping) {
+    /* WANNEER DIE 14 DAGEN INGAAN.
+       Een klus van Justus is onderdelen én montage in één opdracht. Daarvoor
+       gelden volgens art. 6:230g lid 2 BW alleen de regels voor
+       consumentenkoop, en dan loopt de termijn vanaf de ontvangst van de
+       zaak (6:230o lid 1 sub b) — hier dus vanaf het moment dat de klant
+       zijn auto met de apparatuur erin terugkrijgt, niet vanaf de dag van
+       de afspraak. Dat scheelt weken, en te weinig of verkeerde informatie
+       hierover rekt de termijn op tot twaalf maanden.
+       Eén zin voor allebei de gevallen: gaat het bij uitzondering om werk
+       zonder nieuwe onderdelen, dan begint de termijn eerder (bij de
+       afspraak), en geeft deze zin de klant dus meer tijd dan de wet eist.
+       Te veel geven mag; te weinig informeren niet. Het precieze
+       onderscheid staat in artikel 4 van de voorwaarden achterop. */
     punten.push(
       'Omdat we dit op afstand afspreken heb je 14 dagen bedenktijd: je mag de overeenkomst ' +
-      'binnen die termijn zonder opgaaf van reden ontbinden.'
+      'zonder opgaaf van reden ontbinden. Die 14 dagen gaan in op de dag nadat je je auto ' +
+      'met de nieuwe apparatuur erin terugkrijgt.'
+    );
+    /* De wet wil dat het modelformulier meegaat, niet alleen dat je de
+       bedenktijd noemt. Het blad zit als losse pdf bij de offerte; hier
+       staat waarom de klant het ziet, en dat hij het niet hoeft te
+       gebruiken. Zie herroeping.js. */
+    punten.push(
+      'Het modelformulier voor herroeping zit bij deze offerte. Gebruiken hoeft niet: een ' +
+      'berichtje per e-mail of WhatsApp binnen de termijn is net zo geldig.'
+    );
+    /* Wat er met de auto en met het geld gebeurt als iemand zich bedenkt.
+       De wet wil dat je vooraf zegt dat de kosten van het terugbrengen voor
+       de klant zijn, en bij een zaak die niet per post terug kan ook hoe dat
+       praktisch gaat. Zeg je dat niet, dan draag je die kosten zelf. */
+    punten.push(
+      'Bedenk je je, dan breng je de auto binnen 14 dagen langs zodat we de apparatuur ' +
+      'eruit kunnen halen. Dat uitbouwen en het terugzetten van je originele onderdelen ' +
+      'kost je niets; het rijden naar de werkplaats is voor jou.'
     );
     if (startDirect) {
+      /* Hier stond dat de klant bij afzeggen ook de onderdelen betaalt. Dat is
+         niet zo: die gaan terug en dat geld gaat terug. Hij betaalt het werk
+         naar evenredigheid, plus de waardevermindering van apparatuur die
+         in- en weer uitgebouwd is. Zie artikel 4 van de voorwaarden. */
       punten.push(
-        'Je vraagt ons uitdrukkelijk om al binnen die 14 dagen te beginnen. Zeg je daarna ' +
-        'alsnog af, dan betaal je alleen het werk dat dan al gedaan is en de onderdelen die ' +
-        'speciaal voor jouw auto zijn besteld.'
+        'Je vraagt ons uitdrukkelijk om te beginnen voordat je bedenktijd om is. Zeg je ' +
+        'daarna alsnog af, dan gaan de onderdelen terug en krijg je dat geld terug. Je ' +
+        'betaalt dan een evenredig deel van het afgesproken bedrag voor het werk dat al ' +
+        'gedaan is, plus de waardevermindering van apparatuur die ingebouwd en weer ' +
+        'uitgebouwd is. Een uurtarief rekenen we niet.'
       );
     }
   }
