@@ -34,7 +34,7 @@ export default [
     },
     carplay: {
       possible: true,
-      text: 'Op de Jazz vanaf 2015 met Honda Connect zit CarPlay meestal al af fabriek of is het toe te voegen.',
+      text: 'De Jazz van 2015 tot 2020 met Honda Connect heeft geen CarPlay af fabriek. We voegen draadloos CarPlay en Android Auto toe met een module achter het scherm, en Honda Connect blijft gewoon werken. De nieuwe Jazz vanaf 2020 heeft CarPlay al af fabriek.',
     },
     packages: ['akoestische-basis', 'akoestische-isolatie', 'oem-plus-executive'],
     faq: [
