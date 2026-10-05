@@ -825,9 +825,12 @@ describe('Headroom', alsGebouwd, () => {
   }
 
   /** Zet één onderdeel in de catalogus, zoals Justus dat één keer doet. */
-  async function vulCatalogus(pagina, { inkoop = '240,00', marge = '60', uren = '3' } = {}) {
+  async function vulCatalogus(
+    pagina,
+    { inkoop = '240,00', marge = '60', uren = '3', naam = 'Premium 2-weg composet voor' } = {},
+  ) {
     await pagina.click('[data-tab="catalogus"]');
-    await pagina.fill('#wb-o-naam', 'Premium 2-weg composet voor');
+    await pagina.fill('#wb-o-naam', naam);
     await pagina.selectOption('#wb-o-soort', 'speakers-voor');
     await pagina.fill('#wb-o-inkoop', inkoop);
     await pagina.fill('#wb-o-marge', marge);
@@ -2477,6 +2480,88 @@ describe('Headroom', alsGebouwd, () => {
       await pagina.close();
     });
   }
+
+  /**
+   * TWEE TABBLADEN TEGELIJK — HET STILSTE VERLIES.
+   *
+   * Elke keer opslaan schrijft de hele bak weg. Staat Headroom twee keer open,
+   * dan heeft elk tabblad zijn eigen momentopname in het geheugen, en schrijft
+   * wie het laatst opslaat zijn oude versie over het werk van de ander. De
+   * snelkoppelingen op het beginscherm openen per tabblad een eigen venster,
+   * dus dit gebeurt zomaar.
+   *
+   * Nagespeeld: in het ene tabblad een onderdeel neergezet, in het andere een
+   * ander onderdeel, en na elke keer opslaan was het onderdeel van de ander
+   * weg. Geen melding, niets te herstellen.
+   */
+  async function tweeTabbladen() {
+    const context = await browser.newContext({ ...telefoon, acceptDownloads: true });
+    const open = async () => {
+      const p = await context.newPage();
+      await p.goto(paginaUrl('headroom'));
+      await p.evaluate(() => document.fonts.ready);
+      return p;
+    };
+    return { context, a: await open(), b: await open() };
+  }
+
+  const onderdelenInOpslag = (pagina) => pagina.evaluate(
+    () => (JSON.parse(localStorage.getItem('aue-werkbak-v1') || 'null')?.catalogus || [])
+      .map((o) => o.omschrijving)
+  );
+
+  test('het tweede tabblad overschrijft het eerste niet meer', async () => {
+    const { context, a, b } = await tweeTabbladen();
+
+    await vulCatalogus(a, { naam: 'Gladen Mosconi 165 voorin' });
+    await a.waitForFunction(
+      () => (JSON.parse(localStorage.getItem('aue-werkbak-v1') || 'null')?.catalogus || []).length > 0
+    );
+
+    /* De browser tikt het andere tabblad aan zodra er één opslaat, dus daar
+       hoort de melding te staan voordat je er iets probeert te bewaren. */
+    await b.waitForSelector('#wb-alarm:not([hidden])');
+    assert.match(await b.textContent('#wb-alarm-kop'), /nog ergens open/i);
+
+    /* En nu doet hij in het tweede tabblad alsnog iets. */
+    await vulCatalogus(b, { naam: 'Musway D8V3 versterker' });
+    const over = await onderdelenInOpslag(b);
+    assert.deepEqual(over, ['Gladen Mosconi 165 voorin'], 'het werk van het eerste tabblad hoort te blijven staan');
+    assert.equal(await b.locator('#wb-alarm').isVisible(), true, 'de melding hoort te blijven staan');
+
+    /* Wat in dit tabblad staat is niet kwijt: de reservekopie komt uit het
+       geheugen, dus die bevat juist wat er niet weggeschreven kon worden. */
+    const wacht = b.waitForEvent('download');
+    await b.click('#wb-alarm-kopie');
+    const bestand = await wacht;
+    const stroom = await bestand.createReadStream();
+    let tekst = '';
+    for await (const stuk of stroom) tekst += stuk;
+    const kopie = JSON.parse(tekst);
+    assert.ok(
+      (kopie.catalogus || []).some((o) => /Musway/.test(o.omschrijving || '')),
+      'de reservekopie hoort het werk van dit tabblad te bevatten',
+    );
+    await context.close();
+  });
+
+  test('één tabblad merkt hier niets van', async () => {
+    /* De tegenhanger: een valse melding bij normaal gebruik zou erger zijn
+       dan het probleem. Drie keer opslaan, en na vernieuwen nog een keer. */
+    const { pagina, fouten } = await openWerkbak();
+    await vulCatalogus(pagina, { naam: 'Eerste onderdeel' });
+    await vulCatalogus(pagina, { naam: 'Tweede onderdeel' });
+    assert.equal(await pagina.locator('#wb-alarm').isVisible(), false, 'hier hoort niets te staan');
+
+    await pagina.reload();
+    await pagina.evaluate(() => document.fonts.ready);
+    await vulCatalogus(pagina, { naam: 'Derde na vernieuwen' });
+    const over = await onderdelenInOpslag(pagina);
+    assert.equal(over.length, 3, 'alle drie de onderdelen horen bewaard te zijn');
+    assert.equal(await pagina.locator('#wb-alarm').isVisible(), false, 'ook na vernieuwen niets');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
 
   test('de knop biedt de onleesbare gegevens aan zoals ze waren', async () => {
     const stuk = MET_OFFERTES.slice(0, 120);

@@ -993,6 +993,21 @@ import { APP } from '../data/app.js';
   const SLEUTEL_ONLEESBAAR = `${SLEUTEL}-onleesbaar`;
   /* De ruwe tekst die niet te lezen was, zolang dit tabblad open staat. */
   let onleesbaar = null;
+  /**
+   * Wat dit tabblad als laatste in de opslag zag staan.
+   *
+   * WAAROM DIT BIJGEHOUDEN WORDT
+   * Elke keer opslaan schrijft de hele bak weg. Staat Headroom twee keer open
+   * — en de snelkoppelingen op je beginscherm openen per tabblad een eigen
+   * venster, dus dat gebeurt zomaar — dan heeft elk tabblad zijn eigen
+   * momentopname in het geheugen. Wie het laatst opslaat, schrijft zijn oude
+   * versie over het werk van de ander. Nagespeeld met twee tabbladen: in het
+   * ene een onderdeel neergezet, in het andere een ander onderdeel, en na elke
+   * keer opslaan was het onderdeel van de ander weg. Geen melding, niets.
+   *
+   * Hieraan ziet opslaan() of er tussendoor iemand anders heeft geschreven.
+   */
+  let laatstGezien = null;
   /* Wat de knop in de oranje balk doet. Hangt af van wat er mis is. */
   let alarmDoe = null;
 
@@ -1064,6 +1079,11 @@ import { APP } from '../data/app.js';
       /* Opslag helemaal dicht (privémodus). Er is niets om te redden. */
       return leegteStaat();
     }
+    /* Een lege opslag is '' en niet null: null betekent "nog niets gelezen",
+       en dan mag er niets geblokkeerd worden. Zonder dat onderscheid sloeg de
+       controle hieronder over zodra je met een lege bak begon — en dat is
+       precies het geval waarin het tweede tabblad het eerste overschreef. */
+    laatstGezien = rauw ?? '';
     if (!rauw) return leegteStaat();
     try {
       const gelezen = JSON.parse(rauw);
@@ -1112,7 +1132,20 @@ import { APP } from '../data/app.js';
    */
   function opslaan() {
     try {
-      localStorage.setItem(SLEUTEL, JSON.stringify(staat));
+      /* Heeft een ander tabblad tussendoor geschreven? Dan is wat hier in het
+         geheugen staat verouderd, en zou opslaan dat werk wissen. Liever
+         niets wegschrijven en het luid melden: wat hier staat kan nog als
+         reservekopie mee, en dat is met terugzetten samen te voegen. */
+      const inOpslag = localStorage.getItem(SLEUTEL) ?? '';
+      /* Is de opslag juist leeggemaakt, dan is wegschrijven geen overschrijven
+         maar herstellen. Dat mag dus wel. */
+      if (laatstGezien !== null && inOpslag !== '' && inOpslag !== laatstGezien) {
+        meldAnderTabblad();
+        return false;
+      }
+      const uit = JSON.stringify(staat);
+      localStorage.setItem(SLEUTEL, uit);
+      laatstGezien = uit;
       alarmUit();
       return true;
     } catch (e) {
@@ -1152,6 +1185,9 @@ import { APP } from '../data/app.js';
        die is nu achterhaald, dus zetten we de juiste melding terug in plaats
        van de balk weg te halen. */
     if (onleesbaar) { meldOnleesbaar(); return; }
+    /* Twee tabbladen die langs elkaar heen werken lost zichzelf ook niet op:
+       die melding blijft staan tot je vernieuwt. */
+    if (anderTabblad) { meldAnderTabblad(); return; }
     const balk = $('#wb-alarm');
     if (balk) balk.hidden = true;
   }
@@ -1168,6 +1204,26 @@ import { APP } from '../data/app.js';
         knop: 'Oude gegevens binnenhalen',
         doe: haalOnleesbaarBinnen,
       },
+    );
+  }
+
+  /**
+   * De melding dat Headroom nog ergens anders open staat.
+   *
+   * De knop is hier de standaardknop — een reservekopie — en dat is precies
+   * wat op dit moment helpt: die wordt uit het geheugen van dít tabblad
+   * opgebouwd, dus wat hier staat gaat mee. Daarna kun je vernieuwen en het
+   * bestand terugzetten.
+   */
+  let anderTabblad = false;
+  function meldAnderTabblad() {
+    anderTabblad = true;
+    alarmAan(
+      'In een ander tabblad of venster is er iets gewijzigd. Deze pagina weet '
+      + 'daar niets van, dus is er hier niets weggeschreven: dat zou het werk '
+      + 'van daar wissen. Maak een reservekopie van wat je hier ziet en '
+      + 'vernieuw daarna deze pagina.',
+      { kop: 'Headroom staat nog ergens open.' },
     );
   }
 
@@ -4533,6 +4589,15 @@ import { APP } from '../data/app.js';
 
   /* Het moment waarop Android een tabblad afsluit is precies dit moment.
      Wat er nog niet weggeschreven was, gaat hier alsnog mee. */
+  /* De browser roept dit in de ándere tabbladen zodra er één iets opslaat.
+     Zo weet je het meteen, en niet pas als je hier iets probeert te bewaren
+     en je al tien minuten voor niets hebt zitten typen. */
+  window.addEventListener('storage', (e) => {
+    if (e.key && e.key !== SLEUTEL) return;
+    const nu = localStorage.getItem(SLEUTEL) ?? '';
+    if (nu !== '' && laatstGezien !== null && nu !== laatstGezien) meldAnderTabblad();
+  });
+
   window.addEventListener('pagehide', bewaarConcept);
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') bewaarConcept();
