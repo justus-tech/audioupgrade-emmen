@@ -3717,3 +3717,63 @@ describe('de klantenlijst', alsGebouwd, () => {
     await pagina.close();
   });
 });
+
+describe('opvolgen en klantacties', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+  const terug = (n) => new Date(Date.now() - n * 86400000).toISOString();
+  const OFFERTES = [
+    { id: 'v1', nummer: '2026-050', datum: terug(9), status: 'verstuurd', statusSinds: terug(9), zakelijk: false,
+      klant: { naam: 'Henk de Vries', telefoon: '06-12345678' }, auto: { kenteken: '92DJHG', merk: 'Volkswagen', model: 'Golf' },
+      regels: [], opmerking: '', inbouwdatum: '', inbouwtijd: '09:00', afgevinkt: [] },
+    { id: 'v2', nummer: '2026-051', datum: terug(40), status: 'gefactureerd', zakelijk: false,
+      facturen: [{ nummer: '2026-F009', inclCent: 50000, datum: terug(20) }],
+      klant: { naam: 'Piet', telefoon: '0687654321' }, auto: {}, regels: [], opmerking: '', inbouwdatum: '', inbouwtijd: '09:00', afgevinkt: [] },
+  ];
+
+  async function open() {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    await pagina.addInitScript((offertes) => {
+      window.open = (url) => { window.__geopend = url; return null; };
+      if (localStorage.getItem('aue-werkbak-v1')) return;
+      localStorage.setItem('aue-werkbak-v1', JSON.stringify({
+        instellingen: {}, catalogus: [], offertes, dossiers: [], sessies: [], rapporten: [],
+      }));
+    }, OFFERTES);
+    await pagina.goto(paginaUrl('headroom?tab=klanten'));
+    return { pagina, fouten };
+  }
+
+  test('zet klaar wie een bericht moet krijgen, en haalt hem eraf na het sturen', async () => {
+    const { pagina, fouten } = await open();
+    assert.equal(await pagina.textContent('#kl-teller'), '2');
+    assert.equal(await pagina.locator('#kl-opvolgen .kl-punt').count(), 2);
+    assert.match(await pagina.textContent('#kl-opvolgen .kl-punt >> nth=0'), /Factuur staat nog open/);
+    await pagina.click('#kl-opvolgen [data-opvolg="wa"] >> nth=0');
+    const url = await pagina.evaluate(() => window.__geopend);
+    assert.match(url, /^https:\/\/wa\.me\/31687654321\?text=/);
+    assert.match(decodeURIComponent(url), /2026-F009/);
+    assert.equal(await pagina.locator('#kl-opvolgen .kl-punt').count(), 1);
+    assert.equal(await pagina.textContent('#kl-teller'), '1');
+    await pagina.reload();
+    assert.equal(await pagina.locator('#kl-opvolgen .kl-punt').count(), 1, 'onthouden na herladen');
+    const over = await pagina.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    assert.equal(over, 0);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('nieuwe offerte vanuit de klant neemt klant en auto mee', async () => {
+    const { pagina, fouten } = await open();
+    await pagina.click('#kl-lijst .kl-rij >> text=Henk de Vries');
+    assert.match(await pagina.getAttribute('#kl-acties a[href^="https://wa.me"]', 'href'), /31612345678/);
+    await pagina.click('#kl-acties [data-actie="nieuw"]');
+    assert.equal(await pagina.isVisible('[data-paneel="offerte"]'), true);
+    assert.equal(await pagina.inputValue('#wb-naam'), 'Henk de Vries');
+    assert.equal(await pagina.inputValue('#wb-telefoon'), '06-12345678');
+    assert.equal(await pagina.inputValue('#wb-kenteken'), '92DJHG');
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+});
