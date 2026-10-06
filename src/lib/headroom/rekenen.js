@@ -58,13 +58,23 @@ export function euro(cent) {
 }
 
 /**
- * Euro als tekst → centen. Slikt wat iemand op een telefoon intypt:
- * "1.234,56", "1234.56", "€ 89,-" en "89" leveren allemaal het juiste getal.
+ * Een getal uit wat iemand op een telefoon intypt, of `null` als er niets
+ * leesbaars staat.
+ *
+ * WAAROM DIT APART STAAT VAN naarCent()
+ * naarCent() geeft 0 bij een leeg veld, en dat hoort ook: een offerteregel
+ * van nul euro bestaat. Maar bij een instélling is 0 juist het gevaarlijkste
+ * antwoord dat er is. Een leeg btw-veld dat 0% gaat betekenen levert
+ * facturen zonder btw op, en een leeg margeveld verkoopt alles voor de
+ * inkoopprijs. Daarom zegt deze functie "ik kon er geen getal in lezen", en
+ * kiest de aanroeper zelf wat er dan moet gebeuren.
+ *
+ * Slikt "1.234,56", "1234.56", "€ 89,-", "21%" en "60 %".
  */
-export function naarCent(invoer) {
-  if (typeof invoer === 'number') return Math.round(invoer * 100);
+export function getalOfNiets(invoer) {
+  if (typeof invoer === 'number') return Number.isFinite(invoer) ? invoer : null;
   let t = String(invoer ?? '').replace(/[^0-9,.-]/g, '').trim();
-  if (!t) return 0;
+  if (!t || !/[0-9]/.test(t)) return null;
   /* Een minteken telt alleen vooraan. Het streepje in "€ 89,-" betekent
      "en nul cent" en is geen aftrekking; zonder deze regel leest de rest
      van deze functie er NaN in en wordt het bedrag stilletjes 0. */
@@ -78,7 +88,34 @@ export function naarCent(invoer) {
   if (laatsteKomma > laatstePunt) t = t.replace(/\./g, '').replace(',', '.');
   else t = t.replace(/,/g, '');
   const n = Number(t);
-  return Number.isFinite(n) ? Math.round(n * 100) : 0;
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Euro als tekst → centen. Slikt wat iemand op een telefoon intypt:
+ * "1.234,56", "1234.56", "€ 89,-" en "89" leveren allemaal het juiste getal.
+ * Staat er niets leesbaars, dan is het 0 — bij een bedrag mag dat.
+ */
+export function naarCent(invoer) {
+  const n = getalOfNiets(invoer);
+  return n === null ? 0 : Math.round(n * 100);
+}
+
+/**
+ * Het btw-tarief uit de instellingen, of het standaardtarief.
+ *
+ * Hier stond `Number(inst.btwPct) ?? BTW_PCT`, en die terugval kon nooit
+ * werken: `??` vangt alleen null en undefined, en `Number()` geeft NaN. Bij
+ * instellingen zonder btw-tarief werd elk bedrag dus NaN, en stond er op de
+ * factuur "NaN" in plaats van een bedrag. Nagespeeld met
+ * `totalen(regels, { uurtariefCent: 7500 })`.
+ *
+ * Een 0 die er bewust staat blijft 0: 0% btw bestaat, bijvoorbeeld bij
+ * levering over de grens.
+ */
+function btwVan(inst) {
+  const n = getalOfNiets(inst?.btwPct);
+  return n === null ? BTW_PCT : n;
 }
 
 /** De instellingen zoals ze staan als Justus nog niets heeft aangepast. */
@@ -163,7 +200,7 @@ export function regelPrijs(regel, inst = STANDAARD_INSTELLINGEN) {
     ? Number(regel.margePct)
     : Number(inst.margePct) || 0;
   const uurtariefCent = Math.max(0, Math.round(Number(inst.uurtariefCent) || 0));
-  const btwPct = Number(inst.btwPct) ?? BTW_PCT;
+  const btwPct = btwVan(inst);
 
   const onderdeelCent = Math.round(inkoopCent * (1 + margePct / 100));
   const arbeidCent = Math.round(uren * uurtariefCent);
@@ -228,7 +265,7 @@ export function totalen(regels = [], inst = STANDAARD_INSTELLINGEN, kortingExclC
    * De korting krijgt om dezelfde reden zijn eigen btw. Zo blijft gelden:
    * regels bij elkaar, min de korting, is precies het totaal.
    */
-  const btwPct = Number(inst.btwPct) ?? BTW_PCT;
+  const btwPct = btwVan(inst);
   const korting = Math.min(uit.exclCent, Math.max(0, Math.round(Number(kortingExclCent) || 0)));
   if (korting) {
     const kortingBtw = Math.round((korting * btwPct) / 100);
@@ -356,7 +393,7 @@ export function aanbetaling(regels = [], inst = STANDAARD_INSTELLINGEN, percenta
   const pct = Math.min(100, Math.max(0, Number(
     percentage ?? inst.aanbetalingPct ?? STANDAARD_INSTELLINGEN.aanbetalingPct
   ) || 0));
-  const btwPct = Number(inst.btwPct) ?? BTW_PCT;
+  const btwPct = btwVan(inst);
 
   const inclCent = Math.round((t.inclCent * pct) / 100);
   const exclCent = Math.round((inclCent * 100) / (100 + btwPct));
@@ -423,7 +460,7 @@ export function eindafrekening(
   regels = [], inst = STANDAARD_INSTELLINGEN, kortingExclCent = 0, reedsBetaaldInclCent = 0
 ) {
   const t = totalen(regels, inst, kortingExclCent);
-  const btwPct = Number(inst.btwPct) ?? BTW_PCT;
+  const btwPct = btwVan(inst);
 
   /* Nooit meer aftrekken dan er staat: een negatieve eindfactuur bestaat niet. */
   const betaaldIncl = Math.min(t.inclCent, Math.max(0, Math.round(Number(reedsBetaaldInclCent) || 0)));
