@@ -941,7 +941,7 @@ import { APP } from '../data/app.js';
   import { BRAND } from '../data/brand.js';
   import { APP, TABBLADEN } from '../data/app.js';
   import {
-    SOORTEN, STANDAARD_INSTELLINGEN, euro, naarCent, regelPrijs, totalen, marge,
+    SOORTEN, STANDAARD_INSTELLINGEN, euro, naarCent, getalOfNiets, regelPrijs, totalen, marge,
     offertenummer, geldigTot, stuklijst, aanbetaling, eindafrekening,
     factuurnummer, kortingNaarExcl, datumNl, soortenIn,
   } from '../lib/headroom/rekenen.js';
@@ -2818,19 +2818,50 @@ import { APP } from '../data/app.js';
   }
 
   /* ================= INSTELLINGEN ================= */
+
+  /**
+   * EEN LEEG VELD MAG HIER NOOIT 0 WORDEN.
+   *
+   * Hier stond overal `Number(v) || 0`. Dat leest "60%" niet als 60 maar als
+   * NaN, en maakt er dan 0 van. Hetzelfde bij een veld dat je leegmaakt om
+   * iets nieuws te typen: zodra je eruit klikt staat er 0.
+   *
+   * Nagespeeld wat dat kost. Uurtarief op 0: alle montage gratis. Marge op 0:
+   * elk onderdeel voor de inkoopprijs de deur uit. Btw op 0: facturen zonder
+   * btw, dus 21% te weinig gefactureerd én een verkeerde aangifte. Alle drie
+   * zonder dat er iets op het scherm veranderde behalve dat getal.
+   *
+   * Nu geldt: kan ik er geen getal in lezen, dan blijft de standaardwaarde
+   * staan. Die verschijnt meteen in het veld, dus je ziet wat er gebeurd is.
+   * Een 0 die je zélf typt wordt wel 0 — 0% btw bestaat, en een klus zonder
+   * aanbetaling ook.
+   */
+  const uitVeld = (sleutel, { max = Infinity, heel = false } = {}) => (v) => {
+    const n = getalOfNiets(v);
+    if (n === null) return STANDAARD_INSTELLINGEN[sleutel];
+    const binnen = Math.min(max, Math.max(0, n));
+    return heel ? Math.round(binnen) : binnen;
+  };
+
+  /* Het uurtarief staat in centen, dus die gaat via naarCent(). */
+  const uitVeldCent = (sleutel) => (v) => (
+    getalOfNiets(v) === null ? STANDAARD_INSTELLINGEN[sleutel] : Math.max(0, naarCent(v))
+  );
+
   const instellingVelden = [
-    ['#wb-i-uurtarief', 'uurtariefCent', (v) => naarCent(v), (w) => (w / 100).toFixed(2).replace('.', ',')],
-    ['#wb-i-marge', 'margePct', (v) => Number(v.replace(',', '.')) || 0, (w) => w],
-    ['#wb-i-btw', 'btwPct', (v) => Number(v.replace(',', '.')) || 0, (w) => w],
-    ['#wb-i-geldig', 'geldigDagen', (v) => Number(v) || 0, (w) => w],
-    ['#wb-i-volgnummer', 'volgnummer', (v) => Number(v) || 1, (w) => w],
-    ['#wb-i-besteldagen', 'bestelDagen', (v) => Number(v) || 14, (w) => w],
+    ['#wb-i-uurtarief', 'uurtariefCent', uitVeldCent('uurtariefCent'), (w) => (w / 100).toFixed(2).replace('.', ',')],
+    ['#wb-i-marge', 'margePct', uitVeld('margePct'), (w) => w],
+    ['#wb-i-btw', 'btwPct', uitVeld('btwPct', { max: 100 }), (w) => w],
+    ['#wb-i-geldig', 'geldigDagen', uitVeld('geldigDagen', { heel: true }), (w) => w],
+    /* Een volgnummer onder 1 bestaat niet, dus die begint bij 1. */
+    ['#wb-i-volgnummer', 'volgnummer', (v) => Math.max(1, Math.round(getalOfNiets(v) ?? 1)), (w) => w],
+    ['#wb-i-besteldagen', 'bestelDagen', uitVeld('bestelDagen', { heel: true }), (w) => w],
     ['#wb-i-googleagenda', 'googleAgenda', (v) => v.trim(), (w) => w || ''],
     ['#wb-i-iban', 'iban', (v) => v.trim(), (w) => w || ''],
     ['#wb-i-tenaamstelling', 'tenaamstelling', (v) => v.trim(), (w) => w || ''],
-    ['#wb-i-aanbetaling', 'aanbetalingPct', (v) => Number(v.replace(',', '.')) || 0, (w) => w],
-    ['#wb-i-betaaltermijn', 'betaaltermijnDagen', (v) => Number(v) || 0, (w) => w],
-    ['#wb-i-factuurnummer', 'factuurVolgnummer', (v) => Number(v) || 1, (w) => w],
+    ['#wb-i-aanbetaling', 'aanbetalingPct', uitVeld('aanbetalingPct', { max: 100 }), (w) => w],
+    ['#wb-i-betaaltermijn', 'betaaltermijnDagen', uitVeld('betaaltermijnDagen', { heel: true }), (w) => w],
+    ['#wb-i-factuurnummer', 'factuurVolgnummer', (v) => Math.max(1, Math.round(getalOfNiets(v) ?? 1)), (w) => w],
   ];
 
   function tekenInstellingen() {

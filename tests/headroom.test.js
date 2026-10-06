@@ -15,7 +15,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import {
-  euro, naarCent, regelPrijs, totalen, marge, offertenummer, datumNl, geldigTot,
+  euro, naarCent, getalOfNiets, regelPrijs, totalen, marge, offertenummer, datumNl, geldigTot,
   stuklijst, soortenIn, aanbetaling, eindafrekening, kortingNaarExcl, factuurnummer,
   STANDAARD_INSTELLINGEN, SOORTEN, BTW_PCT,
 } from '../src/lib/headroom/rekenen.js';
@@ -85,6 +85,63 @@ describe('bedragen lezen en schrijven', () => {
     for (const invoer of ['', '   ', 'abc', null, undefined]) {
       assert.equal(naarCent(invoer), 0);
     }
+  });
+
+  test('getalOfNiets zegt het verschil tussen nul en niets', () => {
+    /**
+     * WAAROM DIT VERSCHIL BESTAAT
+     * Bij een bedrag mag een leeg veld 0 worden: een offerteregel van nul
+     * euro bestaat. Bij een instélling is 0 juist het gevaarlijkste antwoord
+     * dat er is — een btw-tarief van 0 levert facturen zonder btw op, en een
+     * marge van 0 verkoopt alles voor de inkoopprijs. Daarom moet er een
+     * manier zijn om "ik kon er geen getal in lezen" terug te geven.
+     */
+    assert.equal(getalOfNiets('0'), 0, 'een nul die er staat is een nul');
+    assert.equal(getalOfNiets(0), 0);
+    for (const niets of ['', '   ', 'abc', 'eenentwintig', null, undefined, NaN, '%', '-']) {
+      assert.equal(getalOfNiets(niets), null, `${JSON.stringify(niets)} is geen getal`);
+    }
+    /* Zo typen mensen een percentage en een bedrag echt. */
+    assert.equal(getalOfNiets('21%'), 21);
+    assert.equal(getalOfNiets('60 %'), 60);
+    assert.equal(getalOfNiets('€ 75,00'), 75);
+    assert.equal(getalOfNiets('1.234,56'), 1234.56);
+    assert.equal(getalOfNiets('1,234.56'), 1234.56);
+    assert.equal(getalOfNiets('9,5'), 9.5);
+  });
+
+  test('zonder btw-tarief wordt gerekend met het standaardtarief', () => {
+    /**
+     * Hier stond `Number(inst.btwPct) ?? BTW_PCT`. Die terugval kon nooit
+     * werken: `??` vangt alleen null en undefined, en `Number()` geeft NaN.
+     * Instellingen zonder btw-tarief maakten dus elk bedrag NaN, en dan staat
+     * er op de factuur "NaN" in plaats van een bedrag.
+     *
+     * Een 0 die er bewust staat blijft wél 0: 0% btw bestaat.
+     */
+    const regels = [{ vastExclCent: 100000 }];
+    const verwacht = Math.round(100000 * (1 + BTW_PCT / 100));
+
+    for (const inst of [
+      { uurtariefCent: 7500 },
+      { ...STANDAARD_INSTELLINGEN, btwPct: null },
+      { ...STANDAARD_INSTELLINGEN, btwPct: '' },
+      { ...STANDAARD_INSTELLINGEN, btwPct: 'eenentwintig' },
+    ]) {
+      const t = totalen(regels, inst);
+      assert.ok(Number.isFinite(t.inclCent), `${JSON.stringify(inst.btwPct)} geeft geen getal`);
+      assert.equal(t.inclCent, verwacht);
+      /* En de facturen rekenen met hetzelfde tarief. */
+      const a = aanbetaling(regels, inst, 30);
+      const e = eindafrekening(regels, inst, 0, a.inclCent);
+      assert.ok(Number.isFinite(a.inclCent) && Number.isFinite(e.teBetalenInclCent));
+      assert.equal(a.inclCent + e.teBetalenInclCent, verwacht, 'de facturen samen zijn het totaal');
+    }
+
+    /* 0% btw blijft 0% btw. */
+    const nul = totalen(regels, { ...STANDAARD_INSTELLINGEN, btwPct: 0 });
+    assert.equal(nul.btwCent, 0);
+    assert.equal(nul.inclCent, 100000);
   });
 });
 

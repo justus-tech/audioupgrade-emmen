@@ -2568,6 +2568,63 @@ describe('Headroom', alsGebouwd, () => {
       .map((o) => o.omschrijving)
   );
 
+  test('een leeg of onleesbaar instelveld wordt nooit nul', async () => {
+    /**
+     * WAAROM DEZE TEST BESTAAT
+     * De velden lazen hun waarde met `Number(v) || 0`. Dat leest "60%" niet
+     * als 60 maar als NaN, en maakt er dan 0 van. Hetzelfde bij een veld dat
+     * je leegmaakt om iets nieuws te typen: zodra je eruit klikt staat er 0.
+     *
+     * Wat dat kost: uurtarief 0 maakt alle montage gratis, marge 0 verkoopt
+     * elk onderdeel voor de inkoopprijs, en btw 0 levert facturen zonder btw
+     * op — 21% te weinig gefactureerd én een verkeerde aangifte. Alle drie
+     * zonder dat er iets op het scherm veranderde behalve dat ene getal.
+     *
+     * Een 0 die je zélf typt moet wel blijven staan: 0% btw bestaat, en een
+     * klus zonder aanbetaling ook.
+     */
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.click('[data-tab="instellingen"]');
+
+    const zet = async (kies, waarde) => {
+      await pagina.fill(kies, waarde);
+      await pagina.locator(kies).blur();
+      await pagina.waitForFunction(
+        () => JSON.parse(localStorage.getItem('aue-werkbak-v1') || 'null')?.instellingen != null
+      );
+      return pagina.evaluate(
+        () => JSON.parse(localStorage.getItem('aue-werkbak-v1') || 'null')?.instellingen || {}
+      );
+    };
+
+    /* Leeggemaakt: de standaardwaarde blijft staan, en die hoort ook in het
+       veld te verschijnen zodat je ziet wat er gebeurde. */
+    for (const [kies, sleutel, standaard] of [
+      ['#wb-i-uurtarief', 'uurtariefCent', 7500],
+      ['#wb-i-marge', 'margePct', 60],
+      ['#wb-i-btw', 'btwPct', 21],
+      ['#wb-i-aanbetaling', 'aanbetalingPct', 30],
+    ]) {
+      const leeg = await zet(kies, '');
+      assert.equal(leeg[sleutel], standaard, `${kies} leeg hoort ${standaard} te blijven`);
+      const rommel = await zet(kies, 'abc');
+      assert.equal(rommel[sleutel], standaard, `${kies} met onzin hoort ${standaard} te blijven`);
+      assert.notEqual(await pagina.inputValue(kies), '', `${kies} hoort weer gevuld te staan`);
+    }
+
+    /* Zo typen mensen een percentage echt. */
+    assert.equal((await zet('#wb-i-marge', '45%')).margePct, 45);
+    assert.equal((await zet('#wb-i-btw', '9%')).btwPct, 9);
+    assert.equal((await zet('#wb-i-uurtarief', '€ 95,00')).uurtariefCent, 9500);
+
+    /* En een nul die je zelf neerzet blijft een nul. */
+    assert.equal((await zet('#wb-i-btw', '0')).btwPct, 0);
+    assert.equal((await zet('#wb-i-aanbetaling', '0')).aanbetalingPct, 0);
+
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
   test('het tweede tabblad overschrijft het eerste niet meer', async () => {
     const { context, a, b } = await tweeTabbladen();
 
