@@ -44,6 +44,7 @@
     "kortingIncl": "apparatuur die de klant zelf meebrengt, als korting op het totaal. Nooit als negatieve regel: een regelprijs klemt op nul.",
     "opAfstand": "true als de klant nooit in Emmen is geweest; dan geldt 14 dagen bedenktijd.",
     "startDirect": "alleen true als de montage binnen die 14 dagen valt en de klant daar uitdrukkelijk om vraagt.",
+    "alleenWerk": "true als het alleen werk is aan een installatie die er al in zit, zonder nieuwe onderdelen (bijvoorbeeld alleen inmeten en afstellen). Dan begint de bedenktijd bij het akkoord en niet bij het ophalen van de auto.",
     "verwachtTotaalIncl": "het bedrag dat je met de klant hebt afgesproken. Klopt het totaal daar niet mee, dan stopt het script.",
     "bestand": "optioneel; zonder dit veld krijgt de pdf de naam met offertenummer en kenteken erin."
   }

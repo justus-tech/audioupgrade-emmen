@@ -112,6 +112,7 @@ export function bouwOfferte(invoer) {
     kortingExclCent,
     opAfstand: Boolean(invoer.opAfstand),
     startDirect: Boolean(invoer.startDirect),
+    alleenWerk: Boolean(invoer.alleenWerk),
     voorwaardenBijlage: invoer.voorwaardenBijlage !== false,
   };
 

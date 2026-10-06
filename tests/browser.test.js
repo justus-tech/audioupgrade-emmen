@@ -1831,6 +1831,10 @@ describe('Headroom', alsGebouwd, () => {
     assert.equal(await pagina.isChecked('#wb-op-afstand'), true);
     assert.equal(await pagina.isChecked('#wb-bijlage'), true);
     assert.equal(await pagina.isChecked('#wb-start-direct'), false);
+    assert.equal(await pagina.isChecked('#wb-alleen-werk'), false);
+
+    // Alleen werk, zoals alleen inmeten en afstellen: dat vinkje zet je zelf.
+    await pagina.check('#wb-alleen-werk');
 
     // Zet je 'op afstand' uit, dan verdwijnt 'direct beginnen': zonder
     // bedenktijd valt er niets binnen die bedenktijd te beginnen.
@@ -1845,8 +1849,10 @@ describe('Headroom', alsGebouwd, () => {
     await pagina.click('#wb-bewaar');
     await pagina.click('#wb-nieuw');
     assert.equal(await pagina.isChecked('#wb-op-afstand'), true, 'een nieuwe offerte begint schoon');
+    assert.equal(await pagina.isChecked('#wb-alleen-werk'), false, 'een nieuwe offerte begint schoon');
     await pagina.click('#wb-bewaard .wb-open-offerte >> nth=0');
     assert.equal(await pagina.isChecked('#wb-op-afstand'), false);
+    assert.equal(await pagina.isChecked('#wb-alleen-werk'), true);
 
     assert.deepEqual(fouten, []);
     await pagina.close();

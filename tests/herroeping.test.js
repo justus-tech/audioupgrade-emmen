@@ -13,6 +13,9 @@ import {
   herroepingPdf, herroepingBestandsnaam, hoortErBij,
 } from '../src/lib/headroom/herroeping.js';
 import { kernpunten, volledigeVoorwaarden } from '../src/lib/headroom/voorwaarden.js';
+import { offertePdf } from '../src/lib/headroom/offerte-pdf.js';
+import { factuurPdf } from '../src/lib/headroom/factuur.js';
+import { STANDAARD_INSTELLINGEN } from '../src/lib/headroom/rekenen.js';
 import { SITE, ADRES } from '../src/data/site.js';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, writeFileSync, readdirSync } from 'node:fs';
@@ -365,5 +368,92 @@ describe('het offertescript levert de bijlage mee', () => {
   test('zonder herroepingsrecht blijft het bij de offerte alleen', () => {
     assert.deepEqual(draai({ opAfstand: false }), ['offerte-2026-900-XX99XX.pdf']);
     assert.deepEqual(draai({ opAfstand: true, zakelijk: true }), ['offerte-2026-900-XX99XX.pdf']);
+  });
+});
+
+describe('alleen werk, geen nieuwe onderdelen', () => {
+  /* Bijvoorbeeld alleen het inmeten en afstellen van een installatie die er
+     al in zit. Dan is het een dienst: de bedenktijd loopt vanaf het akkoord,
+     en niet vanaf het ophalen van de auto. Stond daar de zin voor een klus
+     met onderdelen, dan viel het werk zelf binnen de bedenktijd, en dan is de
+     klant voor dat werk niets verschuldigd als hij zich daarna bedenkt. */
+  const WERK = { opAfstand: true, zakelijk: false, alleenWerk: true };
+
+  /* De tekst van een pdf als één lopende zin: de regels die breekAf maakte
+     weer aan elkaar, zodat een zin over twee regels gewoon te vinden is. */
+  const lopend = (bytes) => [...Buffer.from(bytes).toString('latin1')
+    .matchAll(/\(((?:\\.|[^\\)])*)\) Tj/g)]
+    .map((m) => m[1].replace(/\\(.)/g, '$1'))
+    .join(' ')
+    .replace(/\s+/g, ' ');
+
+  test('de bedenktijd begint bij het akkoord, niet bij het ophalen', () => {
+    const punten = kernpunten(WERK).join(' ');
+    assert.match(punten, /14 dagen bedenktijd/);
+    assert.match(punten, /op de dag nadat je akkoord geeft/);
+    /* Komt de offerte pas na het akkoord, dan telt de dag dat hij hem krijgt. */
+    assert.match(punten, /nooit eerder dan de dag nadat je de offerte hebt ontvangen/);
+    assert.doesNotMatch(punten, /met de nieuwe apparatuur erin terugkrijgt/);
+  });
+
+  test('er is niets uit te bouwen, en afzeggen vooraf kost niets', () => {
+    const punten = kernpunten(WERK).join(' ');
+    assert.doesNotMatch(punten, /apparatuur eruit kunnen halen/);
+    assert.match(punten, /betaal je niets en krijg je een aanbetaling volledig terug/);
+    assert.doesNotMatch(punten, /bestelde onderdelen/);
+    assert.doesNotMatch(punten, /Levertijd van onderdelen/);
+  });
+
+  test('het modelformulier hoort er nog steeds bij', () => {
+    assert.equal(hoortErBij(WERK), true);
+    assert.match(kernpunten(WERK).join(' '), /modelformulier voor herroeping zit bij deze offerte/);
+  });
+
+  test('met het startvinkje: de bedenktijd vervalt als het werk klaar is', () => {
+    const punten = kernpunten({ ...WERK, startDirect: true }).join(' ');
+    assert.match(punten, /uitdrukkelijk om te beginnen/);
+    assert.match(punten, /vervalt zodra het werk helemaal klaar is/);
+    assert.match(punten, /evenredig deel van het afgesproken bedrag/);
+    /* Geen onderdelen, dus ook geen zin over onderdelen die teruggaan. */
+    assert.doesNotMatch(punten, /onderdelen terug/);
+    assert.doesNotMatch(punten, /waardevermindering/);
+  });
+
+  test('zonder bedenktijd verandert er aan de bedenktijd niets', () => {
+    for (const geval of [{ opAfstand: false }, { opAfstand: true, zakelijk: true }]) {
+      const punten = kernpunten({ ...geval, alleenWerk: true }).join(' ');
+      assert.doesNotMatch(punten, /bedenktijd/i);
+    }
+  });
+
+  test('zonder het vinkje blijft alles zoals het was', () => {
+    const punten = kernpunten({ opAfstand: true, zakelijk: false }).join(' ');
+    assert.match(punten, /met de nieuwe apparatuur erin terugkrijgt/);
+    assert.match(punten, /het rijden naar de werkplaats is voor jou/);
+    assert.match(punten, /de al bestelde onderdelen/);
+  });
+
+  test('artikel 4 achterop zegt hetzelfde als de voorkant', () => {
+    assert.match(
+      artikel4(),
+      /uitsluitend een dienst zonder levering van onderdelen, zoals alleen het inmeten en afstellen van een bestaande installatie, dan begint de termijn op de dag na het sluiten van de overeenkomst/
+    );
+  });
+
+  test('de offerte en de factuur nemen het vinkje over', () => {
+    const offerte = {
+      ...OFFERTE,
+      ...WERK,
+      geldigTot: new Date('2026-10-28'),
+      regels: [{ omschrijving: 'Inmeten en afstellen', aantal: 1, vastExclCent: 53306 }],
+    };
+    for (const bytes of [
+      offertePdf(offerte, STANDAARD_INSTELLINGEN).naarBytes(),
+      factuurPdf(offerte, STANDAARD_INSTELLINGEN, { soort: 'aanbetaling', nummer: '2026-F900' }).naarBytes(),
+    ]) {
+      const tekst = lopend(bytes);
+      assert.match(tekst, /op de dag nadat je akkoord geeft/);
+      assert.doesNotMatch(tekst, /met de nieuwe apparatuur erin terugkrijgt/);
+    }
   });
 });

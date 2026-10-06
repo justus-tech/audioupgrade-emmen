@@ -296,6 +296,7 @@ export function factuurPdf(offerte, inst = STANDAARD_INSTELLINGEN, opties = {}) 
       vervaldatum: datumNl(vervalt),
       opAfstand: offerte.opAfstand !== false,
       startDirect: !!offerte.startDirect,
+      alleenWerk: !!offerte.alleenWerk,
       /* Een bedrijf heeft geen bedenktijd, en ziet bedragen zonder btw. */
       zakelijk: !!offerte.zakelijk,
       annuleerDagen: annuleertermijn(),
