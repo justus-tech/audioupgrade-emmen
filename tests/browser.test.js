@@ -937,6 +937,64 @@ describe('Headroom', alsGebouwd, () => {
     await pagina.close();
   });
 
+  /* Verzamelt de bestanden die naar beneden komen. waitForEvent('download')
+     pakt alleen de eerste, en juist het tweede bestand is hier het punt.
+
+     Niet een vaste tijd afwachten en dan tellen: op een trage machine is het
+     tweede bestand er dan nog niet en faalt de test op de machine in plaats
+     van op de code. Daarom wachten we tot `verwacht` bestanden binnen zijn,
+     en daarna nog kort of er onverwacht een extra achteraan komt. Dat laatste
+     moet een tijdje blijven, anders zegt de test "precies één bestand" zonder
+     ernaar gekeken te hebben. */
+  async function downloads(pagina, doen, verwacht, ms = 20000) {
+    const namen = [];
+    let binnen;
+    const genoeg = new Promise((los) => { binnen = los; });
+    pagina.on('download', (d) => {
+      namen.push(d.suggestedFilename());
+      if (namen.length >= verwacht) binnen();
+    });
+    await doen();
+    await Promise.race([genoeg, pagina.waitForTimeout(ms)]);
+    await pagina.waitForTimeout(750);
+    return namen;
+  }
+
+  test('bij een consument op afstand gaat het modelformulier mee', async () => {
+    /* De wet wil dat het formulier bij de offerte zit, niet dat je de
+       bedenktijd alleen noemt. Zie herroeping.js. */
+    const { pagina, fouten } = await openWerkbak();
+    await pagina.fill('#wb-naam', 'Mark de Vries');
+    await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+    assert.equal(await pagina.isChecked('#wb-op-afstand'), true, 'op afstand staat niet aan');
+
+    const namen = await downloads(pagina, () => pagina.click('#wb-pdf'), 2);
+    assert.equal(namen.length, 2, `er kwamen ${namen.length} bestanden: ${namen.join(', ')}`);
+    assert.match(namen[0], /^offerte-/);
+    assert.match(namen[1], /^modelformulier-herroeping-\d{4}-\d{3}\.pdf$/);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('zonder herroepingsrecht blijft het bij de offerte alleen', async () => {
+    /* Twee gevallen waarin het recht niet bestaat: een zakelijke klant, en
+       een afspraak die in de werkplaats is gemaakt. Het formulier dan toch
+       meesturen is een recht weggeven dat de wet niet vraagt. */
+    for (const zetKlaar of [
+      async (pagina) => pagina.click('[data-klant="zakelijk"]'),
+      async (pagina) => pagina.uncheck('#wb-op-afstand'),
+    ]) {
+      const { pagina } = await openWerkbak();
+      await pagina.fill('#wb-naam', 'Mark de Vries');
+      await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
+      await zetKlaar(pagina);
+
+      const namen = await downloads(pagina, () => pagina.click('#wb-pdf'), 1);
+      assert.deepEqual(namen.map((n) => n.replace(/\d{4}-\d{3}/, 'nr')), ['offerte-nr.pdf']);
+      await pagina.close();
+    }
+  });
+
   test('een lege offerte levert geen pdf op maar een melding', async () => {
     const { pagina } = await openWerkbak();
     let gemeld = '';
