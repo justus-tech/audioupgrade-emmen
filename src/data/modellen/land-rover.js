@@ -145,7 +145,13 @@ export default [
     brand: 'Land Rover',
     model: 'Range Rover',
     generaties: 'L322, L405 en L460',
-    matchers: { merk: 'LAND ROVER', model: /RANGE ROVER/ },
+    /* De Sport, de Velar en de Evoque hebben hun eigen pagina, en hun naam
+       begint met "RANGE ROVER". Zonder deze uitzondering matcht de bezoeker
+       met een Evoque ook hier, en dan hangt het puur van de volgorde in de
+       lijst af op welke pagina hij belandt. Komt er een submodel bij, dan
+       hoort het hier ook bij — de test "geen enkele schrijfwijze matcht twee
+       pagina's" slaat aan als dat vergeten wordt. */
+    matchers: { merk: 'LAND ROVER', model: /RANGE ROVER(?![ -](?:SPORT|VELAR|EVOQUE))/ },
     title: 'Range Rover audio upgrade | Audio Upgrade Emmen',
     description:
       'Audio upgrade voor je Range Rover. Afstemming voor voor- en achterbank, echt vermogen en grondige demping.',
@@ -229,7 +235,8 @@ export default [
     brand: 'Land Rover',
     model: 'Discovery',
     generaties: 'Discovery 3, 4 en 5',
-    matchers: { merk: 'LAND ROVER', model: /DISCOVERY/ },
+    /* Net als bij de Range Rover: de Discovery Sport heeft zijn eigen pagina. */
+    matchers: { merk: 'LAND ROVER', model: /DISCOVERY(?![ -]SPORT)/ },
     title: 'Land Rover Discovery audio upgrade | Audio Upgrade Emmen',
     description:
       'Audio upgrade voor je Land Rover Discovery. Echt vermogen voor het grote cabinevolume, afstemming per zitrij en grondige demping.',

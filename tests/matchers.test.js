@@ -73,3 +73,61 @@ describe('de gevallenlijst zelf', () => {
     assert.ok(negatief.length >= 12, `slechts ${negatief.length} negatieve gevallen`);
   });
 });
+
+describe('de patronen onderling', () => {
+  /** Álle pagina's die deze schrijfwijze matchen, niet alleen de eerste. */
+  function alleTreffers(merk, benaming) {
+    const M = String(merk).toUpperCase();
+    const B = String(benaming).toUpperCase();
+    return MODELS.filter((x) => M.includes(x.matchers.merk) && x.matchers.model.test(B))
+      .map((x) => x.slug);
+  }
+
+  test('geen enkele schrijfwijze matcht twee modelpagina\'s', () => {
+    /**
+     * WAAROM DEZE TEST BESTAAT
+     * matchAuto() geeft de EERSTE treffer uit de lijst. Matchen twee pagina's
+     * dezelfde schrijfwijze, dan bepaalt de volgorde in het databestand waar
+     * de bezoeker belandt — en dat verschuift zodra iemand een model
+     * toevoegt, zonder dat er een test omvalt.
+     *
+     * Zo zat er een echte fout in. Het patroon van de C-klasse was
+     * `C-KLASSE|C KLASSE` zonder woordgrens, en in "GLC-KLASSE" zit letterlijk
+     * "C-KLASSE". Omdat de C-klasse hoger in de lijst staat dan de GLC, kwam
+     * een GLC op de pagina van de C-klasse uit. Bij de GLE, GLS en CLS zat
+     * hetzelfde gat, maar daar stond de eigen pagina er net boven — die
+     * werden alleen door de volgorde gered.
+     *
+     * Deze test kijkt daar niet naar de volgorde maar naar de patronen zelf,
+     * dus hij slaat ook aan op de gevallen die nu "per ongeluk goed" gaan.
+     */
+    const dubbel = [];
+    const kijk = (merk, benaming) => {
+      const treffers = alleTreffers(merk, benaming);
+      if (treffers.length > 1) dubbel.push(`${merk} "${benaming}" → ${treffers.join(', ')}`);
+    };
+
+    /* Elke pagina met zijn eigen modelnaam, zoals de RDW die ongeveer
+       schrijft, plus elke schrijfwijze uit de gouden lijst. */
+    for (const m of MODELS) {
+      if (m.model) kijk(m.matchers.merk, String(m.model).toUpperCase());
+    }
+    for (const g of GEVALLEN) kijk(g.merk, g.benaming);
+
+    assert.deepEqual([...new Set(dubbel)], [], 'twee pagina\'s vangen dezelfde auto');
+  });
+
+  test('elke modelpagina is te bereiken met zijn eigen naam', () => {
+    /* Een pagina die door een andere wordt afgeschaduwd, ziet een bezoeker
+       nooit — en dat merk je aan niets. */
+    const afgeschaduwd = [];
+    for (const m of MODELS) {
+      if (!m.model) continue;
+      const benaming = String(m.model).toUpperCase();
+      if (!alleTreffers(m.matchers.merk, benaming).includes(m.slug)) continue;
+      const eerste = modelSlug(m.matchers.merk, benaming);
+      if (eerste !== m.slug) afgeschaduwd.push(`"${benaming}" hoort bij ${m.slug} maar komt uit op ${eerste}`);
+    }
+    assert.deepEqual(afgeschaduwd, []);
+  });
+});

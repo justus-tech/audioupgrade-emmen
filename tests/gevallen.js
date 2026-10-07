@@ -67,6 +67,47 @@ export const GEVALLEN = [
   { merk: 'MERCEDES-BENZ', benaming: 'CLA 180', auto: 'mercedes-cla', waarom: 'CLA is geen C-klasse' },
   { merk: 'MERCEDES-BENZ', benaming: 'CLS 350', auto: 'mercedes-cls', waarom: 'CLS is geen C-klasse' },
   { merk: 'MERCEDES-BENZ', benaming: 'GLC 300 E 4MATIC', auto: 'mercedes-glc' },
+
+  // ---------------------------------------------------------------
+  // MERCEDES MET "-KLASSE" EROP — hier zat een echte fout.
+  //
+  // Het patroon van de C-klasse was `C-KLASSE|C KLASSE`, zonder woordgrens
+  // ervoor. In "GLC-KLASSE" zit letterlijk "C-KLASSE", dus een GLC kwam op
+  // de pagina van de C-klasse uit. Hetzelfde gat zat in de A-, B-, E- en
+  // S-klasse: "GLA-KLASSE" bevat "A-KLASSE", "CLS-KLASSE" bevat "S-KLASSE".
+  //
+  // Dat alleen de GLC het merkte, kwam doordat de C-klasse hoger in de lijst
+  // staat dan de GLC; bij de GLE, GLS en CLS stond de eigen pagina er net
+  // boven. Die werden dus alleen door de volgorde gered, niet door hun
+  // patroon. Daarom staan ze hier allemaal.
+  // ---------------------------------------------------------------
+  { merk: 'MERCEDES-BENZ', benaming: 'GLC-KLASSE', model: 'mercedes-glc', auto: 'mercedes-glc', waarom: 'GLC is geen C-klasse' },
+  { merk: 'MERCEDES-BENZ', benaming: 'GLC KLASSE', model: 'mercedes-glc', waarom: 'ook zonder streepje' },
+  { merk: 'MERCEDES-BENZ', benaming: 'GLA-KLASSE', model: 'mercedes-gla', waarom: 'GLA is geen A-klasse' },
+  { merk: 'MERCEDES-BENZ', benaming: 'GLE-KLASSE', model: 'mercedes-gle', waarom: 'GLE is geen E-klasse' },
+  { merk: 'MERCEDES-BENZ', benaming: 'GLS-KLASSE', model: 'mercedes-gls', waarom: 'GLS is geen S-klasse' },
+  { merk: 'MERCEDES-BENZ', benaming: 'CLA-KLASSE', model: 'mercedes-cla', waarom: 'CLA is geen A-klasse' },
+  { merk: 'MERCEDES-BENZ', benaming: 'CLS-KLASSE', model: 'mercedes-cls', waarom: 'CLS is geen S-klasse' },
+  { merk: 'MERCEDES-BENZ', benaming: 'C-KLASSE', model: 'mercedes-c-klasse' },
+  { merk: 'MERCEDES-BENZ', benaming: 'A-KLASSE', model: 'mercedes-a-klasse' },
+  { merk: 'MERCEDES-BENZ', benaming: 'E-KLASSE', model: 'mercedes-e-klasse' },
+  { merk: 'MERCEDES-BENZ', benaming: 'S-KLASSE', model: 'mercedes-s-klasse' },
+  { merk: 'MERCEDES-BENZ', benaming: 'B-KLASSE', model: 'mercedes-b-klasse' },
+
+  // ---------------------------------------------------------------
+  // LAND ROVER — de familienaam zit in de naam van elk submodel.
+  // "RANGE ROVER" matchte ook de Sport, de Velar en de Evoque, en welke
+  // pagina je kreeg hing af van de volgorde in de lijst. De generieke
+  // patronen sluiten de submodellen nu uit.
+  // ---------------------------------------------------------------
+  { merk: 'LAND ROVER', benaming: 'RANGE ROVER', model: 'range-rover' },
+  { merk: 'LAND ROVER', benaming: 'RANGE ROVER 3.0 TDV6', model: 'range-rover' },
+  { merk: 'LAND ROVER', benaming: 'RANGE ROVER SPORT', model: 'range-rover-sport' },
+  { merk: 'LAND ROVER', benaming: 'RANGE ROVER VELAR', model: 'range-rover-velar' },
+  { merk: 'LAND ROVER', benaming: 'RANGE ROVER EVOQUE', model: 'range-rover-evoque' },
+  { merk: 'LAND ROVER', benaming: 'DISCOVERY', model: 'land-rover-discovery' },
+  { merk: 'LAND ROVER', benaming: 'DISCOVERY 5', model: 'land-rover-discovery' },
+  { merk: 'LAND ROVER', benaming: 'DISCOVERY SPORT', model: 'land-rover-discovery-sport' },
   { merk: 'MERCEDES-BENZ', benaming: 'SPRINTER', auto: null, waarom: 'bestelbus, geen personenauto' },
   { merk: 'MERCEDES-BENZ', benaming: 'CITAN', auto: null },
 
