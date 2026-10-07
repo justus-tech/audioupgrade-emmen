@@ -86,7 +86,7 @@ export const WERKWIJZE = [
     nummer: '02',
     kop: 'Eerlijk advies & offerte',
     tekst:
-      'Binnen 24 uur krijg je een helder, vrijblijvend advies op maat met een transparante all-in prijs. Geen verrassingen achteraf.',
+      'Binnen 24 uur krijg je een helder, vrijblijvend advies op maat met een transparante all-inprijs. Geen verrassingen achteraf.',
   },
   {
     nummer: '03',
@@ -106,7 +106,7 @@ export const VAKMANSCHAP = [
   {
     kop: '100% gesoldeerd',
     tekst:
-      'Wij haten knijpstekkers. Elke verbinding wordt vakkundig gesoldeerd, voorzien van krimpkous en afgewerkt met originele stoftape (TESA). 100% storingsvrij.',
+      'Wij haten knijpstekkers. Elke verbinding wordt vakkundig gesoldeerd, voorzien van krimpkous en afgewerkt met originele stoftape (tesa). 100% storingsvrij.',
   },
   {
     kop: 'Akoestische DSP-tuning',
@@ -201,7 +201,7 @@ export const OVER = {
   ],
 
   alineas: [
-    'Ik sleutelde al aan auto-interieurs voordat ik mijn rijbewijs had. De auto stond op de oprit en ik was er dagelijks mee bezig: strippen, uit elkaar, weer in elkaar — net zolang tot ik er het maximale geluid uit had.',
+    'Ik sleutelde al aan auto-interieurs voordat ik mijn rijbewijs had. De auto stond op de oprit en ik was er dagelijks mee bezig: strippen, uit elkaar, weer in elkaar — net zo lang tot ik er het maximale geluid uit had.',
     'Daarnaast heb ik het vak geleerd aan het conservatorium, als audio engineer. Microfoons, luidsprekers, sound design, mixen: sinds 2018 werk ik professioneel met geluid. Mijn speakers bouw ik zelf van hout, van kleine kastjes tot Jamaicaanse superscoopers van 24 inch.',
     'Die twee dingen komen in jouw auto samen. Ik stel niet af omdat het zo in een handleiding staat, maar omdat ik hoor wat er nog niet klopt. En dat is precies waarom ik dit doe: rijden hoort een feestje te zijn. Je moet ergens heen willen puur omdat de muziek onderweg zo goed staat.',
   ],
@@ -239,7 +239,7 @@ export const OVER = {
 /** De afsluitende oproep, voor pagina's zonder specifieke auto in beeld. */
 export const CTA = {
   tekst:
-    'Geen lange formulieren. Stuur een foto van je dashboard via WhatsApp en ontvang binnen 24 uur een eerlijk advies met transparante all-in prijs.',
+    'Geen lange formulieren. Stuur een foto van je dashboard via WhatsApp en ontvang binnen 24 uur een eerlijk advies met transparante all-inprijs.',
   knop: 'Stuur foto dashboard',
 };
 
@@ -249,7 +249,7 @@ export const CTA = {
  */
 export const ctaVoor = (model) =>
   `Geen lange formulieren. Stuur een foto van het dashboard van je ${model} via WhatsApp, ` +
-  `dan weet je binnen 24 uur wat er voor deze auto kan en wat het kost — met een all-in prijs, ` +
+  `dan weet je binnen 24 uur wat er voor deze auto kan en wat het kost — met een all-inprijs, ` +
   `zonder verplichtingen.`;
 
 /**

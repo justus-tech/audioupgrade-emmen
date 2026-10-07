@@ -58,7 +58,7 @@ const PAKKETTEN_DE = {
     tagline: 'Ruhe im Innenraum, klar am Telefon.',
     short: 'Die Grundlage: Ruhe im Innenraum und Details, die Sie vorher nicht gehört haben.',
     body:
-      'Weg mit den dünnen Papierlautsprechern ab Werk. Wir ersetzen die vorderen Lautsprecher durch ein kräftiges 2-Wege-Kompo-Set. Und wir tun mehr: die Türen bekommen eine zweilagige Dämmung in Premiumqualität.',
+      'Weg mit den dünnen Papierlautsprechern ab Werk. Wir ersetzen die vorderen Lautsprecher durch ein kräftiges 2-Wege-Kompo-Set. Und wir tun mehr: die Vordertüren bekommen eine zweilagige Dämmung in Premiumqualität.',
     features: [
       '2-Wege-Kompo-Lautsprecher der Premiumklasse.',
       'Hochwertige zweilagige akustische Türdämmung.',
@@ -79,9 +79,9 @@ const PAKKETTEN_DE = {
       'Für Vielfahrer und Unternehmer. Das ist keine Lautsprecher-Aufrüstung, sondern eine komplette Überarbeitung Ihrer Fahrzeugakustik. Herzstück ist ein digitaler Signalprozessor (DSP): damit steuern wir jeden Lautsprecher einzeln an und korrigieren die Laufzeiten, sodass Sie mitten in der Musik sitzen. Ergänzt durch einen unsichtbaren, spürbaren Subwoofer.',
     features: [
       'Fortschrittlicher DSP-Verstärker (digitaler Signalprozessor).',
-      'Fahrzeugspezifisches High-End-Lautsprecherset.',
-      'Unsichtbarer, ultrakompakter Aktivsubwoofer.',
-      'Dreilagige Dämmung der Türen.',
+      'Hochwertiges 2-Wege-Lautsprecherset, fahrzeugspezifisch eingebaut.',
+      'Unsichtbarer, kompakter Subwoofer, angesteuert vom DSP-Verstärker.',
+      'Dreilagige Dämmung der Vorder- und Hintertüren.',
       'Vollständig akustisch eingemessen.',
       'Batterie und Ladespannung gemessen, die Werte auf dem Auftragsschein.',
     ],
@@ -92,20 +92,21 @@ const PAKKETTEN_DE = {
     naam: "The Reference Edition",
     prijs: "3.695 €",
     prijsNoot: "Inklusive MwSt. und Einbau",
-    prijsExcl: "3.053 € zzgl. MwSt.",
+    prijsExcl: "3.054 € zzgl. MwSt.",
     tagline: 'Kompromisslose audiophile Perfektion.',
     short: 'Audiophile Perfektion für alle, die sich weigern, Kompromisse zu machen.',
     body:
-      'Die höchste Stufe. Ein achtkanaliger Verstärker mit integriertem DSP, Lautsprecherkomponenten aus der absoluten Weltspitze und ein Subwoofergehäuse, das für Ihr Fahrzeug gebaut und bezogen wird. Danach nehmen wir uns Stunden Zeit für die Phasenabstimmung am Laptop — genau da entsteht der Unterschied, den man nicht mehr vergisst.',
+      'Die höchste Stufe. Ein High-End-Verstärker mit eingebautem 10-Kanal-DSP, High-End-Lautsprecherkomponenten mit Phase Plug und ein Subwoofergehäuse, das für Ihr Fahrzeug gebaut und bezogen wird. Danach nehmen wir uns Stunden Zeit für die Abstimmung am Laptop — genau da entsteht der Unterschied, den man nicht mehr vergisst.',
     /* Deze vijf staan één op één in de Nederlandse prijslijst. Ze waren eerst
        samengevat tot vier vage regels, en juist de concrete details verkopen
        dit pakket: acht kanalen, op maat gebouwd, urenlange fase-afstemming. */
     features: [
-      'High-End-Achtkanalverstärker mit integriertem DSP.',
-      'Lautsprecherkomponenten der absoluten Weltspitze.',
+      'High-End-Verstärker mit eingebautem 10-Kanal-DSP.',
+      'High-End-Lautsprecherkomponenten mit Phase Plug.',
+      'Lautsprecher hinten für Ihre Mitfahrer, bewusst zurückhaltend abgestimmt.',
       'Maßgefertigtes und bezogenes Subwoofergehäuse.',
-      'Komplette Dämmung: Außenhaut, Innenhaut und Verkleidung.',
-      'Stundenlange Phasenabstimmung am Laptop durch den Spezialisten.',
+      'Komplette Dämmung: alle Türen, der Boden und die Heckklappe.',
+      'Stundenlange Abstimmung am Laptop: alles erreicht Ihre Ohren gleichzeitig.',
       'Batterie und Ladespannung gemessen, die Werte auf dem Auftragsschein.',
     ],
     cta: 'Reference anfragen',
@@ -206,7 +207,7 @@ const PAKKETTEN_EN = {
     tagline: 'Quiet inside, clear on the phone.',
     short: 'The foundation: a quiet cabin and detail you have not heard before.',
     body:
-      'Out with the thin paper speakers the factory fitted. We replace the front speakers with a proper 2-way component set. And we do more than that: the doors get two layers of premium sound deadening.',
+      'Out with the thin paper speakers the factory fitted. We replace the front speakers with a proper 2-way component set. And we do more than that: the front doors get two layers of premium sound deadening.',
     features: [
       'Premium 2-way component speakers.',
       'High-grade two-layer acoustic door damping.',
@@ -227,12 +228,12 @@ const PAKKETTEN_EN = {
     tagline: '0% boot space lost. 100% dynamics.',
     short: 'For high-mileage drivers who want the maximum without giving up boot space.',
     body:
-      'For people who live in their car, and for anyone who actually listens. This is not a speaker upgrade but a complete rework of your vehicle acoustics. At its heart sits a digital sound processor: it drives every speaker separately and corrects the arrival times, so you end up sitting in the middle of the music rather than in front of it. Finished off with a subwoofer you cannot see but can certainly feel.',
+      'For people who live in their car, and for anyone who actually listens. This is not a speaker upgrade but a complete rework of your vehicle acoustics. At its heart sits a digital signal processor: it drives every speaker separately and corrects the arrival times, so you end up sitting in the middle of the music rather than in front of it. Finished off with a subwoofer you cannot see but can certainly feel.',
     features: [
-      'Advanced DSP amplifier (digital sound processor).',
-      'Vehicle-specific high-end speaker set.',
-      'Invisible, ultra-compact active subwoofer.',
-      'Three-layer damping of the doors.',
+      'Advanced DSP amplifier (digital signal processor).',
+      'High-grade 2-way speaker set, fitted to suit your car.',
+      'Invisible, compact subwoofer, driven by the DSP amplifier.',
+      'Three-layer damping of the front and rear doors.',
       'Fully measured and tuned to your car.',
       'Battery and charging voltage measured, figures on your job sheet.',
     ],
@@ -243,20 +244,21 @@ const PAKKETTEN_EN = {
     naam: "The Reference Edition",
     prijs: "€3,695",
     prijsNoot: "VAT and fitting included",
-    prijsExcl: "€3,053 excl. VAT",
+    prijsExcl: "€3,054 excl. VAT",
     tagline: 'Audiophile perfection, no compromises.',
     short: 'Audiophile perfection for those who refuse to compromise.',
     body:
-      'The top of the range. An eight-channel amplifier with integrated DSP, speaker components from the very top of the market, and a subwoofer enclosure built and trimmed for your car. Then we spend hours on phase alignment with a laptop — that is where the difference comes from, and it is not one you forget.',
+      'The top of the range. A high-end amplifier with a built-in 10-channel DSP, high-end speaker components with a phase plug, and a subwoofer enclosure built and trimmed for your car. Then we spend hours tuning it on a laptop — that is where the difference comes from, and it is not one you forget.',
     /* Deze vijf komen één op één uit de Nederlandse prijslijst. Ze waren eerst
        samengevat tot vier vage regels, terwijl juist de concrete details dit
        pakket verkopen. */
     features: [
-      'High-end eight-channel amplifier with integrated DSP.',
-      'Speaker components from the very top of the market.',
+      'High-end amplifier with a built-in 10-channel DSP.',
+      'High-end speaker components with a phase plug.',
+      'Rear speakers for your passengers, deliberately kept in the background.',
       'Custom-built and trimmed subwoofer enclosure.',
-      'Complete damping: outer skin, inner skin and panel.',
-      'Hours of specialist phase tuning by laptop.',
+      'Complete damping: all doors, the floor and the tailgate.',
+      'Hours of tuning on a laptop: everything reaches your ears at the same moment.',
       'Battery and charging voltage measured, figures on your job sheet.',
     ],
     cta: 'Ask about Reference',

@@ -62,7 +62,7 @@ export default [
     matchers: { merk: 'RENAULT', model: /TWINGO/ },
     title: 'Renault Twingo audio upgrade | Audio Upgrade Emmen',
     description:
-      'Van blikkerig naar vol geluid in je Renault Twingo. Speakers, deurdemping en minder rolgeluid, met all-in prijs.',
+      'Van blikkerig naar vol geluid in je Renault Twingo. Speakers, deurdemping en minder rolgeluid, met all-inprijs.',
     intro:
       'De Twingo is klein, vrolijk en goedkoop gehouden. Aan audio is daarbij vrijwel niets uitgegeven — wat de sprong hier juist zo groot maakt.',
     problems: [

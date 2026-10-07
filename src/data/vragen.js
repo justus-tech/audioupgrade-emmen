@@ -67,7 +67,7 @@ export const VRAGEN = [
   },
   {
     vraag: 'Wat kost het?',
-    antwoord: `De pakketten beginnen bij € ${goedkoopste},- en dat is een all-in prijs: inclusief btw en montage. Er komen achteraf geen montage- of voorrijkosten bij. Wat jouw auto precies kost, hoor je in de offerte vooraf.`,
+    antwoord: `De pakketten beginnen bij € ${goedkoopste},- en dat is een all-inprijs: inclusief btw en montage. Er komen achteraf geen montage- of voorrijkosten bij. Wat jouw auto precies kost, hoor je in de offerte vooraf.`,
   },
   {
     vraag: 'Krijg ik garantie op het werk zelf?',

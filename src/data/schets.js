@@ -314,7 +314,9 @@ export const ONDERDELEN = [
     uitleg:
       'Apple CarPlay en Android Auto draadloos in het scherm dat er al zit. Je stuurknoppen, navigatie en parkeersensoren blijven precies zoals ze waren — er verandert niets zichtbaars aan je dashboard.',
     x: 220, y: 224,
-    pakketten: ['carplay-upgrade', 'oem-plus-executive', 'reference-edition', 'competitie-show'],
+    /* Alleen bij de losse optie. Justus, 26 september 2026: CarPlay blijft
+       iets dat je erbij kiest, geen onderdeel van de grote pakketten. */
+    pakketten: ['carplay-upgrade'],
   },
   {
     id: 'tweeters',
@@ -347,6 +349,11 @@ export const ONDERDELEN = [
     id: 'dsp',
     naam: 'DSP-versterker',
     plek: 'Onder de stoel of in de zijwand',
+    /* Bij een showopbouw is de versterker juist het pronkstuk; zo staat het
+       ook in de tekst van dat pakket. */
+    plekPer: {
+      'competitie-show': 'Zichtbaar achter plexiglas, in de kofferbak',
+    },
     uitleg:
       'Het hart van de installatie. Geeft de speakers het vermogen waarvoor ze gemaakt zijn en corrigeert met tijdcorrectie het feit dat je dichter bij de linkerdeur zit dan bij de rechter. Onzichtbaar weggewerkt.',
     x: 302, y: 486,
@@ -355,9 +362,26 @@ export const ONDERDELEN = [
   {
     id: 'sub',
     naam: 'Subwoofer',
+    /**
+     * DE SUBWOOFER IS NIET IN ELK PAKKET DEZELFDE.
+     *
+     * De compacte variant onder de stoel hoort bij de Executive. Bij de
+     * Reference komt er een eigen behuizing, en bij een showopbouw is die
+     * behuizing juist onderdeel van het ontwerp. Stond hier één tekst voor
+     * alle drie, dan beloofde de site bij de Reference een vlakke laadvloer
+     * die daar niet altijd te geven is.
+     */
     plek: 'Onder de stoel of in de reservewielbak',
+    plekPer: {
+      'reference-edition': 'In een eigen behuizing, de plek verschilt per auto',
+      'competitie-show': 'In een eigen behuizing in de kofferbak',
+    },
     uitleg:
       'Het fundament dat de fabriek weglaat. Compact uitgevoerd, zodat je laadvloer vlak blijft en je bagageruimte volledig bruikbaar. Waar hij precies komt hangt van je auto af.',
+    uitlegPer: {
+      'reference-edition': 'Het fundament dat de fabriek weglaat. Bij dit pakket komt hij in een eigen behuizing, op maat gebouwd voor jouw auto. Waar hij precies komt hangt van je auto af, en reken erop dat hij ruimte in de kofferbak vraagt.',
+      'competitie-show': 'Het fundament dat de fabriek weglaat. Bij een showopbouw is de behuizing onderdeel van het ontwerp: hij staat in de kofferbak, in het zicht, en sluit in vorm en bekleding aan op je interieur.',
+    },
     x: 220, y: 494,
     pakketten: ['oem-plus-executive', 'reference-edition', 'competitie-show'],
   },

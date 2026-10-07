@@ -62,7 +62,7 @@ export default [
     matchers: { merk: 'PEUGEOT', model: /\b10[78]\b/ },
     title: 'Peugeot 107 audio upgrade | Audio Upgrade Emmen',
     description:
-      'Beter geluid in je Peugeot 107 of 108. Speakers, deurdemping en minder rolgeluid, met all-in prijs en behoud van garantie.',
+      'Beter geluid in je Peugeot 107 of 108. Speakers, deurdemping en minder rolgeluid, met all-inprijs en behoud van garantie.',
     intro:
       'De 107 is samen met de Toyota Aygo en de Citroën C1 ontwikkeld op de scherpst mogelijke kostprijs. Aan audio is daarbij vrijwel niets uitgegeven.',
     problems: [
@@ -230,7 +230,7 @@ export default [
     matchers: { merk: 'PEUGEOT', model: /\b20[67]\b/ },
     title: 'Peugeot 207 audio upgrade | Audio Upgrade Emmen',
     description:
-      'Beter geluid in je Peugeot 206 of 207. Speakers vervangen, deuren dempen en minder rolgeluid, met all-in prijs.',
+      'Beter geluid in je Peugeot 206 of 207. Speakers vervangen, deuren dempen en minder rolgeluid, met all-inprijs.',
     intro:
       'De 206 en 207 zijn met honderdduizenden verkocht en veel ervan rijden nog. Bij een auto van deze leeftijd zit de eerste winst niet in meer vermogen maar in herstel.',
     problems: [

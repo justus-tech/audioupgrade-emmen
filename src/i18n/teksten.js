@@ -12,7 +12,7 @@
  *   - Blijft mijn Werksgarantie geldig? (ja, en dat is voor een Duitse
  *     autobezitter een zwaarder punt dan hier)
  *   - Wat kost het echt? (Duitse inbouwers werken vaker met uurtarieven; een
- *     all-in prijs vooraf is daar een groter verschil dan in Nederland)
+ *     all-inprijs vooraf is daar een groter verschil dan in Nederland)
  *
  * De kenteken-check staat NIET op de Duitse en Engelse pagina. Die werkt op de
  * open data van de RDW en kent alleen Nederlandse kentekens. Een veld dat voor

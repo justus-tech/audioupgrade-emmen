@@ -24,8 +24,20 @@ const { start = 'akoestische-basis' } = Astro.props;
    dezelfde pagina, dan mogen ze elkaars arcering niet oppakken. */
 const uid = Math.random().toString(36).slice(2, 8);
 
+/**
+ * Een onderdeel kan per pakket een andere plek of een andere uitleg hebben.
+ * De subwoofer bijvoorbeeld: compact onder de stoel bij de Executive, in een
+ * eigen behuizing bij de Reference. `plekPer` en `uitlegPer` gaan mee, en de
+ * tekst hieronder kiest de juiste zodra je van pakket wisselt.
+ */
 const info = Object.fromEntries(
-  [...ONDERDELEN, ...ZONES].map((o) => [o.id, { naam: o.naam, plek: o.plek, uitleg: o.uitleg }])
+  [...ONDERDELEN, ...ZONES].map((o) => [o.id, {
+    naam: o.naam,
+    plek: o.plek,
+    uitleg: o.uitleg,
+    plekPer: o.plekPer || {},
+    uitlegPer: o.uitlegPer || {},
+  }])
 );
 ---
 <div class="ds" data-actief={start}>
@@ -139,11 +151,17 @@ const info = Object.fromEntries(
       blok.querySelectorAll('[data-id]').forEach((el) => {
         el.classList.toggle('gekozen', el.dataset.id === id);
       });
+      const pakket = blok.dataset.actief;
+      gekozenId = id;
       nrEl.textContent = nummers[id] ?? '';
       kopEl.textContent = info[id].naam;
-      plekEl.textContent = info[id].plek;
-      tekstEl.textContent = info[id].uitleg;
+      plekEl.textContent = info[id].plekPer[pakket] || info[id].plek;
+      tekstEl.textContent = info[id].uitlegPer[pakket] || info[id].uitleg;
     }
+
+    /* Welk onderdeel staat er open? Wisselt de bezoeker van pakket, dan moet
+       dezelfde uitleg opnieuw getekend worden — de plek kan nu verschillen. */
+    let gekozenId = '';
 
     function toonPakket(slug) {
       blok.dataset.actief = slug;
@@ -169,8 +187,11 @@ const info = Object.fromEntries(
         punt.querySelector('.ds-nr').textContent = String(n);
       });
 
-      // Meteen het eerste onderdeel tonen, zodat het paneel nooit leeg is.
-      const eerste = volgorde.find((id) => nummers[id]);
+      /* Staat het onderdeel dat openstond ook in dit pakket, dan blijft het
+         openstaan — maar wel met de tekst van dit pakket erbij. Zo niet, dan
+         het eerste, zodat het paneel nooit leeg is. */
+      const blijft = nummers[gekozenId] ? gekozenId : '';
+      const eerste = blijft || volgorde.find((id) => nummers[id]);
       if (eerste) kies(eerste);
     }
 

@@ -20,7 +20,7 @@ export default [
     matchers: { merk: 'TOYOTA', model: /AYGO/ },
     title: 'Toyota Aygo audio upgrade | Audio Upgrade Emmen',
     description:
-      'Van dun naar vol geluid in je Toyota Aygo. Speakers, deurdemping en minder rolgeluid, met all-in prijs en behoud van fabrieksgarantie.',
+      'Van dun naar vol geluid in je Toyota Aygo. Speakers, deurdemping en minder rolgeluid, met all-inprijs en behoud van fabrieksgarantie.',
     intro:
       'De Aygo is gebouwd op de scherpst mogelijke kostprijs, samen met de Peugeot 107 en de Citroën C1. Aan audio is daarbij vrijwel niets uitgegeven. Dat maakt de sprong hier juist zo groot.',
     problems: [
