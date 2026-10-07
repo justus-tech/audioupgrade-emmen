@@ -233,6 +233,8 @@ export function offertePdf(offerte, inst = STANDAARD_INSTELLINGEN) {
        bedenktijd. Spreek je het in de werkplaats af, dan niet. */
     opAfstand: offerte.opAfstand !== false,
     startDirect: !!offerte.startDirect,
+    /* Alleen werk aan een bestaande installatie: bedenktijd vanaf het akkoord. */
+    alleenWerk: !!offerte.alleenWerk,
     /* Een bedrijf heeft geen bedenktijd, en ziet bedragen zonder btw. */
     zakelijk,
     annuleerDagen: annuleertermijn(),
