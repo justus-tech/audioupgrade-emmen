@@ -16,7 +16,7 @@ export default [
     slug: 'mercedes-c-klasse',
     brand: 'Mercedes-Benz',
     model: 'C-klasse',
-    matchers: { merk: 'MERCEDES', model: /\bC \d|C-KLASSE|C KLASSE|C180|C200|C220|C250|C300/ },
+    matchers: { merk: 'MERCEDES', model: /\bC \d|\bC-KLASSE|\bC KLASSE|\bC180|\bC200|\bC220|\bC250|\bC300/ },
     title: 'Mercedes C-klasse audio upgrade | Audio Upgrade Emmen',
     description:
       'Warmer, voller en dieper geluid in je Mercedes C-klasse. DSP-afstemming, premium speakers en draadloos CarPlay in het originele scherm.',
@@ -312,7 +312,7 @@ export default [
     brand: 'Mercedes-Benz',
     model: 'A-klasse',
     generaties: 'W176 en W177',
-    matchers: { merk: 'MERCEDES', model: /\bA ?\d{3}(?!\d)|A-KLASSE|A KLASSE/ },
+    matchers: { merk: 'MERCEDES', model: /\bA ?\d{3}(?!\d)|\bA-KLASSE|\bA KLASSE/ },
     title: 'Mercedes A-klasse audio upgrade | Audio Upgrade Emmen',
     description:
       'Beter geluid in je Mercedes A-klasse. Premium speakers, deurdemping en DSP-afstemming met behoud van je MBUX-scherm.',
@@ -354,7 +354,7 @@ export default [
     brand: 'Mercedes-Benz',
     model: 'B-klasse',
     generaties: 'W245, W246 en W247',
-    matchers: { merk: 'MERCEDES', model: /\bB ?\d{3}(?!\d)|B-KLASSE|B KLASSE/ },
+    matchers: { merk: 'MERCEDES', model: /\bB ?\d{3}(?!\d)|\bB-KLASSE|\bB KLASSE/ },
     title: 'Mercedes B-klasse audio upgrade | Audio Upgrade Emmen',
     description:
       'Meer body in je Mercedes B-klasse. Premium speakers, deurdemping, DSP en draadloos CarPlay. All-in prijs, garantie behouden.',
@@ -396,7 +396,7 @@ export default [
     brand: 'Mercedes-Benz',
     model: 'E-klasse',
     generaties: 'W211, W212 en W213, sedan en Estate',
-    matchers: { merk: 'MERCEDES', model: /\bE ?\d{3}(?!\d)|E-KLASSE|E KLASSE/ },
+    matchers: { merk: 'MERCEDES', model: /\bE ?\d{3}(?!\d)|\bE-KLASSE|\bE KLASSE/ },
     title: 'Mercedes E-klasse audio upgrade | Audio Upgrade Emmen',
     description:
       'Meer diepgang in je Mercedes E-klasse of Estate. DSP-afstemming, high-end speakers, demping en draadloos CarPlay.',
@@ -438,7 +438,7 @@ export default [
     brand: 'Mercedes-Benz',
     model: 'S-klasse',
     generaties: 'W221, W222 en W223',
-    matchers: { merk: 'MERCEDES', model: /\bS ?\d{3}(?!\d)|S-KLASSE|S KLASSE/ },
+    matchers: { merk: 'MERCEDES', model: /\bS ?\d{3}(?!\d)|\bS-KLASSE|\bS KLASSE/ },
     title: 'Mercedes S-klasse audio upgrade | Audio Upgrade Emmen',
     description:
       'Audio upgrade voor je Mercedes S-klasse. Verfijning met DSP-afstemming en demping, met respect voor wat er al in zit.',
