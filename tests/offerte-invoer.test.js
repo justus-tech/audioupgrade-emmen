@@ -123,6 +123,12 @@ describe('de offerte opbouwen', () => {
     assert.equal(offerte.opAfstand, false);
     assert.equal(offerte.startDirect, false);
   });
+
+  test('alleen werk gaat mee naar de offerte', () => {
+    // Dan begint de bedenktijd bij het akkoord, en dat moet er zo op staan.
+    assert.equal(bouwOfferte(basis).alleenWerk, false);
+    assert.equal(bouwOfferte({ ...basis, alleenWerk: true }).alleenWerk, true);
+  });
 });
 
 describe('het voorbeeldbestand', () => {

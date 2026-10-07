@@ -214,6 +214,16 @@ import { APP } from '../data/app.js';
         </span>
       </label>
 
+      <label class="wb-vink">
+        <input type="checkbox" id="wb-alleen-werk" />
+        <span>
+          Alleen werk, geen nieuwe onderdelen
+          <em>Bijvoorbeeld alleen inmeten en afstellen van een installatie die er al in zit.
+          Dan begint de bedenktijd bij het akkoord en niet bij het ophalen van de auto, en
+          moet dat er zo op staan.</em>
+        </span>
+      </label>
+
       <label class="wb-vink" id="wb-start-veld">
         <input type="checkbox" id="wb-start-direct" />
         <span>
@@ -1321,6 +1331,7 @@ import { APP } from '../data/app.js';
        afstand. `startDirect` staat uit, want dat moet de klant zelf vragen. */
     opAfstand: true,
     startDirect: false,
+    alleenWerk: false,
     voorwaardenBijlage: true,
     /* De afspraak. Leeg tot Justus een dag prikt; dan komt de klus in de
        Agenda te staan en rekent de app de besteldatum uit. */
@@ -2012,6 +2023,7 @@ import { APP } from '../data/app.js';
   const AFSPRAKEN = {
     opAfstand: 'wb-op-afstand',
     startDirect: 'wb-start-direct',
+    alleenWerk: 'wb-alleen-werk',
     voorwaardenBijlage: 'wb-bijlage',
   };
 
@@ -2029,6 +2041,7 @@ import { APP } from '../data/app.js';
   function tekenAfspraken() {
     $('#wb-op-afstand').checked = offerte.opAfstand !== false;
     $('#wb-start-direct').checked = !!offerte.startDirect;
+    $('#wb-alleen-werk').checked = !!offerte.alleenWerk;
     $('#wb-bijlage').checked = offerte.voorwaardenBijlage !== false;
     $('#wb-start-veld').hidden = offerte.opAfstand === false;
   }

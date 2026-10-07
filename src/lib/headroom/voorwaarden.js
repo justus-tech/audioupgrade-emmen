@@ -53,6 +53,11 @@ function artikel(zoek) {
  * "inclusief btw" zou er pertinent naast zitten. En de bedenktijd is een
  * consumentenrecht: een bedrijf heeft hem niet. Hem toch beloven is een recht
  * weggeven dat de wet niet van je vraagt — zie artikel 4 van de voorwaarden.
+ *
+ * `alleenWerk` is voor een klus zonder nieuwe onderdelen, zoals alleen het
+ * inmeten en afstellen van een installatie die er al in zit. Dan begint de
+ * bedenktijd bij het akkoord en niet bij het ophalen van de auto, en is er
+ * niets om uit te bouwen.
  */
 export function kernpunten({
   soort = 'offerte',
@@ -61,6 +66,7 @@ export function kernpunten({
   opAfstand = true,
   startDirect = false,
   zakelijk = false,
+  alleenWerk = false,
   annuleerDagen = 7,
 } = {}) {
   const punten = [];
@@ -85,8 +91,8 @@ export function kernpunten({
 
   punten.push(
     `Afzeggen of verzetten kan kosteloos tot ${annuleerDagen} dagen voor de afgesproken dag. ` +
-    `Daarna brengen we 25% van het offertebedrag in rekening voor de gereserveerde tijd en ` +
-    'de al bestelde onderdelen.' +
+    'Daarna brengen we 25% van het offertebedrag in rekening voor de gereserveerde tijd' +
+    (alleenWerk ? '.' : ' en de al bestelde onderdelen.') +
     (herroeping
       ? ' Zeg je af binnen je bedenktijd hieronder, dan geldt dat niet: dan gelden alleen de' +
         ' regels van die bedenktijd en brengen we die 25% niet in rekening.'
@@ -100,7 +106,10 @@ export function kernpunten({
 
   punten.push('Je fabrieksgarantie blijft 100% behouden; er wordt niet in de originele bedrading geknipt.');
 
-  punten.push('Werk gebeurt uitsluitend op afspraak. Levertijd van onderdelen in overleg.');
+  punten.push(
+    'Werk gebeurt uitsluitend op afspraak.' +
+    (alleenWerk ? '' : ' Levertijd van onderdelen in overleg.')
+  );
 
   /* De bedenktijd is een consumentenrecht. Bij een zakelijke klant bestaat
      hij niet, ook niet als je het per WhatsApp afspreekt. */
@@ -113,15 +122,27 @@ export function kernpunten({
        zijn auto met de apparatuur erin terugkrijgt, niet vanaf de dag van
        de afspraak. Dat scheelt weken, en te weinig of verkeerde informatie
        hierover rekt de termijn op tot twaalf maanden.
-       Eén zin voor allebei de gevallen: gaat het bij uitzondering om werk
-       zonder nieuwe onderdelen, dan begint de termijn eerder (bij de
-       afspraak), en geeft deze zin de klant dus meer tijd dan de wet eist.
-       Te veel geven mag; te weinig informeren niet. Het precieze
-       onderscheid staat in artikel 4 van de voorwaarden achterop. */
+
+       ALLEEN WERK, GEEN ONDERDELEN.
+       Dan is het een dienst en geen koop, en loopt de termijn vanaf het
+       sluiten van de overeenkomst (art. 6:230o BW); artikel 4 achterop zegt
+       dat ook. De zin voor een klus met onderdelen zou hier niet alleen meer
+       tijd geven maar het werk zelf binnen de bedenktijd zetten, en zonder
+       uitdrukkelijk verzoek is de klant voor dat werk dan niets
+       verschuldigd. Komt de offerte pas ná het akkoord bij de klant, zoals
+       bij een afspraak die per WhatsApp al rond is, dan eindigt de termijn
+       14 dagen na de dag waarop hij deze informatie ontvangt. "Nooit eerder
+       dan" dekt allebei de gevallen met één zin. */
     punten.push(
-      'Omdat we dit op afstand afspreken heb je 14 dagen bedenktijd: je mag de overeenkomst ' +
-      'zonder opgaaf van reden ontbinden. Die 14 dagen gaan in op de dag nadat je je auto ' +
-      'met de nieuwe apparatuur erin terugkrijgt.'
+      alleenWerk
+        ? 'Omdat we dit op afstand afspreken heb je 14 dagen bedenktijd: je mag de ' +
+          'overeenkomst zonder opgaaf van reden ontbinden. Het gaat hier alleen om werk aan ' +
+          'wat er al in je auto zit, zonder nieuwe onderdelen. Daarom gaan die 14 dagen in ' +
+          'op de dag nadat je akkoord geeft, en nooit eerder dan de dag nadat je de offerte ' +
+          'hebt ontvangen.'
+        : 'Omdat we dit op afstand afspreken heb je 14 dagen bedenktijd: je mag de overeenkomst ' +
+          'zonder opgaaf van reden ontbinden. Die 14 dagen gaan in op de dag nadat je je auto ' +
+          'met de nieuwe apparatuur erin terugkrijgt.'
     );
     /* De wet wil dat het modelformulier meegaat, niet alleen dat je de
        bedenktijd noemt. Het blad zit als losse pdf bij de offerte; hier
@@ -134,13 +155,29 @@ export function kernpunten({
     /* Wat er met de auto en met het geld gebeurt als iemand zich bedenkt.
        De wet wil dat je vooraf zegt dat de kosten van het terugbrengen voor
        de klant zijn, en bij een zaak die niet per post terug kan ook hoe dat
-       praktisch gaat. Zeg je dat niet, dan draag je die kosten zelf. */
+       praktisch gaat. Zeg je dat niet, dan draag je die kosten zelf.
+       Bij alleen werk is er niets uit te bouwen; wat de klant dan wil weten
+       is dat afzeggen voordat er iets gedaan is hem niets kost (artikel 4). */
     punten.push(
-      'Bedenk je je, dan breng je de auto binnen 14 dagen langs zodat we de apparatuur ' +
-      'eruit kunnen halen. Dat uitbouwen en het terugzetten van je originele onderdelen ' +
-      'kost je niets; het rijden naar de werkplaats is voor jou.'
+      alleenWerk
+        ? 'Bedenk je je binnen die 14 dagen voordat we aan je auto begonnen zijn, dan ' +
+          'betaal je niets en krijg je een aanbetaling volledig terug.'
+        : 'Bedenk je je, dan breng je de auto binnen 14 dagen langs zodat we de apparatuur ' +
+          'eruit kunnen halen. Dat uitbouwen en het terugzetten van je originele onderdelen ' +
+          'kost je niets; het rijden naar de werkplaats is voor jou.'
     );
-    if (startDirect) {
+    if (startDirect && alleenWerk) {
+      /* Een dienst die helemaal is uitgevoerd op uitdrukkelijk verzoek van de
+         klant, die wist dat zijn bedenktijd dan vervalt, kan niet meer
+         worden herroepen. Zegt hij eerder af, dan betaalt hij het gedane werk
+         naar evenredigheid. Zie artikel 4 van de voorwaarden. */
+      punten.push(
+        'Je vraagt ons uitdrukkelijk om te beginnen voordat je bedenktijd om is, en je weet ' +
+        'dat je bedenktijd vervalt zodra het werk helemaal klaar is. Zeg je eerder af, dan ' +
+        'betaal je een evenredig deel van het afgesproken bedrag voor het werk dat al gedaan ' +
+        'is. Een uurtarief rekenen we niet.'
+      );
+    } else if (startDirect) {
       /* Hier stond dat de klant bij afzeggen ook de onderdelen betaalt. Dat is
          niet zo: die gaan terug en dat geld gaat terug. Hij betaalt het werk
          naar evenredigheid, plus de waardevermindering van apparatuur die
