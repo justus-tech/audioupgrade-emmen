@@ -9,7 +9,7 @@ import { pad } from '../lib/pad.js';
 import { DEALERS } from '../data/dealers.js';
 import { whatsappLink, berichtOverAuto } from '../lib/whatsapp.js';
 import Taalkiezer from '../components/Taalkiezer.astro';
-import { TALEN, TAALVOLGORDE, STANDAARDTAAL, taalPad, wisselPad, padVan } from '../i18n/talen.js';
+import { TALEN, TAALVOLGORDE, STANDAARDTAAL, PADEN, taalPad, wisselPad, padVan } from '../i18n/talen.js';
 import { tekstenVan, tijdenKortVan } from '../i18n/teksten.js';
 
 /**
@@ -108,10 +108,27 @@ const nav = MENU.map((item) => ({
  * kan hij ze als concurrenten van elkaar behandelen. x-default vertelt hem
  * welke versie hij moet tonen als hij de taal van de bezoeker niet kent.
  */
-const anderetalen = TAALVOLGORDE.map((code) => ({
-  hreflang: TALEN[code].hreflang,
-  href: new URL(pad(wisselPad(code, sleutel)), Astro.site).href,
-}));
+/* Alleen voor pagina's die écht in meer talen bestaan.
+ *
+ * Een modelpagina, een merkpagina en de voorwaarden bestaan alleen in het
+ * Nederlands. Die hebben geen `sleutel` in de routekaart, en dan viel
+ * wisselPad() terug op de startpagina van elke taal. Het gevolg stond op 183
+ * van de 204 pagina's in de broncode: canonical wees naar de modelpagina zelf,
+ * maar hreflang="nl" wees naar de homepage. Daarmee vertelde elke modelpagina
+ * aan Google dat haar Nederlandse versie de startpagina is — en 150 pagina's
+ * die allemaal dezelfde pagina als hun tegenhanger aanwijzen is precies het
+ * signaal waarop hij er één uitkiest en de rest laat vallen.
+ *
+ * Een taalgroep van één is net zo goed als geen groep: dan laten we hem weg.
+ * /de en /en blijven bereikbaar via de taalknop in de kopbalk en via de
+ * sitemap, dus er gaat niets verloren. */
+const inMeerTalen = Boolean(sleutel && PADEN[sleutel]);
+const anderetalen = inMeerTalen
+  ? TAALVOLGORDE.map((code) => ({
+      hreflang: TALEN[code].hreflang,
+      href: new URL(pad(wisselPad(code, sleutel)), Astro.site).href,
+    }))
+  : [];
 ---
 <!doctype html>
 <html lang={dezeTaal.htmlLang}>
@@ -147,7 +164,7 @@ const anderetalen = TAALVOLGORDE.map((code) => ({
   {!noindex && anderetalen.map((t) => (
     <link rel="alternate" hreflang={t.hreflang} href={t.href} />
   ))}
-  {!noindex && (
+  {!noindex && inMeerTalen && (
     <link rel="alternate" hreflang="x-default" href={new URL(pad(wisselPad('nl', sleutel)), Astro.site).href} />
   )}
   {(noindex || voorbeeld) && <meta name="robots" content="noindex, nofollow" />}
@@ -155,7 +172,12 @@ const anderetalen = TAALVOLGORDE.map((code) => ({
   <meta property="og:description" content={description} />
   <meta property="og:type" content="website" />
   <meta property="og:url" content={canonical} />
-  <meta property="og:locale" content="nl_NL" />
+  {/* De taal van déze pagina, niet altijd Nederlands. Hier stond nl_NL vast,
+      ook op /de en /en: dan deelt WhatsApp een Duitse pagina als Nederlands. */}
+  <meta property="og:locale" content={dezeTaal.ogLocale} />
+  {inMeerTalen && TAALVOLGORDE.filter((code) => code !== taal).map((code) => (
+    <meta property="og:locale:alternate" content={TALEN[code].ogLocale} />
+  ))}
   {/* De afbeelding die WhatsApp toont als iemand de link deelt. Afmetingen
       erbij: dan reserveert WhatsApp meteen de goede ruimte en verspringt de
       voorbeeldweergave niet als het beeld binnenkomt.
@@ -215,7 +237,16 @@ const anderetalen = TAALVOLGORDE.map((code) => ({
     url: SITE.url,
     telephone: SITE.phone,
     email: SITE.email,
-    priceRange: '€695 - €3695',
+    /* Uitgerekend uit de pakketten, niet ingetikt. Hier stond "€695 - €3695"
+       met de hand, en dat klopte aan geen van beide kanten meer: het
+       goedkoopste dat je bij ons kunt kopen is € 395 (accu en voeding).
+       Alleen wat een zichtbaar bedrag heeft telt mee — "Prijs op aanvraag"
+       heeft geen bedrag om een vork mee te trekken, en de showbouw van
+       € 12.500 zou de vork oprekken tot iets wat niets meer zegt. */
+    priceRange: (() => {
+      const bedragen = PACKAGES.filter((p) => p.bedrag && /\d/.test(p.price)).map((p) => p.bedrag);
+      return `€${Math.min(...bedragen)} - €${Math.max(...bedragen)}`;
+    })(),
     currenciesAccepted: 'EUR',
     vatID: SITE.btw,
     /* De sociale profielen van hetzelfde bedrijf. Zie SOCIALS in site.js. */
@@ -232,9 +263,18 @@ const anderetalen = TAALVOLGORDE.map((code) => ({
       { '@type': 'City', name: 'Emmen' },
       { '@type': 'AdministrativeArea', name: 'Drenthe' },
       { '@type': 'Country', name: 'Nederland' },
+      /* De site heeft een volledige Duitse versie die klanten van over de
+         grens aanspreekt ("20 minuten hinter der Grenze"). Dan hoort
+         Duitsland hier ook te staan — dit is geen nieuwe belofte, het is wat
+         de site al doet. */
+      { '@type': 'Country', name: 'Duitsland' },
     ],
-    knowsLanguage: 'nl-NL',
-    availableLanguage: 'Nederlands',
+    /* Hier stond alleen nl-NL, op élke pagina — ook op de Duitse en Engelse.
+       Dan staat er machineleesbaar dat we geen Duits spreken, onder een
+       pagina die in het Duits uitlegt dat dat wel kan.
+       availableLanguage is hier weggehaald: dat is in schema.org geen
+       eigenschap van een bedrijf maar van een contactpunt, dus het deed niets. */
+    knowsLanguage: ['nl-NL', 'de-DE', 'en-GB'],
     /**
      * De openingstijden, machineleesbaar.
      *
@@ -257,14 +297,42 @@ const anderetalen = TAALVOLGORDE.map((code) => ({
       })),
     description:
       'Premium car audio, draadloze CarPlay- en Android Auto-inbouw, DSP-tuning en akoestische deurdemping in Emmen (Drenthe). Werken op afspraak. Onzichtbaar weggewerkt achter de originele panelen, met behoud van fabrieksgarantie.',
-    makesOffer: PACKAGES.map((p) => ({
-      '@type': 'Offer',
-      name: p.name,
-      description: p.short,
-      priceCurrency: 'EUR',
-      ...(p.bedrag ? { price: p.bedrag } : { availability: 'https://schema.org/InStock' }),
-      itemOffered: { '@type': 'Service', name: p.name, serviceType: 'Car audio upgrade' },
-    })),
+    /**
+     * De pakketten, machineleesbaar.
+     *
+     * Let op het verschil tussen een vaste prijs en een ondergrens. Hier
+     * stond alleen `price: p.bedrag`, en dat maakte van The Competition Build
+     * een pakket van precies € 12.500 — terwijl de pagina ernaast "Prijs op
+     * aanvraag" zegt. Dat is twee dingen tegelijk beweren, en Google mag van
+     * ons geen prijs tonen die wij zelf niet durven opschrijven. Hetzelfde
+     * geldt voor "Vanaf € 695,00": dat is een vanafprijs, geen vaste prijs.
+     *
+     * Dus: staat er een gewoon bedrag op de pagina, dan is het `price`. Is het
+     * een vanafprijs of een prijs op aanvraag, dan gaat het bedrag mee als
+     * `minPrice` — eerlijk over wat het is, en het anker blijft staan.
+     */
+    makesOffer: PACKAGES.map((p) => {
+      const vastBedrag = p.bedrag && /\d/.test(p.price) && !/vanaf/i.test(p.price);
+      return {
+        '@type': 'Offer',
+        name: p.name,
+        description: p.short,
+        priceCurrency: 'EUR',
+        ...(vastBedrag
+          ? { price: p.bedrag }
+          : p.bedrag
+            ? {
+                priceSpecification: {
+                  '@type': 'PriceSpecification',
+                  minPrice: p.bedrag,
+                  priceCurrency: 'EUR',
+                },
+                availability: 'https://schema.org/InStock',
+              }
+            : { availability: 'https://schema.org/InStock' }),
+        itemOffered: { '@type': 'Service', name: p.name, serviceType: 'Car audio upgrade' },
+      };
+    }),
   })} />
 </head>
 <body>
@@ -429,6 +497,15 @@ const anderetalen = TAALVOLGORDE.map((code) => ({
       );
 
       doelen.forEach((el) => kijker.observe(el));
+
+      /* Een blok dat hoger is dan het scherm komt met de tab-toets nooit ver
+         genoeg in beeld om de waarnemer af te laten gaan: die wil 5% zien, en
+         bij een blok van 1200 pixels is dat meer dan er past. Gevolg: je tabt
+         naar een knop die je niet ziet staan. Krijgt er iets binnen het blok
+         focus, dan laten we het dus meteen verschijnen. */
+      doelen.forEach((el) => {
+        el.addEventListener('focusin', () => el.classList.add('in'), { once: true });
+      });
     }
   </script>
 

@@ -38,6 +38,9 @@ export const TALEN = {
     /* Voor hreflang: nl-NL zou de site alleen aan Nederlanders koppelen, maar
        Vlamingen zoeken in hetzelfde Nederlands. Daarom zonder land. */
     hreflang: 'nl',
+    /* Voor og:locale, wat WhatsApp en Facebook lezen bij het delen van een
+       link. Die willen juist wél taal_LAND, en accepteren geen kale taalcode. */
+    ogLocale: 'nl_NL',
   },
   de: {
     code: 'de',
@@ -46,6 +49,7 @@ export const TALEN = {
     htmlLang: 'de-DE',
     prefix: '/de',
     hreflang: 'de',
+    ogLocale: 'de_DE',
   },
   en: {
     code: 'en',
@@ -54,6 +58,9 @@ export const TALEN = {
     htmlLang: 'en',
     prefix: '/en',
     hreflang: 'en',
+    /* en_GB en niet en_US: de Engelse pagina's richten zich op bezoekers uit
+       Europa die geen Nederlands of Duits lezen. */
+    ogLocale: 'en_GB',
   },
 };
 

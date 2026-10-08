@@ -401,7 +401,10 @@ const DE = {
       {
         vraag: 'Wie lange bin ich ohne mein Auto?',
         antwoord:
-          'Das hängt vom Paket ab, und es steht bei jedem Paket dabei. Eine kabellose CarPlay-Aufrüstung ist in etwa zwei Stunden fertig, die Akustik-Basis in einem halben Tag und The OEM+ Executive an einem Werktag. The Reference Edition dauert zwei bis drei Tage, weil die Abstimmung Zeit braucht. Bleibt Ihr Auto stehen, fahren wir Sie im Umkreis von fünfzehn Kilometern um Emmen nach Hause und holen Sie wieder ab, sobald es fertig ist.',
+          /* Tekst van main, met één verandering: aan het eind van de dag
+             opgehaald worden kan niet als de auto twee tot drie dagen
+             blijft staan. Dat was juist de tegenspraak. */
+          'Das hängt vom Paket ab. Eine kabellose CarPlay-Aufrüstung ist in etwa zwei Stunden fertig, Akustische Basis in einem halben Tag und The OEM+ Executive an einem Werktag. The Reference Edition dauert zwei bis drei Tage, denn die Abstimmung braucht Zeit. Bleibt Ihr Auto stehen, fahren wir Sie im Umkreis von fünfzehn Kilometern um Emmen nach Hause und holen Sie wieder ab, sobald es fertig ist.',
       },
       {
         vraag: 'Passt das auch in mein Auto?',
@@ -614,7 +617,10 @@ const EN = {
       {
         vraag: 'How long will I be without my car?',
         antwoord:
-          'It depends on the package, and the time is listed with each one. A wireless CarPlay upgrade is done in about two hours, the Acoustic Basis in half a day and The OEM+ Executive in one working day. The Reference Edition takes two to three days, because the tuning needs time. If your car stays with us, we drive you home within fifteen kilometres of Emmen and pick you up once it is ready.',
+          /* Tekst van main, met één verandering: aan het eind van de dag
+             opgehaald worden kan niet als de auto twee tot drie dagen
+             blijft staan. Dat was juist de tegenspraak. */
+          'It depends on the package. A wireless CarPlay upgrade is done in about two hours, Acoustic Basis in half a day and The OEM+ Executive in one working day. The Reference Edition takes two to three days, because the tuning needs time. If your car stays, we drive you home within fifteen kilometres of Emmen and pick you up once it is ready.',
       },
       {
         vraag: 'Will it fit my car?',

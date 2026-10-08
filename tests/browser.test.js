@@ -1376,18 +1376,11 @@ describe('Headroom', alsGebouwd, () => {
     const { pagina, fouten } = await openWerkbak();
     await pagina.click('#wb-pakketten .wb-toevoeg >> nth=0');
     await pagina.fill('#wb-naam', 'Mark de Vries');
-    /**
-       De datum moet ver genoeg weg liggen, en daarom niet vastgezet.
-
-       Hier stond '2026-10-07'. Zolang die dag nog niet geweest was ging de
-       test goed; de ochtend erna viel hij om met "1 !== 2". De besteldag ligt
-       namelijk veertien dagen vóór de inbouw, en voor een besteldag die al
-       geweest is biedt de app geen afspraak meer aan — terecht. Er gingen dus
-       geen twee vensters open maar één, en dat had niets met de app te maken.
-
-       De andere vaste datums in dit bestand mogen blijven staan: die pinnen
-       een dag om de opmáák na te kijken (de weekdag in het appbericht, de
-       ICS-stempel, de bestandsnaam). Daar hangt geen gedrag van af. */
+    /* Een datum in de toekomst, uitgerekend vanaf vandaag. Hier stond
+       '2026-10-07' met de hand ingetikt, en die dag kwam een keer. Toen hij
+       voorbij was hoefde er niets meer besteld te worden, dus ging er nog maar
+       één venster open en viel deze test om — zonder dat er iets veranderd was
+       aan de code. */
     await pagina.fill('#wb-inbouwdatum', overDagen(30));
     await pagina.click('#wb-bewaar');
     await pagina.click('[data-tab="agenda"]');
