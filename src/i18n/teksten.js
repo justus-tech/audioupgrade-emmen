@@ -104,9 +104,20 @@ export const TEKSTEN = {
     },
 
     meta: {
-      titel: 'Car-Hifi und CarPlay in Emmen — 20 Min. hinter der Grenze',
+      /**
+       * De bedrijfsnaam hoort in elke paginatitel (zie de SEO-regels in
+       * CLAUDE.md), en hier stond hij niet. Erachter plakken kon niet: dan
+       * werd de titel 79 tekens en kapt Google precies die naam eraf.
+       *
+       * Dus is "20 Min. hinter der Grenze" uit de titel gehaald en vooraan in
+       * de beschrijving gezet. Daar is ruimte, en het is een sterk argument
+       * voor een Duitse bezoeker: het zegt in vier woorden waarom Emmen voor
+       * hem dichtbij is. "Werksgarantie bleibt" blijft staan — dat is een van
+       * de drie conversie-troeven en gaat nooit weg voor ruimte.
+       */
+      titel: 'Car-Hifi und CarPlay in Emmen | Audio Upgrade Emmen',
       omschrijving:
-        'Kabelloses Apple CarPlay, Lautsprecher und Dämmung, unsichtbar hinter den Originalverkleidungen. Festpreise inklusive Einbau, Werksgarantie bleibt.',
+        '20 Minuten hinter der Grenze: kabelloses Apple CarPlay, Lautsprecher und Dämmung. Festpreise inklusive Einbau, Werksgarantie bleibt.',
     },
 
     hero: {
@@ -262,9 +273,13 @@ export const TEKSTEN = {
     },
 
     meta: {
-      titel: 'Car audio and CarPlay installation in Emmen, Netherlands',
+      /* Zelfde reden als bij de Duitse titel. "Emmen" staat al in de
+         bedrijfsnaam, dus de stad hoeft er niet twee keer in; "Netherlands"
+         is naar de beschrijving verhuisd, waar een Engelstalige bezoeker het
+         net zo goed ziet. */
+      titel: 'Car audio and CarPlay installation | Audio Upgrade Emmen',
       omschrijving:
-        'Wireless Apple CarPlay, speakers and sound deadening, built in behind your original panels. All-in prices including fitting, factory warranty intact.',
+        'Wireless Apple CarPlay, speakers and sound deadening in Emmen, the Netherlands. All-in prices including fitting, factory warranty intact.',
     },
 
     hero: {

@@ -16,7 +16,8 @@ import { ALGEMENE_VOORWAARDEN } from '../src/data/juridisch.js';
 import { STANDAARD_PAKKETTEN } from '../src/data/generiek.js';
 import { AUTOS, autoTabel } from '../src/data/autos.js';
 import { REVIEWS, reviewsOpDatum } from '../src/data/reviews.js';
-import { AUTO, ONDERDELEN, ZONES, ALLES, VOLGORDE, schetsVan, spiegelPad, MATEN, METER, HULPLIJNEN, inMeters } from '../src/data/schets.js';
+import * as SCHETS from '../src/data/schets.js';
+import { AUTO, ONDERDELEN, ZONES, ALLES, VOLGORDE, schetsVan, spiegelPad, MATEN, METER, HULPLIJNEN } from '../src/data/schets.js';
 import { PAGINAS } from '../src/i18n/paginas.js';
 import { TEKSTEN } from '../src/i18n/teksten.js';
 import { VRAGEN } from '../src/data/vragen.js';
@@ -840,12 +841,35 @@ describe('de doorkijktekening van de auto', () => {
     }
   });
 
-  test('een maat wordt geschreven zoals wij hem schrijven', () => {
-    assert.equal(inMeters(METER), '1,00 m');
-    assert.equal(inMeters(MATEN.breedte.tot - MATEN.breedte.van), '1,82 m');
-    /* Een auto van vier meter tachtig is geloofwaardig; veertig meter niet. */
-    const lengte = (MATEN.lengte.tot - MATEN.lengte.van) / METER;
-    assert.ok(lengte > 3.5 && lengte < 5.6, `de referentieauto is ${lengte.toFixed(2)} m lang`);
+  test('de referentiecarrosserie levert geen maat voor op de pagina', () => {
+    /**
+     * WAAROM DEZE TEST VERANDERD IS
+     * Hier stond een test op inMeters(), een hulpje dat tekeneenheden naar
+     * meters omrekende. Dat hulpje is weg, en dit bewaakt dat het wegblijft.
+     *
+     * De reden: deze carrosserie is met de hand getekend, niet opgemeten. De
+     * omrekening gaf 4,87 m lang bij een wielbasis van 2,63 m, en die auto
+     * bestaat niet — de verhouding is 0,54 waar echte auto's tussen 0,58 en
+     * 0,61 zitten. Een getal uit zo'n tekening hoort nergens te staan, ook
+     * niet met "indicatief" erbij.
+     *
+     * De maten in MATEN blijven wél bestaan: die zetten de hulplijnen en de
+     * wielen op hun plek. Wat niet meer mag, is er meters van maken.
+     *
+     * Komt er ooit een tekening die uit een opgemeten auto komt, dan mag de
+     * omrekening terug — met dat voertuig erbij genoemd. Deze test slaat dan
+     * aan en dwingt je die afweging bewust te maken.
+     */
+    assert.equal(
+      SCHETS.inMeters,
+      undefined,
+      'zolang de carrosserie niet is opgemeten, hoort er geen omrekening naar meters te zijn',
+    );
+    assert.equal(
+      typeof SCHETS.default?.inMeters,
+      'undefined',
+      'ook niet via de verzamelexport',
+    );
   });
 
   test('de hulplijnen lopen over de hele tekening', () => {

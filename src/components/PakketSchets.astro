@@ -97,9 +97,24 @@ const info = Object.fromEntries(
           {HULPLIJNEN.assen.map((a) => <path d={a} class="as" />)}
           {HULPLIJNEN.kruizen.map((k) => <path d={k} class="as" />)}
         </g>
+        {/**
+            HIER STOND EEN SCHAALBALK VAN "1 METER", EN DIE KLOPTE NIET.
+
+            De balk was 124 eenheden lang omdat METER op 124 staat. Maar deze
+            carrosserie is met de hand getekend, niet opgemeten: de verhouding
+            wielbasis/lengte komt uit op 0,54, terwijl echte auto's tussen 0,58
+            en 0,61 zitten. Er is dus niets dat de schaal vastlegt, en wie de
+            subwoofer naast die balk legde kreeg een maat die nergens op sloeg.
+
+            De tekenstandaard zegt: maten komen uit de tekening zelf — maar dat
+            geldt alleen als de tekening uit een bron komt. Zonder bron hoort er
+            geen getal te staan, ook niet als "indicatief".
+
+            In plaats daarvan staat er nu wat deze tekening echt is. Dat is
+            eerlijker, en het is een betere verkoopregel dan een maat: het zegt
+            dat we bij jouw auto langs de meetlat gaan. */}
         <g class="ds-schaal">
-          <path d={`M 107 642 L 107 652 M ${107 + METER} 642 L ${107 + METER} 652 M 107 647 L ${107 + METER} 647`} />
-          <text x={107 + METER / 2} y="666" text-anchor="middle">1 meter</text>
+          <text x="220" y="660" text-anchor="middle">referentiecarrosserie — wij meten jouw eigen auto op</text>
         </g>
 
         {/* --- gespiegelde punten zonder eigen nummer --- */}

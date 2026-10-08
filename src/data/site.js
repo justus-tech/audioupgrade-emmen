@@ -51,7 +51,11 @@ export const SITE = {
 };
 
 /**
- * De audiomerken waar we mee werken — dezelfde zes als op de oude site.
+ * De audiomerken waar we mee werken — dezelfde als op de oude site.
+ *
+ * Het waren er zes toen de oude site Gladen Mosconi als één merk schreef.
+ * Hier staan ze apart, en dat is juister: Mosconi maakt versterkers, Gladen
+ * luidsprekers. Dus zeven namen.
  * Bewust géén koppeling aan een pakket: zie de uitleg in Merken.astro.
  */
 export const AUDIOMERKEN = [

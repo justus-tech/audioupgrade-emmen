@@ -264,8 +264,23 @@ export const AUTO = {
 /** Tekeneenheden per meter. De carrosserie is 226 breed, oftewel 1,82 m. */
 export const METER = 124;
 
-/** Een maat in meters, zoals wij hem schrijven: 2,63 m. */
-export const inMeters = (eenheden) => `${(eenheden / METER).toFixed(2).replace('.', ',')} m`;
+/**
+ * HIER STOND inMeters(), EN DIE IS WEG.
+ *
+ * Hij rekende tekeneenheden om naar meters, en op deze tekening leverde dat
+ * 4,87 m lang, 1,82 m breed en 2,63 m wielbasis op. Die auto bestaat niet: de
+ * verhouding wielbasis/lengte is 0,54 en bij echte auto's is dat 0,58 tot
+ * 0,61. Logisch ook — deze carrosserie is met de hand getekend en niet
+ * opgemeten.
+ *
+ * Hij werd nergens gebruikt, dus er heeft nooit een verkeerd getal op de site
+ * gestaan. Maar hij lag wel klaar: de eerstvolgende die een maat bij de
+ * tekening wilde zetten pakte hem in goed vertrouwen, en dan stond er ineens
+ * "4,87 m". Weg is hier de beste afscherming.
+ *
+ * Komt er ooit een tekening die wél uit een opgemeten auto komt, dan hoort de
+ * omrekening daarbij te staan, met het voertuig erbij genoemd.
+ */
 
 /** De maten van de referentiecarrosserie, in tekeneenheden. */
 export const MATEN = {
@@ -481,5 +496,5 @@ export const schetsVan = (slug) =>
 
 export default {
   AUTO, ONDERDELEN, ZONES, VOLGORDE, ALLES, schetsVan, spiegelPad,
-  METER, MATEN, HULPLIJNEN, inMeters,
+  METER, MATEN, HULPLIJNEN,
 };

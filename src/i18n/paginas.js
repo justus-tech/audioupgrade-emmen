@@ -333,7 +333,9 @@ const DE = {
   pakketten: PAKKETTEN_DE,
 
   prijzen: {
-    titel: 'Preise für Car-Hifi und CarPlay — Audio Upgrade Emmen',
+    /* Een liggend streepje in plaats van een |, als enige Duitse titel. De
+       naam stond er dus al; alleen het scheidingsteken week af. */
+    titel: 'Preise für Car-Hifi und CarPlay | Audio Upgrade Emmen',
     omschrijving:
       'Vier Pakete mit Festpreisen ab 695 €, inklusive Einbau und Mehrwertsteuer. Kabelloses CarPlay, Lautsprecher, DSP-Abstimmung und Dämmung.',
     eyebrow: 'Festpreise, inklusive Einbau und Mehrwertsteuer',
