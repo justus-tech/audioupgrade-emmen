@@ -43,7 +43,7 @@ export const VRAGEN = [
   {
     vraag: 'Hoe lang ben ik mijn auto kwijt?',
     antwoord:
-      'Dat hangt van het pakket af. Een draadloze CarPlay-upgrade is klaar in ongeveer twee uur; bij de grotere pakketten staat je auto een werkdag bij ons. Blijft hij staan, dan brengen we je thuis binnen vijftien kilometer rond Emmen en halen we je aan het eind van de dag weer op.',
+      'Dat hangt van het pakket af, en het staat bij elk pakket erbij. Een draadloze CarPlay-upgrade is klaar in ongeveer twee uur, de Akoestische Basis in een halve dag en The OEM+ Executive in één werkdag. The Reference Edition duurt twee tot drie dagen, omdat het afstemmen tijd kost. Blijft je auto staan, dan brengen we je thuis binnen vijftien kilometer rond Emmen en halen we je weer op zodra hij klaar is.',
   },
   {
     vraag: 'Past dit ook in mijn auto?',

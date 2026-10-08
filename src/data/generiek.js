@@ -92,7 +92,7 @@ export const WERKWIJZE = [
     nummer: '03',
     kop: 'De premium inbouw',
     tekst:
-      'We plannen een datum. Je levert de auto \'s ochtends af en rijdt aan het eind van de dag weg met een systeem dat op jouw auto is afgestemd.',
+      'We plannen een datum. Je levert de auto \'s ochtends af, en je weet vooraf hoe lang hij blijft staan: van twee uur voor CarPlay tot een paar dagen voor een volledige opbouw. Je rijdt weg met een systeem dat op jouw auto is afgestemd.',
   },
 ];
 
@@ -155,7 +155,7 @@ export const LUISTEREN = {
 export const ONTZORGEN = {
   kop: 'Je hoeft niet te wachten.',
   tekst:
-    'Je brengt je auto naar de Charles Darwinstraat en wij gaan aan de slag. Blijft hij een dag staan, dan brengen we je gewoon thuis — tot vijftien kilometer rond Emmen. Aan het eind van de dag halen we je weer op, of kom je zelf langs. Kleinere klussen kunnen in overleg ook bij jou op de oprit.',
+    'Je brengt je auto naar de Charles Darwinstraat en wij gaan aan de slag. Blijft hij staan, dan brengen we je gewoon thuis — tot vijftien kilometer rond Emmen. Zodra hij klaar is halen we je weer op, of kom je zelf langs. Kleinere klussen kunnen in overleg ook bij jou op de oprit.',
 };
 
 /**

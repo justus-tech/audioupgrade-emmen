@@ -41,7 +41,12 @@ import { whatsappLink, berichtOverAuto } from '../lib/whatsapp.js';
         <div class="step">
           <span class="num">03</span>
           <h3>De premium inbouw</h3>
-          <p>We plannen een datum. Je levert de auto 's ochtends af en wij nemen er de tijd voor. Aan het eind van de dag stap je in een auto die klinkt zoals hij bedoeld was.</p>
+          {/* Hier stond "aan het eind van de dag" als vaste belofte. Dat klopt
+              voor CarPlay, de Basis en de Executive, maar niet voor de
+              Reference (twee tot drie dagen) of een Competition Build (een
+              week of langer). Zo plant iemand zijn dag op een belofte die we
+              niet nakomen. De duur staat per pakket op de prijzenpagina. */}
+          <p>We plannen een datum. Je levert de auto 's ochtends af en wij nemen er de tijd voor. Hoe lang je auto blijft staan weet je vooraf — van twee uur voor CarPlay tot een paar dagen voor een volledige opbouw. Daarna stap je in een auto die klinkt zoals hij bedoeld was.</p>
         </div>
       </div>
       <div class="center mt">
