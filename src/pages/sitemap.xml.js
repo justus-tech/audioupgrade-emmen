@@ -45,8 +45,15 @@ const VERTAALDE_PADEN = ['de', 'en'].flatMap((taal) =>
 );
 
 export async function GET() {
-  const vandaag = new Date().toISOString().slice(0, 10);
-
+  /* Geen lastmod meer.
+     Hier stond de datum van de bouw, op alle 204 adressen tegelijk. Daarmee
+     vertelde de sitemap elke keer dat de hele site die dag veranderd was —
+     ook als er alleen een komma was verzet. Een zoekmachine die dat een paar
+     keer ziet, gaat de datum negeren, en dan werkt hij ook niet meer op de
+     momenten dat er écht iets veranderd is. Geen datum is eerlijker dan een
+     datum die niet klopt. Wil je ze per pagina kloppend maken, dan moet de
+     bouwstraat de volledige geschiedenis ophalen (fetch-depth: 0) en de
+     datum van de laatste wijziging per bestand uit git komen. */
   const paden = [
     ...VAST,
     ...VERTAALDE_PADEN,
@@ -59,7 +66,6 @@ export async function GET() {
       ([pad, prioriteit]) =>
         `  <url>\n` +
         `    <loc>${SITE.url}${pad}</loc>\n` +
-        `    <lastmod>${vandaag}</lastmod>\n` +
         `    <priority>${prioriteit.toFixed(1)}</priority>\n` +
         `  </url>`
     )

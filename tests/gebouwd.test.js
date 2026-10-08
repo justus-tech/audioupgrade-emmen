@@ -651,15 +651,56 @@ describe('drie talen', alsGebouwd, () => {
     assert.deepEqual(kapot, []);
   });
 
-  test('elke pagina noemt zijn tegenhangers in de andere talen', () => {
+  /**
+   * Hreflang alleen waar er écht meer talen zijn.
+   *
+   * Dit stond fout en je zag het nergens aan: een modelpagina bestaat alleen
+   * in het Nederlands, maar kreeg toch een volledige taalgroep mee. Omdat er
+   * geen Nederlandse tegenhanger ís, viel die terug op de startpagina. Het
+   * gevolg: 183 pagina's vertelden Google dat hun Nederlandse versie de
+   * startpagina was, terwijl hun canonical naar henzelf wees. Dat zijn 150
+   * modelpagina's die allemaal dezelfde pagina aanwijzen — precies het signaal
+   * waarop Google er één uitkiest en de rest laat vallen.
+   *
+   * Een taalgroep van één bestaat niet. Waar de pagina maar in één taal
+   * bestaat, laten we de groep dus weg.
+   */
+  test('alleen pagina\'s die in meer talen bestaan noemen hun tegenhangers', () => {
+    const meertalig = new Set();
+    for (const sleutel of Object.keys(PADEN)) {
+      for (const taal of ['nl', 'de', 'en']) meertalig.add(padVan(sleutel, taal));
+    }
+
     for (const [pad, html] of inhoud) {
       if (html.includes('noindex')) continue; // de foutpagina hoort er niet bij
+      const aantal = (html.match(/rel="alternate"/g) || []).length;
+
+      if (!meertalig.has(pad)) {
+        assert.equal(
+          aantal, 0,
+          `${pad} bestaat maar in één taal, maar noemt ${aantal} tegenhangers`
+        );
+        continue;
+      }
+
+      assert.equal(aantal, 4, `${pad}: ${aantal} hreflang-regels in plaats van vier`);
       for (const code of ['nl', 'de', 'en', 'x-default']) {
         assert.ok(
           html.includes(`rel="alternate" hreflang="${code}"`),
           `${pad}: geen hreflang voor ${code}`
         );
       }
+
+      /* En de groep moet naar deze pagina zelf wijzen. Zonder die
+         zelfverwijzing negeert Google de hele groep. */
+      const canonical = (html.match(/<link rel="canonical" href="([^"]*)"/) || [])[1];
+      assert.ok(canonical, `${pad}: geen canonical om mee te vergelijken`);
+      const verwijzingen = [...html.matchAll(/rel="alternate" hreflang="[^"]*" href="([^"]*)"/g)]
+        .map((m) => m[1]);
+      assert.ok(
+        verwijzingen.includes(canonical),
+        `${pad}: de taalgroep wijst nergens naar de pagina zelf (${canonical})`
+      );
     }
   });
 

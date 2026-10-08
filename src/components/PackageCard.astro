@@ -265,6 +265,10 @@ const kenmerkenTonen = uitgebreid && kenmerken.length > 0;
     font-size: .72rem; color: var(--text-dim);
     cursor: pointer; list-style: none;
     display: inline-flex; align-items: center; gap: 8px;
+    /* De letters blijven klein, het tikvlak niet: 19 pixels is te krap voor
+       een duim. De tekst blijft gecentreerd, want align-items staat al op
+       center. */
+    min-height: 40px;
     transition: color .2s;
   }
   .meer summary::-webkit-details-marker { display: none; }

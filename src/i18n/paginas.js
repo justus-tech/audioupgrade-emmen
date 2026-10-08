@@ -401,7 +401,7 @@ const DE = {
       {
         vraag: 'Wie lange bin ich ohne mein Auto?',
         antwoord:
-          'Das hängt vom Paket ab. Eine kabellose CarPlay-Aufrüstung ist in etwa zwei Stunden fertig; bei den größeren Paketen bleibt Ihr Auto einen Werktag bei uns. Bleibt es stehen, fahren wir Sie im Umkreis von fünfzehn Kilometern um Emmen nach Hause und holen Sie am Ende des Tages wieder ab.',
+          'Das hängt vom Paket ab. Eine kabellose CarPlay-Aufrüstung ist in etwa zwei Stunden fertig, Akustische Basis in einem halben Tag und The OEM+ Executive an einem Werktag. The Reference Edition dauert zwei bis drei Tage, denn die Abstimmung braucht Zeit. Bleibt Ihr Auto stehen, fahren wir Sie im Umkreis von fünfzehn Kilometern um Emmen nach Hause und holen Sie am Ende des Tages wieder ab.',
       },
       {
         vraag: 'Passt das auch in mein Auto?',
@@ -614,7 +614,7 @@ const EN = {
       {
         vraag: 'How long will I be without my car?',
         antwoord:
-          'It depends on the package. A wireless CarPlay upgrade is done in about two hours; for the larger packages your car stays with us for a working day. If it stays, we drive you home within fifteen kilometres of Emmen and pick you up at the end of the day.',
+          'It depends on the package. A wireless CarPlay upgrade is done in about two hours, Acoustic Basis in half a day and The OEM+ Executive in one working day. The Reference Edition takes two to three days, because the tuning needs time. If your car stays, we drive you home within fifteen kilometres of Emmen and pick you up at the end of the day.',
       },
       {
         vraag: 'Will it fit my car?',

@@ -310,14 +310,18 @@ const dienstSchema = {
     font-size: .74rem;
     transition: border-color .15s ease, color .15s ease;
   }
+  /* Focus altijd, hover alleen waar een muis is; op een telefoon blijft hover
+     na een tik plakken. Zie de huisregel in CLAUDE.md. */
   .verwant a:focus-visible { border-color: var(--accent); color: var(--accent-text); }
-
-  .eyebrow-link { text-decoration: none; }
-
-  /* Hover alleen waar er een muis is; focus blijft overal staan, want daar
-     navigeert iemand met het toetsenbord op. */
   @media (hover: hover) {
     .verwant a:hover { border-color: var(--accent); color: var(--accent-text); }
+  }
+
+  /* display:inline-block met wat lucht: als blokje telt de padding mee voor
+     het tikvlak, en 23 pixels wordt 31. De kop eronder verschuift niet, want
+     de eyebrow heeft toch al margin-bottom: 1em. */
+  .eyebrow-link { text-decoration: none; display: inline-block; padding: 4px 0; }
+  @media (hover: hover) {
     .eyebrow-link:hover { text-decoration: underline; }
   }
   .generaties { color: var(--text-dim); font-size: .95rem; margin-top: .6em; }

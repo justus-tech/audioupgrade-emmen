@@ -29,6 +29,16 @@ const id = (naam) => `${slug}-${naam}`;
         <stop offset="0%" stop-color="var(--accent)" stop-opacity="var(--teken-gloed)" />
         <stop offset="100%" stop-color="var(--accent)" stop-opacity="0" />
       </radialGradient>
+      {/* De weerschijn op het plexiglas van de showbouw. Eerst stonden hier
+          twee schuine strepen, maar die liepen precies over de koelribben van
+          de versterkers eronder en lazen daardoor als een doorhaling — alsof
+          het pakket was afgestreept. Een verloop over het hele glasvlak doet
+          hetzelfde werk en raakt niets. */}
+      <linearGradient id={id('glas')} x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="var(--accent)" stop-opacity=".22" />
+        <stop offset="55%" stop-color="var(--accent)" stop-opacity=".04" />
+        <stop offset="100%" stop-color="var(--accent)" stop-opacity="0" />
+      </linearGradient>
     </defs>
 
     <rect width="640" height="240" fill={`url(#${id('grond')})`} />
@@ -46,14 +56,14 @@ const id = (naam) => `${slug}-${naam}`;
         <rect x="180" y="48" width="280" height="124" rx="6" class="scherm" />
         {/* De tegels van CarPlay. Eén ervan licht op in de merkkleur. */}
         <g>
-          <rect x="196" y="62" width="54" height="44" rx="9" class="tegel" />
-          <rect x="262" y="62" width="54" height="44" rx="9" class="tegel aan" />
-          <rect x="328" y="62" width="54" height="44" rx="9" class="tegel" />
-          <rect x="394" y="62" width="50" height="44" rx="9" class="tegel" />
-          <rect x="196" y="114" width="54" height="44" rx="9" class="tegel" />
-          <rect x="262" y="114" width="54" height="44" rx="9" class="tegel" />
-          <rect x="328" y="114" width="54" height="44" rx="9" class="tegel" />
-          <rect x="394" y="114" width="50" height="44" rx="9" class="tegel" />
+          <rect x="196" y="62" width="53" height="44" rx="9" class="tegel" />
+          <rect x="261" y="62" width="53" height="44" rx="9" class="tegel aan" />
+          <rect x="326" y="62" width="53" height="44" rx="9" class="tegel" />
+          <rect x="391" y="62" width="53" height="44" rx="9" class="tegel" />
+          <rect x="196" y="114" width="53" height="44" rx="9" class="tegel" />
+          <rect x="261" y="114" width="53" height="44" rx="9" class="tegel" />
+          <rect x="326" y="114" width="53" height="44" rx="9" class="tegel" />
+          <rect x="391" y="114" width="53" height="44" rx="9" class="tegel" />
         </g>
         {/* Draadloos: het wifi-teken onder het scherm. */}
         <g class="lijn">
@@ -145,14 +155,14 @@ const id = (naam) => `${slug}-${naam}`;
         />
         {/* Acht kanalen als staafjes onderin. */}
         <g class="staaf">
-          <rect x="48" y="204" width="58" height="6" rx="3" />
-          <rect x="118" y="204" width="58" height="6" rx="3" />
-          <rect x="188" y="204" width="58" height="6" rx="3" />
-          <rect x="258" y="204" width="58" height="6" rx="3" />
-          <rect x="328" y="204" width="58" height="6" rx="3" />
-          <rect x="398" y="204" width="58" height="6" rx="3" />
-          <rect x="468" y="204" width="58" height="6" rx="3" />
-          <rect x="538" y="204" width="54" height="6" rx="3" />
+          <rect x="48" y="204" width="57.5" height="6" rx="3" />
+          <rect x="117.5" y="204" width="57.5" height="6" rx="3" />
+          <rect x="187" y="204" width="57.5" height="6" rx="3" />
+          <rect x="256.5" y="204" width="57.5" height="6" rx="3" />
+          <rect x="326" y="204" width="57.5" height="6" rx="3" />
+          <rect x="395.5" y="204" width="57.5" height="6" rx="3" />
+          <rect x="465" y="204" width="57.5" height="6" rx="3" />
+          <rect x="534.5" y="204" width="57.5" height="6" rx="3" />
         </g>
       </g>
     )}
@@ -173,12 +183,9 @@ const id = (naam) => `${slug}-${naam}`;
         </g>
         <circle cx="356" cy="102" r="5" class="stip aan" />
         <circle cx="356" cy="150" r="5" class="stip aan" />
-        {/* Twee korte strepen in de hoek: zo leest het vlak als glas. Een
-            streep over de hele diagonaal leek een doorhaling. */}
-        <g class="glans">
-          <path d="M262 122L302 78" />
-          <path d="M282 176L318 134" />
-        </g>
+        {/* De weerschijn ligt als verloop over het hele glasvlak. Zie de
+            uitleg bij de verloopdefinitie bovenaan dit bestand. */}
+        <rect x="252" y="70" width="136" height="112" rx="6" fill={`url(#${id('glas')})`} />
 
         {/* Twee subwoofers in zicht, links en rechts van het middenstuk. */}
         <g transform="translate(160 122)">
@@ -280,7 +287,12 @@ const id = (naam) => `${slug}-${naam}`;
   /* ---- gedeelde stijlen voor alle tekeningen ----
      Deze gebruiken --teken-* en niet --line, omdat een tekening meer contrast
      nodig heeft dan een randje om een kaart. Zie src/data/brand.js. */
-  .vlak { fill: var(--teken-vlak); stroke: var(--teken-lijn); stroke-width: 1.5; }
+  /* De omtrek draagt de tekening en krijgt dus de zwaarste lijn: 2.6 voor het
+     vlak, 2 voor wat erin zit, 1.5 voor het detailwerk. Dat stond omgekeerd —
+     de buitenrand was dunner dan de ribbels erbinnen, waardoor de tekening
+     uit elkaar viel in plaats van als één vorm te lezen. Dezelfde volgorde als
+     in de doorkijktekening; zie "De tekenstandaard" in CLAUDE.md. */
+  .vlak { fill: var(--teken-vlak); stroke: var(--teken-lijn); stroke-width: 2.6; }
   .rand { fill: none; stroke: var(--teken-lijn); stroke-width: 2; }
   .scherm { fill: var(--teken-diep); stroke: var(--teken-lijn); stroke-width: 1; }
   .dun { stroke: var(--teken-lijn); stroke-width: 1.5; fill: none; opacity: .8; }

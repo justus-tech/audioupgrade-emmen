@@ -136,7 +136,7 @@ export const TEKSTEN = {
       eyebrow: 'Festpreise, inklusive Einbau und Mehrwertsteuer',
       kop: 'Vier Stufen im Klang',
       lead:
-        'Sie bauen aufeinander auf: jedes Paket enthält, was links davon steht. Der Preis, den Sie hier sehen, ist der Preis, den Sie zahlen — Einbau und Material inbegriffen, keine Anfahrtskosten, nichts Zusätzliches bei der Abholung.',
+        'Sie bauen aufeinander auf: jedes Paket enthält alles aus dem vorherigen. Der Showbau ist Maßarbeit und beginnt bei einem leeren Blatt. Der Preis, den Sie hier sehen, ist der Preis, den Sie zahlen — Einbau und Material inbegriffen, keine Anfahrtskosten, nichts Zusätzliches bei der Abholung.',
       /* CarPlay en isolatie staan apart, net als op de Nederlandse homepage.
          Zie de uitleg bij AUDIOPAKKETTEN in site.js. */
       losKop: 'Einzeln bestellbar',
@@ -292,7 +292,7 @@ export const TEKSTEN = {
       eyebrow: 'All-in prices, fitting and VAT included',
       kop: 'Four steps in sound',
       lead:
-        'They build on one another: every package includes what sits to the left of it. The price you see is the price you pay — parts and fitting included, no call-out charge, nothing extra when you come to collect it.',
+        'They build on one another: every package includes everything from the one before. The show build is bespoke and starts from a blank sheet. The price you see is the price you pay — parts and fitting included, no call-out charge, nothing extra when you come to collect it.',
       losKop: 'Available on its own',
       losLead: 'After a screen that simply works, power that does not sag — or just quiet?',
       duurLabel: 'Time needed',

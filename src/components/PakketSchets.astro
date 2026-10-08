@@ -108,10 +108,14 @@ const info = Object.fromEntries(
                   data-id={o.id} data-pakketten={o.pakketten.join(' ')} />
         ))}
 
-        {/* --- de aanklikbare punten --- */}
+        {/* --- de aanklikbare punten ---
+            tabindex -1 om te beginnen: welke punten bij het gekozen pakket
+            horen weet pas het script, en tot die tijd mag je niet met de
+            tab-toets in een punt belanden dat onzichtbaar is. toonPakket()
+            zet hem op 0 voor de punten die wél meedoen. */}
         {[...ONDERDELEN, ...ZONES].map((o) => (
           <g class="ds-punt" data-id={o.id} data-pakketten={o.pakketten.join(' ')}
-             role="button" tabindex="0" aria-label={o.naam}>
+             role="button" tabindex="-1" aria-hidden="true" aria-label={o.naam}>
             <circle class="ds-halo" cx={o.x} cy={o.y} r="26" />
             <circle class="ds-bol" cx={o.x} cy={o.y} r="16" />
             <text class="ds-nr" x={o.x} y={o.y} text-anchor="middle"
@@ -173,7 +177,16 @@ const info = Object.fromEntries(
       });
 
       blok.querySelectorAll('[data-pakketten]').forEach((el) => {
-        el.classList.toggle('aan', el.dataset.pakketten.split(' ').includes(slug));
+        const hoortErbij = el.dataset.pakketten.split(' ').includes(slug);
+        el.classList.toggle('aan', hoortErbij);
+        /* Een punt dat niet bij dit pakket hoort is onzichtbaar. Zonder deze
+           twee regels stond het wél gewoon in de tab-volgorde en las een
+           schermlezer het voor: bij Akoestische Basis kreeg je zo negen
+           onzichtbare punten mee die nergens heen leiden. */
+        if (el.classList.contains('ds-punt')) {
+          el.setAttribute('tabindex', hoortErbij ? '0' : '-1');
+          el.setAttribute('aria-hidden', hoortErbij ? 'false' : 'true');
+        }
       });
 
       // Nummeren in vaste volgorde, alleen wat bij dit pakket hoort.

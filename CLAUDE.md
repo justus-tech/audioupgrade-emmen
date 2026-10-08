@@ -82,6 +82,87 @@ Controleren of er geen losse kleuren zijn ingeslopen:
 grep -rnoE "#[0-9a-fA-F]{3,6}\b" src/ --include=*.css --include=*.astro
 ```
 
+## De tekenstandaard — dit is de lat voor al het beeld
+
+De posters voor het kantoor hebben de lat gelegd voor de hele site. Alles wat
+getekend is moet daaraan voldoen: wat er al staat én alles wat erbij komt.
+Dit is geen smaakkwestie maar een verkoopargument. Een klant die twijfelt
+tussen appen en wegklikken, beslist mede op wat hij ziet. Een tekening die er
+duur uitziet maakt het werk geloofwaardig; een tekening van blokjes maakt het
+goedkoop, hoe goed het werk ook is.
+
+**Waar het beeld staat:** `src/data/schets.js` (de doorkijktekening van de
+auto), `src/components/PakketBeeld.astro` (het beeld bovenaan elke
+pakketkaart), `src/components/PakketSchets.astro`, `AutoSchets.astro`,
+`Golflijn.astro`. De posters zelf: `scripts/posters.mjs` — draaien met
+`npm run posters`.
+
+### De tien regels
+
+1. **Eén bron voor de vorm.** Een tekening die op twee plekken gebruikt wordt
+   staat in een gegevensbestand, niet in een component. De auto op de poster
+   en de auto op de site komen uit hetzelfde bestand; verplaats je daar een
+   speaker, dan verschuift hij op allebei. Twee keer natekenen betekent dat ze
+   vroeg of laat iets anders vertellen.
+2. **Geen rechthoeken.** Een auto heeft nergens een rechte hoek, een speaker
+   ook niet. Alles is een pad met bochten. Een blokje met ronde hoeken ziet er
+   altijd uit als een blokje met ronde hoeken.
+3. **Spiegelen in plaats van twee keer tekenen.** Wat dubbel voorkomt teken je
+   één keer, aan de rechterkant, en de linkerhelft rolt er automatisch uit
+   (`spiegelPad`). Niets verraadt handwerk zo hard als een rechterstoel die
+   drie eenheden lager staat dan de linker, en met het blote oog zie je dat
+   niet — een test wel.
+4. **Lijndiktes in lagen.** De omtrek het zwaarst, panelen en naden daaronder,
+   detailwerk het lichtst. Daardoor leest de tekening in één oogopslag en
+   verzuipt het detail niet.
+5. **De taal van een werktekening.** Meetraster van één meter met een kwart
+   meter fijn, hartlijn en aslijnen in streep-punt, maatvoering met pijlen,
+   arcering waar een oppervlak behandeld wordt, en een stempel met wat je voor
+   je hebt. Dat is wat een ontwerp van een ontwerp maakt in plaats van een
+   plaatje.
+6. **Maten komen uit de tekening zelf.** Nooit een getal intikken. De 1,82 m op
+   de poster wordt uit de omtrek gerekend, dus er kan nooit iets anders op
+   papier staan dan wat je ziet. Wat indicatief is, staat als indicatief in
+   het stempel.
+7. **Detail dat je oog herkent.** Buitenspiegels met glas, deurgrepen,
+   ruitenwissers, koplampen, bandenspoor, stoelen met zijwangen en een
+   hoofdsteun. Juist die kleinigheden maken het verschil tussen een schets en
+   een tekening.
+8. **Uitleg hoort bij het beeld.** Elk genummerd punt heeft een naam en een
+   plek, in gewone taal. De uitleg komt naar het punt toe, niet in een lijst
+   eronder. Een tekening die uitleg nodig heeft die er niet bij staat, is niet
+   af.
+9. **Kleuren uit `brand.js`, nooit los.** Ook in een SVG. En de tekening moet
+   in de lichte én de donkere stand kloppen.
+10. **Tests bewaken het.** Symmetrie, maten en de afstand tussen de bollen
+    staan in `tests/data.test.js`. Die symmetrietest vond meteen wat hij moest
+    vinden: het dak stond een eenheid scheef. Voeg je nieuw beeld toe, voeg dan
+    de bewaking toe.
+
+### Hoe je een bestaande tekening langs de lat legt
+
+Vraag per tekening: zit er een rechthoek in? Is hij precies symmetrisch? Zijn
+er lijndiktes of is alles even dik? Zou een klant zonder bijschrift snappen
+wat hij ziet? Helpt dit beeld hem beslissen, of vult het alleen ruimte?
+
+Is het antwoord ergens nee, dan is dat werk voor de eerstvolgende ronde.
+
+## Dagelijkse onderhoudsronde
+
+De site wordt onderhouden met een vaste ronde: scannen, verbeteren, uitbreiden.
+Die draait elke ochtend automatisch (de taak "Dagelijkse ronde — website beter
+maken" in de Claude-app) en is ook met de hand te starten: `Workflow` met
+`{name: "dagelijkse-ronde"}`, de workflow staat in `.claude/workflows/`.
+
+Vier brillen — tekenstandaard, conversie, vindbaarheid, en snelheid samen met
+toegankelijkheid. Elke bevinding gaat eerst langs een tegenspreker die hem
+probeert onderuit te halen voordat hij op de lijst komt. Dat voorkomt werk dat
+ontstaat uit een verkeerde meting, en dat gebeurt vaker dan je denkt: kleuren,
+maten en gewicht zijn alle drie makkelijk verkeerd te meten.
+
+De regel bij elke ronde: **laat de site beter achter dan je hem aantrof, en
+nooit slechter.** Bouwen, testen en controleren hoort bij de ronde, niet erna.
+
 ## Hoe het project in elkaar zit
 
 Astro 5, statische site. Geen database, geen server.
