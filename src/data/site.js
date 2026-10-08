@@ -393,6 +393,7 @@ export const PACKAGES = [
       'Extreme drielaagse demping van voor- en achterdeuren.',
       'Volledig akoestisch op maat ingemeten.',
       'Accu en laadspanning gemeten, met de waarden op je werkbon.',
+      'Het meetrapport krijg je geprint mee, met de meting voor en na.',
     ],
     cta: 'Kies Executive',
     duur: 'Je auto staat één werkdag bij ons',
@@ -456,6 +457,7 @@ export const PACKAGES = [
       'Totale demping: alle deuren, de vloer en de achterklep.',
       'Urenlange afstelling via de laptop: alles komt tegelijk bij je oren aan.',
       'Accu en laadspanning gemeten, met de waarden op je werkbon.',
+      'Het meetrapport krijg je geprint mee, met de meting voor en na.',
     ],
     /* Stond op 'Bespreek maatwerk'. Dat past niet meer: maatwerk is nu het
        pakket ernaast, en een vaste prijs verdient een knop die kiest in
@@ -522,6 +524,8 @@ export const PACKAGES = [
       'Behuizingen met de hand gebouwd, passend bij het interieur.',
       'Afstemming over meerdere sessies, met meetapparatuur.',
       "Minimaal twee accu's, met een laadvoorziening die dat aankan.",
+      'Accu en laadspanning gemeten, met de waarden op je werkbon.',
+      'Het meetrapport krijg je geprint mee, met de meting voor en na.',
     ],
     cta: 'Bespreek je project',
     duur: 'Een week of langer — in overleg',
