@@ -117,6 +117,46 @@ export function voetregel(doc, paginaNr, {
   });
 }
 
+/**
+ * EEN BLOK REGELS WEGSCHRIJVEN DAT LANGER MAG ZIJN DAN HET PAPIER.
+ *
+ * Elk papieren stuk heeft een `ruimte(hoogte)`: is er nog zoveel plek op dit
+ * blad, en zo niet, sla dan om. Dat werkt zolang het blok op één blad past.
+ *
+ * WAT ER MISGING
+ * Bij een blok dat op geen enkel blad past — een toelichting van drie
+ * kantjes, een opmerking onderaan de offerte, een werkstap met een lang
+ * "let op" — sloeg hij één keer om en liep de tekst daarna gewoon door tot
+ * voorbij de onderrand. Nagemeten op een offerte met een toelichting van
+ * achtduizend tekens: de laatste regels stonden op y=1028 op een blad dat
+ * 842 punten hoog is. Die regels komen niet uit de printer en je ziet in de
+ * app niet dat ze weg zijn. Hij liep ook dwars door de voetregel met de
+ * bedrijfsgegevens heen.
+ *
+ * WAT HET NU DOET
+ * Elke regel vraagt zelf om zijn plek. Past een blok nog heel op het blad,
+ * dan verandert er niets — daar heeft `ruimte()` hierboven al voor gezorgd,
+ * en een omschrijving van drie regels wil je niet over twee bladen verdeeld
+ * zien. Past hij niet, dan houdt hij op waar het blad ophoudt en gaat de
+ * rest op de volgende bladzijde verder.
+ *
+ * `nieuweBladzijde` moet de nieuwe y teruggeven, want die bepaalt waar op het
+ * verse blad verder wordt geschreven.
+ *
+ * @returns {number} de y onder de laatste regel
+ */
+export function regelsMetOmslag(doc, regels, {
+  x, y, stap, nieuweBladzijde, ...opties
+}) {
+  let huidig = y;
+  for (const regel of regels) {
+    if (huidig + stap > ONDERGRENS) huidig = nieuweBladzijde();
+    doc.tekst(regel, x, huidig, opties);
+    huidig += stap;
+  }
+  return huidig;
+}
+
 /** Een kopje boven een blokje gegevens. */
 export function blokkop(doc, tekst, x, y) {
   doc.tekst(tekst.toUpperCase(), x, y, {

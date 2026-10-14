@@ -24,7 +24,7 @@ import { nieuwPdf, breekAf, breedteVan } from './pdf.js';
 import { SITE } from '../../data/site.js';
 import { formatteerKenteken } from '../match.js';
 import {
-  KLEUR, LINKS, RECHTS, ONDERGRENS,
+  KLEUR, LINKS, RECHTS, ONDERGRENS, regelsMetOmslag,
   kopbalk, voetregel, blokkop, kentekenplaat, vakje, invulregel,
 } from './opmaak.js';
 import { stuklijst, soortenIn, datumNl } from './rekenen.js';
@@ -57,6 +57,7 @@ export function werkbonPdf(offerte, dossier = null, eigenBlokken = []) {
     doc.nieuwePagina();
     paginaNr += 1;
     y = kopbalk(doc, { ...kop, vervolg: true }) + 26;
+    return y;
   };
 
   /** Zorgt dat er nog `hoogte` punten over zijn; anders een nieuwe bladzijde. */
@@ -193,10 +194,10 @@ export function werkbonPdf(offerte, dossier = null, eigenBlokken = []) {
       const regels = breekAf(waarde, RECHTS - LINKS - LABEL, 9, true);
       ruimte(regels.length * 12 + 6);
       doc.tekst(veld.naam, LINKS, y, { grootte: 8, kleur: KLEUR.zacht });
-      regels.forEach((regel, i) => {
-        doc.tekst(regel, LINKS + LABEL, y + i * 12, { grootte: 9, vet: true, kleur: KLEUR.inkt });
-      });
-      y += regels.length * 12 + 1;
+      y = regelsMetOmslag(doc, regels, {
+        x: LINKS + LABEL, y, stap: 12, nieuweBladzijde,
+        grootte: 9, vet: true, kleur: KLEUR.inkt,
+      }) + 1;
     }
     y += 4;
 
@@ -205,10 +206,9 @@ export function werkbonPdf(offerte, dossier = null, eigenBlokken = []) {
     if (String(dossier.bron || '').trim()) {
       const regels = breekAf(`Bron: ${dossier.bron}`, RECHTS - LINKS, 8);
       ruimte(regels.length * 11 + 6);
-      regels.forEach((regel, i) => {
-        doc.tekst(regel, LINKS, y + i * 11, { grootte: 8, kleur: KLEUR.zacht });
+      y = regelsMetOmslag(doc, regels, {
+        x: LINKS, y, stap: 11, nieuweBladzijde, grootte: 8, kleur: KLEUR.zacht,
       });
-      y += regels.length * 11;
     }
     y += 10;
   }
@@ -322,10 +322,11 @@ export function werkbonPdf(offerte, dossier = null, eigenBlokken = []) {
       doc.tekst(String(stap.nummer), LINKS + 18, y, {
         grootte: 9, vet: true, kleur: KLEUR.accentInkt,
       });
-      regels.forEach((regel, i) => {
-        doc.tekst(regel, tekstX, y + i * 12, { grootte: 9, kleur: KLEUR.inkt });
-      });
-      let onder = y + (regels.length - 1) * 12;
+      /* `onder` is de laatste schrijflijn, niet de ruimte eronder: daar wordt
+         vanaf verder gerekend voor de waarde en het "let op". */
+      let onder = regelsMetOmslag(doc, regels, {
+        x: tekstX, y, stap: 12, nieuweBladzijde, grootte: 9, kleur: KLEUR.inkt,
+      }) - 12;
 
       if (stap.waarde) {
         /* Vastgelegd: dan staat het er gewoon, dikgedrukt, zodat je het ziet
@@ -340,10 +341,12 @@ export function werkbonPdf(offerte, dossier = null, eigenBlokken = []) {
           grootte: 9, vet: true, kleur: KLEUR.accentInkt,
         });
       }
-      letRegels.forEach((regel, i) => {
-        doc.tekst(regel, tekstX, onder + 11 + i * 10, { grootte: 8, kleur: KLEUR.zacht });
-      });
-      if (letRegels.length) onder += 11 + (letRegels.length - 1) * 10;
+      if (letRegels.length) {
+        onder = regelsMetOmslag(doc, letRegels, {
+          x: tekstX, y: onder + 11, stap: 10, nieuweBladzijde,
+          grootte: 8, kleur: KLEUR.zacht,
+        }) - 10;
+      }
 
       if (stap.invullen) {
         /* Niet vastgelegd: een lege regel om ter plekke in te vullen. Geen

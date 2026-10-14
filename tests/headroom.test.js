@@ -20,6 +20,7 @@ import {
   STANDAARD_INSTELLINGEN, SOORTEN, BTW_PCT,
 } from '../src/lib/headroom/rekenen.js';
 import { nieuwPdf, naarPdfTekens, breedteVan, breekAf, A4 } from '../src/lib/headroom/pdf.js';
+import { ONDERGRENS } from '../src/lib/headroom/opmaak.js';
 import { offertePdf, pdfBestandsnaam } from '../src/lib/headroom/offerte-pdf.js';
 import { werkbonPdf, werkbonBestandsnaam } from '../src/lib/headroom/werkbon.js';
 import { factuurPdf, factuurBestandsnaam } from '../src/lib/headroom/factuur.js';
@@ -1812,6 +1813,141 @@ describe('niets loopt de kolom uit op de pdf', () => {
     // De afbreking mag niet zomaar overal gaan knippen.
     const pdf = lees(offertePdf({ ...basis, klant: { naam: 'Mark de Vries' } }, INST));
     assert.match(pdf, /Mark de Vries/);
+  });
+});
+
+/**
+ * NIETS LOOPT DE ONDERRAND AF.
+ *
+ * De vorige controle kijkt naar de breedte: loopt een lange naam de kolom
+ * uit. Deze kijkt naar de hoogte, en dat is de ergere van de twee. Loopt
+ * tekst de onderrand af, dan komt hij niet uit de printer en zie je in de
+ * app niet dat hij weg is. Hij loopt ook dwars door de voetregel met de
+ * bedrijfsgegevens heen.
+ *
+ * Wat dit vond: een offerte met een toelichting van achtduizend tekens zette
+ * de laatste regels op y=1028, op een blad dat 842 punten hoog is. De
+ * ruimtecheck sloeg de bladzijde één keer om, en een blok dat op geen enkel
+ * blad past liep daarna gewoon door. Hetzelfde gold voor een lange opmerking
+ * onderaan de offerte en voor een werkstap met een lang "let op".
+ */
+describe('niets loopt de onderrand af op de pdf', () => {
+  const datum = new Date(2026, 8, 18);
+
+  /* De schrijflijn van elk stuk tekst, gerekend vanaf de bovenkant van het
+     blad. De pdf telt van onderen, vandaar het aftrekken. */
+  const schrijflijnen = (doc) => {
+    const pdf = Buffer.from(doc.naarBytes()).toString('latin1');
+    return [...pdf.matchAll(/stream\n([\s\S]*?)\nendstream/g)].flatMap((blad, nr) =>
+      [...blad[1].matchAll(/1 0 0 1 (-?[\d.]+) (-?[\d.]+) Tm \((.*?)\) Tj/g)].map((t) => ({
+        blad: nr + 1,
+        vanBoven: A4.hoogte - Number(t[2]),
+        tekst: t[3],
+      })));
+  };
+
+  /* De voetregel hoort onder de ondergrens te staan; die is niet de fout. */
+  const isVoetregel = (r) =>
+    /^(Audio Upgrade Emmen|KVK |Pagina |Interne werkbon|Alleen voor jezelf)/.test(r.tekst);
+
+  const teDiep = (doc) =>
+    schrijflijnen(doc).filter((r) => !isVoetregel(r) && r.vanBoven > ONDERGRENS);
+
+  const zeg = (regels) => regels.length
+    ? `${regels.length} regel(s) voorbij de ondergrens, diepste op y=` +
+      `${Math.max(...regels.map((r) => r.vanBoven)).toFixed(0)} van ${A4.hoogte.toFixed(0)}: ` +
+      `"${regels[0].tekst.slice(0, 40)}"`
+    : '';
+
+  const basis = {
+    nummer: '2026-042',
+    datum,
+    geldigTot: geldigTot(datum, 30),
+    klant: { naam: 'Jan Jansen' },
+    auto: { kenteken: 'XX99XX', merk: 'BMW', model: '320i', bouwjaar: '2019' },
+    voorwaardenBijlage: false,
+  };
+  /* Lang genoeg om op geen enkel blad te passen. */
+  const lap = (n) => 'Wat we bij deze auto doen, stap voor stap, zwart op wit. '.repeat(n);
+
+  test('een toelichting van meerdere bladen gaat door op de volgende bladzijde', () => {
+    const doc = offertePdf({
+      ...basis,
+      regels: [{
+        omschrijving: 'Volledige demping',
+        toelichting: lap(140),
+        aantal: 1,
+        vastExclCent: 100000,
+      }],
+    }, INST);
+    const diep = teDiep(doc);
+    assert.equal(diep.length, 0, zeg(diep));
+    assert.ok(doc.paginas > 1, 'zo veel tekst hoort niet op één blad te passen');
+  });
+
+  test('een lange opmerking onderaan de offerte loopt het blad niet af', () => {
+    const diep = teDiep(offertePdf({
+      ...basis,
+      regels: [{ omschrijving: 'Werk', aantal: 1, vastExclCent: 50000 }],
+      opmerking: lap(90),
+    }, INST));
+    assert.equal(diep.length, 0, zeg(diep));
+  });
+
+  test('een werkstap met een lang "let op" loopt het blad niet af', () => {
+    const diep = teDiep(werkbonPdf(
+      { ...basis, regels: [{ omschrijving: 'Werk', aantal: 1, vastExclCent: 50000 }] },
+      null,
+      [{ naam: 'Eigen blok', stappen: [{ nummer: 1, tekst: lap(130), let: lap(130) }] }],
+    ));
+    assert.equal(diep.length, 0, zeg(diep));
+  });
+
+  test('een dossierveld met een lange waarde loopt het blad niet af', () => {
+    const diep = teDiep(werkbonPdf(
+      { ...basis, regels: [{ omschrijving: 'Werk', aantal: 1, vastExclCent: 50000 }] },
+      { bron: lap(150), bijzonderheden: lap(150) },
+    ));
+    assert.equal(diep.length, 0, zeg(diep));
+  });
+
+  test('veertig regels op een offerte blijven alle veertig op het papier', () => {
+    const doc = offertePdf({
+      ...basis,
+      regels: Array.from({ length: 40 }, (_, i) => ({
+        omschrijving: `Onderdeel ${i + 1}`,
+        toelichting: 'Inclusief montage en afstemming.',
+        aantal: 1,
+        vastExclCent: 12345,
+      })),
+    }, INST);
+    const diep = teDiep(doc);
+    assert.equal(diep.length, 0, zeg(diep));
+    /* En ze staan er ook echt alle veertig op. */
+    const pdf = Buffer.from(doc.naarBytes()).toString('latin1');
+    assert.match(pdf, /Onderdeel 1\)/);
+    assert.match(pdf, /Onderdeel 40\)/);
+  });
+
+  test('boven een vervolgblad zonder tabel staat geen kolomkop', () => {
+    /* "Omschrijving · Aantal · Bedrag" boven een blad met alleen de afspraken
+       wijst naar een tabel die daar niet staat. */
+    const doc = offertePdf({
+      ...basis,
+      regels: Array.from({ length: 14 }, (_, i) => ({
+        omschrijving: `Onderdeel ${i + 1}`,
+        toelichting: 'Inclusief montage en afstemming, met meetrapport erbij.',
+        aantal: 1,
+        vastExclCent: 24900,
+      })),
+    }, INST);
+    const koppen = schrijflijnen(doc).filter((r) => r.tekst === 'Omschrijving');
+    const afspraken = schrijflijnen(doc).find((r) => r.tekst === 'GOED OM TE WETEN');
+    assert.ok(afspraken, 'het blok met de afspraken staat er niet op');
+    assert.ok(
+      !koppen.some((k) => k.blad === afspraken.blad),
+      `op blad ${afspraken.blad} staat een kolomkop boven de afspraken`
+    );
   });
 });
 

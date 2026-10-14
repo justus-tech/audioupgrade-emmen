@@ -19,7 +19,7 @@ import { nieuwPdf, breekAf, breedteVan } from './pdf.js';
 import { SITE } from '../../data/site.js';
 import {
   KLEUR, LINKS, RECHTS, ONDERGRENS, kopbalk, voetregel, blokkop, kentekenplaat,
-  voorwaardenBijlage,
+  voorwaardenBijlage, regelsMetOmslag,
 } from './opmaak.js';
 import { kernpunten, annuleertermijn } from './voorwaarden.js';
 /* De streepjes in een kenteken zitten al in de site: dezelfde functie die de
@@ -123,12 +123,18 @@ export function offertePdf(offerte, inst = STANDAARD_INSTELLINGEN) {
     y += 18;
   };
 
-  const nieuweBladzijde = () => {
+  /**
+   * `metTabelkop` staat uit waar de tabel al voorbij is. Een kolomkop
+   * "Omschrijving · Aantal · Bedrag" boven een blad met alleen de totalen of
+   * alleen de afspraken wijst naar een tabel die daar niet staat.
+   */
+  const nieuweBladzijde = ({ metTabelkop = true } = {}) => {
     voetregel(doc, paginaNr);
     doc.nieuwePagina();
     paginaNr += 1;
     y = kopbalk(doc, { ...kop, vervolg: true }) + 26;
-    tabelkop();
+    if (metTabelkop) tabelkop();
+    return y;
   };
 
   tabelkop();
@@ -145,14 +151,18 @@ export function offertePdf(offerte, inst = STANDAARD_INSTELLINGEN) {
     if (y + hoogte > ONDERGRENS) nieuweBladzijde();
 
     const bovenkant = y;
-    titelRegels.forEach((tekst, i) => {
-      doc.tekst(tekst, LINKS, y + i * 13, { grootte: 10, vet: true, kleur: KLEUR.inkt });
-    });
-    let onder = y + (titelRegels.length - 1) * 13;
-    uitleg.forEach((tekst, i) => {
-      doc.tekst(tekst, LINKS, onder + 12 + i * 11, { grootte: 8.5, kleur: KLEUR.zacht });
-    });
-    if (uitleg.length) onder += 12 + (uitleg.length - 1) * 11;
+    /* De y die terugkomt staat ónder de laatste regel; `onder` is de laatste
+       schrijflijn zelf, want daar wordt vanaf verder gerekend. */
+    let onder = regelsMetOmslag(doc, titelRegels, {
+      x: LINKS, y, stap: 13, nieuweBladzijde,
+      grootte: 10, vet: true, kleur: KLEUR.inkt,
+    }) - 13;
+    if (uitleg.length) {
+      onder = regelsMetOmslag(doc, uitleg, {
+        x: LINKS, y: onder + 12, stap: 11, nieuweBladzijde,
+        grootte: 8.5, kleur: KLEUR.zacht,
+      }) - 11;
+    }
 
     doc.tekst(String(prijs.aantal), KOLOM_AANTAL, bovenkant, {
       grootte: 10, kleur: KLEUR.zacht, uitlijnen: 'rechts',
@@ -174,7 +184,7 @@ export function offertePdf(offerte, inst = STANDAARD_INSTELLINGEN) {
   /* ---- de totalen ----------------------------------------------------- */
   const t = totalen(regels, inst, offerte.kortingExclCent || 0);
   const totaalHoogte = zakelijk ? 78 : 62;
-  if (y + totaalHoogte > ONDERGRENS) nieuweBladzijde();
+  if (y + totaalHoogte > ONDERGRENS) nieuweBladzijde({ metTabelkop: false });
 
   y += 8;
   const labelX = RECHTS - 132;
@@ -242,14 +252,14 @@ export function offertePdf(offerte, inst = STANDAARD_INSTELLINGEN) {
   if (offerte.opmerking) afspraken.push(offerte.opmerking);
 
   const afsprakenRegels = afspraken.flatMap((zin) => breekAf(`·  ${zin}`, RECHTS - LINKS, 8.5));
-  if (y + afsprakenRegels.length * 12 + 26 > ONDERGRENS) nieuweBladzijde();
+  const versBlad = () => nieuweBladzijde({ metTabelkop: false });
+  if (y + afsprakenRegels.length * 12 + 26 > ONDERGRENS) versBlad();
 
   blokkop(doc, 'Goed om te weten', LINKS, y);
-  y += 15;
-  for (const regel of afsprakenRegels) {
-    doc.tekst(regel, LINKS, y, { grootte: 8.5, kleur: KLEUR.zacht });
-    y += 12;
-  }
+  y = regelsMetOmslag(doc, afsprakenRegels, {
+    x: LINKS, y: y + 15, stap: 12, nieuweBladzijde: versBlad,
+    grootte: 8.5, kleur: KLEUR.zacht,
+  });
 
   voetregel(doc, paginaNr);
 
