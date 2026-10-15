@@ -133,12 +133,23 @@ h1, h2, h3, .btn, nav a, .eyebrow {
   letter-spacing: .14em;
 }
 
-/* Koppen staan in hoofdletters mét letterafstand. Een lang woord als
-   "DARWINSTRAAT" wordt daardoor breder dan een telefoon van 320 pixels, en
-   dan kun je de hele pagina opzij schuiven. Dit laat zo'n woord desnoods
-   afbreken in plaats van de pagina op te rekken. Het valt op tot het
-   webletttertype geladen is; daarna is het een vangnet. */
-h1, h2, h3 { overflow-wrap: break-word; }
+/* VANGNET TEGEN EEN WOORD DAT BREDER IS DAN DE TELEFOON.
+
+   Twee keer hetzelfde probleem, daarom één regel op body — overflow-wrap
+   erft, dus hiermee is de hele pagina gedekt.
+
+   In een kop: die staat in hoofdletters mét letterafstand, dus een woord als
+   "DARWINSTRAAT" wordt breder dan 320 pixels. Dat valt op zolang het
+   weblettertype nog niet geladen is.
+
+   In de bodytekst: Nederlands maakt lange samenstellingen. Nagemeten op de
+   voorwaardenpagina: "bedrijfsaansprakelijkheidsverzekering" in artikel 7 is
+   37 letters en vroeg 325 pixels in een kolom van 272. Het woord bleef heel
+   en rekte de pagina 29 pixels op, dus je kon de voorwaarden opzij schuiven.
+   Op 390 pixels zag je er niets van, op een kleinere telefoon wel.
+
+   Dit doet niets zolang een woord past. */
+body { overflow-wrap: break-word; }
 
 h1 { font-size: clamp(1.9rem, 4.5vw, 3.2rem); line-height: 1.15; font-weight: 600; }
 h2 { font-size: clamp(1.3rem, 2.6vw, 1.9rem); font-weight: 600; margin-bottom: .75em; }

@@ -11,7 +11,7 @@
  */
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
 import { join, extname } from 'node:path';
@@ -678,11 +678,41 @@ describe('licht en donker', alsGebouwd, () => {
 describe('op een telefoon', alsGebouwd, () => {
   const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 
+  /**
+   * ELKE pagina, niet een handvol.
+   *
+   * Hier stonden vier paden: de homepage, /upgrades, één modelpagina en
+   * /contact. Daardoor glipte er een overloop door op /algemene-voorwaarden,
+   * waar één Nederlandse samenstelling van 37 letters de pagina op 320 pixels
+   * 29 pixels oprekte. Nu wordt de lijst uit de gebouwde map gelezen, dus een
+   * nieuwe pagina staat er automatisch bij.
+   */
+  const allePaginas = () => [
+    ...readdirSync(DIST)
+      .filter((bestand) => bestand.endsWith('.html'))
+      .map((bestand) => bestand.replace(/\.html$/, '').replace(/^index$/, '')),
+    /* Een greep uit de modelpagina's: die komen uit één sjabloon, dus een
+       overloop zou op alle honderdvijftig zitten. Wel merken met lange namen. */
+    'audio-upgrade/saab-9-3',
+    'audio-upgrade/land-rover-discovery',
+    'audio-upgrade/mercedes-c-klasse',
+  ].filter((pad, i, lijst) => lijst.indexOf(pad) === i);
+
   test('niets loopt over de zijkant heen — ook niet op 320 pixels', async () => {
     for (const breedte of [320, 390]) {
       const pagina = await browser.newPage({ ...telefoon, viewport: { width: breedte, height: 844 } });
-      for (const pad of ['', 'upgrades', 'audio-upgrade/saab-9-3', 'contact']) {
+      for (const pad of allePaginas()) {
         await pagina.goto(paginaUrl(pad));
+        /* Wachten tot het adres stilstaat. Drie adressen sturen namelijk
+           door: /werkbak en /deck naar /headroom, en /headroom naar het
+           eerste tabblad. Meet je tijdens die sprong, dan is het venster
+           alweer weg en krijg je "execution context was destroyed" in plaats
+           van een breedte. */
+        let vorig = null;
+        while (pagina.url() !== vorig) {
+          vorig = pagina.url();
+          await pagina.waitForTimeout(90);
+        }
         // Wachten tot de letters er zijn: zolang de terugvalletter nog in
         // gebruik is, meet je een andere breedte dan de bezoeker uiteindelijk
         // ziet. Zonder dit slaat deze test af en toe zomaar aan.
