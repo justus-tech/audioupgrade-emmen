@@ -869,6 +869,10 @@ describe('Headroom', alsGebouwd, () => {
     await pagina.click('[data-tab="offerte"]');
   }
 
+  /** Wat er op dit moment in de opslag van de app staat. */
+  const opslagVan = (pagina) =>
+    pagina.evaluate(() => JSON.parse(localStorage.getItem('aue-werkbak-v1') || '{}'));
+
   test('het kenteken haalt de auto op bij de RDW', async () => {
     const { pagina, fouten } = await openWerkbak();
     await pagina.fill('#wb-kenteken', '92DJHG');
@@ -946,6 +950,81 @@ describe('Headroom', alsGebouwd, () => {
     await pagina.waitForSelector('#wb-onderdelen .wb-toevoeg');
     const knoppen = await pagina.$$('#wb-onderdelen .wb-toevoeg');
     assert.equal(knoppen.length, 1);
+    await pagina.close();
+  });
+
+  /**
+   * WEGGOOIEN GAAT NIET PER ONGELUK.
+   *
+   * "Weghalen" staat op een telefoon naast "Aanpassen", en wat eraf gaat komt
+   * niet terug. Nagespeeld op 390 pixels: één tik en het onderdeel stond niet
+   * meer in de opslag — zonder vraag, en opgeslagen voordat je het zag. De
+   * inkoopprijs, het artikelnummer en de toebehoren moet je dan weer bij je
+   * leverancier opzoeken; bij een vastgelegd model moet de auto er weer voor
+   * open.
+   *
+   * Er wordt nu gevraagd, net als bij een luistersessie. Deze twee tests
+   * letten op beide antwoorden: nee moet het laten staan.
+   */
+  test('een onderdeel weggooien vraagt eerst, en nee laat het staan', async () => {
+    const { pagina } = await openWerkbak();
+    await vulCatalogus(pagina, { naam: 'Gladen RS 165 composet', inkoop: '289,00' });
+    await pagina.click('[data-tab="catalogus"]');
+
+    const vragen = [];
+    pagina.on('dialog', async (venster) => {
+      vragen.push(venster.message());
+      /* De eerste keer nee, de tweede keer ja. */
+      if (vragen.length === 1) await venster.dismiss();
+      else await venster.accept();
+    });
+
+    await pagina.click('#wb-catalogus .wb-weg >> nth=0');
+    await pagina.waitForTimeout(150);
+    assert.equal(vragen.length, 1, 'er werd niets gevraagd');
+    assert.match(vragen[0], /Gladen RS 165 composet/, 'de vraag noemt het onderdeel niet');
+    assert.match(vragen[0], /289,00/, 'de vraag noemt de inkoopprijs niet');
+    assert.deepEqual(
+      (await opslagVan(pagina)).catalogus.map((c) => c.omschrijving),
+      ['Gladen RS 165 composet'],
+      'nee zeggen gooide het alsnog weg'
+    );
+
+    /* En met ja gaat hij er wél af. */
+    await pagina.click('#wb-catalogus .wb-weg >> nth=0');
+    await pagina.waitForTimeout(150);
+    assert.deepEqual((await opslagVan(pagina)).catalogus, [], 'ja zeggen hield het alsnog');
+    await pagina.close();
+  });
+
+  test('een vastgelegd model weggooien vraagt eerst, en nee laat het staan', async () => {
+    const pagina = await browser.newPage(telefoon);
+    await pagina.addInitScript(() => {
+      localStorage.setItem('aue-werkbak-v1', JSON.stringify({
+        instellingen: {}, catalogus: [], offertes: [], sessies: [], rapporten: [],
+        dossiers: [{
+          sleutel: 'bmw-3-serie', naam: 'BMW 3er (E90)', vanJaar: '2005', totJaar: '2011',
+          voorMaat: '165 mm', bron: 'Zelf nagemeten, 3 maart 2026',
+        }],
+      }));
+    });
+    await pagina.goto(paginaUrl('headroom?tab=autos'));
+    await pagina.evaluate(() => document.fonts.ready);
+    await pagina.waitForSelector('#wb-a-lijst .wb-weg');
+
+    const vragen = [];
+    pagina.on('dialog', async (venster) => {
+      vragen.push(venster.message());
+      await venster.dismiss();
+    });
+    await pagina.click('#wb-a-lijst .wb-weg >> nth=0');
+    await pagina.waitForTimeout(150);
+    assert.equal(vragen.length, 1, 'er werd niets gevraagd');
+    assert.match(vragen[0], /BMW/, 'de vraag noemt de auto niet');
+    assert.equal(
+      (await opslagVan(pagina)).dossiers.length, 1,
+      'nee zeggen gooide het model alsnog weg'
+    );
     await pagina.close();
   });
 
@@ -1288,7 +1367,11 @@ describe('Headroom', alsGebouwd, () => {
     await metGroteCatalogus(pagina);
     await pagina.click('[data-tab="catalogus"]');
     await pagina.fill('#wb-cat-zoek', 'pico');
+    /* Weghalen vraagt sinds kort eerst; hier zeggen we ja, want het gaat erom
+       dat hij hét gezochte onderdeel pakt en niet de eerste van de lijst. */
+    pagina.once('dialog', (venster) => venster.accept());
     await pagina.click('#wb-catalogus .wb-weg >> nth=0');
+    await pagina.waitForTimeout(150);
 
     const over = await pagina.evaluate(() =>
       JSON.parse(localStorage.getItem('aue-werkbak-v1')).catalogus);

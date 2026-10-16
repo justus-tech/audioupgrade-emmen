@@ -2517,6 +2517,15 @@ import { APP } from '../data/app.js';
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
       rij.querySelector('.wb-weg').addEventListener('click', () => {
+        /* Even vragen, net als bij een luistersessie. Dit knopje zit op een
+           telefoon naast "Aanpassen", en wat eraf gaat is niet terug te
+           halen: de inkoopprijs en het artikelnummer moet je dan weer bij je
+           leverancier opzoeken. */
+        if (!confirm(
+          `"${onderdeel.omschrijving}" uit je catalogus weghalen?\n\n`
+          + `De inkoopprijs (${euro(onderdeel.inkoopCent)}) en het artikelnummer `
+          + 'moet je dan opnieuw opzoeken.'
+        )) return;
         staat.catalogus.splice(i, 1);
         opslaan();
         tekenCatalogus();
@@ -2821,6 +2830,14 @@ import { APP } from '../data/app.js';
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
       rij.querySelector('.wb-weg').addEventListener('click', () => {
+        /* Zelf nagemeten weegt zwaarder dan een lijst van vijf jaar oud, dus
+           dit is het vervelendste om per ongeluk kwijt te raken: dan moet de
+           auto er weer voor open. */
+        if (!confirm(
+          `${dossierNaam(dossier)} weghalen?\n\n`
+          + `Wat je bij deze auto hebt nagemeten (${stand.ingevuld} van de `
+          + `${stand.totaal} gegevens) is dan weg.`
+        )) return;
         staat.dossiers.splice(i, 1);
         opslaan();
         tekenDossiers();
