@@ -13,7 +13,7 @@ import {
   subImpedantie, eindImpedantie, versterkerStroom, leesVermogen, leesSpoelen,
   leegPlan, nieuwComponent, planUitOfferte, bouwPlan, stroomSchema, audioSchema,
   zoekDing, bedradingHtml, kabellijst, autoMaten, routeTussen, inbouwSchema, inbouwLijst,
-  plekkenVan, GEMIDDELDE_AUTO,
+  plekkenVan, GEMIDDELDE_AUTO, waaromGeenKabel, MAX_VERLIES, KOPER,
 } from '../src/lib/headroom/bedrading.js';
 
 /** Een plan met een 4-kanaals versterker, een monoblok en een sub. */
@@ -74,6 +74,103 @@ describe('de zekering beschermt de kabel', () => {
   test('spanningsverlies volgt de wet van Ohm', () => {
     // 100 A over 5 m koper van 21,2 mm²: 100 × 0,0175 × 5 / 21,2 = 0,41 V.
     assert.equal(Math.round(verlies(100, 5, 21.2) * 100) / 100, 0.41);
+  });
+});
+
+/**
+ * PAST ER GEEN KABEL, DAN MOET HET PLAN ZEGGEN WAAROM.
+ *
+ * Er zijn twee redenen waarom geen enkele maat voldoet, en ze hebben
+ * tegenovergestelde oplossingen:
+ *
+ *   te veel stroom   de dikste kabel mag de zekering niet dragen → tweede
+ *                    kabel of tweede accu
+ *   te lang          hij mag hem wel dragen, maar verliest te veel spanning
+ *                    → kortere route, massapunt dichterbij, OFC in plaats
+ *                      van CCA
+ *
+ * Het plan noemde allebei "meer dan één 0 AWG-kabel veilig draagt". Nagemeten:
+ * 181 A over CCA van 4,5 m kreeg die melding, terwijl 0 AWG in CCA daar 240 A
+ * mag — het ging om het verlies (0,426 V waar 0,4 V mag). Op die melding koop
+ * je een tweede accu die je niet nodig hebt.
+ *
+ * En bij een tak stond er helemaal niets: alleen een streepje bij "Dikte",
+ * met de zekering er wél bij. Dan sta je bij de auto te gokken.
+ */
+describe('waarom er geen kabel past', () => {
+  test('te veel stroom heet stroom, te lang heet lengte', () => {
+    const dikste = VOEDING[VOEDING.length - 1];
+
+    // 400 A: geen kabel mag dat dragen, hoe kort je hem ook legt.
+    assert.equal(
+      waaromGeenKabel({ zekeringA: 400, stroomA: 400, lengteM: 0.5, maxVerlies: 0.4 }),
+      'stroom'
+    );
+    // 200 A over CCA van 4,5 m: de kabel mag 240 A, dus het is de lengte.
+    assert.ok(dikste.maxA * KOPER.cca.belast >= 200, 'de aanname van deze test klopt niet meer');
+    assert.equal(
+      waaromGeenKabel({ zekeringA: 200, stroomA: 181, lengteM: 4.5, maxVerlies: 0.4, koper: 'cca' }),
+      'lengte'
+    );
+    // En past er wél een maat, dan is er niets aan de hand.
+    assert.equal(
+      waaromGeenKabel({ zekeringA: 200, stroomA: 181, lengteM: 4.5, maxVerlies: 0.4, koper: 'ofc' }),
+      null
+    );
+  });
+
+  test('een hoofdkabel die te lang is krijgt niet de melding over te veel stroom', () => {
+    const plan = standaardPlan();
+    plan.koper = 'cca';
+    const uit = bouwPlan(plan);
+    const fouten = uit.waarschuwingen.filter((w) => w.ernst === 'fout' && w.bij === 'hoofdzekering');
+    for (const f of fouten) {
+      if (/verliest zelfs/.test(f.tekst)) {
+        assert.match(f.tekst, /De stroom is niet het probleem/);
+        assert.ok(
+          !/tweede accu/.test(f.tekst),
+          'een te lange kabel hoort geen tweede accu voor te stellen'
+        );
+      }
+    }
+  });
+
+  test('een tak zonder passende kabel zegt waarom, en noemt de lengte', () => {
+    const plan = standaardPlan();
+    /* De zwaarste versterker nemen, niet de eerste: een lichte haalt die
+       lengte wél. Plus en massa allebei 4 m, samen 8 m, en dan haalt geen
+       enkele maat de 0,15 V die over een tak mag. */
+    const amp = plan.componenten
+      .filter((c) => c.soort === 'versterker')
+      .sort((a, b) => (versterkerStroom(b) || 0) - (versterkerStroom(a) || 0))[0];
+    plan.lengtes[`plus-${amp.id}`] = '4';
+    plan.lengtes[`massa-${amp.id}`] = '4';
+    const uit = bouwPlan(plan);
+
+    const tak = uit.kabels.find((k) => k.id === `plus-${amp.id}`);
+    assert.ok(tak, 'de tak staat niet in de kabellijst');
+    assert.equal(tak.maat, null, 'deze test gaat uit van een tak waar niets op past');
+
+    const fout = uit.waarschuwingen.find(
+      (w) => w.ernst === 'fout' && w.bij === amp.id && /verliest zelfs/.test(w.tekst)
+    );
+    assert.ok(fout, 'er staat een zekering zonder kabel, zonder uitleg waarom');
+    assert.match(fout.tekst, /samen 8 m/, 'de melding noemt de lengte niet');
+    assert.match(fout.tekst, /verdeelblok dichter/, 'de melding zegt niet wat je eraan doet');
+  });
+
+  test('bij gewone lengtes komt die melding niet', () => {
+    // Anders staat er bij elke klus een foutmelding die er niet hoort.
+    const uit = bouwPlan(standaardPlan());
+    const onnodig = uit.waarschuwingen.filter(
+      (w) => w.ernst === 'fout' && /verliest zelfs|veilig draagt/.test(w.tekst)
+    );
+    assert.deepEqual(onnodig, [], 'een gewoon plan geeft een foutmelding over de kabels');
+  });
+
+  test('de grens van een tak is strenger dan die van de hoofdkabel', () => {
+    assert.ok(MAX_VERLIES.tak < MAX_VERLIES.hoofd);
+    assert.ok(MAX_VERLIES.hoofd < MAX_VERLIES.enkel);
   });
 });
 

@@ -176,6 +176,35 @@ export function kiesVoeding({ zekeringA, stroomA, lengteM, maxVerlies, koper = '
 }
 
 /**
+ * WAAROM ER GEEN KABEL PAST.
+ *
+ * `kiesVoeding` hierboven geeft niets terug zodra geen enkele maat voldoet.
+ * Dat kan twee heel verschillende dingen betekenen:
+ *
+ *   'stroom'   de dikste kabel mag deze zekering niet dragen. Dan moet het
+ *              systeem anders: twee voedingskabels of een tweede accu.
+ *   'lengte'   hij mag de zekering wél dragen, maar verliest over deze
+ *              lengte te veel spanning. Dan moet de kabel korter, of van
+ *              OFC in plaats van CCA.
+ *
+ * WAAROM DIT VERSCHIL ERTOE DOET
+ * Het plan zei in beide gevallen dat het meer was dan één 0 AWG-kabel veilig
+ * draagt. Nagemeten: 181 A over een CCA-kabel van 4,5 m kreeg die melding,
+ * terwijl 0 AWG in CCA daar 240 A mag — het ging puur om het verlies (0,426 V
+ * waar 0,4 V mag). Op zo'n melding koop je een tweede accu die je niet nodig
+ * hebt, terwijl een kortere route of OFC het oplost.
+ *
+ * @returns {'stroom'|'lengte'|null} null als er wél een maat past
+ */
+export function waaromGeenKabel({ zekeringA, stroomA, lengteM, maxVerlies, koper = 'ofc' }) {
+  const dikste = VOEDING[VOEDING.length - 1];
+  const draagt = dikste.maxA * (KOPER[koper] || KOPER.ofc).belast;
+  if (!zekeringA || zekeringA > draagt) return 'stroom';
+  if (verlies(stroomA, lengteM, dikste.mm2, koper) > maxVerlies) return 'lengte';
+  return null;
+}
+
+/**
  * De luidsprekerkabel.
  *
  * Twee eisen: genoeg koper voor het vermogen, en niet meer dan 3% van het
@@ -648,14 +677,26 @@ export function bouwPlan(plan, { dossier = null, auto = {} } = {}) {
        totaal niet bekend. Dan liever geen getal dan een te kleine zekering. */
     const compleet = !onbekend.length;
     const hoofdA = compleet ? kiesZekering(totaalA) : null;
+    /* Over de lange kabel naar achter mag meer verlies dan over een korte
+       tak; zonder verdeelblok is die kabel de hele voeding. */
+    const maxVerliesHoofd = metBlok ? MAX_VERLIES.hoofd : MAX_VERLIES.enkel;
+    const dikste = VOEDING[VOEDING.length - 1];
     const hoofdKabel = !compleet ? null : kiesVoeding({
       zekeringA: hoofdA || 0, stroomA: volStroomA, lengteM: voedingLengte,
-      maxVerlies: metBlok ? MAX_VERLIES.hoofd : MAX_VERLIES.enkel, koper,
+      maxVerlies: maxVerliesHoofd, koper,
     });
-    if (compleet && (totaalA > 300 || !hoofdKabel)) {
-      meld('fout', `Samen vragen de versterkers ${Math.round(totaalA)} A. Dat is meer dan één 0 AWG-kabel veilig draagt: dit vraagt een eigen ontwerp met twee voedingskabels of een tweede accu.`, 'hoofdzekering');
+    /* Past er geen kabel, dan maakt het alles uit of dat door de stroom of
+       door de lengte komt: dat zijn twee verschillende oplossingen. */
+    const waarom = !compleet ? null : (totaalA > 300 ? 'stroom' : waaromGeenKabel({
+      zekeringA: hoofdA || 0, stroomA: volStroomA, lengteM: voedingLengte,
+      maxVerlies: maxVerliesHoofd, koper,
+    }));
+    if (waarom === 'stroom') {
+      meld('fout', `Samen vragen de versterkers ${Math.round(totaalA)} A. Dat is meer dan één kabel van ${voedingNaam(dikste)} veilig draagt: dit vraagt een eigen ontwerp met twee voedingskabels of een tweede accu.`, 'hoofdzekering');
+    } else if (waarom === 'lengte') {
+      meld('fout', `De voedingskabel is ${komma(voedingLengte)} m (plus en massa samen). Bij ${Math.round(volStroomA)} A verliest zelfs ${voedingNaam(dikste)} daarover meer dan de ${komma(maxVerliesHoofd, 2)} V die mag. De stroom is niet het probleem: zoek een kortere route, een massapunt dichterbij${koper === 'cca' ? ', of neem OFC in plaats van CCA' : ''}.`, 'hoofdzekering');
     }
-    const maat = compleet ? (hoofdKabel || VOEDING[VOEDING.length - 1]) : null;
+    const maat = compleet ? (hoofdKabel || dikste) : null;
     const hoofdVerlies = maat ? verlies(volStroomA, voedingLengte, maat.mm2, koper) : null;
 
     knopen.push({
@@ -731,9 +772,25 @@ export function bouwPlan(plan, { dossier = null, auto = {} } = {}) {
       const zekA = v.vast ?? kiesZekering(v.ontwerpA || 0);
       let takMaat = null;
       if (v.ontwerpA) {
+        const takTotaal = takLengte + massaLengte;
+        const takStroom = v.stroomA ?? v.ontwerpA;
         takMaat = metBlok
-          ? kiesVoeding({ zekeringA: zekA, stroomA: v.stroomA ?? v.ontwerpA, lengteM: takLengte + massaLengte, maxVerlies: MAX_VERLIES.tak, koper })
+          ? kiesVoeding({ zekeringA: zekA, stroomA: takStroom, lengteM: takTotaal, maxVerlies: MAX_VERLIES.tak, koper })
           : maat;
+        /* Stond hier niets, dan kwam er een streepje bij "Dikte" te staan
+           met de zekering er wél bij — en geen woord over waarom. Nagemeten
+           met een tak van 4 m bij een versterker van 150 A: dat gebeurde.
+           Dan sta je bij de auto te gokken welke kabel erin moet. */
+        if (metBlok && !takMaat) {
+          const waaromTak = waaromGeenKabel({
+            zekeringA: zekA, stroomA: takStroom, lengteM: takTotaal,
+            maxVerlies: MAX_VERLIES.tak, koper,
+          });
+          meld('fout', waaromTak === 'stroom'
+            ? `De zekering naar ${c.naam} is ${zekA} A. Dat is meer dan één kabel van ${voedingNaam(dikste)} veilig draagt: deze versterker vraagt zijn eigen voeding.`
+            : `Plus en massa naar ${c.naam} zijn samen ${komma(takTotaal)} m. Bij ${Math.round(takStroom)} A verliest zelfs ${voedingNaam(dikste)} daarover meer dan de ${komma(MAX_VERLIES.tak, 2)} V die over een tak mag. Zet het verdeelblok dichter bij de versterker, of zoek een massapunt dichterbij.`,
+            c.id);
+        }
       }
       const status = c.status === 'bestaand' && !nieuwStroom ? 'bestaand' : 'nieuw';
       if (metBlok) {
