@@ -117,6 +117,113 @@ describe('de patronen onderling', () => {
     assert.deepEqual([...new Set(dubbel)], [], 'twee pagina\'s vangen dezelfde auto');
   });
 
+  /**
+   * DE SCHRIJFWIJZEN DIE IN DE PATRONEN ZELF STAAN.
+   *
+   * De test hierboven toetst elke pagina met zijn eigen modelnaam, plus de
+   * gouden lijst. Maar een patroon bedoelt meestal veel meer schrijfwijzen
+   * dan die ene naam: achter de 3-serie zitten ook 316, 318, 320, 325, 328,
+   * 330, 335 en 340. Die werden door niets bewaakt.
+   *
+   * Daarom klappen we elk patroon uit naar de schrijfwijzen die het zélf
+   * bedoelt, en halen die er allemaal langs. Voegt iemand een model toe
+   * waarvan het patroon botst met zo'n losse schrijfwijze — een 330e, een
+   * 3-serie GT — dan valt deze test om in plaats van dat een bezoeker stil
+   * op de verkeerde pagina belandt.
+   *
+   * Dit is geen complete regex-ontleder: alleen de vormen die in
+   * src/data/modellen/ voorkomen. Wat hij niet aankan slaat hij over, en
+   * daarom staat er onderaan een ondergrens op het aantal. Zonder die
+   * ondergrens zou een test die niets meer uitklapt gewoon groen blijven.
+   */
+  function schrijfwijzenVan(re) {
+    const bron = re.source;
+
+    /* Splitsen op de | die niet binnen ( ) of [ ] staat. */
+    const delen = [];
+    let diep = 0;
+    let blok = 0;
+    let nu = '';
+    for (let i = 0; i < bron.length; i += 1) {
+      const teken = bron[i];
+      if (teken === '\\') { nu += teken + (bron[i + 1] || ''); i += 1; continue; }
+      if (teken === '(') diep += 1;
+      if (teken === ')') diep -= 1;
+      if (teken === '[') blok += 1;
+      if (teken === ']') blok -= 1;
+      if (teken === '|' && diep === 0 && blok === 0) { delen.push(nu); nu = ''; continue; }
+      nu += teken;
+    }
+    delen.push(nu);
+
+    const uit = [];
+    for (const deel of delen) {
+      /* Groepen met keuzes uitklappen: (16|18|20) wordt drie schrijfwijzen.
+         Een vooruitblik (?! … ) laten we juist weg: dat is wat NIET mag. */
+      let varianten = [deel];
+      for (let ronde = 0; ronde < 4; ronde += 1) {
+        const volgende = [];
+        let veranderd = false;
+        for (const variant of varianten) {
+          const groep = variant.match(/\((\?:)?([^()]*)\)/);
+          if (!groep) { volgende.push(variant); continue; }
+          veranderd = true;
+          if (groep[0].startsWith('(?!') || groep[0].startsWith('(?=')) {
+            volgende.push(variant.replace(groep[0], ''));
+            continue;
+          }
+          for (const keuze of groep[2].split('|')) volgende.push(variant.replace(groep[0], keuze));
+        }
+        varianten = volgende;
+        if (!veranderd) break;
+      }
+
+      for (const variant of varianten) {
+        const schoon = variant
+          .replace(/\(\?[!=][^)]*\)/g, '')
+          .replace(/\[A-Z\]\*|\[A-Z0-9\]\*|\\w\*/g, '')
+          .replace(/\\b|\^|\$/g, '')
+          .replace(/\\d/g, '0')
+          .replace(/\\s/g, ' ')
+          .replace(/\\\./g, '.')
+          .replace(/\\-/g, '-')
+          .replace(/\[ -\]/g, ' ')
+          .replace(/\?/g, '')
+          .trim();
+        /* Staat er nog een regex-teken in, dan kan deze ontleder het niet
+           aan en slaan we die schrijfwijze over. */
+        if (!schoon || /[[\]()*+{}|\\]/.test(schoon)) continue;
+        uit.push(schoon);
+      }
+    }
+    return [...new Set(uit)];
+  }
+
+  test('ook de schrijfwijzen uit de patronen zelf matchen één pagina', () => {
+    const dubbel = [];
+    const elders = [];
+    let geteld = 0;
+
+    for (const m of MODELS) {
+      for (const vorm of schrijfwijzenVan(m.matchers.model)) {
+        geteld += 1;
+        const treffers = alleTreffers(m.matchers.merk, vorm);
+        if (treffers.length > 1) {
+          dubbel.push(`${m.matchers.merk} "${vorm}" (uit ${m.slug}) → ${treffers.join(', ')}`);
+        } else if (treffers[0] !== m.slug) {
+          elders.push(`${m.matchers.merk} "${vorm}" (uit ${m.slug}) → ${treffers[0] || 'niets'}`);
+        }
+      }
+    }
+
+    assert.deepEqual([...new Set(dubbel)], [], 'twee pagina\'s vangen dezelfde schrijfwijze');
+    assert.deepEqual([...new Set(elders)], [], 'een schrijfwijze uit een patroon komt elders uit');
+    /* De ondergrens: bij 150 modellen hoort dit er ruim honderd op te
+       leveren. Klapt hij er ineens veel minder uit, dan bewaakt deze test
+       niets meer en hoort hij om te vallen. */
+    assert.ok(geteld > 150, `er zijn maar ${geteld} schrijfwijzen uitgeklapt; de ontleder werkt niet meer`);
+  });
+
   test('elke modelpagina is te bereiken met zijn eigen naam', () => {
     /* Een pagina die door een andere wordt afgeschaduwd, ziet een bezoeker
        nooit — en dat merk je aan niets. */
