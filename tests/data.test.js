@@ -396,6 +396,175 @@ describe('pakketten en prijzen', () => {
   });
 });
 
+/**
+ * EEN PRIJS DIE IN EEN MODELTEKST STAAT, MOET DIE VAN HET PAKKET ZIJN.
+ *
+ * De pakketprijzen staan in site.js, en dat hoort de enige bron te zijn.
+ * Maar in de teksten van de modelpagina's staan ze ook letterlijk:
+ * "De Akoestische Basis: premium speakers voorin plus deurdemping,
+ * € 995 all-in" staat op vijfentwintig modelpagina's, en de CarPlay-prijs
+ * en die van The OEM+ Executive elk op één.
+ *
+ * Vandaag kloppen ze alle zevenentwintig. Het gevaar zit in de dag erna:
+ * verandert Justus een pakketprijs in site.js, dan veranderen die teksten
+ * niet mee en staan er twee prijzen voor hetzelfde pakket op zijn eigen
+ * site. Dat ziet een klant eerder dan wij.
+ *
+ * Deze test kost vandaag niets en valt om op precies het moment waarop het
+ * uitmaakt. Zet je bewust een andere prijs in een tekst, dan hoort die eerst
+ * in site.js te staan.
+ */
+describe('prijzen in de modelteksten', () => {
+  /** Elk bedrag dat ergens in de tekst van een modelpagina staat. */
+  const bedragenIn = (model) => {
+    const alles = [
+      model.intro,
+      model.description,
+      model.solution?.text,
+      model.carplay?.text,
+      ...(model.problems || []),
+      ...(model.faq || []).flatMap((f) => [f.q, f.a]),
+    ].filter(Boolean).join(' ');
+    return [...alles.matchAll(/€\s?[\d.,]+/g)].map((t) => t[0]);
+  };
+
+  /* "€ 2.195,00" en "€ 2.195" zijn hetzelfde bedrag; nullen achter de komma
+     en punten in het duizendtal doen er niet toe. */
+  const kaal = (bedrag) => String(bedrag)
+    .replace(/[€\s.]/g, '')
+    .replace(/,00$/, '')
+    .replace(/,$/, '');
+
+  test('elk bedrag in een modeltekst is een echte pakketprijs', () => {
+    const bekend = new Set(PACKAGES.map((p) => kaal(String(p.price).replace(/[^\d.,]/g, ''))));
+    const vreemd = [];
+    for (const model of MODELS) {
+      for (const bedrag of bedragenIn(model)) {
+        if (!bekend.has(kaal(bedrag))) {
+          vreemd.push(`${model.slug}: "${bedrag}" staat niet bij de pakketten in site.js`);
+        }
+      }
+    }
+    assert.deepEqual(vreemd, [], 'een modelpagina noemt een prijs die niet meer klopt');
+  });
+
+  test('de test kijkt echt naar bedragen en niet naar niets', () => {
+    /* Zonder deze ondergrens blijft bovenstaande test groen op de dag dat
+       niemand meer een prijs in een modeltekst zet — of, erger, op de dag
+       dat de bedragen anders geschreven worden en de zoeker ze mist. */
+    const totaal = MODELS.reduce((som, m) => som + bedragenIn(m).length, 0);
+    assert.ok(totaal >= 20, `er zijn maar ${totaal} bedragen gevonden in de modelteksten`);
+  });
+});
+
+/**
+ * GEEN SJABLOONTEKST OP DE MODELPAGINA'S — EN HET MAG NIET ERGER WORDEN.
+ *
+ * CLAUDE.md is er duidelijk over: elke modelpagina heeft eigen tekst, nooit
+ * een sjabloon waarin alleen de modelnaam verschilt, want dat rankt niet en
+ * leest als spam.
+ *
+ * Nagemeten op 19 oktober 2026 en dat is niet goed: 189 teksten staan
+ * letterlijk op meer dan één modelpagina, samen 648 keer, verspreid over 142
+ * van de 150 pagina's. De zwaarste gevallen:
+ *
+ *   22x  faq-vraag  "Verlies ik bagageruimte?"
+ *   13x  probleem   "De achterklep resoneert hoorbaar mee zodra er echte bas bij komt."
+ *   12x  probleem   "De hoge zitpositie legt het geluidsbeeld laag, ver onder je oorhoogte."
+ *    9x  antwoord   "De Akoestische Basis: premium speakers voorin plus deurdemping, € 995 all-in."
+ *
+ * Een vraag die terugkomt is niet het ergste — "blijft mijn fabrieksgarantie
+ * geldig?" is bij elke auto een echte vraag. Een letterlijk gelijk antwoord
+ * of probleem is dat wel: dat is wat een zoekmachine als dubbele tekst leest.
+ *
+ * Dit uitschrijven is werk voor meer dan één ronde en vraagt per auto echte
+ * kennis, geen synonymenjacht. Tot die tijd houdt deze test de stand vast.
+ * HET GETAL HIERONDER MAG ALLEEN OMLAAG. Valt deze test om, dan is er
+ * sjabloontekst bijgekomen in plaats van afgegaan.
+ */
+describe('sjabloontekst op de modelpagina\'s', () => {
+  const normaliseer = (tekst) => String(tekst || '')
+    .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+  /** Elk stuk tekst van een modelpagina, met het soort erbij. */
+  const stukkenVan = (model) => [
+    ...(model.problems || []).map((t) => ['probleem', t]),
+    ...(model.faq || []).flatMap((f) => [['faq-vraag', f.q], ['faq-antwoord', f.a]]),
+    ['carplay', model.carplay?.text],
+    ['oplossing', model.solution?.text],
+    ['intro', model.intro],
+    ['description', model.description],
+  ].filter(([, t]) => t && String(t).trim());
+
+  const dubbeleTeksten = () => {
+    const kaart = new Map();
+    for (const model of MODELS) {
+      for (const [soort, tekst] of stukkenVan(model)) {
+        const sleutel = `${soort}|${normaliseer(tekst)}`;
+        if (!kaart.has(sleutel)) kaart.set(sleutel, []);
+        kaart.get(sleutel).push(model.slug);
+      }
+    }
+    return [...kaart.values()].filter((paginas) => paginas.length > 1);
+  };
+
+  /**
+   * De stand van 19 oktober 2026, en wat hier geteld wordt.
+   *
+   * NIET het aantal verschillende dubbele teksten, maar het aantal
+   * PLAATSINGEN daarvan. Dat verschil is precies de valkuil waar deze test
+   * zelf eerst in trapte: zet je een zin die al op dertien pagina's staat op
+   * een veertiende, dan blijft het aantal verschillende teksten 189 en merkt
+   * niemand iets. Het aantal plaatsingen gaat dan van 648 naar 649, en dat
+   * is wat er feitelijk slechter wordt.
+   *
+   * Alleen omlaag bijstellen.
+   */
+  const PLAATSINGEN = 648;
+
+  test('er komt geen sjabloontekst bij', () => {
+    const dubbel = dubbeleTeksten();
+    const plaatsingen = dubbel.reduce((som, paginas) => som + paginas.length, 0);
+    assert.ok(
+      plaatsingen <= PLAATSINGEN,
+      `geleende tekst staat nu ${plaatsingen} keer op een modelpagina; dat was ${PLAATSINGEN}. `
+      + 'Schrijf voor deze pagina eigen tekst in plaats van een bestaande zin te kopiëren.'
+    );
+    /* Ging het omlaag, dan hoort het getal hierboven mee te zakken, anders
+       sluipt de boel er later weer ongemerkt in. */
+    assert.ok(
+      plaatsingen >= PLAATSINGEN - 20,
+      `mooi: nog ${plaatsingen} plaatsingen (was ${PLAATSINGEN}). `
+      + `Zet PLAATSINGEN in deze test op ${plaatsingen}.`
+    );
+  });
+
+  test('geen enkele modelpagina bestaat alléén uit geleende tekst', () => {
+    /* Het ergste geval: een pagina waarvan élk stuk tekst ook ergens anders
+       staat. Dan is er niets eigen aan en heeft hij geen reden om te
+       bestaan naast die andere pagina. */
+    const geleend = new Set(dubbeleTeksten().flatMap((paginas) => paginas));
+    const kaal = [];
+    for (const model of MODELS) {
+      const stukken = stukkenVan(model);
+      if (!stukken.length) continue;
+      const eigen = stukken.filter(([soort, tekst]) => {
+        const sleutel = `${soort}|${normaliseer(tekst)}`;
+        let keer = 0;
+        for (const ander of MODELS) {
+          for (const [s2, t2] of stukkenVan(ander)) {
+            if (`${s2}|${normaliseer(t2)}` === sleutel) keer += 1;
+          }
+        }
+        return keer === 1;
+      });
+      if (!eigen.length) kaal.push(model.slug);
+    }
+    assert.deepEqual(kaal, [], 'deze pagina heeft geen enkele eigen zin');
+    assert.ok(geleend.size > 0, 'de meting werkt niet meer');
+  });
+});
+
 describe('bedrijfsgegevens', () => {
   test('de gegevens die op elke pagina staan zijn ingevuld', () => {
     for (const veld of ['name', 'phone', 'email', 'whatsapp', 'kvk', 'btw', 'street', 'postalCode', 'city']) {
