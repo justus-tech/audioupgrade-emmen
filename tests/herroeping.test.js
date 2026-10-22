@@ -46,8 +46,25 @@ describe('wanneer het formulier meegaat', () => {
   });
 
   test('niet als de afspraak in de werkplaats is gemaakt', () => {
+    /* Alleen een uitdrukkelijke `false` betekent "in de werkplaats". */
     assert.equal(hoortErBij({ opAfstand: false }), false);
-    assert.equal(hoortErBij({}), false);
+  });
+
+  test('een offerte zonder dat veld geldt als op afstand', () => {
+    /**
+     * Hier stond `hoortErBij({})` op false, en dat was de verkeerde kant op.
+     * Overal elders geldt een ontbrekend veld als "op afstand": kernpunten()
+     * heeft true als standaard, de offerte geeft `!== false` door en het
+     * vinkje op het scherm staat aan.
+     *
+     * Het gevolg van die ene afwijking: bij een offerte uit een oudere
+     * reservekopie stond op de pdf dat de klant veertien dagen bedenktijd
+     * heeft, terwijl het modelformulier niet meeging. Dan loopt die termijn
+     * door tot maximaal een jaar.
+     */
+    assert.equal(hoortErBij({}), true);
+    assert.equal(hoortErBij({ zakelijk: false }), true);
+    assert.equal(hoortErBij({ zakelijk: true }), false);
   });
 
   test('dezelfde twee voorwaarden als de bedenktijd op de offerte', () => {
@@ -58,6 +75,10 @@ describe('wanneer het formulier meegaat', () => {
       { opAfstand: true, zakelijk: true },
       { opAfstand: false, zakelijk: false },
       { opAfstand: false, zakelijk: true },
+      /* De twee gevallen waarin het veld er niet is. Juist die stonden hier
+         niet, en juist daar liepen formulier en bedenktijd uit elkaar. */
+      { zakelijk: false },
+      { zakelijk: true },
     ]) {
       const punten = kernpunten({ ...geval, geldigTot: '28-10-2026' }).join(' ');
       assert.equal(

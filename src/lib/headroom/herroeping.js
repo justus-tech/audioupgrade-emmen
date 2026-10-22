@@ -33,9 +33,28 @@ import {
  * op afstand gesloten én een consument. Een zakelijke klant heeft geen
  * herroepingsrecht, dus voor hem is dit blad een belofte die de wet niet
  * vraagt. Staat de klant in de werkplaats, dan bestaat het recht ook niet.
+ *
+ * EEN ONTBREKENDE `opAfstand` IS "OP AFSTAND", NIET "NIET OP AFSTAND".
+ *
+ * Hier stond `!!offerte.opAfstand`, en dat las een ontbrekend veld als
+ * "in de werkplaats afgesproken". Overal elders in de app is het precies
+ * andersom: kernpunten() heeft `opAfstand = true` als standaard, de offerte
+ * geeft `offerte.opAfstand !== false` door, en het vinkje op het scherm staat
+ * bij een ontbrekend veld aan. Deze regel was de enige die er anders over
+ * dacht.
+ *
+ * Wat dat deed bij een offerte zonder dat veld — en die komt uit een
+ * reservekopie van vóór de bedenktijd: op de offerte stond dat de klant
+ * veertien dagen bedenktijd heeft, het vinkje op het scherm stond aan, en het
+ * modelformulier ging niet mee. Dat is precies het geval uit de uitleg
+ * bovenaan dit bestand: vertel je over de bedenktijd zonder het formulier,
+ * dan loopt die termijn door tot maximaal een jaar.
+ *
+ * Nagespeeld met een offerte zonder `opAfstand`: de pdf noemde de bedenktijd,
+ * hoortErBij() zei nee.
  */
 export function hoortErBij(offerte = {}) {
-  return !!offerte.opAfstand && !offerte.zakelijk;
+  return offerte.opAfstand !== false && !offerte.zakelijk;
 }
 
 export function herroepingBestandsnaam(offerte = {}) {
