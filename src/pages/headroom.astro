@@ -980,6 +980,7 @@ import { APP } from '../data/app.js';
   import {
     RAPPORT_SOORTEN, ACCU_METINGEN, NAZORG_VELDEN, KORTE_PUNTEN,
     leegRapport, rapportnummer, rapportenVoor, ontbreekt, meetrapportHtml,
+    SYSTEEM_MAX,
   } from '../lib/headroom/meetrapport.js';
   import { MODELS } from '../data/models.js';
   import { klantenUit, klantPast, zoekKlant } from '../lib/headroom/klanten.js';
@@ -3732,7 +3733,6 @@ import { APP } from '../data/app.js';
   }
 
   /** De systeemtabel: maximaal vijf regels, want meer past niet op het blad. */
-  const SYSTEEM_MAX = 5;
   function tekenSysteem() {
     $('#mr-systeem').innerHTML = meting.systeem.map((r, i) => `
       <div class="wb-veldrij mr-rij">

@@ -43,7 +43,7 @@ import { autoNaam } from '../src/lib/headroom/autos.js';
 import {
   RAPPORT_SOORTEN, ACCU_METINGEN, KORTE_PUNTEN, NAZORG_TIPS, MEETKOP,
   leegRapport, rapportnummer, rapportenVoor, ontbreekt, meetrapportHtml,
-  meetrapportBestandsnaam,
+  meetrapportBestandsnaam, SYSTEEM_MAX,
 } from '../src/lib/headroom/meetrapport.js';
 import {
   DOSSIER_VELDEN, autoSleutel, zoekDossier, dossierStand, leegDossier, dossierNaam,
@@ -2317,6 +2317,44 @@ describe('een zelf getikte modelnaam vindt hetzelfde dossier', () => {
 
 
 /* ================= HET MEETRAPPORT ================= */
+describe('het maximum van vijf systeemregels staat op één plek', () => {
+  /**
+   * De app laat je er vijf invullen en het rapport drukt er vijf af. Dat
+   * getal stond op twee plekken, en als die uiteenlopen kap je geruisloos af:
+   * de app laat zes regels zien, het rapport toont vijf, en je ziet pas op
+   * papier dat er een mist. Nu komt het uit één constante.
+   */
+  test('het rapport drukt nooit meer regels af dan het maximum', () => {
+    const regels = (n) => Array.from({ length: n }, (_, i) => ({
+      onderdeel: `Onderdeel ${i + 1}`, merktype: 'Gladen RS 165', plaats: 'voordeuren',
+    }));
+    const maak = (n) => meetrapportHtml({
+      soort: 'geluid', nummer: '26-007', datum: '2026-10-23', klant: 'Jan Jansen',
+      kenteken: '92DJHG', auto: 'BMW 320i', bouwjaar: '2019',
+      systeem: regels(n), kort: [], voorBeeld: 'x', naBeeld: 'y',
+      accu: { type: '', metingen: {} }, nazorg: {},
+    });
+    const opHetRapport = (html) => (html.match(/Onderdeel \d+/g) || []).length;
+
+    /* Tot het maximum komt elke regel erop. */
+    assert.equal(opHetRapport(maak(SYSTEEM_MAX)), SYSTEEM_MAX);
+    assert.equal(opHetRapport(maak(3)), 3);
+    /* En erboven kapt hij af — maar dat kan de app niet laten gebeuren. */
+    assert.equal(opHetRapport(maak(SYSTEEM_MAX + 4)), SYSTEEM_MAX);
+  });
+
+  test('de app staat er niet meer toe dan er op het rapport passen', alsGebouwd, () => {
+    /* Het getal in de app komt uit hetzelfde bestand als dat van het rapport,
+       dus er is niets meer om uit elkaar te laten lopen. Deze test leest de
+       gebouwde app na om te zien dat er geen tweede vijf is ingeslopen. */
+    const bron = readFileSync(
+      fileURLToPath(new URL('../src/pages/headroom.astro', import.meta.url)), 'utf8'
+    );
+    assert.match(bron, /SYSTEEM_MAX,?\n?\s*\} from '\.\.\/lib\/headroom\/meetrapport\.js'/);
+    assert.doesNotMatch(bron, /const SYSTEEM_MAX\s*=/, 'de app bepaalt het maximum weer zelf');
+  });
+});
+
 describe('het meetrapport', () => {
   /** Een compleet geluidsrapport, zoals het uit het formulier komt. */
   const geluid = () => ({

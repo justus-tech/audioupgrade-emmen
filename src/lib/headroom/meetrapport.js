@@ -274,11 +274,23 @@ function bladvoet(paginaNr, totaal) {
     </footer>`;
 }
 
+/**
+ * Hoeveel regels "Jouw systeem" er op het rapport passen.
+ *
+ * Het blad heeft een vaste hoogte van 295 mm, dus er gaat niet oneindig veel
+ * op. Dit getal stond op twee plekken: hier als `.slice(0, 5)` en in de app
+ * als `SYSTEEM_MAX`. Zolang ze gelijk zijn merk je daar niets van, maar
+ * verhoogt iemand het in de app, dan laat de app zes regels invullen en drukt
+ * het rapport er stil vijf af. Dat is dezelfde geruisloze afkapping die op de
+ * werkbon al eens een halve artikelnaam kostte, dus staat het nu op één plek.
+ */
+export const SYSTEEM_MAX = 5;
+
 /** Blad 1: wie, welke auto, wat erin zit en wat je ervan merkt. */
 function bladSamenvatting(rapport, soortNaam, nr, totaal) {
   const regels = (rapport.systeem || []).filter(
     (r) => String(r.onderdeel || '').trim() || String(r.merktype || '').trim()
-  ).slice(0, 5);
+  ).slice(0, SYSTEEM_MAX);
 
   const systeem = regels.length
     ? `<table class="mr-tabel">
