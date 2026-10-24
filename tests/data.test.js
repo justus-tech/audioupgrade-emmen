@@ -470,8 +470,13 @@ describe('prijzen in de modelteksten', () => {
  *
  *   22x  faq-vraag  "Verlies ik bagageruimte?"
  *   13x  probleem   "De achterklep resoneert hoorbaar mee zodra er echte bas bij komt."
- *   12x  probleem   "De hoge zitpositie legt het geluidsbeeld laag, ver onder je oorhoogte."
  *    9x  antwoord   "De Akoestische Basis: premium speakers voorin plus deurdemping, € 995 all-in."
+ *
+ * Op 24 oktober is de zwaarste probleemzin aangepakt: "De hoge zitpositie
+ * legt het geluidsbeeld laag, ver onder je oorhoogte" stond op twaalf
+ * SUV-pagina's en is vervangen door twaalf eigen zinnen. Het houvast per
+ * pagina komt uit het record zelf — de generaties, de variant, of het
+ * fabriekssysteem dat die pagina al noemde — zodat er niets bij verzonnen is.
  *
  * Een vraag die terugkomt is niet het ergste — "blijft mijn fabrieksgarantie
  * geldig?" is bij elke auto een echte vraag. Een letterlijk gelijk antwoord
@@ -518,9 +523,10 @@ describe('sjabloontekst op de modelpagina\'s', () => {
    * niemand iets. Het aantal plaatsingen gaat dan van 648 naar 649, en dat
    * is wat er feitelijk slechter wordt.
    *
-   * Alleen omlaag bijstellen.
+   * Alleen omlaag bijstellen. Stand: 648 op 19 oktober, 636 op 24 oktober
+   * nadat de twaalf SUV-pagina's hun eigen zin over de zitpositie kregen.
    */
-  const PLAATSINGEN = 648;
+  const PLAATSINGEN = 636;
 
   test('er komt geen sjabloontekst bij', () => {
     const dubbel = dubbeleTeksten();

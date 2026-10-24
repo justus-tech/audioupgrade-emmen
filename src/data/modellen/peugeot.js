@@ -193,7 +193,7 @@ export default [
       'De 3008 is de auto waarmee Peugeot bewees dat het weer meetelt: een interieur dat aanvoelt als een klasse hoger. Het geluid loopt daar in de basisuitvoering op achter.',
     problems: [
       'Het cabinevolume is fors en lage tonen hebben vermogen nodig om zo\'n ruimte te vullen.',
-      'De hoge zitpositie legt het geluidsbeeld laag, ver onder je oorhoogte.',
+      'Je zit hoog en kijkt over het stuur heen op het instrumentenpaneel, terwijl de speakers ver daaronder in de deur zitten. Het beeld komt daardoor van beneden in plaats van voor je.',
       'De grote achterklep dreunt hoorbaar mee op elke basnoot.',
     ],
     solution: {

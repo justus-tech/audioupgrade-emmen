@@ -67,7 +67,7 @@ export default [
     problems: [
       'Het cabinevolume is groot. Lage tonen vragen daar veel meer vermogen dan het Sound Package Plus kan geven.',
       'De grote achterklep en de zijpanelen van de bagageruimte resoneren hoorbaar mee.',
-      'De hoge zitpositie legt het geluidsbeeld laag, ver onder je oorhoogte.',
+      'In zo\'n brede cabine zit je vlak naast de ene voorspeaker en ver van de andere. Het beeld trekt daardoor naar de deur waar je naast zit, in plaats van dat het midden voor je staat.',
     ],
     solution: {
       title: 'Wat wij eraan doen',

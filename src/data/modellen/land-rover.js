@@ -201,7 +201,7 @@ export default [
       'De Discovery Sport is de praktische Land Rover: hoog, recht en met plek voor zeven. Die rechte, hoge vormen maken hem akoestisch levendiger dan comfortabel is.',
     problems: [
       'De rechte, hoge panelen resoneren makkelijk mee en geven een holle nagalm bij lage tonen.',
-      'De hoge zitpositie legt het geluidsbeeld laag, ver onder je oorhoogte.',
+      'Je zit rechtop en hoog, met de speakers een flink stuk onder je. Samen met die rechte panelen komt het geluid eerder van beneden dan van voren.',
       'Met de derde zitrij in gebruik zitten passagiers ver van elke speaker.',
     ],
     solution: {

@@ -358,7 +358,7 @@ export default [
       'De Q3 is de Audi waarin veel gezinnen rondrijden. Groot genoeg om ruim te zitten, klein genoeg om mee te parkeren, en precies groot genoeg om het fabriekssysteem tekort te laten schieten.',
     problems: [
       'Het cabinevolume is groter dan bij een A3, terwijl de aansturing in de basis vergelijkbaar bescheiden is.',
-      'De hoge zitpositie legt het geluidsbeeld laag, ver onder je oorhoogte.',
+      'Je zit in een Q3 hoger dan in een A3, terwijl de speakers op dezelfde plek laag in de deur zitten. Het beeld blijft daardoor ergens onder het dashboard hangen in plaats van voor je.',
       'De grote achterklep werkt als een trommelvel en dreunt hoorbaar mee op elke basnoot.',
     ],
     solution: {
@@ -400,7 +400,7 @@ export default [
       'De Q5 is een van de best verkochte Audi\'s en dat is te merken aan de afstemming: hij is voor iedereen gemaakt en dus nergens scherp. Het geluid is daar het duidelijkste voorbeeld van.',
     problems: [
       'Het cabinevolume is fors en lage tonen hebben vermogen nodig om zo\'n ruimte te vullen. Dat levert de fabrieksaansturing niet.',
-      'De hoge zitpositie legt het geluidsbeeld laag, ver onder je oorhoogte.',
+      'Je oren zitten een flink stuk boven de deurspeakers. Ook met Bang & Olufsen erin blijft het beeld laag: meer speakers lossen een verkeerde hoogte niet op.',
       'De grote achterklep en de bagageruimtepanelen resoneren hoorbaar mee.',
     ],
     solution: {

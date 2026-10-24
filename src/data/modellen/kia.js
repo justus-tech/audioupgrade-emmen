@@ -109,7 +109,7 @@ export default [
       'De Sportage is een van de best verkochte SUV\'s van Nederland en biedt veel auto voor je geld. Het geluid is het onderdeel waar dat het duidelijkst te merken is.',
     problems: [
       'Het cabinevolume is fors en lage tonen hebben vermogen nodig om zo\'n ruimte te vullen.',
-      'De hoge zitpositie legt het geluidsbeeld laag, ver onder je oorhoogte.',
+      'Je zitpositie is hoog en de speakers zitten laag in de deur, dus het beeld blijft laag hangen — ook met het JBL-systeem erin.',
       'De grote achterklep werkt als een trommelvel en dreunt hoorbaar mee op elke basnoot.',
     ],
     solution: {

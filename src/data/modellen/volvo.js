@@ -66,7 +66,7 @@ export default [
       'De XC40 is de best verkochte Volvo van Nederland. Volvo adverteert zelf met Harman Kardon en Bowers & Wilkins — wie zonder die optie rijdt, hoort precies waarom.',
     problems: [
       'De basisinstallatie is breed opgezet maar onderbemeten: veel speakers, weinig vermogen per speaker.',
-      'De hoge zitpositie legt het geluidsbeeld laag, ver onder je oorhoogte.',
+      'De vele speakers zitten laag of in de deur, en jij zit daar hoog boven. Breed klinkt het wel, maar het beeld ligt onder je oorhoogte in plaats van ervoor.',
       'De grote achterklep resoneert hoorbaar mee zodra er echte bas bij komt.',
     ],
     solution: {

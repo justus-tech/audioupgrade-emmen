@@ -444,7 +444,7 @@ export default [
     problems: [
       'Het cabinevolume is fors, en lage tonen hebben vermogen nodig om zo\'n ruimte te vullen. Dat levert de fabrieksaansturing niet.',
       'De grote achterklep werkt als een trommelvel en dreunt hoorbaar mee op elke basnoot.',
-      'De hoge zitpositie legt het geluidsbeeld laag, ver onder je oorhoogte.',
+      'De luisterpositie zit hoog en de speakers laag in de deur, dus het beeld komt onder je oorhoogte uit. Harman Kardon verandert dat niet — het is een kwestie van richten, niet van vermogen.',
     ],
     solution: {
       title: 'Wat wij eraan doen',

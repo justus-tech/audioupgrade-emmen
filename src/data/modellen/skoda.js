@@ -192,7 +192,7 @@ export default [
       'De Karoq is de compacte SUV die veel Nederlanders kozen als opvolger van hun Octavia. Meer ruimte, hetzelfde audiosysteem. Dat merk je.',
     problems: [
       'Het cabinevolume is groter dan bij een Octavia terwijl de aansturing even bescheiden is.',
-      'De hoge zitpositie legt het geluidsbeeld laag, ver onder je oorhoogte.',
+      'Je zit in een Karoq hoger dan in een Octavia, terwijl de speakers op dezelfde plek laag in de deur zitten. Het beeld blijft daardoor onder je oorhoogte.',
       'De grote achterklep dreunt hoorbaar mee op elke basnoot.',
     ],
     solution: {

@@ -195,7 +195,7 @@ export default [
     problems: [
       'Het cabinevolume is fors en lage tonen hebben vermogen nodig om zo\'n ruimte te vullen. Dat levert de fabrieksaansturing niet.',
       'De grote achterklep werkt als een trommelvel en dreunt hoorbaar mee op elke basnoot.',
-      'De hoge zitpositie legt het geluidsbeeld laag, ver onder je oorhoogte.',
+      'Je zit hoog en de speakers zitten laag in de deur, dus het beeld hangt onder je oorhoogte. Of je de gewone GLC of de Coupé hebt maakt daarvoor niets uit.',
     ],
     solution: {
       title: 'Wat wij eraan doen',

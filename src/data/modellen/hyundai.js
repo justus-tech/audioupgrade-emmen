@@ -152,7 +152,7 @@ export default [
       'De Tucson is een van de best verkochte SUV\'s van Nederland en biedt veel voor zijn geld. Het geluid is het onderdeel waar dat het duidelijkst te merken is.',
     problems: [
       'Het cabinevolume is fors en lage tonen hebben vermogen nodig om zo\'n ruimte te vullen.',
-      'De hoge zitpositie legt het geluidsbeeld laag, ver onder je oorhoogte.',
+      'Je oren zitten boven de deurspeakers, dus het beeld komt van beneden. Ook het Krell-systeem richt dat niet omhoog; daarvoor is tijdcorrectie nodig.',
       'De grote achterklep werkt als een trommelvel en dreunt hoorbaar mee.',
     ],
     solution: {

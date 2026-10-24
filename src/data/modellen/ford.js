@@ -150,7 +150,7 @@ export default [
       'De Kuga is de gezinsauto van Ford: hoog, ruim en met veel kilometers per jaar. Dat formaat vraagt meer van de audio dan er af fabriek in zit.',
     problems: [
       'Het cabinevolume is fors terwijl de basisaansturing weinig vermogen levert, dus lage tonen komen nooit op niveau.',
-      'De hoge zitpositie legt het geluidsbeeld laag, ver onder je oorhoogte.',
+      'Je zit hoog boven de deurspeakers, en daar komt het geluidsbeeld dan ook vandaan. Het B&O-systeem geeft meer vermogen maar verandert die hoogte niet.',
       'De grote achterklep en de bagageruimtepanelen resoneren hoorbaar mee.',
     ],
     solution: {
