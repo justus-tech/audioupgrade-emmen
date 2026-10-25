@@ -109,7 +109,7 @@ export default [
     problems: [
       'Het interieur is hard afgewerkt met veel kunststof en leer op harde ondergrond, wat hoge tonen scherp terug laat kaatsen.',
       'De hoge zitpositie zet je verder van de deurspeakers, waardoor het geluidsbeeld laag blijft hangen.',
-      'De achterklep resoneert hoorbaar mee zodra er echte bas bij komt.',
+      'Al dat harde materiaal achterin trilt mee, en de achterklep is het grootste paneel van het stel. Met Burmester erop hoor je dat eerder, niet minder.',
     ],
     solution: {
       title: 'Wat wij eraan doen',

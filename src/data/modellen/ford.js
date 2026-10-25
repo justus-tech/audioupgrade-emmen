@@ -193,7 +193,7 @@ export default [
     problems: [
       'De basisinstallatie levert weinig vermogen en knijpt dicht zodra je verder opendraait.',
       'De hogere zitpositie legt het geluidsbeeld laag, onder je oorhoogte.',
-      'De achterklep resoneert hoorbaar mee zodra er echte bas bij komt.',
+      'Het B&O-systeem stuurt meer vermogen naar achteren, en daarmee komt de achterklep in beweging. Je hoort hem meedreunen op de laagste tonen.',
     ],
     solution: {
       title: 'Wat wij eraan doen',

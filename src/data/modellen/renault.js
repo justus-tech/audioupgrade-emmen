@@ -108,9 +108,9 @@ export default [
     intro:
       'De Captur is de Clio op hoge poten en is daarmee een van de best verkochte compacte SUV\'s van Nederland. Die extra hoogte kost je geluid.',
     problems: [
-      'De hogere zitpositie zet je verder van de deurspeakers, waardoor het geluidsbeeld laag blijft hangen.',
+      'Je zitpositie is hoog en de speakers zitten laag in de deur. Ook met Bose blijft het beeld daar hangen: meer speakers veranderen de hoogte niet.',
       'Het cabinevolume is groter dan bij de Clio terwijl de aansturing dezelfde bescheiden is.',
-      'De achterklep resoneert hoorbaar mee zodra er echte bas bij komt.',
+      'Met het Bose-systeem komt er genoeg vermogen achterin om de klep in beweging te krijgen. Dat dreunen gaat ten koste van de bas die je wél wilt horen.',
     ],
     solution: {
       title: 'Wat wij eraan doen',

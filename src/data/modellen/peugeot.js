@@ -108,9 +108,9 @@ export default [
     intro:
       'De 2008 is de 208 op hoge poten en een van de best verkochte compacte SUV\'s van het land. Het i-Cockpit voelt bijzonder; het geluid komt daar niet achteraan.',
     problems: [
-      'De hogere zitpositie zet je verder van de deurspeakers, waardoor het geluidsbeeld laag blijft hangen.',
+      'Je zit hoog en de speakers laag, dus het beeld komt van onderen. Focal erin zet er meer kwaliteit op maar verandert die richting niet.',
       'De basisinstallatie mist zowel de onderkant als de openheid bovenin.',
-      'De achterklep resoneert hoorbaar mee zodra er echte bas bij komt.',
+      'Met Focal erin is er vermogen genoeg om de achterklep te laten meetrillen. Die trilling hoor je als een doffe dreun onder de muziek.',
     ],
     solution: {
       title: 'Wat wij eraan doen',

@@ -150,9 +150,9 @@ export default [
     intro:
       'De Mokka is de compacte SUV waarmee Opel het gat naar de crossover dichtte. Je zit hoger dan in een Corsa, en dat verandert meer aan het geluid dan je zou denken.',
     problems: [
-      'De hogere zitpositie zet je verder van de deurspeakers, waardoor het geluidsbeeld laag blijft hangen.',
+      'Je kijkt over het dashboard heen terwijl de muziek van onder je uit komt. Dat verschil in hoogte hoor je meteen aan het stereobeeld.',
       'Het cabinevolume is groter dan bij een Corsa terwijl de aansturing even bescheiden is.',
-      'De achterklep resoneert hoorbaar mee zodra er echte bas bij komt.',
+      'De achterklep is groot voor zo\'n korte auto en gaat meedoen zodra er bas bij komt. Je hoort dan het paneel in plaats van de speaker.',
     ],
     solution: {
       title: 'Wat wij eraan doen',
@@ -276,9 +276,9 @@ export default [
     intro:
       'De Crossland is de praktische compacte crossover van Opel: hoog instappen, veel ruimte voor zijn maat. Die hoogte verandert meer aan het geluid dan je zou denken.',
     problems: [
-      'De hogere zitpositie zet je verder van de deurspeakers, waardoor het geluidsbeeld laag blijft hangen.',
+      'De afstand van je oren naar de deurspeakers is groter dan in een lage auto, en het beeld zakt daarmee mee naar beneden.',
       'Het interieur heeft veel hard kunststof dat hoge tonen scherp terug laat kaatsen.',
-      'De achterklep resoneert hoorbaar mee zodra er echte bas bij komt.',
+      'Het harde kunststof achterin rammelt mee op lage tonen, en de achterklep doet daar het hardst aan mee.',
     ],
     solution: {
       title: 'Wat wij eraan doen',

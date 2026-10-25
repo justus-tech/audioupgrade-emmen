@@ -193,8 +193,8 @@ export default [
     intro:
       'De GLC is de meest verkochte Mercedes-SUV, en dat is te merken: hij is voor iedereen gemaakt en dus nergens scherp afgestemd. Het geluid is daar het duidelijkste voorbeeld van.',
     problems: [
-      'Het cabinevolume is fors en lage tonen hebben vermogen nodig om zo\'n ruimte te vullen. Dat levert de fabrieksaansturing niet.',
-      'De grote achterklep werkt als een trommelvel en dreunt hoorbaar mee op elke basnoot.',
+      'De cabine is ruim, en ruimte vullen met lage tonen kost vermogen. De fabrieksversterker heeft dat niet in huis.',
+      'Achterin zit een grote, vlakke klep die meegaat op lage tonen. Dat dreunen komt bovenop de bas en maakt hem traag.',
       'Je zit hoog en de speakers zitten laag in de deur, dus het beeld hangt onder je oorhoogte. Of je de gewone GLC of de Coupé hebt maakt daarvoor niets uit.',
     ],
     solution: {

@@ -236,7 +236,7 @@ export default [
     problems: [
       'De aflopende daklijn en kleine ruiten geven weinig cabinevolume, waardoor het geluidsbeeld snel benauwd wordt.',
       'Bij de hybride valt het rolgeluid extra op, want er is geen motorgeluid dat het maskeert.',
-      'De achterklep resoneert hoorbaar mee zodra er echte bas bij komt.',
+      'De kleine achterruit en de klep eronder trillen mee op lage tonen. Bij de hybride, zonder motorgeluid eroverheen, hoor je dat nog duidelijker.',
     ],
     solution: {
       title: 'Wat wij eraan doen',

@@ -110,7 +110,7 @@ export default [
     problems: [
       'Het cabinevolume is fors en lage tonen hebben vermogen nodig om zo\'n ruimte te vullen.',
       'Je zitpositie is hoog en de speakers zitten laag in de deur, dus het beeld blijft laag hangen — ook met het JBL-systeem erin.',
-      'De grote achterklep werkt als een trommelvel en dreunt hoorbaar mee op elke basnoot.',
+      'De achterklep is een groot vlak dat meetrilt zodra de bas inzet; dat hoor je als een dof naklinken na elke noot.',
     ],
     solution: {
       title: 'Wat wij eraan doen',
@@ -235,9 +235,9 @@ export default [
     intro:
       'De Stonic is de Rio op hoge poten en verkoopt uitstekend als eerste crossover. Die extra hoogte kost je precies wat het geluid nodig heeft.',
     problems: [
-      'De hogere zitpositie zet je verder van de deurspeakers, waardoor het geluidsbeeld laag blijft hangen.',
+      'Doordat je hoog zit en de speakers laag, hoor je de muziek vanaf je knieën. Met zo weinig vermogen erop is er ook niets dat dat goedmaakt.',
       'Weinig vermogen op de deurspeakers: het systeem knijpt dicht zodra je opendraait.',
-      'De achterklep resoneert hoorbaar mee zodra er echte bas bij komt.',
+      'Draai je verder open, dan doet de achterklep mee. Dat voegt geen bas toe maar haalt hem juist weg: wat je dan hoort is blik en geen muziek.',
     ],
     solution: {
       title: 'Wat wij eraan doen',

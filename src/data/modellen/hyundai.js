@@ -68,8 +68,8 @@ export default [
       'De Kona is een van de populairste compacte SUV\'s van Nederland, en de elektrische versie is er een die je vaak in Drenthe ziet. Juist die stilte legt bloot wat het geluid mist.',
     problems: [
       'Bij de elektrische versie valt het rolgeluid extra op, omdat er geen motorgeluid overheen komt.',
-      'De hogere zitpositie zet je verder van de deurspeakers, waardoor het geluidsbeeld laag blijft hangen.',
-      'De achterklep resoneert hoorbaar mee zodra er echte bas bij komt.',
+      'Doordat je hoger zit, kijk je als het ware over de speakers heen. De muziek komt van onder je uit en het beeld blijft smal.',
+      'In de elektrische Kona is er geen motorgeluid dat het maskeert, dus je hoort de achterklep meedreunen zodra de bas inzet.',
     ],
     solution: {
       title: 'Wat wij eraan doen',

@@ -111,7 +111,7 @@ export default [
     problems: [
       'Op ruwer asfalt komt er veel bandengeluid binnen, precies in het gebied waar stemmen zitten.',
       'De hogere zitpositie legt het geluidsbeeld laag, onder je oorhoogte.',
-      'De achterklep resoneert hoorbaar mee zodra er echte bas bij komt.',
+      'Bij echte bas gaat de achterklep meedoen. Dat dreunen zit lager dan de muziek en maakt het geheel troebel in plaats van vol.',
     ],
     solution: {
       title: 'Wat wij eraan doen',

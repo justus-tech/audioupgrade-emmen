@@ -316,7 +316,7 @@ export default [
       'De Q2 is de kleinste SUV van Audi: strak, hoekig en compact. Die hoekige vormen en harde oppervlakken maken hem akoestisch levendiger dan je zou willen.',
     problems: [
       'Het interieur heeft veel hard kunststof en rechte vlakken, waardoor hoge tonen scherp terugkaatsen.',
-      'De hogere zitpositie zet je verder van de deurspeakers, waardoor het geluidsbeeld laag blijft hangen.',
+      'Je zit rechtop en hoog, met de speakers een stuk onder je. Daardoor komt de muziek van beneden en niet van voren.',
       'De achterklep resoneert hoorbaar mee zodra er bas bij komt.',
     ],
     solution: {
@@ -359,7 +359,7 @@ export default [
     problems: [
       'Het cabinevolume is groter dan bij een A3, terwijl de aansturing in de basis vergelijkbaar bescheiden is.',
       'Je zit in een Q3 hoger dan in een A3, terwijl de speakers op dezelfde plek laag in de deur zitten. Het beeld blijft daardoor ergens onder het dashboard hangen in plaats van voor je.',
-      'De grote achterklep werkt als een trommelvel en dreunt hoorbaar mee op elke basnoot.',
+      'De bagageklep is groot en vlak, en juist zo\'n paneel gaat op lage tonen staan trillen. Je hoort dan de klep in plaats van de bas.',
     ],
     solution: {
       title: 'Wat wij eraan doen',
@@ -399,7 +399,7 @@ export default [
     intro:
       'De Q5 is een van de best verkochte Audi\'s en dat is te merken aan de afstemming: hij is voor iedereen gemaakt en dus nergens scherp. Het geluid is daar het duidelijkste voorbeeld van.',
     problems: [
-      'Het cabinevolume is fors en lage tonen hebben vermogen nodig om zo\'n ruimte te vullen. Dat levert de fabrieksaansturing niet.',
+      'Er moet veel lucht in beweging komen voor een cabine van dit formaat, en dat vraagt meer vermogen dan de basisaansturing geeft.',
       'Je oren zitten een flink stuk boven de deurspeakers. Ook met Bang & Olufsen erin blijft het beeld laag: meer speakers lossen een verkeerde hoogte niet op.',
       'De grote achterklep en de bagageruimtepanelen resoneren hoorbaar mee.',
     ],

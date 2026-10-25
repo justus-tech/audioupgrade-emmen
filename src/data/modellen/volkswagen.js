@@ -356,9 +356,9 @@ export default [
     intro:
       'De T-Cross is de Polo op hoge poten: compact van buiten, verrassend ruim van binnen. Die extra hoogte kost je precies wat het geluid nodig heeft.',
     problems: [
-      'De hogere zitpositie zet je verder van de deurspeakers, waardoor het geluidsbeeld laag blijft hangen.',
+      'Je oren zitten hoger dan de deurspeakers, dus het beeld blijft onder het dashboard hangen in plaats van ervoor te staan.',
       'Het interieur heeft veel hard kunststof, wat hoge tonen scherp terug laat kaatsen.',
-      'De achterklep resoneert hoorbaar mee zodra er echte bas bij komt.',
+      'Zet je er meer vermogen op, dan gaat de achterklep meedoen: hij tikt en dreunt mee op de laagste tonen, en dat klinkt als bas die niet klopt.',
     ],
     solution: {
       title: 'Wat wij eraan doen',

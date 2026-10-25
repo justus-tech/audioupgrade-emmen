@@ -442,8 +442,8 @@ export default [
     intro:
       'De X3 is de gezinsauto onder de X-modellen: groot genoeg voor alles, klein genoeg om mee te parkeren. Dat formaat vraagt meer van de audio dan er af fabriek in zit.',
     problems: [
-      'Het cabinevolume is fors, en lage tonen hebben vermogen nodig om zo\'n ruimte te vullen. Dat levert de fabrieksaansturing niet.',
-      'De grote achterklep werkt als een trommelvel en dreunt hoorbaar mee op elke basnoot.',
+      'Voor zo\'n cabine is er simpelweg te weinig vermogen: de lage tonen komen niet verder dan aanwezig zijn.',
+      'De achterklep is één groot vlak paneel en gedraagt zich als een trommelvel: elke basnoot komt er dubbel terug, net iets te laat.',
       'De luisterpositie zit hoog en de speakers laag in de deur, dus het beeld komt onder je oorhoogte uit. Harman Kardon verandert dat niet — het is een kwestie van richten, niet van vermogen.',
     ],
     solution: {

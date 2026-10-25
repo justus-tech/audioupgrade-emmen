@@ -152,7 +152,7 @@ export default [
     problems: [
       'De kleine ruiten en aflopende daklijn geven weinig cabinevolume, waardoor het geluidsbeeld snel benauwd wordt.',
       'De hoge zitpositie legt het geluidsbeeld laag, terwijl het lagere dak de ruimte erboven beperkt.',
-      'De achterklep resoneert hoorbaar mee zodra er echte bas bij komt.',
+      'Onder dat lage dak zit weinig ruimte, en de achterklep sluit die af als een trommelvel. Met het Bose-systeem erop dreunt hij mee.',
     ],
     solution: {
       title: 'Wat wij eraan doen',

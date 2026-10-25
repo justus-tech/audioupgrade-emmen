@@ -318,7 +318,7 @@ export default [
     problems: [
       'Zonder motorgeluid wordt het rolgeluid van de banden het luidste geluid in de auto.',
       'Het interieur is strak en minimalistisch afgewerkt met veel harde oppervlakken die hoge tonen terugkaatsen.',
-      'De achterklep resoneert hoorbaar mee zodra er echte bas bij komt.',
+      'Omdat er geen motor overheen komt, hoor je de achterklep meedreunen zodra er echte bas bij komt. In een stille auto valt zoiets meteen op.',
     ],
     solution: {
       title: 'Wat wij eraan doen',
