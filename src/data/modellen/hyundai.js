@@ -129,7 +129,7 @@ export default [
       },
       {
         q: 'Wat levert het meest op?',
-        a: 'De Akoestische Basis: premium speakers voorin plus deurdemping, € 995 all-in.',
+        a: 'De Akoestische Basis, € 995 all-in. De i20 knijpt dicht zodra je opendraait en mist een echte tweeter; met vermogen, een tweeter en gedempte deuren is dat in één keer verholpen.',
       },
       {
         q: 'Blijft mijn fabrieksgarantie geldig?',

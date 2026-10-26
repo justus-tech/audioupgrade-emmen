@@ -170,7 +170,7 @@ export default [
       },
       {
         q: 'Wat levert het meest op?',
-        a: 'De Akoestische Basis: premium speakers voorin plus deurdemping, € 995 all-in.',
+        a: 'De Akoestische Basis, € 995 all-in. Daar zit precies wat de Rio mist: vermogen op de voorspeakers zodat hij niet meer dichtknijpt, een echte tweeter zodat stemmen op ooghoogte komen, en gedempte deuren zodat de bas in de cabine blijft in plaats van in het paneel.',
       },
       {
         q: 'Hoe lang duurt de inbouw?',
@@ -297,7 +297,7 @@ export default [
       },
       {
         q: 'Wat levert het meest op?',
-        a: 'De Akoestische Basis: premium speakers voorin plus deurdemping, € 995 all-in.',
+        a: 'De Akoestische Basis, € 995 all-in. Die pakt de twee grootste klachten van de Venga tegelijk: de demping legt de holle nagalm van die rechte panelen stil, en de nieuwe speakers met tweeter halen stemmen uit de dofheid.',
       },
       {
         q: 'Vervalt mijn Kia-garantie?',

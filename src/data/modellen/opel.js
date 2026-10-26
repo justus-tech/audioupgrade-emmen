@@ -258,7 +258,7 @@ export default [
       },
       {
         q: 'Wat levert het meest op?',
-        a: 'De Akoestische Basis: premium speakers voorin plus deurdemping, € 995 all-in.',
+        a: 'De Akoestische Basis, € 995 all-in. In de Meriva zit de winst vooral in de demping — die hoge panelen galmen mee — en in speakers die niet dichtknijpen zodra je opendraait.',
       },
     ],
   },
@@ -296,7 +296,7 @@ export default [
       },
       {
         q: 'Wat levert het meest op?',
-        a: 'De Akoestische Basis: premium speakers voorin plus deurdemping, € 995 all-in.',
+        a: 'De Akoestische Basis, € 995 all-in. Bij de Crossland doet de demping het meeste werk: die haalt het rammelen uit het harde kunststof, en de speakers voorin brengen het beeld terug naar voren.',
       },
       {
         q: 'Verlies ik bagageruimte?',

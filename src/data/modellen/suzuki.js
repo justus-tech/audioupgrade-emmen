@@ -128,7 +128,7 @@ export default [
       },
       {
         q: 'Wat levert het meest op?',
-        a: 'De Akoestische Basis: premium speakers voorin plus deurdemping, € 995 all-in.',
+        a: 'De Akoestische Basis, € 995 all-in. Het lichte plaatwerk van de Vitara is hier de hoofdzaak: zodra dat stilligt draagt de bas in plaats van dat hij rammelt, en de speakers voorin tillen het beeld omhoog.',
       },
       {
         q: 'Verlies ik bagageruimte?',
@@ -170,7 +170,7 @@ export default [
       },
       {
         q: 'Wat levert het meest op?',
-        a: 'De Akoestische Basis: premium speakers voorin plus deurdemping, € 995 all-in.',
+        a: 'De Akoestische Basis, € 995 all-in. Bij de Ignis is het plaatwerk zo licht dat het op elke basnoot meetrilt; demping legt dat stil, en het rolgeluid op de snelweg zakt er mee weg.',
       },
       {
         q: 'Blijft mijn fabrieksgarantie geldig?',
@@ -212,7 +212,7 @@ export default [
       },
       {
         q: 'Wat levert het meest op?',
-        a: 'De Akoestische Basis: premium speakers voorin plus deurdemping, € 995 all-in.',
+        a: 'De Akoestische Basis, € 995 all-in. In de SX4 begint het bij de deuren: het lichte blik stilleggen en er speakers in zetten die het beeld op ooghoogte brengen. Het rolgeluid dat over de stemmen heen zit gaat er meteen mee omlaag.',
       },
       {
         q: 'Verlies ik bagageruimte?',

@@ -128,7 +128,7 @@ export default [
       },
       {
         q: 'Wat levert het meest op?',
-        a: 'De Akoestische Basis: premium speakers voorin plus deurdemping, € 995 all-in.',
+        a: 'De Akoestische Basis, € 995 all-in. In de Note helpt de demping dubbel: de holle nagalm verdwijnt én je houdt minder rolgeluid over, zodat de muziek niet meer tegen de snelweg hoeft op te boksen.',
       },
       {
         q: 'Blijft mijn fabrieksgarantie geldig?',

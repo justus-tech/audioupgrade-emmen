@@ -39,6 +39,7 @@ import {
   luistersessieItems, whatsappBericht, googleLinkLuistersessie,
 } from '../src/lib/headroom/luistersessie.js';
 import { SITE, ADRES } from '../src/data/site.js';
+import { kaalNummer } from '../src/lib/headroom/klanten.js';
 import { autoNaam } from '../src/lib/headroom/autos.js';
 import {
   RAPPORT_SOORTEN, ACCU_METINGEN, KORTE_PUNTEN, NAZORG_TIPS, MEETKOP,
@@ -1746,6 +1747,44 @@ describe('de WhatsApp-link', () => {
 
   test('zonder nummer kies je zelf de contactpersoon', () => {
     assert.match(whatsappBericht('hoi'), /^https:\/\/wa\.me\/\?text=/);
+  });
+
+  test('ook de schrijfwijzen met 00 ervoor leveren een werkende link', () => {
+    /**
+     * Hier stond een eigen omzetting die alleen 06, 316 en een los
+     * negencijferig nummer kende. Vier schrijfwijzen vielen daarbuiten en
+     * gaven een adres waar WhatsApp "ongeldig nummer" van maakt. Nagemeten:
+     * 0031 644379844 werd 0031644379844, en 0049 171 1234567 werd
+     * 00491711234567.
+     *
+     * Een geldig nummer in een wa.me-adres begint altijd met een landcode en
+     * nooit met een nul, dus daar kijkt deze test op.
+     */
+    for (const invoer of [
+      '06 44 37 98 44', '0644379844', '+31 6 44 37 98 44', '+31644379844',
+      '0031 6 44 37 98 44', '0031644379844', '31644379844',
+      '+49 171 1234567', '0049 171 1234567', '0591 61 23 45',
+    ]) {
+      const nummer = whatsappBericht('hoi', invoer).match(/wa\.me\/(\d*)/)[1];
+      assert.ok(nummer, `${invoer} levert helemaal geen nummer op`);
+      assert.doesNotMatch(nummer, /^0/, `${invoer} wordt ${nummer}, en dat begint met een nul`);
+    }
+    /* En de Nederlandse schrijfwijzen komen allemaal op hetzelfde nummer uit. */
+    const nl = ['06 44 37 98 44', '0644379844', '+31644379844', '0031644379844']
+      .map((t) => whatsappBericht('x', t).match(/wa\.me\/(\d*)/)[1]);
+    assert.deepEqual([...new Set(nl)], ['31644379844']);
+  });
+
+  test('de knop herkent hetzelfde nummer als de klantenlijst', () => {
+    /* Twee omzettingen die uiteenlopen betekent dat de WhatsApp-knop naar een
+       ander nummer gaat dan waarop de klant in de lijst staat. */
+    for (const invoer of ['06 44 37 98 44', '+31644379844', '0031644379844', '0049 171 1234567']) {
+      assert.equal(
+        whatsappBericht('x', invoer).match(/wa\.me\/(\d*)/)[1],
+        kaalNummer(invoer),
+        `de knop en de klantenlijst zijn het niet eens over ${invoer}`
+      );
+    }
   });
 
   test('het bericht gaat er onverminkt in mee', () => {

@@ -22,6 +22,7 @@
  */
 import { SITE, ADRES } from '../../data/site.js';
 import { formatteerKenteken } from '../match.js';
+import { kaalNummer } from './klanten.js';
 import {
   icsTekst, icsStempel, icsNu, icsBestand, opMiddernacht, dagenTussen, hoeLangNog,
   googleAgendaLink,
@@ -193,14 +194,25 @@ export function luistersessieBestandsnaam(sessie = {}) {
  * het krijgt. Met nummer gaat hij rechtstreeks naar dat gesprek.
  */
 export function whatsappBericht(tekst, telefoon = '') {
-  const nummer = String(telefoon).replace(/[^0-9]/g, '');
-  /* Een Nederlands 06-nummer wil WhatsApp als 316... zien. */
-  const internationaal = nummer.startsWith('06') ? `31${nummer.slice(1)}`
-    : nummer.startsWith('316') ? nummer
-    : nummer.startsWith('6') && nummer.length === 9 ? `31${nummer}`
-    : nummer;
-  return internationaal
-    ? `https://wa.me/${internationaal}?text=${encodeURIComponent(tekst)}`
+  /**
+   * HETZELFDE NUMMER ALS WAAROP DE KLANTENLIJST HERKENT.
+   *
+   * Hier stond een eigen omzetting: 06 ervoor, of al 316, of negen cijfers
+   * met een 6 vooraan. Vier schrijfwijzen vielen daarbuiten en leverden een
+   * link op waar WhatsApp "ongeldig nummer" van maakt:
+   *
+   *   0031 6 44 37 98 44   werd 0031644379844
+   *   0049 171 1234567     werd 00491711234567
+   *   0591 61 23 45        werd 0591612345
+   *
+   * `kaalNummer` uit klanten.js doet dit al goed — die haalt een 00 eraf,
+   * vertrouwt een + en zet een Nederlands kengetal om naar 31. Door die te
+   * gebruiken staat de omzetting op één plek, en herkent de WhatsApp-knop
+   * precies dezelfde nummers als de klantenlijst.
+   */
+  const nummer = kaalNummer(telefoon);
+  return nummer
+    ? `https://wa.me/${nummer}?text=${encodeURIComponent(tekst)}`
     : `https://wa.me/?text=${encodeURIComponent(tekst)}`;
 }
 
