@@ -32,6 +32,7 @@ import {
 } from '../src/lib/headroom/herroeping.js';
 import {
   STANDAARD_INSTELLINGEN, geldigTot, totalen, aanbetaling, euro, naarCent,
+  kortingNaarExcl, BTW_PCT,
 } from '../src/lib/headroom/rekenen.js';
 import { btwTerugrekenen, splitsExact, euroKort } from '../src/lib/headroom/prijsbepaling.js';
 
@@ -95,11 +96,29 @@ export function bouwOfferte(invoer) {
   const regels = (invoer.regels || []).map(regelUit);
   if (!regels.length) throw new Error('een offerte zonder regels bestaat niet');
 
-  /* Eigen apparatuur van de klant is een korting op het totaal, geen negatieve
-     regel: een regelprijs klemt op nul. De korting verschijnt als eigen regel
-     "Korting" op de pdf. */
-  const kortingInclCent = naarCent(invoer.kortingIncl);
-  const kortingExclCent = kortingInclCent ? Math.round(kortingInclCent / 1.21) : 0;
+  /**
+   * Eigen apparatuur van de klant is een korting op het totaal, geen negatieve
+   * regel: een regelprijs klemt op nul. De korting verschijnt als eigen regel
+   * "Korting" op de pdf.
+   *
+   * HIER STOND EEN DELING DOOR 1,21, ALTIJD.
+   *
+   * Dat klopt bij een particulier, want die leest zijn bedragen inclusief
+   * btw. Bij een bedrijf niet: dat leest ze exclusief, en dan haalde die
+   * deling er nog een keer 21% af. Nagerekend op een zakelijke offerte met
+   * 500,00 korting: er kwam € 413,22 op de pdf, € 86,78 te weinig. Met een
+   * ingevuld `verwachtTotaalIncl` liep je dan tegen een melding aan die de
+   * oorzaak niet noemde; zonder dat anker ging het verschil gewoon mee de
+   * deur uit.
+   *
+   * Nu gaat het via kortingNaarExcl() uit rekenen.js — dezelfde functie die
+   * de app gebruikt, die de maat van de klant kent en het btw-percentage uit
+   * één bron haalt. En wie geen twijfel wil, schrijft `kortingExcl`.
+   */
+  const subtotaalExclCent = totalen(regels, STANDAARD_INSTELLINGEN, 0).exclCent;
+  const kortingExclCent = invoer.kortingExcl != null
+    ? Math.min(subtotaalExclCent, Math.max(0, naarCent(invoer.kortingExcl)))
+    : kortingNaarExcl(invoer.kortingIncl, subtotaalExclCent, Boolean(invoer.zakelijk), BTW_PCT);
 
   const offerte = {
     nummer: invoer.nummer,
@@ -110,7 +129,10 @@ export function bouwOfferte(invoer) {
     auto: invoer.auto || {},
     regels,
     kortingExclCent,
-    opAfstand: Boolean(invoer.opAfstand),
+    /* Een ontbrekend veld geldt als "op afstand", net als in de app: bijna
+       alles gaat per WhatsApp de deur uit. Stond hier Boolean(), en dan liet
+       een vergeten regel de bedenktijd en het modelformulier stil wegvallen. */
+    opAfstand: invoer.opAfstand !== false,
     startDirect: Boolean(invoer.startDirect),
     alleenWerk: Boolean(invoer.alleenWerk),
     voorwaardenBijlage: invoer.voorwaardenBijlage !== false,

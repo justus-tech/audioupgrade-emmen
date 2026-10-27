@@ -104,6 +104,45 @@ describe('de offerte opbouwen', () => {
     assert.equal(t.inclCent, 159500 - 30000);
   });
 
+  test('bij een bedrijf is de korting al exclusief btw', () => {
+    /**
+     * Hier stond een deling door 1,21, altijd. Dat klopt bij een particulier,
+     * want die leest zijn bedragen inclusief btw. Een bedrijf leest ze
+     * exclusief, en dan haalde die deling er nog een keer 21% af.
+     *
+     * Nagerekend: op een zakelijke offerte met 500,00 korting kwam € 413,22
+     * op de pdf, € 86,78 te weinig. Met een ingevuld verwachtTotaalIncl liep
+     * je tegen een melding aan die de oorzaak niet noemde; zonder dat anker
+     * ging het verschil mee de deur uit.
+     */
+    const particulier = bouwOfferte({ ...basis, kortingIncl: '500,00' });
+    assert.equal(particulier.kortingExclCent, Math.round(50000 / 1.21));
+
+    const bedrijf = bouwOfferte({ ...basis, zakelijk: true, kortingIncl: '500,00' });
+    assert.equal(bedrijf.kortingExclCent, 50000, 'bij een bedrijf hoort er geen btw meer af');
+
+    /* En wat de klant op zijn pdf ziet, is in beide gevallen vijfhonderd euro
+       in de maat die hij leest. */
+    const tP = totalen(particulier.regels, STANDAARD_INSTELLINGEN, particulier.kortingExclCent);
+    assert.equal(tP.kortingInclCent, 50000);
+    const tB = totalen(bedrijf.regels, STANDAARD_INSTELLINGEN, bedrijf.kortingExclCent);
+    assert.equal(tB.kortingExclCent, 50000);
+  });
+
+  test('met kortingExcl schrijf je het bedrag zonder twijfel op', () => {
+    const offerte = bouwOfferte({ ...basis, kortingExcl: '250,00' });
+    assert.equal(offerte.kortingExclCent, 25000);
+    /* Nooit meer korting dan er aan regels staat. */
+    const alles = bouwOfferte({ ...basis, kortingExcl: '99999,00' });
+    const t = totalen(alles.regels, STANDAARD_INSTELLINGEN, alles.kortingExclCent);
+    assert.equal(t.inclCent, 0, 'een korting groter dan het totaal hoort op nul uit te komen');
+  });
+
+  test('opAfstand laat zich wel uitzetten als je in de werkplaats afspreekt', () => {
+    assert.equal(bouwOfferte({ ...basis, opAfstand: false }).opAfstand, false);
+    assert.equal(bouwOfferte({ ...basis, opAfstand: true }).opAfstand, true);
+  });
+
   test('een laag offertenummer wordt geweigerd', () => {
     // 2026-001 leest alsof het zijn eerste offerte van het jaar is.
     assert.throws(() => bouwOfferte({ ...basis, nummer: '2026-001' }), /laag nummer/);
@@ -118,10 +157,26 @@ describe('de offerte opbouwen', () => {
     assert.throws(() => bouwOfferte({ ...basis, datum: 'volgende week' }), /geen datum/);
   });
 
-  test('de bedenktijd staat standaard uit', () => {
+  test('direct beginnen staat standaard uit, op afstand staat standaard aan', () => {
+    /**
+     * Twee standaarden die de andere kant op moeten staan, en daarom staan ze
+     * hier bij elkaar.
+     *
+     * `startDirect` uit: direct beginnen laat de klant een deel van zijn
+     * bedenktijd opgeven, en dat mag je nooit aannemen. Dat moet hij zelf
+     * zeggen.
+     *
+     * `opAfstand` aan: bijna alles gaat per WhatsApp de deur uit, en dat is
+     * een overeenkomst op afstand. Hier stond Boolean(invoer.opAfstand), dus
+     * stond dit standaard uit — en dan liet een vergeten regel op het
+     * invulblad de bedenktijd én het modelformulier stil wegvallen. Dat is de
+     * onveilige kant: vergeet je het formulier bij een klant die er recht op
+     * heeft, dan loopt zijn termijn door tot maximaal een jaar. De app leest
+     * een ontbrekend veld al als op afstand; dit script doet dat nu ook.
+     */
     const offerte = bouwOfferte(basis);
-    assert.equal(offerte.opAfstand, false);
     assert.equal(offerte.startDirect, false);
+    assert.equal(offerte.opAfstand, true);
   });
 
   test('alleen werk gaat mee naar de offerte', () => {
