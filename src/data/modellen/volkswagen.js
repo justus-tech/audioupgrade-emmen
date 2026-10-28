@@ -334,7 +334,7 @@ export default [
       },
       {
         q: 'Verlies ik bagageruimte?',
-        a: 'Nee. Wij gebruiken compacte subwoofers die onder de stoel of in de reservewielbak verdwijnen.',
+        a: 'Nee. In een Touran is de kofferruimte het halve verkoopargument, dus die blijft zoals hij is. We kijken eerst waar bij jouw indeling de ruimte echt zit en zetten daar een compacte subwoofer — onder een stoel of in de reservewielbak.',
       },
       {
         q: 'Hoe lang duurt de inbouw?',
@@ -380,7 +380,7 @@ export default [
       },
       {
         q: 'Verlies ik bagageruimte?',
-        a: 'Nee. Wij gebruiken compacte subwoofers die onder de stoel of in de reservewielbak verdwijnen.',
+        a: 'Nee. De T-Cross is achterin al niet de ruimste, dus daar halen we niets weg: de subwoofer is compact en verdwijnt onder een stoel of in de reservewielbak.',
       },
     ],
   },

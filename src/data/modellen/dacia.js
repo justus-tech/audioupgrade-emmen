@@ -90,7 +90,7 @@ export default [
       },
       {
         q: 'Verlies ik bagageruimte?',
-        a: 'Nee. Wij werken met compacte subwoofers die onder de stoel of in de reservewielbak verdwijnen.',
+        a: 'Nee. Een Duster koop je om er dingen in te kunnen leggen, dus die ruimte blijft. De compacte subwoofer past onder een stoel of in de reservewielbak.',
       },
     ],
   },

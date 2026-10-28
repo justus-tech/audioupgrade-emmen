@@ -132,7 +132,7 @@ export default [
       },
       {
         q: 'Verlies ik bagageruimte?',
-        a: 'Nee. Wij gebruiken compacte subwoofers die onder de stoel of in de reservewielbak verdwijnen.',
+        a: 'Nee. We kijken eerst wat er onder de laadvloer zit en of daar plek is; verder gaat een compacte subwoofer onder een stoel of in de reservewielbak.',
       },
     ],
   },
@@ -216,7 +216,7 @@ export default [
       },
       {
         q: 'Verlies ik bagageruimte?',
-        a: 'Nee. Wij gebruiken compacte subwoofers die onder de stoel of in de reservewielbak verdwijnen.',
+        a: 'Nee. In de 3008 is achterin ruimte genoeg om een compacte subwoofer kwijt te raken zonder dat je er iets van merkt, onder een stoel of in de reservewielbak.',
       },
     ],
   },

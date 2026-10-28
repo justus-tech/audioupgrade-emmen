@@ -174,7 +174,7 @@ export default [
       },
       {
         q: 'Verlies ik bagageruimte?',
-        a: 'Nee. Wij werken met compacte subwoofers die onder de stoel of in de reservewielbak verdwijnen.',
+        a: 'Nee. Doe je de klep open, dan zie je geen verschil: de compacte subwoofer zit onder een stoel of in de reservewielbak.',
       },
     ],
   },
@@ -300,7 +300,7 @@ export default [
       },
       {
         q: 'Verlies ik bagageruimte?',
-        a: 'Nee. Wij gebruiken compacte subwoofers die onder de stoel of in de reservewielbak verdwijnen.',
+        a: 'Nee. Juist in een auto van dit formaat is bagageruimte kostbaar, dus die laten we heel. De subwoofer is compact en gaat onder een stoel of in de reservewielbak.',
       },
     ],
   },

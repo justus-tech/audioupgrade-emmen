@@ -90,7 +90,7 @@ export default [
       },
       {
         q: 'Verlies ik bagageruimte?',
-        a: 'Nee. Wij gebruiken compacte subwoofers die onder de stoel of in de reservewielbak verdwijnen.',
+        a: 'Nee. Bij de Niro kijken we eerst waar de accu en de kabels achterin lopen, en zetten de compacte subwoofer daar waar hij niemand in de weg zit — onder een stoel of in de reservewielbak.',
       },
     ],
   },
@@ -132,7 +132,7 @@ export default [
       },
       {
         q: 'Verlies ik bagageruimte?',
-        a: 'Nee. Wij gebruiken compacte subwoofers die onder de stoel of in de reservewielbak verdwijnen.',
+        a: 'Nee. De laadvloer blijft vlak; we gebruiken juist de ruimte eronder. Een compacte subwoofer past onder een stoel of in de reservewielbak.',
       },
     ],
   },

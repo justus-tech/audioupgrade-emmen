@@ -173,7 +173,7 @@ export default [
       },
       {
         q: 'Verlies ik bagageruimte?',
-        a: 'Nee. Wij werken met compacte subwoofers die onder de stoel of in de reservewielbak verdwijnen.',
+        a: 'Nee. De Kuga houdt zijn hele kofferruimte. De subwoofer die wij gebruiken is compact genoeg voor onder een stoel of in de reservewielbak.',
       },
     ],
   },

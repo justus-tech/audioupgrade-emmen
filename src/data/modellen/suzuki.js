@@ -132,7 +132,7 @@ export default [
       },
       {
         q: 'Verlies ik bagageruimte?',
-        a: 'Nee. Wij werken met compacte subwoofers die onder de stoel of in de reservewielbak verdwijnen.',
+        a: 'Nee. Je kofferbak blijft onaangeroerd. De compacte subwoofer verdwijnt onder een stoel of in de reservewielbak; bij de Vitara is dat laatste meestal de makkelijkste plek.',
       },
     ],
   },
@@ -216,7 +216,7 @@ export default [
       },
       {
         q: 'Verlies ik bagageruimte?',
-        a: 'Nee. Wij werken met compacte subwoofers die onder de stoel of in de reservewielbak verdwijnen.',
+        a: 'Nee. Wat je inlaadt verandert niet: de subwoofer is compact en gaat uit het zicht onder een stoel of in de reservewielbak.',
       },
     ],
   },

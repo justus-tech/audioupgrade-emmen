@@ -132,7 +132,7 @@ export default [
       },
       {
         q: 'Verlies ik bagageruimte?',
-        a: 'Nee. Wij werken met compacte subwoofers die onder de stoel of in de reservewielbak verdwijnen.',
+        a: 'Nee. Heeft jouw Captur een verschuifbare achterbank, dan blijft die gewoon werken: de compacte subwoofer gaat onder een stoel of in de reservewielbak.',
       },
     ],
   },
