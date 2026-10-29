@@ -68,7 +68,7 @@ export default [
     problems: [
       'Zonder motorgeluid valt het rolgeluid van de banden extra op, en dat maskeert precies het gebied waar stemmen zitten.',
       'De hogere zitpositie legt het geluidsbeeld laag, onder je oorhoogte.',
-      'De basisinstallatie mist een echte onderkant, waardoor er onder de muziek niets zit.',
+      'Een echte onderkant ontbreekt. Er zit geen subwoofer in, dus onder de stemmen en de gitaren blijft het leeg.',
     ],
     solution: {
       title: 'Wat wij eraan doen',
@@ -151,7 +151,7 @@ export default [
       'De Rio is de praktische keuze in de compacte klasse: veel uitrusting voor een scherpe prijs. Op audio is daarbij zichtbaar bezuinigd.',
     problems: [
       'Weinig vermogen op de deurspeakers: het systeem knijpt dicht zodra je verder opendraait.',
-      'De deuren zijn niet gedempt, dus een deel van de bas verdwijnt in het paneel.',
+      'Met zo weinig vermogen is het extra zuur dat de deur onbehandeld is: wat de speaker nog wel maakt, zakt deels weg in het paneel.',
       'Op veel uitvoeringen ontbreekt een aparte tweeter, waardoor het beeld laag hangt.',
     ],
     solution: {
@@ -194,7 +194,7 @@ export default [
       'De Ceed is de praktische middenklasser van Kia: veel auto voor je geld en zeven jaar garantie. Op audio is net als bij de rest van het merk zuinig gekozen.',
     problems: [
       'Weinig vermogen op de deurspeakers: het systeem blijft beheerst, ook als je dat niet wilt.',
-      'De deuren zijn niet gedempt, dus een deel van de bas verdwijnt in het paneel.',
+      'De deur is van binnen kaal. Bij de Sportswagon komt dat bovenop de laadruimte die lage tonen al wegslikt.',
       'Bij de Sportswagon slikt de laadruimte lage tonen weg en resoneert de achterklep mee.',
     ],
     solution: {

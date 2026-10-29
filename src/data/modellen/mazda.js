@@ -25,7 +25,7 @@ export default [
       'De CX-5 rijdt scherper dan de meeste SUV\'s en is van binnen mooi afgewerkt. Waar hij bekend om staat is minder plezierig: rolgeluid.',
     problems: [
       'De CX-5 laat op ruwer asfalt meer bandengeluid door dan zijn concurrenten, en dat maskeert precies het gebied waar stemmen zitten.',
-      'De basisinstallatie mist een echte onderkant, waardoor er onder de muziek niets zit.',
+      'De onderkant ontbreekt. Ook de Bose-uitvoering legt daar geen echte fundering onder; wat je mist is een subwoofer en geen equalizerstand.',
       'De hoge zitpositie legt het geluidsbeeld laag, en de grote achterklep resoneert mee.',
     ],
     solution: {
@@ -68,7 +68,7 @@ export default [
     problems: [
       'Mazda\'s laten op ruwer asfalt meer bandengeluid door dan hun concurrenten, en dat maskeert precies waar stemmen zitten.',
       'Weinig vermogen op de deurspeakers: het systeem knijpt dicht zodra je opendraait.',
-      'De deuren zijn niet gedempt, dus een deel van de bas verdwijnt in het paneel.',
+      'De deuren zijn onbehandeld, en dat is precies waar het bandengeluid binnenkomt en waar de bas weglekt. Een ingreep, twee winsten.',
     ],
     solution: {
       title: 'Wat wij eraan doen',

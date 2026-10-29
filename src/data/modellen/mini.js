@@ -26,7 +26,7 @@ export default [
     problems: [
       'Het interieur zit vol harde, glanzende oppervlakken die hoge tonen scherp terugkaatsen.',
       'De cabine is klein, waardoor je heel dicht op de speakers zit en het beeld snel naar één kant trekt.',
-      'De basisinstallatie mist een echte onderkant, waardoor er onder de muziek niets zit.',
+      'Onder de muziek zit niets. In zo\'n kleine cabine zou een compacte subwoofer juist veel doen, en die ontbreekt in de basis.',
     ],
     solution: {
       title: 'Wat wij eraan doen',

@@ -110,7 +110,7 @@ export default [
       'De i20 biedt veel auto voor weinig geld, en dat is precies waar het geluid het onderspit delft. Het is niet slecht, het is zuinig gekozen.',
     problems: [
       'Weinig vermogen op de deurspeakers: het systeem knijpt dicht zodra je verder opendraait.',
-      'De deuren zijn niet gedempt, dus een deel van de bas verdwijnt in het paneel.',
+      'De deur is van binnen leeg. Dat de i20 al dichtknijpt helpt niet: wat er aan bas overblijft, verdwijnt deels in het plaatwerk.',
       'Op veel uitvoeringen ontbreekt een aparte tweeter, waardoor het beeld laag hangt.',
     ],
     solution: {

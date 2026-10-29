@@ -276,7 +276,7 @@ export default [
       'De Mondeo is de klassieke zakelijke kilometervreter. Op die afstanden gaat het niet om hoe hard het kan, maar om hoe lang je het volhoudt.',
     problems: [
       'Op snelwegtempo verdrinkt het middengebied in rolgeluid, en juist dan knijpt de fabrieksversterking dicht.',
-      'De deuren zijn niet gedempt, dus een deel van de bas verdwijnt in het paneel.',
+      'De deuren zijn van binnen onbehandeld, dus ze houden het rolgeluid niet tegen en ze laten de bas van de speaker ontsnappen. Demping doet daar twee dingen tegelijk.',
       'Bij de Wagon slikt de grote laadruimte lage tonen weg en resoneert de achterklep mee.',
     ],
     solution: {

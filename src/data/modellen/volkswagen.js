@@ -400,7 +400,7 @@ export default [
     problems: [
       'Zonder motorgeluid wordt het rolgeluid van de banden het luidste geluid in de auto, precies waar stemmen zitten.',
       'Het interieur heeft veel hard kunststof, wat hoge tonen scherp terug laat kaatsen.',
-      'De basisinstallatie mist een echte onderkant, waardoor er onder de muziek niets zit.',
+      'Onder de muziek zit niets: er is geen subwoofer, en in een auto zonder motorgeluid valt dat gat des te meer op.',
     ],
     solution: {
       title: 'Wat wij eraan doen',

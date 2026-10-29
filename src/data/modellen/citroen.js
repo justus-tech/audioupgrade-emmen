@@ -67,7 +67,7 @@ export default [
       'Citroën verkoopt de C3 op comfort, en daar hoort rust bij. Het audiosysteem doet daar in de basisuitvoering weinig aan mee.',
     problems: [
       'Weinig vermogen op de deurspeakers: het systeem blijft altijd beheerst, ook als je dat niet wilt.',
-      'De deuren zijn niet gedempt, dus een deel van de bas verdwijnt in het paneel.',
+      'Een onbehandelde deur kost bas, en met de bescheiden aansturing van de C3 is er niets om dat verlies mee te compenseren.',
       'Op veel uitvoeringen ontbreekt een aparte tweeter, waardoor stemmen dof blijven en het beeld laag hangt.',
     ],
     solution: {

@@ -109,8 +109,8 @@ export default [
       'De Corolla is de meest verkochte auto ter wereld en tegenwoordig vrijwel altijd hybride. Die stille aandrijving legt precies bloot wat het audiosysteem niet doet.',
     problems: [
       'Bij de hybride valt het rolgeluid extra op, omdat er geen motorgeluid overheen komt om het te maskeren.',
-      'De basisinstallatie mist een echte onderkant, waardoor er onder de muziek niets zit.',
-      'De deuren zijn niet gedempt, dus een deel van de bas verdwijnt in het paneel.',
+      'Zonder subwoofer blijft de onderkant weg. Ook met JBL erin is dat een kwestie van een speaker die er niet is, niet van afstemming.',
+      'De deuren zijn kaal van binnen: dat kost bas, en het laat bij de hybride het rolgeluid makkelijker binnen.',
     ],
     solution: {
       title: 'Wat wij eraan doen',
@@ -276,7 +276,7 @@ export default [
       'De Prius was de eerste hybride die Nederland massaal kocht en rijdt vaak volledig elektrisch in de stad. Die stilte is precies waarom het audiosysteem er zo mager afkomt.',
     problems: [
       'Zonder motorgeluid wordt het rolgeluid van de banden het luidste geluid in de auto.',
-      'De basisinstallatie mist een echte onderkant, waardoor er onder de muziek niets zit.',
+      'Er zit geen subwoofer in, dus onder de muziek is het stil. In een Prius merk je dat snel, want er is geen motorgeluid dat de leegte opvult.',
       'De aflopende daklijn en de gedeelde achterruit geven een akoestisch onrustige achterkant.',
     ],
     solution: {
