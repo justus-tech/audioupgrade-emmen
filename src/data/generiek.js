@@ -163,8 +163,9 @@ export const ONTZORGEN = {
  *
  * WAAROM DIT ER STAAT
  * Je vraagt iemand om zijn auto — vaak zijn duurste bezit na zijn huis — een
- * dag lang bij een vreemde achter te laten. Er zijn nog geen reviews die dat
- * makkelijker maken. Een gezicht en een verhaal doen dan het werk.
+ * dag lang bij een vreemde achter te laten. Er is nog maar één review (sinds
+ * oktober 2026) die dat makkelijker maakt. Een gezicht en een verhaal doen dan
+ * het meeste werk.
  *
  * WAT ER NIET STAAT, EN WAAROM NIET
  * Nergens "jarenlange ervaring in car audio". Het bedrijf bestaat drie jaar
@@ -187,10 +188,11 @@ export const OVER = {
    * pagina waar bijna iedereen landt — en het geeft niemand een reden om door
    * te klikken.
    *
-   * Waarom het op de homepage tóch blijft staan: er zijn nog geen reviews en
-   * geen eigen werkfoto's. Dit gezicht is voorlopig het enige bewijs dat er
-   * een vakman achter staat, en de homepage is de pagina die het meest wordt
-   * gezien. Weghalen kost meer dan het oplevert.
+   * Waarom het op de homepage tóch blijft staan: er is nog maar één review en
+   * er zijn pas een paar eigen werkfoto's (oktober 2026). Dit gezicht is
+   * voorlopig het sterkste bewijs dat er een vakman achter staat, en de
+   * homepage is de pagina die het meest wordt gezien. Weghalen kost meer dan
+   * het oplevert.
    *
    * Deze twee zinnen moeten dus twee dingen doen: vertrouwen wekken én
    * nieuwsgierig maken naar de rest.

@@ -18,9 +18,11 @@
  * één erin is een gat; één uitgelicht verhaal is een keuze. Komen er meer bij,
  * dan schuift de nieuwste naar voren en staan de rest er kleiner onder.
  *
- * Onderaan de stap die de bezoeker nu kan zetten: rijdt hij dezelfde auto als
- * de klant in het citaat, dan vraagt de knop daar letterlijk naar. En staat er
- * een link naar Google in reviews.js, dan kan hij de rest daar nalezen.
+ * Onderaan de stap die de bezoeker nu kan zetten. Bewust zonder de auto uit
+ * het citaat: de meeste bezoekers rijden iets anders, en een WhatsApp-bericht
+ * dat al "ik heb een Škoda" zegt moet een Golf-rijder eerst gaan wissen. En
+ * staat er een link naar Google in reviews.js, dan kan hij de rest daar
+ * nalezen.
  *
  * Sterren alleen als de klant ze zelf op Google gaf, en nooit als
  * machineleesbare gegevens: zie de uitleg in reviews.js.
@@ -105,13 +107,9 @@ const nummer = (i) => String(i + 1).padStart(2, '0');
     )}
 
     <div class="reviews-voet">
-      <p>
-        {eerste.auto
-          ? <>Rijd jij ook een {eerste.auto}? Eén foto van je dashboard is genoeg.</>
-          : <>Jouw auto als volgende? Eén foto van je dashboard is genoeg.</>}
-      </p>
+      <p>Jouw auto als volgende? Eén foto van je dashboard is genoeg.</p>
       <div class="voet-knoppen">
-        <a class="btn wa" href={whatsappLink(berichtOverAuto(eerste.auto))}>Stuur foto dashboard</a>
+        <a class="btn wa" href={whatsappLink(berichtOverAuto())}>Stuur foto dashboard</a>
         {GOOGLE_REVIEWS && (
           <a class="naar-google" href={GOOGLE_REVIEWS} rel="noopener" target="_blank">
             Lees alle reviews op Google &rarr;

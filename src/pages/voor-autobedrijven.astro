@@ -17,8 +17,8 @@ import { DEALERS } from '../data/dealers.js';
 import { LEVENSLANG } from '../data/generiek.js';
 import { SITE } from '../data/site.js';
 import { pad } from '../lib/pad.js';
-/* Foto: Unsplash — vrij te gebruiken. Zie src/components/Fotoband.astro. */
-import deurspeaker from '../assets/foto/deurspeaker.jpg';
+/* Eigen werkfoto: de Ford Focus uit de werkplaats, na de inbouw. */
+import deurDicht from '../assets/werk/ford-deur-dicht.jpg';
 import { whatsappLink } from '../lib/whatsapp.js';
 
 const faqSchema = {
@@ -79,9 +79,10 @@ const faqSchema = {
   </section>
 
   <Fotoband
-    foto={deurspeaker}
+    foto={deurDicht}
     hoogte="laag"
-    alt="Speakerrooster in een deurpaneel, verlicht door de sfeerverlichting van de auto"
+    positie="30% center"
+    alt="De dichte passagiersdeur van een Ford Focus na de inbouw: origineel deurpaneel en origineel speakerrooster, de nieuwe speaker en de demping zitten erachter"
     kop="Aan de buitenkant zie je er niets van"
     tekst="Alles zit achter de originele panelen. Je levert een auto af die er af fabriek uitziet en niet zo klinkt."
   />

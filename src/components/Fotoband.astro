@@ -18,14 +18,21 @@
  * met "aan de buitenkant zie je er niets van" is een NA-foto nodig: een
  * dichte deur of een dicht dashboard. Een foto van open werk zou daar het
  * tegenovergestelde zeggen van de tekst eronder.
+ *
+ *   positie    welk stuk van de foto blijft staan als hij bijgesneden wordt,
+ *              bijvoorbeeld "30% center". Op de telefoon wordt de band 4:3 en
+ *              valt er links en rechts veel weg; zo blijft het onderwerp erin.
+ *   bijschrift "boven" zet de tekst bovenin, voor een foto waarvan het
+ *              belangrijkste onderaan zit (zoals een meetscherm).
  */
 import { Image } from 'astro:assets';
 
-const { foto, alt, hoogte = 'normaal', kop, tekst } = Astro.props;
+const { foto, alt, hoogte = 'normaal', kop, tekst, positie, bijschrift = 'onder' } = Astro.props;
 ---
-<figure class:list={['fotoband', hoogte === 'laag' && 'fotoband-laag']}>
+<figure class:list={['fotoband', hoogte === 'laag' && 'fotoband-laag', bijschrift === 'boven' && 'fotoband-boven']}>
   <Image src={foto} alt={alt} widths={[640, 1024, 1600, 2000]}
-         sizes="100vw" loading="lazy" decoding="async" />
+         sizes="100vw" loading="lazy" decoding="async"
+         style={positie ? `object-position: ${positie}` : undefined} />
   {(kop || tekst) && (
     <figcaption>
       {kop && <strong>{kop}</strong>}
@@ -98,9 +105,25 @@ const { foto, alt, hoogte = 'normaal', kop, tekst } = Astro.props;
     text-shadow: 0 1px 10px rgba(0, 0, 0, .6);
   }
 
+  /* Tekst bovenin: het verloop draait mee, zodat het donker achter de tekst
+     zit en de onderkant van de foto zichtbaar blijft. */
+  .fotoband-boven::after {
+    background: linear-gradient(
+      0deg,
+      rgba(0, 0, 0, .18) 0%,
+      rgba(0, 0, 0, .10) 50%,
+      rgba(0, 0, 0, .82) 100%
+    );
+  }
+  .fotoband-boven figcaption {
+    top: 0; bottom: auto;
+    padding: 28px 24px 0;
+  }
+
   /* Op een telefoon is 21:9 een streepje van niks. */
   @media (max-width: 700px) {
     .fotoband, .fotoband-laag { aspect-ratio: 4 / 3; }
     figcaption { padding-bottom: 22px; }
+    .fotoband-boven figcaption { padding: 22px 24px 0; }
   }
 </style>
