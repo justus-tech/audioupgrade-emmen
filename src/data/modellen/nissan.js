@@ -26,7 +26,7 @@ export default [
     problems: [
       'De hoge zitpositie zet je verder van de deurspeakers, waardoor het geluidsbeeld laag bij je knieën blijft hangen.',
       'Het cabinevolume is groter dan bij een hatchback terwijl de aansturing even bescheiden is.',
-      'De grote achterklep resoneert hoorbaar mee zodra er echte bas bij komt.',
+      'De achterklep gaat meetrillen zodra de bas inzet, en dat klinkt als bas die er niet is: een dreun zonder toon.',
     ],
     solution: {
       title: 'Wat wij eraan doen',

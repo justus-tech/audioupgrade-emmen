@@ -235,7 +235,7 @@ export default [
       'De Meriva is de praktische gezinsauto met de tegengesteld openende achterdeuren. Hoog, recht en ruim — akoestisch een auto die makkelijk gaat galmen.',
     problems: [
       'De hoge, rechte panelen resoneren makkelijk mee en geven een holle nagalm bij lage tonen.',
-      'De hoge zitpositie zet je verder van de deurspeakers, waardoor het geluidsbeeld laag blijft hangen.',
+      'Je zit hoog en de speakers laag; met de bescheiden aansturing erbij komt er niets omhoog dat dat goedmaakt.',
       'Weinig vermogen op de deurspeakers: het systeem knijpt dicht zodra je opendraait.',
     ],
     solution: {

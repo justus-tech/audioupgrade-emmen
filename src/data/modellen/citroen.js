@@ -109,7 +109,7 @@ export default [
       'De C4 Picasso is de ruimtewagen met de enorme voorruit en het lichte interieur. Al dat glas is prettig om in te zitten en lastig voor geluid.',
     problems: [
       'Het grote glasoppervlak kaatst hoge tonen terug, waardoor het geheel scherp en vermoeiend wordt.',
-      'Het cabinevolume is fors en vraagt meer vermogen dan de basisinstallatie geeft.',
+      'De cabine is groot, bij de Grand nog groter, en lage tonen vullen die ruimte niet met het vermogen dat er standaard op staat.',
       'Bij de Grand met zeven stoelen zitten passagiers achterin ver van de voorste speakers.',
     ],
     solution: {

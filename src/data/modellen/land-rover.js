@@ -70,7 +70,7 @@ export default [
     problems: [
       'Het interieur is strak en hard afgewerkt met veel glas en gladde panelen, waardoor hoge tonen scherp terugkaatsen.',
       'Het cabinevolume is fors en vraagt meer vermogen dan de basisinstallatie levert.',
-      'De grote achterklep resoneert hoorbaar mee zodra er echte bas bij komt.',
+      'De achterklep trilt mee op lage tonen. In een auto die verder zo stil is afgewerkt hoor je zoiets eerder dan elders.',
     ],
     solution: {
       title: 'Wat wij eraan doen',

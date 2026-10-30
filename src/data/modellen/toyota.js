@@ -193,7 +193,7 @@ export default [
       'De RAV4 is de best verkochte SUV ter wereld en vrijwel altijd hybride. Die stille aandrijving legt precies bloot waar het audiosysteem tekortschiet.',
     problems: [
       'Bij de hybride valt het rolgeluid extra op, omdat er geen motorgeluid overheen komt.',
-      'Het cabinevolume is fors en vraagt meer vermogen dan de basisinstallatie geeft.',
+      'Voor een cabine van dit formaat is er te weinig vermogen. Ook de JBL-uitvoering komt niet verder dan netjes op niveau blijven.',
       'De grote achterklep en de bagageruimtepanelen resoneren hoorbaar mee.',
     ],
     solution: {

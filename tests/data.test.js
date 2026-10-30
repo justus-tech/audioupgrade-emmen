@@ -527,10 +527,10 @@ describe('sjabloontekst op de modelpagina\'s', () => {
    *
    * Alleen omlaag bijstellen. Stand: 648 op 19 oktober, 636 op 24 oktober,
    * 608 op 25 oktober, 599 op 26 oktober, 585 op 28 oktober, 572 op
-   * 29 oktober. De probleemteksten gaan het eerst, want die staan
+   * 29 oktober, 557 op 30 oktober. De probleemteksten gaan het eerst, want die staan
    * bovenaan de pagina en zijn het meest zichtbaar.
    */
-  const PLAATSINGEN = 572;
+  const PLAATSINGEN = 557;
 
   test('er komt geen sjabloontekst bij', () => {
     const dubbel = dubbeleTeksten();

@@ -25,7 +25,7 @@ export default [
       'De Jazz is de kleine auto met de slimste binnenruimte die er is. Die hoge, rechte vorm die dat mogelijk maakt, werkt akoestisch tegen je.',
     problems: [
       'De hoge, rechte panelen resoneren makkelijk mee en geven een holle nagalm bij lage tonen.',
-      'De hoge zitpositie zet je verder van de deurspeakers, waardoor het geluidsbeeld laag blijft hangen.',
+      'In een Jazz zit je rechtop en hoog, met de speakers een stuk onder je. De muziek komt daardoor van beneden in plaats van voor je.',
       'Bij de hybride valt het rolgeluid extra op omdat er geen motorgeluid overheen komt.',
     ],
     solution: {

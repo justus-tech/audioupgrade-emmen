@@ -24,8 +24,8 @@ export default [
       'De 01 kwam via het abonnementsmodel in korte tijd op tienduizenden Nederlandse opritten terecht. Onder de huid is het een Volvo, en dat zie je terug in de opzet — maar niet in het geluid.',
     problems: [
       'Rijd je elektrisch, dan is het rolgeluid het luidste geluid in de auto en maskeert het precies waar stemmen zitten.',
-      'Het cabinevolume is fors en vraagt meer vermogen dan de basisinstallatie geeft.',
-      'De grote achterklep resoneert hoorbaar mee zodra er echte bas bij komt.',
+      'Voor zo veel ruimte is het standaardvermogen simpelweg te krap; de bas komt niet verder dan hoorbaar.',
+      'Rijd je elektrisch, dan is er geen motorgeluid dat het maskeert: de achterklep die meetrilt hoor je dan ongefilterd.',
     ],
     solution: {
       title: 'Wat wij eraan doen',

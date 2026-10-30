@@ -108,7 +108,7 @@ export default [
       'De Macan is de compacte Porsche-SUV en rijdt scherper dan zijn formaat doet vermoeden. Het geluid houdt daar niet helemaal gelijke tred mee.',
     problems: [
       'Het interieur is hard afgewerkt met veel kunststof en leer op harde ondergrond, wat hoge tonen scherp terug laat kaatsen.',
-      'De hoge zitpositie zet je verder van de deurspeakers, waardoor het geluidsbeeld laag blijft hangen.',
+      'De zitpositie is hoog en de speakers zitten laag in de deur. Ook met Burmester blijft het beeld daar: dat is een kwestie van tijdcorrectie, niet van vermogen.',
       'Al dat harde materiaal achterin trilt mee, en de achterklep is het grootste paneel van het stel. Met Burmester erop hoor je dat eerder, niet minder.',
     ],
     solution: {

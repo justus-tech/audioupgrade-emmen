@@ -362,8 +362,8 @@ export default [
       'De B-klasse is gekocht om zijn ruimte en zijn hoge instap. Datzelfde extra volume is precies wat de fabrieksinstallatie niet gevuld krijgt.',
     problems: [
       'Meer cabinevolume dan een A-klasse, met dezelfde bescheiden aansturing. Lage tonen komen daardoor nooit op niveau.',
-      'De hoge zitpositie zet je verder van de deurspeakers, waardoor het geluidsbeeld laag blijft hangen.',
-      'De grote achterklep resoneert hoorbaar mee zodra er echte bas bij komt.',
+      'Je zit er hoger in dan in een A-klasse, terwijl de speakers op dezelfde plek in de deur zitten. Het beeld komt daardoor van onder je uit.',
+      'Zodra er echte bas bij komt doet de achterklep mee. Je hoort dan twee dingen: de noot en het paneel, net niet gelijk.',
     ],
     solution: {
       title: 'Wat wij eraan doen',

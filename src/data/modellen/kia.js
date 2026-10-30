@@ -278,7 +278,7 @@ export default [
       'De Venga is de compacte ruimtewagen van Kia: hoog instappen, veel hoofdruimte en een praktische achterbank. Die hoge, rechte vorm gaat makkelijk galmen.',
     problems: [
       'De hoge, rechte panelen resoneren makkelijk mee en geven een holle nagalm bij lage tonen.',
-      'De hoge zitpositie zet je verder van de deurspeakers, waardoor het geluidsbeeld laag blijft hangen.',
+      'Je oren zitten boven de speakers, en zonder tweeter is er niets wat het beeld omhoog trekt. Het blijft daardoor bij je knieen hangen.',
       'Eenvoudige speakers zonder aparte tweeter, waardoor stemmen dof blijven.',
     ],
     solution: {

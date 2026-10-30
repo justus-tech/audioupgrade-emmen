@@ -67,7 +67,7 @@ export default [
     problems: [
       'De basisinstallatie is breed opgezet maar onderbemeten: veel speakers, weinig vermogen per speaker.',
       'De vele speakers zitten laag of in de deur, en jij zit daar hoog boven. Breed klinkt het wel, maar het beeld ligt onder je oorhoogte in plaats van ervoor.',
-      'De grote achterklep resoneert hoorbaar mee zodra er echte bas bij komt.',
+      'De achterklep is het grootste losse paneel in de auto en trilt mee zodra de bas inzet. Met zo veel speakers maar weinig vermogen valt dat dreunen extra op.',
     ],
     solution: {
       title: 'Wat wij eraan doen',
@@ -108,7 +108,7 @@ export default [
       'De XC60 is de meest verkochte Volvo-SUV en een auto waarin veel mensen bewust voor comfort kiezen. Het basissysteem doet daar minder aan mee dan je zou verwachten.',
     problems: [
       'Breed opgezet maar onderbemeten: veel speakers, weinig vermogen per speaker. Je hoort alles, maar niets heeft gewicht.',
-      'Het cabinevolume is fors en vraagt meer vermogen dan de basisinstallatie geeft.',
+      'Er is veel lucht te verzetten in zo\'n cabine, en dat is precies wat deze installatie niet kan: veel speakers, te weinig vermogen per stuk.',
       'De grote achterklep en de zijpanelen van de bagageruimte resoneren hoorbaar mee.',
     ],
     solution: {

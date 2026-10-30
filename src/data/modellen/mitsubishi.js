@@ -24,7 +24,7 @@ export default [
       'De Outlander PHEV was jarenlang de meest verkochte stekkerauto van Nederland. Juist die elektrische aandrijving legt bloot wat het audiosysteem laat liggen.',
     problems: [
       'Bij de PHEV rijd je vaak volledig elektrisch, waardoor het rolgeluid het luidste geluid in de auto wordt.',
-      'Het cabinevolume is fors en vraagt meer vermogen dan de basisinstallatie geeft.',
+      'Een cabine van dit formaat vraagt meer dan de basisinstallatie geeft, en bij de PHEV valt dat extra op omdat er geen motor overheen komt.',
       'De grote achterklep en de bagageruimtepanelen resoneren hoorbaar mee.',
     ],
     solution: {
