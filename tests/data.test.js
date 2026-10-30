@@ -15,7 +15,7 @@ import { PACKAGES, SITE, AUDIOMERKEN, AUDIOPAKKETTEN, LOSSE_OPTIES, pakkettenVan
 import { ALGEMENE_VOORWAARDEN } from '../src/data/juridisch.js';
 import { STANDAARD_PAKKETTEN } from '../src/data/generiek.js';
 import { AUTOS, autoTabel } from '../src/data/autos.js';
-import { REVIEWS, reviewsOpDatum } from '../src/data/reviews.js';
+import { REVIEWS, reviewsOpDatum, maandVan, GOOGLE_REVIEWS } from '../src/data/reviews.js';
 import * as SCHETS from '../src/data/schets.js';
 import { AUTO, ONDERDELEN, ZONES, ALLES, VOLGORDE, schetsVan, spiegelPad, MATEN, METER, HULPLIJNEN } from '../src/data/schets.js';
 import { PAGINAS } from '../src/i18n/paginas.js';
@@ -797,6 +797,39 @@ describe('reviews', () => {
   test('de nieuwste staat vooraan', () => {
     const datums = reviewsOpDatum().map((r) => String(r.datum));
     assert.deepEqual(datums, [...datums].sort().reverse());
+  });
+
+  /* Het stempel bij een review noemt het pakket. Een tikfout daarin staat
+     dan als feit onder de woorden van een klant. */
+  test('een genoemd pakket bestaat echt', () => {
+    const namen = PACKAGES.map((p) => p.name);
+    for (const r of REVIEWS) {
+      if (r.pakket === undefined) continue;
+      assert.ok(namen.includes(r.pakket), `onbekend pakket "${r.pakket}" bij ${r.naam}`);
+    }
+  });
+
+  /* Sterren alleen als de klant ze zelf op Google gaf. Een review uit
+     WhatsApp heeft er geen, en die verzinnen we er ook niet bij. */
+  test('sterren alleen bij een Google-review, en zoals gegeven', () => {
+    for (const r of REVIEWS) {
+      if (r.bron !== undefined) {
+        assert.ok(['google', 'whatsapp'].includes(r.bron), `onbekende bron "${r.bron}" bij ${r.naam}`);
+      }
+      if (r.sterren === undefined) continue;
+      assert.equal(r.bron, 'google', `${r.naam}: sterren zonder dat de review van Google komt`);
+      assert.ok(Number.isInteger(r.sterren) && r.sterren >= 1 && r.sterren <= 5, `${r.naam}: sterren moet 1 t/m 5 zijn`);
+    }
+  });
+
+  test('de maand in het stempel', () => {
+    assert.equal(maandVan('2026-09'), 'september 2026');
+    assert.equal(maandVan('2027-01'), 'januari 2027');
+  });
+
+  test('de link naar Google is leeg of een echt adres', () => {
+    if (!GOOGLE_REVIEWS) return;
+    assert.match(GOOGLE_REVIEWS, /^https:\/\//);
   });
 });
 

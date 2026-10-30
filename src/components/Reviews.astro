@@ -7,81 +7,334 @@
  * kopje, geen streep, geen lege ruimte. Zo kan het alvast overal staan waar
  * het straks hoort, zonder dat iemand er nu iets van ziet.
  *
- * Bewust géén sterren en géén beoordelingsopmaak: zie de uitleg in
- * reviews.js. Wat hier staat is een citaat, meer niet — en dat overtuigt op
- * een eigen site sowieso beter dan een cijfer dat je zelf hebt bepaald.
+ * HOE HET ERUITZIET
+ * De nieuwste review is geen kaartje in een rij maar een uitgelicht stuk: een
+ * groot citaat over de hele breedte, met eronder het stempel van een
+ * werktekening (de tekenstandaard in CLAUDE.md, regel 5). Daarin staat wie het
+ * zei, over welke auto, welk pakket en wanneer het werd opgeleverd. Zo leest
+ * een review als het einde van een klus, niet als een losse kreet.
+ *
+ * Daardoor voelt één review nooit leeg. Een rij van drie kaartjes met maar
+ * één erin is een gat; één uitgelicht verhaal is een keuze. Komen er meer bij,
+ * dan schuift de nieuwste naar voren en staan de rest er kleiner onder.
+ *
+ * Onderaan de stap die de bezoeker nu kan zetten: rijdt hij dezelfde auto als
+ * de klant in het citaat, dan vraagt de knop daar letterlijk naar. En staat er
+ * een link naar Google in reviews.js, dan kan hij de rest daar nalezen.
+ *
+ * Sterren alleen als de klant ze zelf op Google gaf, en nooit als
+ * machineleesbare gegevens: zie de uitleg in reviews.js.
  *
  *   aantal   hoeveel er hoogstens getoond worden (standaard drie)
  *   kop      de kop erboven; geef null mee als de pagina er al één heeft
  */
-import { reviewsOpDatum } from '../data/reviews.js';
+import { reviewsOpDatum, maandVan, GOOGLE_REVIEWS } from '../data/reviews.js';
+import { whatsappLink, berichtOverAuto } from '../lib/whatsapp.js';
 
 const { aantal = 3, kop = 'Wat klanten zeggen' } = Astro.props;
 const lijst = reviewsOpDatum().slice(0, aantal);
+const [eerste, ...overige] = lijst;
+
+/** De regels van het stempel. Wat er niet is, komt er ook niet in te staan. */
+const stempel = (r) =>
+  [
+    ['Klant', [r.naam, r.plaats].filter(Boolean).join(', ')],
+    ['Auto', r.auto],
+    ['Pakket', r.pakket],
+    ['Opgeleverd', maandVan(r.datum)],
+  ].filter(([, waarde]) => waarde);
+
+const opGoogle = (r) => r.bron === 'google' && r.sterren > 0;
+const sterren = (n) => '★'.repeat(n) + '☆'.repeat(5 - n);
+
+/** Twee cijfers, zoals een tekeningnummer: 01, 02, … */
+const nummer = (i) => String(i + 1).padStart(2, '0');
 ---
-{lijst.length > 0 && (
+{eerste && (
   <div class="reviews">
-    {kop && <h2 class="center">{kop}</h2>}
-    <div class="reviews-rij">
-      {lijst.map((r) => (
-        <figure class="review">
-          <blockquote>{r.tekst}</blockquote>
-          <figcaption>
-            <strong>{r.naam}</strong>
-            {(r.auto || r.plaats) && (
-              <span>{[r.auto, r.plaats].filter(Boolean).join(' · ')}</span>
+    {kop && (
+      <div class="reviews-kop">
+        <span class="eyebrow">Na de oplevering</span>
+        <h2>{kop}</h2>
+      </div>
+    )}
+
+    <figure class="uitgelicht">
+      <div class="citaat">
+        <span class="teken" aria-hidden="true">&ldquo;</span>
+        {opGoogle(eerste) && (
+          <p class="sterren">
+            <span aria-hidden="true">{sterren(eerste.sterren)}</span>
+            <span class="vh">{eerste.sterren} van de 5 sterren</span> op Google
+          </p>
+        )}
+        <blockquote>{eerste.tekst}</blockquote>
+      </div>
+      <figcaption class="stempel">
+        <span class="stempel-nr">Nº {nummer(0)}</span>
+        <dl>
+          {stempel(eerste).map(([label, waarde]) => (
+            <div>
+              <dt>{label}</dt>
+              <dd>{waarde}</dd>
+            </div>
+          ))}
+        </dl>
+      </figcaption>
+    </figure>
+
+    {overige.length > 0 && (
+      <div class="overige">
+        {overige.map((r, i) => (
+          <figure class="review">
+            <span class="stempel-nr">Nº {nummer(i + 1)}</span>
+            {opGoogle(r) && (
+              <p class="sterren">
+                <span aria-hidden="true">{sterren(r.sterren)}</span>
+                <span class="vh">{r.sterren} van de 5 sterren</span> op Google
+              </p>
             )}
-          </figcaption>
-        </figure>
-      ))}
+            <blockquote>{r.tekst}</blockquote>
+            <figcaption>
+              <strong>{r.naam}</strong>
+              <span>{[r.auto, r.pakket, maandVan(r.datum)].filter(Boolean).join(' · ')}</span>
+            </figcaption>
+          </figure>
+        ))}
+      </div>
+    )}
+
+    <div class="reviews-voet">
+      <p>
+        {eerste.auto
+          ? <>Rijd jij ook een {eerste.auto}? Eén foto van je dashboard is genoeg.</>
+          : <>Jouw auto als volgende? Eén foto van je dashboard is genoeg.</>}
+      </p>
+      <div class="voet-knoppen">
+        <a class="btn wa" href={whatsappLink(berichtOverAuto(eerste.auto))}>Stuur foto dashboard</a>
+        {GOOGLE_REVIEWS && (
+          <a class="naar-google" href={GOOGLE_REVIEWS} rel="noopener" target="_blank">
+            Lees alle reviews op Google &rarr;
+          </a>
+        )}
+      </div>
     </div>
   </div>
 )}
 
 <style>
-  .reviews-rij {
+  .reviews-kop { text-align: center; }
+
+  /* ---- het uitgelichte citaat ----
+     Een paneel met een fijn meetraster erachter, zoals het papier van een
+     werktekening. Het raster vervaagt naar beneden, zodat het sfeer geeft en
+     nooit door de tekst heen gaat lopen. */
+  .uitgelicht {
+    margin: 2.4rem 0 0;
+    background: var(--panel);
+    border-top: 2px solid var(--accent);
+    position: relative;
+    overflow: hidden;
+  }
+  .uitgelicht::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    /* Een masker kijkt alleen naar de dekking, niet naar de kleur. */
+    -webkit-mask-image: linear-gradient(to bottom, var(--text) 0%, transparent 75%);
+    mask-image: linear-gradient(to bottom, var(--text) 0%, transparent 75%);
+    opacity: .55;
+    pointer-events: none;
+  }
+
+  .citaat {
+    position: relative;
+    padding: clamp(2rem, 6vw, 3.6rem) clamp(1.4rem, 6vw, 4rem) clamp(1.6rem, 4vw, 2.6rem);
+  }
+
+  /* Het aanhalingsteken als beeld: groot, in het accent, half over de rand.
+     Meteen duidelijk dat hier iemand anders praat dan wij. */
+  .teken {
+    display: block;
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(5rem, 16vw, 8rem);
+    line-height: .7;
+    height: .42em;
+    color: var(--accent);
+    margin-bottom: .1em;
+  }
+
+  .uitgelicht blockquote {
+    margin: 0;
+    max-width: 38ch;
+    color: var(--text);
+    font-size: clamp(1.3rem, 4.6vw, 2.05rem);
+    line-height: 1.38;
+    font-weight: 300;
+    letter-spacing: -.005em;
+    text-wrap: pretty;
+  }
+
+  .sterren {
+    margin: 0 0 1.1rem;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .2em;
+    font-size: .72rem;
+    color: var(--text-dim);
+  }
+  .sterren span[aria-hidden] {
+    color: var(--accent);
+    letter-spacing: .18em;
+    font-size: .95rem;
+    margin-right: .5em;
+  }
+
+  /* ---- het stempel ----
+     Het titelblok rechtsonder op elke werktekening: vakjes met een klein
+     label en de waarde eronder. Op de telefoon twee naast elkaar, op een
+     breed scherm alles op één regel. */
+  .stempel {
+    position: relative;
+    margin: 0 clamp(1.4rem, 6vw, 4rem) clamp(1.6rem, 5vw, 3rem);
+    border: 1px solid var(--line-strong);
+  }
+  .stempel dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .stempel dl > div {
+    padding: .8rem 1rem .85rem;
+    border-top: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+    margin-left: -1px;
+    margin-top: -1px;
+    min-width: 0;
+  }
+  /* Een oneven aantal vakjes: het laatste krijgt de hele regel, anders blijft
+     er rechtsonder een leeg hokje over. */
+  .stempel dl > div:last-child:nth-child(odd) { grid-column: 1 / -1; }
+
+  dt,
+  .stempel-nr {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .22em;
+    font-size: .64rem;
+    color: var(--text-dim);
+  }
+  dd {
+    margin: .3em 0 0;
+    color: var(--text);
+    font-size: .95rem;
+    line-height: 1.35;
+  }
+
+  /* Het nummer hangt boven op de rand van het stempel, zoals een
+     tekeningnummer. */
+  .stempel > .stempel-nr {
+    position: absolute;
+    top: 0;
+    right: .9rem;
+    transform: translateY(-50%);
+    padding: 0 .5em;
+    background: var(--panel);
+    color: var(--accent-text);
+  }
+
+  @media (min-width: 760px) {
+    .stempel dl {
+      grid-template-columns: none;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(0, 1fr);
+    }
+    .stempel dl > div:last-child:nth-child(odd) { grid-column: auto; }
+  }
+
+  /* ---- de overige reviews ---- */
+  .overige {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
     gap: 16px;
-    margin-top: 2.4rem;
+    margin-top: 16px;
   }
-
-  /* Een streep in de accentkleur boven elk citaat, zoals de troeven en de
-     feiten onder het portret. Zo blijft het één taal. */
   .review {
     margin: 0;
     padding: 1.6rem 1.5rem;
-    border-top: 2px solid var(--accent);
+    border-top: 1px solid var(--line-strong);
     background: var(--panel);
+    display: flex;
+    flex-direction: column;
   }
-
-  blockquote {
+  .review > .stempel-nr { color: var(--accent-text); margin-bottom: 1rem; }
+  .review blockquote {
     margin: 0;
     color: var(--text);
     font-size: 1.02rem;
     line-height: 1.6;
+    flex: 1;
   }
-  /* Echte aanhalingstekens eromheen: dan zie je meteen dat dit iemand anders
-     is die praat, en niet wij over onszelf. */
-  blockquote::before { content: '\201C'; }
-  blockquote::after { content: '\201D'; }
-
-  figcaption {
+  .review blockquote::before { content: '\201C'; }
+  .review blockquote::after { content: '\201D'; }
+  .review figcaption {
     margin-top: 1.2rem;
     padding-top: .9rem;
     border-top: 1px solid var(--line);
   }
-  figcaption strong {
+  .review figcaption strong {
     display: block;
     font-family: 'Oswald', sans-serif;
     text-transform: uppercase;
     letter-spacing: .14em;
     font-size: .76rem;
   }
-  figcaption span {
+  .review figcaption span {
     display: block;
     margin-top: .35em;
     font-size: .82rem;
     color: var(--text-dim);
+  }
+
+  /* ---- de volgende stap ---- */
+  .reviews-voet {
+    margin-top: 2.2rem;
+    text-align: center;
+  }
+  .reviews-voet p {
+    margin: 0 auto 1.2rem;
+    color: var(--text-dim);
+  }
+  .voet-knoppen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.1rem;
+  }
+  .naar-google {
+    font-size: .92rem;
+    color: var(--text);
+    text-underline-offset: .3em;
+  }
+  @media (max-width: 559px) {
+    .voet-knoppen .btn { width: 100%; text-align: center; }
+  }
+  @media (hover: hover) {
+    .naar-google:hover { color: var(--accent-text); }
+  }
+
+  /* Alleen voor schermlezers: "5 van de 5 sterren" in plaats van vijf
+     losse sterretjes voorlezen. */
+  .vh {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 </style>
