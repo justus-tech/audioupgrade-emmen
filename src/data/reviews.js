@@ -68,12 +68,10 @@ export const GOOGLE_REVIEWS = '';
 /** @type {{tekst: string, naam: string, auto?: string, plaats?: string, pakket?: string, datum: string, bron?: 'google' | 'whatsapp', sterren?: number}[]} */
 export const REVIEWS = [
   // Van Google, 5 sterren. Justus gaf op 30 oktober 2026 akkoord om hem te
-  // gebruiken. Op Google loopt de tekst na "Daarnaast" nog door; die zin komt
-  // erbij zodra de volledige tekst er is. Tot dan staan alleen de twee hele
-  // zinnen hier, zodat er niets halfs of verzonnens staat. De maand is
-  // afgeleid uit "een week geleden" op 30 oktober.
+  // gebruiken en stuurde de volledige tekst, die hier woordelijk staat. De
+  // maand is afgeleid uit "een week geleden" op 30 oktober.
   {
-    tekst: 'Vanaf het begin tot het eind ben ik goed geïnformeerd over de gang van zaken en over wat ik kon verwachten. Justus heeft mijn auto voorzien van het “OEM+Executive” pakket en heeft dit keurig en volledig uit het zicht gemonteerd.',
+    tekst: 'Vanaf het begin tot het eind ben ik goed geïnformeerd over de gang van zaken en over wat ik kon verwachten. Justus heeft mijn auto voorzien van het “OEM+Executive” pakket en heeft dit keurig en volledig uit het zicht gemonteerd. Daarnaast wordt er goed mee gedacht met de wensen van de klant en wordt alles keurig ingemeten op jouw oren. Aldus een meer dan tevreden klant.',
     naam: 'Ronald E.',
     auto: 'Škoda Enyaq Coupé RS',
     pakket: 'The OEM+ Executive',
