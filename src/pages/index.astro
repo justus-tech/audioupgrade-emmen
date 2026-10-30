@@ -10,8 +10,8 @@ import Reviews from '../components/Reviews.astro';
 import NogGeenAuto from '../components/NogGeenAuto.astro';
 import KomLuisteren from '../components/KomLuisteren.astro';
 import { REVIEWS } from '../data/reviews.js';
-/* Foto: Unsplash — vrij te gebruiken. Zie src/components/Fotoband.astro. */
-import deurspeaker from '../assets/foto/deurspeaker.jpg';
+/* Eigen werk: een Ford in de werkplaats, deuren en dashboard open. */
+import interieurOpen from '../assets/werk/ford-interieur-open.jpg';
 import { SITE, AUDIOPAKKETTEN, LOSSE_OPTIES, pakkettenVan } from '../data/site.js';
 import { ONTZORGEN, LEVENSLANG } from '../data/generiek.js';
 import { pad } from '../lib/pad.js';
@@ -105,8 +105,8 @@ const los = pakkettenVan(LOSSE_OPTIES);
   {/* Breekt de pagina open op de plek waar hij anders drie blokken tekst
       achter elkaar zou zijn. */}
   <Fotoband
-    foto={deurspeaker}
-    alt="Speakerrooster in een deurpaneel, verlicht door de sfeerverlichting van de auto"
+    foto={interieurOpen}
+    alt="Een Ford in de werkplaats van Audio Upgrade Emmen: deurpanelen en dashboard open, een nieuwe speaker in de deur en dempingsmateriaal op het plaatwerk"
     kop="Onzichtbaar ingebouwd"
     tekst="Aan de buitenkant verandert er niets. Het verschil zit achter het paneel."
   />

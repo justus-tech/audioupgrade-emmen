@@ -20,8 +20,8 @@ import Fotoband from '../components/Fotoband.astro';
 import ModelKiezer from '../components/ModelKiezer.astro';
 import NogGeenAuto from '../components/NogGeenAuto.astro';
 import KomLuisteren from '../components/KomLuisteren.astro';
-/* Foto: Unsplash — vrij te gebruiken. Zie src/components/Fotoband.astro. */
-import speakerconus from '../assets/foto/speakerconus.jpg';
+/* Eigen werk: de nieuwe speaker naast de fabrieksspeaker, in de deur. */
+import deurSpeakers from '../assets/werk/ford-deur-speakers.jpg';
 import { SITE, AUDIOPAKKETTEN, LOSSE_OPTIES, pakkettenVan } from '../data/site.js';
 import { autoTabel } from '../data/autos.js';
 import { GARANTIE, LEVENSLANG, CTA } from '../data/generiek.js';
@@ -111,9 +111,9 @@ const los = pakkettenVan(LOSSE_OPTIES);
   </section>
 
   <Fotoband
-    foto={speakerconus}
+    foto={deurSpeakers}
     hoogte="laag"
-    alt="Close-up van een geweven speakerconus met de tweeter in het midden"
+    alt="Een nieuwe speaker met een stijve honingraatconus, vastgehouden naast de papieren fabrieksspeaker in de deur van een Ford"
     kop="Geweven conus, geen papier"
     tekst="Waar de fabriek papier gebruikt, gebruiken wij materiaal dat vorm houdt — ook na tien jaar in een deur vol vocht."
   />
