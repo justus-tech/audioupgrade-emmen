@@ -475,10 +475,18 @@ describe('prijzen in de modelteksten', () => {
  * Sinds 24 oktober worden de probleemteksten uitgeschreven. Het houvast per
  * pagina komt uit het record zelf — de generaties, de variant, of het
  * fabriekssysteem dat die pagina al noemde — zodat er niets bij verzonnen is.
- * Gedaan: de zin over de zitpositie op twaalf SUV's, die over de achterklep
- * op dertien compacte crossovers, en op de vijf premium SUV's ook de twee
- * zinnen die daar nog overheen lagen. Van de identieke probleemzinnen staan
- * er nog 58 over, samen 167 plaatsingen.
+ * Gedaan tot nu toe: de zitpositie op twaalf SUV's, de achterklep op dertien
+ * crossovers, het bagageruimte-antwoord op veertien pagina's, en een reeks
+ * losse groepen van vijf tot zeven.
+ *
+ * WAAR DIT VASTLOOPT, EN DAT IS GEEN ONWIL
+ * Wat overblijft zijn vooral zinnen die een natuurkundig feit noemen dat voor
+ * vijf vergelijkbare auto's even waar is: dat je hoog zit, dat rechte panelen
+ * nagalmen. Die vijf keer anders opschrijven levert vijf formuleringen van
+ * hetzelfde op, en dat is hetzelfde sjabloon in andere woorden — precies wat
+ * CLAUDE.md verbiedt. Daarvoor is kennis van die auto nodig die niet in dit
+ * databestand staat: wat je bij dát model aantreft als je de deur opent.
+ * Zulke groepen blijven staan tot Justus die kennis erbij geeft.
  *
  * Een vraag die terugkomt is niet het ergste — "blijft mijn fabrieksgarantie
  * geldig?" is bij elke auto een echte vraag. Een letterlijk gelijk antwoord
@@ -527,10 +535,10 @@ describe('sjabloontekst op de modelpagina\'s', () => {
    *
    * Alleen omlaag bijstellen. Stand: 648 op 19 oktober, 636 op 24 oktober,
    * 608 op 25 oktober, 599 op 26 oktober, 585 op 28 oktober, 572 op
-   * 29 oktober, 557 op 30 oktober. De probleemteksten gaan het eerst, want die staan
+   * 29 oktober, 557 op 30 oktober, 552 op 31 oktober. De probleemteksten gaan het eerst, want die staan
    * bovenaan de pagina en zijn het meest zichtbaar.
    */
-  const PLAATSINGEN = 557;
+  const PLAATSINGEN = 552;
 
   test('er komt geen sjabloontekst bij', () => {
     const dubbel = dubbeleTeksten();

@@ -25,7 +25,7 @@ export default [
       'De C1 deelt zijn techniek met de Toyota Aygo en de Peugeot 107, en deelt daarmee ook hun grootste tekortkoming: er is aan geluid vrijwel niets gedaan.',
     problems: [
       'Twee of vier eenvoudige speakers zonder aparte tweeter, dus alles komt uit je knieën.',
-      'Minimale isolatie: op snelwegsnelheid overstemt het rolgeluid de muziek.',
+      'Er zit bijna niets tussen de weg en jou, dus bij snelheid is het rolgeluid het luidste in de auto en niet de muziek.',
       'De dunne deurpanelen resoneren mee, waardoor bas als geklapper terugkomt.',
     ],
     solution: {

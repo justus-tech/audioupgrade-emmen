@@ -68,7 +68,7 @@ export default [
     problems: [
       'De rechte, hoge panelen resoneren makkelijk mee en geven een holle nagalm bij lage tonen.',
       'Twee of vier eenvoudige speakers zonder aparte tweeter, dus het geluid komt volledig uit je knieën.',
-      'Minimale isolatie: op snelwegsnelheid overstemt het rolgeluid de muziek.',
+      'Isolatie ontbreekt zo goed als helemaal. In de stad merk je dat niet, op de snelweg des te meer.',
     ],
     solution: {
       title: 'Wat wij eraan doen',

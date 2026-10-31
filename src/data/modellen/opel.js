@@ -68,7 +68,7 @@ export default [
     problems: [
       'De rechte, hoge panelen resoneren makkelijk mee en geven een holle nagalm bij lage tonen.',
       'Twee of vier eenvoudige speakers zonder aparte tweeter, dus het geluid komt uit je knieën.',
-      'Minimale isolatie: op snelwegsnelheid overstemt het rolgeluid de muziek.',
+      'Isolatie is er nauwelijks, dus bij honderd op de teller wint het rolgeluid het van de speakers.',
     ],
     solution: {
       title: 'Wat wij eraan doen',
@@ -194,7 +194,7 @@ export default [
     problems: [
       'Eenvoudige speakers zonder aparte tweeter, waardoor het geluid volledig uit je knieën komt.',
       'Licht deurblik dat op elke basnoot hoorbaar meetrilt.',
-      'Minimale isolatie: op snelwegsnelheid overstemt het rolgeluid de muziek.',
+      'De bodem en de wielkasten zijn niet gedempt, dus je draait de muziek harder om de weg te overstemmen in plaats van om beter te horen.',
     ],
     solution: {
       title: 'Wat wij eraan doen',

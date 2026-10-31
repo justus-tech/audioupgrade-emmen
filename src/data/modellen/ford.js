@@ -109,7 +109,7 @@ export default [
     problems: [
       'Twee of vier eenvoudige speakers zonder aparte tweeter, dus het geluid komt volledig uit je knieën.',
       'Het lichte deurblik trilt hoorbaar mee op elke basnoot.',
-      'Minimale isolatie: op snelwegsnelheid overstemt het rolgeluid de muziek.',
+      'Er zit vrijwel geen isolatie in: op de snelweg hoor je vooral de weg, en de muziek moet daar bovenuit komen.',
     ],
     solution: {
       title: 'Wat wij eraan doen',
