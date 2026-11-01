@@ -1374,11 +1374,44 @@ import { APP } from '../data/app.js';
    * beginscherm rechtstreeks in de agenda springen, en doet de terugknop van
    * je telefoon wat je verwacht in plaats van de app af te sluiten.
    */
+  /**
+   * HET ACTIEVE TABBLAD IN BEELD SCHUIVEN.
+   *
+   * Op een telefoon van 390 pixels passen er vier van de acht tabbladen
+   * naast elkaar; de strook schuift daarom zijwaarts. Tik je een tabblad aan,
+   * dan schuift de browser hem zelf in beeld, en dus leek er niets aan de
+   * hand. Maar bij de twee manieren waarop je zonder tikken op een tabblad
+   * terechtkomt ging het mis:
+   *
+   *   - een snelkoppeling op je beginscherm (/headroom?tab=instellingen)
+   *   - de terugknop van je telefoon
+   *
+   * Nagemeten op 390 pixels: bij ?tab=instellingen stond het paneel open,
+   * maar het tabblad zelf op 678 tot 787 pixels terwijl je maar tot 390 ziet.
+   * Je zag dus Offerte, Klanten, Bedrading en Agenda, met geen enkele
+   * oplichtend — alsof er niets gekozen was. Hetzelfde bij Auto's en Meting,
+   * en ook bij de knoppen die je zelf naar een ander tabblad brengen.
+   *
+   * Er blijft een marge van 12 pixels vrij, zodat je het volgende tabblad
+   * net ziet uitsteken. Dat is tegelijk de hint dat de strook verder schuift.
+   */
+  function schuifTabInBeeld(doel) {
+    const strook = $('.wb-tabs');
+    const knop = $$('.wb-tab').find((k) => k.dataset.tab === doel);
+    if (!strook || !knop) return;
+    const marge = 12;
+    const s = strook.getBoundingClientRect();
+    const k = knop.getBoundingClientRect();
+    if (k.left < s.left + marge) strook.scrollLeft -= (s.left + marge) - k.left;
+    else if (k.right > s.right - marge) strook.scrollLeft += k.right - (s.right - marge);
+  }
+
   function toonTab(naam, { inGeschiedenis = false } = {}) {
     const bestaat = $$('.wb-tab').some((k) => k.dataset.tab === naam);
     const doel = bestaat ? naam : 'offerte';
     $$('.wb-tab').forEach((k) => k.classList.toggle('aan', k.dataset.tab === doel));
     $$('.wb-paneel').forEach((p) => { p.hidden = p.dataset.paneel !== doel; });
+    schuifTabInBeeld(doel);
     /* Het plan hoort bij de offerte waar je nu aan werkt. Die kan sinds de
        vorige keer veranderd zijn, dus elke keer opnieuw tekenen. */
     if (doel === 'bedrading') { tekenBedrading(); bewaarConcept(); }
@@ -4675,6 +4708,28 @@ import { APP } from '../data/app.js';
      op het goede tabblad. */
   tekenBericht();
   toonTab(new URLSearchParams(location.search).get('tab') || 'offerte');
+
+  /* Bij een eerste bezoek zijn de lettertypen er nog niet als hierboven de
+     strook wordt geschoven. De tabbladen zijn dan breder dan ze straks worden
+     — nagemeten: 969 pixels in plaats van 799 — en dus schuift de strook een
+     stukje te ver. Zodra de letters binnen zijn rekenen we het één keer
+     opnieuw. Alleen als er nog niets anders gekozen is, zodat we een tik van
+     de eerste seconde niet terugdraaien. */
+  if (document.fonts?.ready) {
+    const bijStart = $('.wb-tab.aan')?.dataset.tab;
+    const strookBijStart = $('.wb-tabs');
+    const standBijStart = strookBijStart ? strookBijStart.scrollLeft : null;
+    document.fonts.ready.then(() => {
+      if (!strookBijStart || !bijStart) return;
+      /* Heeft hij in die eerste tienden van een seconde zelf al een ander
+         tabblad gekozen of de strook met zijn duim verschoven, dan laten we
+         het staan. Zijn hand gaat voor onze nauwkeurigheid. */
+      if ($('.wb-tab.aan')?.dataset.tab !== bijStart) return;
+      if (strookBijStart.scrollLeft !== standBijStart) return;
+      strookBijStart.scrollLeft = 0;
+      schuifTabInBeeld(bijStart);
+    });
+  }
 
   /* Het moment waarop Android een tabblad afsluit is precies dit moment.
      Wat er nog niet weggeschreven was, gaat hier alsnog mee. */

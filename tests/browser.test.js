@@ -3883,6 +3883,116 @@ describe('het bedradingsplan', alsGebouwd, () => {
   });
 });
 
+/**
+ * HET GEKOZEN TABBLAD STAAT IN BEELD.
+ *
+ * Op 390 pixels passen er vier van de negen tabbladen naast elkaar; de strook
+ * schuift zijwaarts. Tik je een tabblad aan, dan schuift de browser hem zelf
+ * in beeld — daarom leek er niets aan de hand. Maar bij de twee manieren
+ * waarop je er zonder tikken op terechtkomt ging het mis: een snelkoppeling
+ * van je beginscherm (/headroom?tab=instellingen, en dat staat zo in de app
+ * uitgelegd) en de terugknop van je telefoon.
+ *
+ * Nagemeten vóór de reparatie: bij ?tab=instellingen stond het paneel open,
+ * maar het tabblad zelf op 678 tot 787 pixels terwijl je tot 390 ziet. Je zag
+ * Offerte, Klanten, Bedrading en Agenda, met geen enkele oplichtend — alsof er
+ * niets gekozen was. Vier van de negen tabbladen hadden dat.
+ */
+describe('het gekozen tabblad staat in beeld', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+  const TABBLADEN = [
+    'offerte', 'klanten', 'bedrading', 'agenda', 'rapport',
+    'catalogus', 'autos', 'meting', 'instellingen',
+  ];
+
+  /* Waar het actieve tabblad staat ten opzichte van het venster van de strook. */
+  const stand = (pagina) => pagina.evaluate(() => {
+    const strook = document.querySelector('.wb-tabs');
+    const aan = document.querySelector('.wb-tab.aan');
+    const s = strook.getBoundingClientRect();
+    const k = aan.getBoundingClientRect();
+    return {
+      tab: aan.dataset.tab,
+      paneel: document.querySelector('.wb-paneel:not([hidden])')?.dataset.paneel,
+      inBeeld: k.left >= s.left - 1 && k.right <= s.right + 1,
+      schuift: strook.scrollWidth > strook.clientWidth + 1,
+      links: Math.round(k.left - s.left),
+      rechts: Math.round(k.right - s.left),
+      venster: Math.round(s.width),
+    };
+  });
+
+  async function opTabblad(tab) {
+    const pagina = await browser.newPage(telefoon);
+    await pagina.goto(`${paginaUrl('headroom')}?tab=${tab}`);
+    await pagina.evaluate(() => document.fonts.ready);
+    return pagina;
+  }
+
+  test('de strook schuift echt, anders bewijst de rest hieronder niets', async () => {
+    // Past de hele strook ooit in het scherm, dan staat elk tabblad altijd in
+    // beeld en kan de test niets meer vinden. Dan moet deze test omvallen,
+    // zodat hij niet jarenlang groen staat zonder iets te meten.
+    const pagina = await opTabblad('offerte');
+    const r = await stand(pagina);
+    assert.ok(r.schuift, 'de tabstrook schuift niet meer; de tests hieronder meten niets');
+    await pagina.close();
+  });
+
+  for (const tab of TABBLADEN) {
+    test(`?tab=${tab} opent met dat tabblad in beeld`, async () => {
+      const pagina = await opTabblad(tab);
+      const r = await stand(pagina);
+      assert.equal(r.tab, tab, 'een ander tabblad licht op dan het paneel dat openstaat');
+      assert.equal(r.paneel, tab);
+      assert.ok(
+        r.inBeeld,
+        `het tabblad staat op ${r.links}..${r.rechts} terwijl je tot ${r.venster} ziet`
+      );
+      await pagina.close();
+    });
+  }
+
+  test('de terugknop brengt het tabblad weer in beeld', async () => {
+    const pagina = await opTabblad('offerte');
+    await pagina.click('[data-tab="instellingen"]');
+    await pagina.click('[data-tab="offerte"]');
+    await pagina.goBack();
+    await pagina.waitForFunction(
+      () => document.querySelector('.wb-tab.aan')?.dataset.tab === 'instellingen',
+      null, { timeout: 5000 }
+    );
+    const r = await stand(pagina);
+    assert.equal(r.paneel, 'instellingen');
+    assert.ok(r.inBeeld, `na de terugknop staat het tabblad op ${r.links}..${r.rechts}`);
+    await pagina.close();
+  });
+
+  test('een knop die je naar een ander tabblad brengt, brengt het ook in beeld', async () => {
+    // Er zijn knoppen in de app die je naar Auto's sturen. Die deden hetzelfde
+    // als de snelkoppeling: het paneel wisselde, het tabblad bleef buiten beeld.
+    const pagina = await opTabblad('offerte');
+    await pagina.evaluate(() => {
+      document.querySelector('.wb-tab[data-tab="autos"]').click();
+    });
+    await pagina.waitForFunction(
+      () => document.querySelector('.wb-tab.aan')?.dataset.tab === 'autos',
+      null, { timeout: 5000 }
+    );
+    const r = await stand(pagina);
+    assert.ok(r.inBeeld, `het tabblad Auto's staat op ${r.links}..${r.rechts}`);
+    await pagina.close();
+  });
+
+  test('een adres met een tabblad dat niet bestaat valt terug op de offerte', async () => {
+    const pagina = await opTabblad('bestaatniet');
+    const r = await stand(pagina);
+    assert.equal(r.tab, 'offerte');
+    assert.ok(r.inBeeld);
+    await pagina.close();
+  });
+});
+
 describe('de klantenlijst', alsGebouwd, () => {
   const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
   const regel = { id: 'r1', soort: 'versterker', omschrijving: 'Musway M4 4x100W', aantal: 1, inkoopCent: 0, uren: 0 };
