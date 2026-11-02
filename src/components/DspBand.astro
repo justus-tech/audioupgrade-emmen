@@ -1,0 +1,78 @@
+---
+/**
+ * DE BAND "HET BREIN VAN ELKE INSTALLATIE".
+ *
+ * Staat op de homepage en de upgradepagina, direct onder de pakketten, en
+ * stuurt door naar /dsp-tuning. Twee soorten lezers, twee knoppen:
+ * wie al een DSP heeft gaat naar het afstelpakket, wie er nog geen heeft
+ * naar de uitleg waarom hij er een wil.
+ *
+ * Het beeld is hetzelfde brein als bovenaan /dsp-tuning, maar kleiner: één
+ * ingang, vijf uitgangen, het signaal dat erdoorheen loopt. Schema, geen
+ * meting. Staat stil bij "verminder beweging".
+ */
+import { PACKAGES } from '../data/site.js';
+import { pad } from '../lib/pad.js';
+
+const afstellen = PACKAGES.find((p) => p.slug === 'inmeten-afstellen');
+const UIT = [30, 70, 110, 150, 190];
+---
+<div class="dspband">
+  <div class="tekst">
+    <span class="eyebrow">DSP-tuning · elk merk</span>
+    <h2>Het brein van elke installatie</h2>
+    <p>
+      De DSP bepaalt wanneer elke speaker speelt, wat hij speelt en hoe hard.
+      Goed afgesteld staat de muziek voor je op het dashboard. Slecht
+      afgesteld zit hij in je portier, hoe duur je speakers ook waren.
+    </p>
+    <p class="prijsregel">
+      Heb je er al een? <strong>{afstellen.name}</strong> voor {afstellen.price}, {afstellen.duur.toLowerCase()}.
+    </p>
+    <div class="knoppen">
+      <a class="btn solid" href={pad('/dsp-tuning#al-een-dsp')}>Ik heb al een DSP</a>
+      <a class="btn" href={pad('/dsp-tuning')}>Wat doet een DSP?</a>
+    </div>
+  </div>
+  <svg viewBox="0 0 360 220" class="mini" aria-hidden="true">
+    <path d="M0 110 H118" class="spoor" />
+    <path d="M0 110 H118" class="stroom" />
+    {UIT.map((y) => (
+      <>
+        <path d={`M238 110 C270 110 270 ${y} 300 ${y} H326`} class="spoor" />
+        <path d={`M238 110 C270 110 270 ${y} 300 ${y} H326`} class="stroom" />
+        <circle cx="336" cy={y} r="7" class="spk" />
+      </>
+    ))}
+    <g class="poot">
+      {[0, 1, 2, 3].map((i) => <path d={`M${136 + i * 28} 64 v-12 M${136 + i * 28} 156 v12`} />)}
+    </g>
+    <path d="M124 70 C124 66 126 64 130 64 L232 64 C236 64 238 66 238 70 L238 150 C238 154 236 156 232 156 L130 156 C126 156 124 154 124 150 Z" class="chip" />
+    <text x="181" y="120" class="chiptekst">DSP</text>
+  </svg>
+</div>
+
+<style>
+  .dspband {
+    display: grid; gap: 32px; align-items: center; grid-template-columns: 1fr;
+    border-top: 1px solid var(--accent); border-bottom: 1px solid var(--line);
+    padding: 40px 0;
+  }
+  @media (min-width: 900px) { .dspband { grid-template-columns: 1.2fr .8fr; } }
+  h2 { margin: .4em 0 .6em; }
+  .prijsregel { margin-top: 1em; }
+  .prijsregel strong { color: var(--text); font-weight: 500; }
+  .knoppen { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 1.6rem; }
+  @media (max-width: 640px) { .knoppen .btn { width: 100%; text-align: center; } }
+  .mini { width: 100%; max-width: 420px; height: auto; justify-self: center; display: block; }
+  .spoor { fill: none; stroke: var(--line-strong); stroke-width: 2; }
+  .stroom { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 5 19; }
+  @media (prefers-reduced-motion: no-preference) {
+    .stroom { animation: stroom 1.5s linear infinite; }
+  }
+  @keyframes stroom { to { stroke-dashoffset: -24; } }
+  .spk { fill: var(--teken-vul); stroke: var(--teken-lijn); stroke-width: 2; }
+  .chip { fill: var(--teken-vlak); stroke: var(--teken-lijn); stroke-width: 2.6; }
+  .poot path { stroke: var(--teken-lijn); stroke-width: 3; }
+  .chiptekst { font-family: 'Oswald', sans-serif; font-weight: 600; letter-spacing: .14em; font-size: 30px; fill: var(--text); text-anchor: middle; }
+</style>

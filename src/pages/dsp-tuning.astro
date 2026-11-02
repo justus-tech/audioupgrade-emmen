@@ -1,0 +1,640 @@
+---
+/**
+ * DSP-TUNING: "HET BREIN VAN ELKE INSTALLATIE".
+ *
+ * Gemaakt op 2 november 2026, op verzoek van Justus. Deze pagina moet twee
+ * soorten bezoekers binnenhalen:
+ *
+ *   1. Wie al een DSP heeft (van een andere inbouwer, of zelf ingebouwd) en
+ *      er niet blij mee is. Die zoekt op "dsp afstellen" of "dsp tuning" en
+ *      moet hier binnen één scherm het pakket Inmeten & Afstellen vinden.
+ *   2. Wie nog geen DSP heeft en niet wist dat het bestond. Die moet na de
+ *      drie voorbeelden snappen waarom zijn speakers alleen niet genoeg zijn,
+ *      en doorklikken naar The OEM+ Executive of The Reference Edition.
+ *
+ * Daarom splitst de pagina zich halverwege in twee paden, en staan beide al
+ * als knop in de hero.
+ *
+ * DE ANIMATIES ZIJN SCHEMA'S
+ * Er staat geen enkele meting of maat in: de auto, de golven en de curves
+ * zijn uitleg van het principe. Dat staat er ook bij ("Schema, niet op
+ * schaal"), zoals de tekenstandaard vraagt. Alles staat stil bij "verminder
+ * beweging", en elke animatie stopt zodra hij uit beeld is.
+ *
+ * De drie voorbeelden (tijd, klank, balans) zijn dezelfde drie als op blad 1
+ * van het meetrapport. Wie hier leest wat hij krijgt, herkent het straks op
+ * papier.
+ *
+ * Prijzen en pakketteksten komen uit site.js; hier staat geen bedrag.
+ */
+import Base from '../layouts/Base.astro';
+import PackageCard from '../components/PackageCard.astro';
+import { PACKAGES } from '../data/site.js';
+import { LEVENSLANG } from '../data/generiek.js';
+import { pad } from '../lib/pad.js';
+import { whatsappLink } from '../lib/whatsapp.js';
+
+const pakket = (slug) => PACKAGES.find((p) => p.slug === slug);
+const afstellen = pakket('inmeten-afstellen');
+const executive = pakket('oem-plus-executive');
+const reference = pakket('reference-edition');
+
+const waHebDsp = whatsappLink(
+  'ik heb al een DSP in mijn auto en wil hem laten inmeten en afstellen. Merk en type van de DSP: … Mijn auto: …'
+);
+const waGeenDsp = whatsappLink(
+  'ik heb nog geen DSP en wil weten wat het in mijn auto zou doen. Ik stuur zo een foto van mijn dashboard.'
+);
+
+/* De curve van het klankvoorbeeld. Dezelfde formules als de hero van de
+   homepage (Golflijn.astro), zodat het verhaal overal hetzelfde is. */
+const KB = 640, KH = 220, KP = 120, DBMAX = 7, DBMIN = -11;
+const bel = (u, m, b) => Math.exp(-(((u - m) / b) ** 2));
+const fabriek = (u) =>
+  -0.8 - 7.2 * bel(u, 0.155, 0.115) + 2.6 * bel(u, 0.333, 0.062) - 3.0 * bel(u, 0.47, 0.075) +
+  5.0 * bel(u, 0.752, 0.085) - 2.2 * bel(u, 0.88, 0.065) - 6.0 * bel(u, 1.02, 0.105);
+const ingemeten = (u) =>
+  0.2 + 4.2 * bel(u, 0.118, 0.15) + 0.9 * bel(u, 0.69, 0.15) - 2.4 * bel(u, 1.02, 0.13);
+const naarY = (db) => 14 + ((DBMAX - db) / (DBMAX - DBMIN)) * (KH - 28);
+const curvePad = (fn) => {
+  let d = '';
+  for (let i = 0; i < KP; i++) {
+    const u = i / (KP - 1);
+    d += `${i ? 'L' : 'M'}${(u * KB).toFixed(1)} ${naarY(fn(u)).toFixed(1)}`;
+  }
+  return d;
+};
+const OCTAAF = [31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000].map(
+  (hz) => ((Math.log10(hz) - Math.log10(20)) / 3) * KB
+);
+
+/* Het brein in de hero: vijf uitgangen, elk met een eigen weg. */
+const UITGANGEN = [
+  { y: 46, naam: 'Tweeter links' },
+  { y: 98, naam: 'Tweeter rechts' },
+  { y: 150, naam: 'Mid links' },
+  { y: 202, naam: 'Mid rechts' },
+  { y: 254, naam: 'Subwoofer' },
+];
+
+const VRAGEN = [
+  {
+    q: 'Wat is een DSP?',
+    a: 'Een digitale signaalprocessor: het brein tussen je radio en je speakers. Hij verdeelt het geluid over elke speaker apart, zet het op het juiste moment klaar en corrigeert wat het interieur van je auto met de klank doet. Zonder goede afstelling doet hij dat niet, hoe duur hij ook was.',
+  },
+  {
+    q: 'Ik heb al een DSP. Kun je die afstellen?',
+    a: `Ja. Ik stel elk merk DSP af. Dat is het pakket ${afstellen.name}: ${afstellen.price}, ${afstellen.duur.toLowerCase()}. Stuur me vooraf het merk en type, dan weet ik wat ik meeneem.`,
+  },
+  {
+    q: 'Hoe meet je?',
+    a: 'Met een gekalibreerde meetmicrofoon op de plek van je hoofd. Ik meet voordat ik iets aanpas en nog een keer als ik klaar ben. Beide metingen krijg je mee in je meetrapport.',
+  },
+  {
+    q: 'Wat als de meting laat zien dat er iets kapot is?',
+    a: 'Dan hoor je dat eerst. Ik vervang of repareer niets zonder je akkoord.',
+  },
+  {
+    q: 'Ik heb nog geen DSP. Waar zit hij in?',
+    a: `In ${executive.name} (${executive.price}) en ${reference.name} (${reference.price}). Daar zit het afstellen al in de prijs.`,
+  },
+];
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: VRAGEN.map((v) => ({
+    '@type': 'Question',
+    name: v.q,
+    acceptedAnswer: { '@type': 'Answer', text: v.a },
+  })),
+};
+---
+<Base
+  title="DSP-tuning en inmeten in Emmen | Audio Upgrade Emmen"
+  description={`Het brein van elke installatie. Ik meet en stel je DSP af op jouw auto, elk merk, met de meting van voor en na op papier. ${afstellen.price}, ${afstellen.duur.toLowerCase()}.`}
+  path="/dsp-tuning"
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  {/* ================= HERO: HET BREIN ================= */}
+  <section class="dsp-hero">
+    <div class="wrap">
+      <span class="eyebrow">DSP-tuning · Emmen · Elk merk DSP</span>
+      <h1>Het brein van<br /><span class="accent">elke installatie.</span></h1>
+      <p class="lead">
+        Dure speakers en een sterke versterker klinken pas goed als het brein
+        ze vertelt wat ze moeten doen. Dat brein is de DSP. Staat hij niet goed
+        afgesteld, dan zit de zanger in je portier in plaats van voor je op het
+        dashboard.
+      </p>
+
+      <figure class="brein" aria-hidden="true">
+        <svg viewBox="0 0 640 300">
+          {/* De bron: je originele radio. */}
+          <text x="8" y="146" class="lbl">Radio</text>
+          <path d="M8 156 H196" class="spoor" />
+          <path d="M8 156 H196" class="stroom" />
+
+          {/* Van het brein naar elke speaker een eigen weg. */}
+          {UITGANGEN.map((u) => (
+            <>
+              <path d={`M372 150 C420 150 420 ${u.y} 468 ${u.y} H496`} class="spoor" />
+              <path d={`M372 150 C420 150 420 ${u.y} 468 ${u.y} H496`} class="stroom" />
+              <circle cx="508" cy={u.y} r="9" class="luidspreker" />
+              <text x="526" y={u.y + 5} class="lbl klein">{u.naam}</text>
+            </>
+          ))}
+
+          {/* De chip, met pootjes. */}
+          <g class="pootjes">
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <path d={`M${212 + i * 28} 86 v-14 M${212 + i * 28} 214 v14`} />
+            ))}
+          </g>
+          <path d="M204 92 C204 88 206 86 210 86 L366 86 C370 86 372 88 372 92 L372 208 C372 212 370 214 366 214 L210 214 C206 214 204 212 204 208 Z" class="chip" />
+          <path d="M224 106 L352 106 L352 194 L224 194 Z" class="kern" />
+          <text x="288" y="160" class="chiptekst">DSP</text>
+        </svg>
+        <figcaption>Schema, niet op schaal</figcaption>
+      </figure>
+
+      <div class="keuze">
+        <a class="btn solid" href="#al-een-dsp">Ik heb al een DSP</a>
+        <a class="btn" href="#nog-geen-dsp">Ik heb nog geen DSP</a>
+      </div>
+    </div>
+  </section>
+
+  {/* ================= WAT HET BREIN DOET ================= */}
+  <section class="alt" id="wat-het-doet">
+    <div class="wrap">
+      <span class="eyebrow">Wat een DSP doet</span>
+      <h2>Drie dingen die je speakers zelf niet kunnen</h2>
+      <p class="intro">Druk op de knop en hoor het verschil met je ogen.</p>
+
+      <div class="schakel" role="group" aria-label="Vergelijk zonder en met DSP">
+        <button type="button" data-stand="zonder" aria-pressed="true">Zonder DSP</button>
+        <button type="button" data-stand="met" aria-pressed="false">Met DSP</button>
+      </div>
+
+      <div class="demos" data-stand="zonder">
+        {/* ---------- 01 TIJD ---------- */}
+        <article class="demo">
+          <span class="num">01</span>
+          <h3>Tijd</h3>
+          <svg viewBox="0 0 360 280" class="tijd" aria-hidden="true">
+            {/* Bovenaanzicht van de cabine. De voorkant is boven. */}
+            <path d="M60 36 C60 20 90 12 180 12 C270 12 300 20 300 36 L306 236 C306 258 290 268 180 268 C70 268 54 258 54 236 Z" class="cabine" />
+            <path d="M84 64 C120 54 240 54 276 64" class="ruit" />
+            {/* Stoelen: links de bestuurder (Nederland rijdt links). */}
+            <path d="M92 150 C92 138 100 132 122 132 C144 132 152 138 152 150 L150 204 C150 212 144 216 122 216 C100 216 94 212 94 204 Z" class="stoel" />
+            <path d="M208 150 C208 138 216 132 238 132 C260 132 268 138 268 150 L266 204 C266 212 260 216 238 216 C216 216 210 212 210 204 Z" class="stoel" />
+            {/* Speakers in de portieren. */}
+            <circle cx="62" cy="104" r="9" class="luidspreker" />
+            <circle cx="298" cy="104" r="9" class="luidspreker" />
+            {/* De golven: elke speaker zijn eigen, binnen de cabine. */}
+            <clipPath id="binnen-cabine">
+              <path d="M60 36 C60 20 90 12 180 12 C270 12 300 20 300 36 L306 236 C306 258 290 268 180 268 C70 268 54 258 54 236 Z" />
+            </clipPath>
+            <g clip-path="url(#binnen-cabine)">
+              <circle cx="62" cy="104" r="0" class="golf links" />
+              <circle cx="298" cy="104" r="0" class="golf rechts" />
+            </g>
+            {/* Jouw hoofd. */}
+            <circle cx="122" cy="156" r="13" class="hoofd" />
+          </svg>
+          <div class="aankomst" aria-hidden="true">
+            <span class="as"></span>
+            <span class="tik links">L</span>
+            <span class="tik rechts">R</span>
+          </div>
+          <p class="zonder">De speaker in jouw portier zit dichter bij je dan die aan de overkant. Zijn geluid is er eerder, en dus trekt het hele beeld naar links.</p>
+          <p class="met">De DSP houdt de dichtste speaker een fractie in. Beide komen tegelijk bij je oren aan, en de muziek staat weer voor je.</p>
+        </article>
+
+        {/* ---------- 02 KLANK ---------- */}
+        <article class="demo">
+          <span class="num">02</span>
+          <h3>Klank</h3>
+          <svg viewBox={`0 0 ${KB} ${KH}`} class="klank" preserveAspectRatio="none" aria-hidden="true">
+            {OCTAAF.map((x) => <line x1={x.toFixed(1)} y1="0" x2={x.toFixed(1)} y2={KH} class="raster" />)}
+            <line x1="0" y1={naarY(0)} x2={KB} y2={naarY(0)} class="nullijn" />
+            <path d={curvePad(fabriek)} class="klankcurve" />
+          </svg>
+          <div class="as-tekst" aria-hidden="true"><span>Diepe bas</span><span>Hoge tonen</span></div>
+          <p class="zonder">Elk interieur maakt pieken en dalen: een bult in de bas, een gat waar de stemmen zitten, een schelle piek bovenin.</p>
+          <p class="met">Na het afstellen ligt de lijn rustig. Stemmen en instrumenten klinken zoals ze zijn opgenomen.</p>
+        </article>
+
+        {/* ---------- 03 BALANS ---------- */}
+        <article class="demo">
+          <span class="num">03</span>
+          <h3>Balans</h3>
+          <svg viewBox="0 0 360 280" class="balans" aria-hidden="true">
+            {/* Vooraanzicht: voorruit, dashboard en de twee portieren. */}
+            <path d="M40 40 C110 24 250 24 320 40 L300 132 C240 124 120 124 60 132 Z" class="ruit-vlak" />
+            <path d="M24 152 C100 136 260 136 336 152 L336 176 C260 164 100 164 24 176 Z" class="dashboard" />
+            <circle cx="40" cy="214" r="12" class="luidspreker" />
+            <circle cx="320" cy="214" r="12" class="luidspreker" />
+            {/* Het stuur: jij zit links. */}
+            <circle cx="104" cy="214" r="34" class="stuur" />
+            <circle cx="104" cy="214" r="8" class="stuur" />
+            {/* De zanger. */}
+            <g class="zanger">
+              <circle r="26" class="ring" />
+              <circle r="15" class="ring" />
+              <circle r="7" class="stem" />
+            </g>
+          </svg>
+          <p class="zonder">Zonder afstelling hoor je de zanger uit het portier naast je.</p>
+          <p class="met">Met afstelling staat hij in het midden van het dashboard, ook al zit jij er zelf niet.</p>
+        </article>
+      </div>
+      <p class="schema-noot">Schema's, niet op schaal. Hoeveel het in jouw auto scheelt, zie je in de voormeting.</p>
+    </div>
+  </section>
+
+  {/* ================= PAD 1: AL EEN DSP ================= */}
+  <section id="al-een-dsp">
+    <div class="wrap">
+      <div class="twee">
+        <div>
+          <span class="eyebrow">Heb je al een DSP?</span>
+          <h2>Een DSP is zo goed als de afstelling erin</h2>
+          <p>
+            Veel DSP's worden ingebouwd en daarna nooit goed ingemeten. Of ze
+            zijn afgesteld in een andere auto, op een ander oor, met de
+            standaardinstelling van de fabriek. Je hebt het brein al betaald.
+            Ik zorg dat het ook gaat denken.
+          </p>
+          <ol class="stappen">
+            <li><b>Voormeting.</b> Eerst meten hoe het nu klinkt, voordat ik iets aanraak.</li>
+            <li><b>Controle.</b> Aansluitingen, polariteit en versterking nagelopen.</li>
+            <li><b>Afstellen.</b> Looptijden, scheidingsfilters, fase en equalizer op jouw auto.</li>
+            <li><b>Nameting.</b> Voor en na samen in je meetrapport, zwart op wit.</li>
+          </ol>
+          <p class="voorwaarde">{afstellen.voorwaarde}</p>
+          <a class="btn wa" href={waHebDsp}>App me je DSP</a>
+        </div>
+        <div class="kaartvak">
+          <PackageCard pkg={afstellen} showScores={false} />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* ================= PAD 2: NOG GEEN DSP ================= */}
+  <section class="alt" id="nog-geen-dsp">
+    <div class="wrap">
+      <span class="eyebrow">Nog geen DSP?</span>
+      <h2>Betere speakers zonder brein zijn half werk</h2>
+      <p class="intro">
+        Nieuwe speakers maken het geluid helderder, maar ze lossen niet op dat
+        de ene dichter bij je zit dan de andere, of dat je interieur de bas
+        opblaast. Dat doet alleen een DSP. In deze twee pakketten zit hij erin,
+        en het inmeten en afstellen zit in de prijs.
+      </p>
+      <div class="grid cols-2 gelijk mt">
+        <PackageCard pkg={executive} />
+        <PackageCard pkg={reference} />
+      </div>
+      <div class="center mt">
+        <a class="btn wa" href={waGeenDsp}>Stuur foto dashboard</a>
+        <p class="klein"><a href={pad('/upgrades')}>Of vergelijk alle pakketten →</a></p>
+      </div>
+    </div>
+  </section>
+
+  {/* ================= HET RAPPORT ================= */}
+  <section>
+    <div class="wrap">
+      <div class="twee midden">
+        <div>
+          <span class="eyebrow">Zwart op wit</span>
+          <h2>Je krijgt de meting mee naar huis</h2>
+          <p>
+            Afstellen is onzichtbaar werk. Daarom krijg je bij elke DSP die ik
+            afstel een meetrapport: hoe je auto klonk voordat ik begon, en hoe
+            hij nu klinkt. Klank, tijd en balans, de drie dingen van hierboven.
+          </p>
+          <p class="klein">{LEVENSLANG.kort} Zolang de auto van jou blijft. Voor de apparatuur geldt de fabrieksgarantie.</p>
+        </div>
+        <figure class="rapport" aria-hidden="true">
+          <svg viewBox="0 0 300 380">
+            <path d="M24 14 L250 14 L276 40 L276 366 L24 366 Z" class="papier" />
+            <path d="M250 14 L250 40 L276 40" class="papier-rand" />
+            <path d="M48 46 H160" class="rapport-kop" />
+            <path d="M48 64 H220 M48 76 H190" class="rapport-regel" />
+            <text x="48" y="112" class="rapport-lbl">Voor</text>
+            <path d="M48 120 H252 V200 H48 Z" class="rapport-vak" />
+            <path d="M52 170 C70 166 78 138 96 140 C112 142 118 160 134 158 C152 156 158 140 176 144 C192 148 198 124 214 122 C228 120 236 156 248 166" class="rapport-voor" />
+            <text x="48" y="232" class="rapport-lbl">Na</text>
+            <path d="M48 240 H252 V320 H48 Z" class="rapport-vak" />
+            <path d="M52 276 C72 272 92 280 112 281 C140 282 170 280 196 281 C216 282 236 286 248 292" class="rapport-na" />
+          </svg>
+          <figcaption>Schema van het rapport, geen echte meting</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  {/* ================= VRAGEN ================= */}
+  <section class="alt">
+    <div class="wrap smal">
+      <span class="eyebrow">Veelgestelde vragen</span>
+      <h2>Over DSP-tuning</h2>
+      <div class="vragen">
+        {VRAGEN.map((v) => (
+          <details>
+            <summary>{v.q}</summary>
+            <p>{v.a}</p>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="center">
+    <div class="wrap">
+      <h2>Laat je auto horen wat hij kan</h2>
+      <div class="keuze midden">
+        <a class="btn wa" href={waHebDsp}>Ik heb al een DSP</a>
+        <a class="btn" href={waGeenDsp}>Ik heb nog geen DSP</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  const stil = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------------- De schakelaar Zonder / Met DSP ---------------- */
+  const sectie = document.querySelector('#wat-het-doet');
+  const demos = sectie?.querySelector('.demos');
+  const knoppen = sectie ? [...sectie.querySelectorAll('.schakel button')] : [];
+  let stand = 'zonder';
+  let zelfGekozen = false;
+  let wissel = 0;
+
+  /* Klank: de curve schuift van de fabriek naar de afgestelde lijn. */
+  const KB = 640, KH = 220, KP = 120, DBMAX = 7, DBMIN = -11;
+  const bel = (u, m, b) => Math.exp(-(((u - m) / b) ** 2));
+  const fabriek = (u) =>
+    -0.8 - 7.2 * bel(u, 0.155, 0.115) + 2.6 * bel(u, 0.333, 0.062) - 3.0 * bel(u, 0.47, 0.075) +
+    5.0 * bel(u, 0.752, 0.085) - 2.2 * bel(u, 0.88, 0.065) - 6.0 * bel(u, 1.02, 0.105);
+  const ingemeten = (u) =>
+    0.2 + 4.2 * bel(u, 0.118, 0.15) + 0.9 * bel(u, 0.69, 0.15) - 2.4 * bel(u, 1.02, 0.13);
+  const naarY = (db) => 14 + ((DBMAX - db) / (DBMAX - DBMIN)) * (KH - 28);
+  const klankPad = (m, t) => {
+    let d = '';
+    for (let i = 0; i < KP; i++) {
+      const u = i / (KP - 1);
+      const ruis = (1 - m) * (0.35 * Math.sin(u * 29 + t * 0.9));
+      const db = (1 - m) * fabriek(u) + m * ingemeten(u) + ruis;
+      d += `${i ? 'L' : 'M'}${(u * KB).toFixed(1)} ${naarY(db).toFixed(1)}`;
+    }
+    return d;
+  };
+  const curve = sectie?.querySelector('.klankcurve');
+  let meng = 0;
+
+  /* Balans: de zanger schuift van het portier naar het midden. */
+  const zanger = sectie?.querySelector('.zanger');
+  const ZANGER_ZONDER = { x: 62, y: 196 };
+  const ZANGER_MET = { x: 180, y: 140 };
+  let balans = 0;
+
+  /* Tijd: twee golven en de aankomst bij je hoofd. */
+  const golfL = sectie?.querySelector('.golf.links');
+  const golfR = sectie?.querySelector('.golf.rechts');
+  const tikL = sectie?.querySelector('.tik.links');
+  const tikR = sectie?.querySelector('.tik.rechts');
+  const HOOFD = { x: 122, y: 156 };
+  const afstand = (x, y) => Math.hypot(HOOFD.x - x, HOOFD.y - y);
+  const dL = afstand(62, 104);
+  const dR = afstand(298, 104);
+  const SNELHEID = 150; // eenheden per seconde in de tekening, geen echte maat
+  const CYCLUS = 2.6;
+  const MAXR = 280;
+  let tijd = 0;
+
+  /* Waar de tikjes op de tijdlijn staan: 0 = start, 1 = eind van de cyclus. */
+  const plaatsTikken = (met) => {
+    const vertraging = met ? (dR - dL) / SNELHEID : 0;
+    const aL = (dL / SNELHEID + vertraging) / (dR / SNELHEID + 0.6);
+    const aR = (dR / SNELHEID) / (dR / SNELHEID + 0.6);
+    tikL.style.left = `${(aL * 100).toFixed(1)}%`;
+    tikR.style.left = `${(aR * 100).toFixed(1)}%`;
+  };
+
+  const zet = (nieuw, doorKnop) => {
+    stand = nieuw;
+    if (doorKnop) zelfGekozen = true;
+    demos.dataset.stand = nieuw;
+    knoppen.forEach((k) => k.setAttribute('aria-pressed', String(k.dataset.stand === nieuw)));
+    plaatsTikken(nieuw === 'met');
+    if (stil) {
+      meng = nieuw === 'met' ? 1 : 0;
+      balans = meng;
+      teken(0);
+    }
+  };
+
+  const teken = (dt) => {
+    const doel = stand === 'met' ? 1 : 0;
+    const stapje = Math.min(1, dt * 1.6);
+    meng += (doel - meng) * stapje;
+    balans += (doel - balans) * stapje;
+    if (stil) { meng = doel; balans = doel; }
+
+    curve?.setAttribute('d', klankPad(meng, tijd));
+
+    if (zanger) {
+      const x = ZANGER_ZONDER.x + (ZANGER_MET.x - ZANGER_ZONDER.x) * balans;
+      const y = ZANGER_ZONDER.y + (ZANGER_MET.y - ZANGER_ZONDER.y) * balans;
+      zanger.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)})`);
+    }
+
+    if (golfL && golfR) {
+      if (stil) {
+        golfL.setAttribute('r', dL.toFixed(1));
+        golfR.setAttribute('r', dR.toFixed(1));
+        golfL.style.opacity = golfR.style.opacity = '.7';
+      } else {
+        const t = tijd % CYCLUS;
+        const vertraging = stand === 'met' ? (dR - dL) / SNELHEID : 0;
+        const rL = Math.max(0, (t - vertraging) * SNELHEID);
+        const rR = t * SNELHEID;
+        golfL.setAttribute('r', Math.min(rL, MAXR).toFixed(1));
+        golfR.setAttribute('r', Math.min(rR, MAXR).toFixed(1));
+        golfL.style.opacity = rL > 0 ? String(Math.max(0, 1 - rL / MAXR)) : '0';
+        golfR.style.opacity = String(Math.max(0, 1 - rR / MAXR));
+        /* Een tikje licht op op het moment dat zijn golf je hoofd raakt. */
+        tikL.classList.toggle('raak', rL >= dL && rL < dL + 40);
+        tikR.classList.toggle('raak', rR >= dR && rR < dR + 40);
+      }
+    }
+  };
+
+  if (sectie && demos) {
+    knoppen.forEach((k) => k.addEventListener('click', () => zet(k.dataset.stand, true)));
+    zet('zonder', false);
+    teken(0);
+
+    if (!stil) {
+      let loopt = false, vorig = 0, frame = 0, sindsWissel = 0;
+      const stap = (nu) => {
+        if (!loopt) return;
+        const dt = Math.min(0.05, (nu - vorig) / 1000 || 0.016);
+        vorig = nu;
+        tijd += dt;
+        /* Zolang de bezoeker zelf niets kiest, wisselt het vanzelf. Na één
+           klik blijft staan wat hij koos. */
+        sindsWissel += dt;
+        if (!zelfGekozen && sindsWissel > 5.2) {
+          sindsWissel = 0;
+          zet(stand === 'met' ? 'zonder' : 'met', false);
+        }
+        teken(dt);
+        frame = requestAnimationFrame(stap);
+      };
+      const start = () => { if (!loopt) { loopt = true; vorig = performance.now(); frame = requestAnimationFrame(stap); } };
+      const stop = () => { loopt = false; cancelAnimationFrame(frame); };
+      new IntersectionObserver(([i]) => (i.isIntersecting && !document.hidden ? start() : stop()), { threshold: 0.15 }).observe(sectie);
+      document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
+    }
+  }
+</script>
+
+<style>
+  /* ---------------- Hero ---------------- */
+  .dsp-hero { padding-top: 64px; overflow: hidden; }
+  .dsp-hero h1 { margin-top: .4em; }
+  .dsp-hero .accent { color: var(--accent-text); }
+  .lead { max-width: 640px; margin-top: 1.2em; font-size: 1.05rem; }
+  .keuze { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 2rem; }
+  .keuze.midden { justify-content: center; }
+  @media (max-width: 640px) { .keuze .btn { width: 100%; text-align: center; } }
+
+  .brein { margin: 2.4rem 0 0; max-width: 760px; }
+  .brein svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .brein figcaption, .schema-noot, .rapport figcaption {
+    font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: .2em;
+    font-size: .62rem; color: var(--text-dim); margin-top: .8rem;
+  }
+  .lbl { font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: .14em; font-size: 17px; fill: var(--text-dim); }
+  .lbl.klein { font-size: 15px; }
+  .spoor { fill: none; stroke: var(--line-strong); stroke-width: 2; }
+  .stroom {
+    fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round;
+    stroke-dasharray: 6 22; animation: stroom 1.6s linear infinite;
+  }
+  @keyframes stroom { to { stroke-dashoffset: -28; } }
+  .chip { fill: var(--teken-vlak); stroke: var(--teken-lijn); stroke-width: 2.6; }
+  .kern { fill: var(--teken-diep); stroke: var(--accent); stroke-width: 1.5; animation: adem 2.8s ease-in-out infinite; }
+  @keyframes adem { 50% { stroke-opacity: .35; } }
+  .pootjes path { stroke: var(--teken-lijn); stroke-width: 3; }
+  .chiptekst {
+    font-family: 'Oswald', sans-serif; font-weight: 600; letter-spacing: .14em; font-size: 34px;
+    fill: var(--text); text-anchor: middle;
+  }
+  .luidspreker { fill: var(--teken-vul); stroke: var(--teken-lijn); stroke-width: 2; }
+
+  /* ---------------- De drie voorbeelden ---------------- */
+  .intro { max-width: 640px; margin-top: 1em; }
+  .schakel {
+    display: inline-flex; margin-top: 1.8rem; border: 1px solid var(--line-strong);
+    border-radius: var(--radius, 4px); overflow: hidden;
+  }
+  .schakel button {
+    font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: .14em; font-size: .85rem;
+    padding: 12px 20px; min-height: 44px; border: 0; background: transparent; color: var(--text-dim); cursor: pointer;
+  }
+  .schakel button[aria-pressed='true'] { background: var(--accent); color: var(--accent-ink); }
+  @media (max-width: 640px) { .schakel { display: flex; } .schakel button { flex: 1; } }
+
+  .demos { display: grid; gap: 28px; margin-top: 2rem; grid-template-columns: 1fr; }
+  @media (min-width: 900px) { .demos { grid-template-columns: repeat(3, 1fr); } }
+  .demo { border-top: 1px solid var(--line-strong); padding-top: 18px; display: flex; flex-direction: column; }
+  .demo .num { font-family: 'Oswald', sans-serif; letter-spacing: .3em; color: var(--accent-text); font-size: .85rem; }
+  .demo h3 { margin: .3em 0 .8em; }
+  .demo svg { width: 100%; height: auto; display: block; }
+  .demo svg.klank { aspect-ratio: 640 / 220; height: auto; }
+  .demo p { font-size: .95rem; margin-top: 1em; }
+  .demos[data-stand='zonder'] .met, .demos[data-stand='met'] .zonder { display: none; }
+
+  .cabine { fill: var(--teken-vlak); stroke: var(--teken-lijn); stroke-width: 2.6; }
+  .ruit { fill: none; stroke: var(--teken-lijn); stroke-width: 1.5; }
+  .stoel { fill: var(--teken-vul); stroke: var(--teken-lijn); stroke-width: 1.5; }
+  .hoofd { fill: var(--teken-diep); stroke: var(--text); stroke-width: 2; }
+  .golf { fill: none; stroke-width: 2; }
+  .golf.links { stroke: var(--accent); }
+  .golf.rechts { stroke: var(--text-dim); }
+
+  .aankomst { position: relative; height: 50px; margin-top: 10px; }
+  .aankomst .as { position: absolute; left: 0; right: 0; top: 23px; border-top: 1px dashed var(--line-strong); }
+  .tik {
+    position: absolute; top: 0; transform: translateX(-50%);
+    font-family: 'Oswald', sans-serif; font-size: .7rem; letter-spacing: .1em;
+    padding: 2px 6px; border: 1px solid var(--line-strong); background: var(--bg-alt); color: var(--text-dim);
+    transition: left .6s ease, color .2s, border-color .2s;
+  }
+  .tik.links { color: var(--accent-text); }
+  .tik.rechts { top: 24px; }
+  .tik.raak { border-color: var(--accent); color: var(--text); }
+
+  .raster { stroke: var(--line); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .nullijn { stroke: var(--line-strong); stroke-dasharray: 3 5; vector-effect: non-scaling-stroke; }
+  .klankcurve { fill: none; stroke: var(--accent); stroke-width: 2.4; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+  .as-tekst { display: flex; justify-content: space-between; font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: .16em; font-size: .6rem; color: var(--text-dim); margin-top: 6px; }
+
+  .ruit-vlak { fill: var(--teken-diep); stroke: var(--teken-lijn); stroke-width: 2; }
+  .dashboard { fill: var(--teken-vlak); stroke: var(--teken-lijn); stroke-width: 2.6; }
+  .stuur { fill: none; stroke: var(--teken-lijn); stroke-width: 3; }
+  .zanger .stem { fill: var(--accent); }
+  .zanger .ring { fill: none; stroke: var(--accent); stroke-width: 1.5; opacity: .45; }
+  @media (prefers-reduced-motion: no-preference) {
+    .zanger .ring { animation: ring 2.2s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+    .zanger .ring:nth-child(2) { animation-delay: .5s; }
+  }
+  @keyframes ring { 0% { transform: scale(.6); opacity: .7; } 100% { transform: scale(1.4); opacity: 0; } }
+
+  /* ---------------- De twee paden ---------------- */
+  .twee { display: grid; gap: 40px; grid-template-columns: 1fr; }
+  @media (min-width: 900px) { .twee { grid-template-columns: 1.1fr .9fr; align-items: start; } .twee.midden { align-items: center; } }
+  .twee h2 { margin: .4em 0 .8em; }
+  .stappen { margin: 1.6rem 0; padding: 0; list-style: none; counter-reset: s; border-top: 1px solid var(--line); }
+  .stappen li { counter-increment: s; padding: 14px 0 14px 44px; border-bottom: 1px solid var(--line); position: relative; font-size: .95rem; }
+  .stappen li::before {
+    content: counter(s, decimal-leading-zero); position: absolute; left: 0; top: 14px;
+    font-family: 'Oswald', sans-serif; letter-spacing: .1em; color: var(--accent-text);
+  }
+  .stappen b { color: var(--text); font-weight: 500; }
+  .voorwaarde { font-size: .88rem; margin-bottom: 1.6rem; }
+  .klein { font-size: .9rem; margin-top: 1.2rem; }
+  .grid.cols-2 { display: grid; gap: 24px; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); }
+
+  /* ---------------- Rapport ---------------- */
+  .rapport { margin: 0; max-width: 320px; justify-self: center; }
+  .rapport svg { width: 100%; height: auto; display: block; }
+  .papier { fill: var(--teken-vlak); stroke: var(--teken-lijn); stroke-width: 2; }
+  .papier-rand { fill: none; stroke: var(--teken-lijn); stroke-width: 1.5; }
+  .rapport-kop { stroke: var(--text); stroke-width: 6; }
+  .rapport-regel { stroke: var(--line-strong); stroke-width: 3; }
+  .rapport-lbl { font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: .2em; font-size: 12px; fill: var(--text-dim); }
+  .rapport-vak { fill: var(--teken-diep); stroke: var(--line-strong); stroke-width: 1; }
+  .rapport-voor { fill: none; stroke: var(--text-dim); stroke-width: 2; }
+  .rapport-na { fill: none; stroke: var(--accent); stroke-width: 2.6; }
+
+  /* ---------------- Vragen ---------------- */
+  .smal { max-width: 780px; }
+  .vragen { margin-top: 1.6rem; border-top: 1px solid var(--line); }
+  .vragen details { border-bottom: 1px solid var(--line); padding: 16px 0; }
+  .vragen summary { cursor: pointer; font-weight: 500; color: var(--text); min-height: 28px; }
+  .vragen p { margin-top: .7em; font-size: .95rem; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stroom, .kern { animation: none; }
+  }
+</style>

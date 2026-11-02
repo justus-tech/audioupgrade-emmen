@@ -216,8 +216,8 @@ export const AUDIOPAKKETTEN = [
   'competitie-show',
 ];
 
-/** De twee losse opties, náást de vier hierboven. */
-export const LOSSE_OPTIES = ['carplay-upgrade', 'accu-voeding', 'akoestische-isolatie'];
+/** De losse opties, náást de vier hierboven. */
+export const LOSSE_OPTIES = ['carplay-upgrade', 'inmeten-afstellen', 'accu-voeding', 'akoestische-isolatie'];
 
 /**
  * ==========================================================================
@@ -590,6 +590,51 @@ export const PACKAGES = [
     ],
     cta: 'Kies Accu & Voeding',
     duur: 'Klaar in ± 2 uur',
+    scores: [],
+  },
+  {
+    /**
+     * INMETEN & AFSTELLEN — VOOR WIE AL EEN DSP HEEFT.
+     *
+     * Toegevoegd op 2 november 2026, op verzoek van Justus: er zijn klanten
+     * met een DSP van een andere inbouwer (Helix, Puzu, noem maar op) die
+     * alleen een goede meting en afstelling willen. Puur werk, geen
+     * onderdelen.
+     *
+     * DE PRIJS: Justus wil € 85 per uur zonder btw binnenhalen. Vier uur werk
+     * is € 340 excl. = € 411,40 incl.; naar boven afgerond € 415. Die vier uur
+     * zijn de halve dag hieronder. Duurt het structureel langer, pas dan de
+     * prijs én de duur aan.
+     *
+     * GEMETEN MET de miniDSP UMIK-1, een gekalibreerde meetmicrofoon. Werkt
+     * met elk merk DSP, want de microfoon meet het geluid en niet de DSP.
+     *
+     * Eenmalig. Jaarlijks nameten hoort hier niet in.
+     *
+     * Staat bij de losse opties en niet in de rij van vier: daar vergelijkt
+     * iemand geluidspakketten, en dan leest 415 als een goedkope Executive.
+     * Dit pakket gaat over iemand die het systeem al heeft.
+     */
+    slug: 'inmeten-afstellen',
+    name: 'Inmeten & Afstellen',
+    tagline: 'Je hebt al een DSP. Tijd voor de afstelling.',
+    price: '€ 415,00',
+    bedrag: 415,
+    priceNote: 'Inclusief BTW',
+    priceExcl: '€ 343,- excl. btw',
+    short: 'Je bestaande DSP opnieuw ingemeten en afgesteld op jouw auto, met de meting van voor en na op papier.',
+    body: 'Een DSP is zo goed als de afstelling erin. Klinkt jouw systeem niet zoals je hoopte, dan meet ik eerst hoe het nu klinkt, voordat ik iets aanpas. Daarna stel ik de looptijden, de scheidingsfilters, de fase en de equalizer opnieuw af op de akoestiek van jouw auto, en meet ik na. Je krijgt beide metingen mee, zodat je zelf ziet wat er veranderd is. Ik stel elk merk DSP af.',
+    features: [
+      'Voormeting met een gekalibreerde meetmicrofoon, voordat er iets wordt aangepast.',
+      'Controle van aansluitingen, polariteit en versterking.',
+      'Looptijden, scheidingsfilters, fase en equalizer opnieuw afgesteld.',
+      'Nameting, met voor en na in je meetrapport.',
+      'Accu en laadspanning gemeten, met de waarden op je werkbon.',
+      'Na twee weken luisteren één keer kosteloos bijstellen.',
+    ],
+    voorwaarde: 'Stuur me vooraf het merk en type van je DSP. Vind ik bij de voormeting een defect, dan hoor je dat eerst: ik vervang of repareer niets zonder je akkoord.',
+    cta: 'Kies Inmeten & Afstellen',
+    duur: 'Klaar in een halve dag',
     scores: [],
   },
   {

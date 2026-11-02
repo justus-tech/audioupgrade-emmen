@@ -358,6 +358,13 @@ nav.main a[aria-current="page"] { color: var(--text); border-bottom-color: var(-
 .grid.vier { grid-template-columns: 1fr; }
 @media (min-width: 640px)  { .grid.vier { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 1100px) { .grid.vier { grid-template-columns: repeat(4, 1fr); } }
+/* De losse opties: sinds Inmeten & Afstellen erbij kwam (2 november 2026)
+   zijn het er ook vier, met dezelfde regel: een, twee of vier naast elkaar.
+   Een eigen naam, zodat de metingen van de rij audiopakketten (.grid.vier)
+   er niet ineens acht kaarten in tellen. */
+.grid.losse { grid-template-columns: 1fr; }
+@media (min-width: 640px)  { .grid.losse { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1100px) { .grid.losse { grid-template-columns: repeat(4, 1fr); } }
 
 /* ALLES OP ÉÉN LIJN — KAARTEN OP TIEN GEDEELDE RIJEN.
    Zonder dit begint elke kaart zijn prijs op een andere hoogte, want de ene

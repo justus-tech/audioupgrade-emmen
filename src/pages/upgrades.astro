@@ -13,6 +13,7 @@
 import Base from '../layouts/Base.astro';
 import Logo from '../components/Logo.astro';
 import PackageCard from '../components/PackageCard.astro';
+import DspBand from '../components/DspBand.astro';
 import PakketSchets from '../components/PakketSchets.astro';
 import Kentekenplaat from '../components/Kentekenplaat.astro';
 import Merken from '../components/Merken.astro';
@@ -92,14 +93,16 @@ const los = pakkettenVan(LOSSE_OPTIES);
         {audio.map((pkg) => <PackageCard pkg={pkg} uitgebreid={true} />)}
       </div>
 
+      <div class="mt"><DspBand /></div>
+
       {/* CarPlay en isolatie gaan over gemak en over stilte, niet over
           geluidskwaliteit. Zie AUDIOPAKKETTEN in site.js. */}
       <div class="losse-opties">
         <h2 class="center">Los te bestellen</h2>
         <p class="center" style="margin:0 auto 2.2em;">
-          Zoek je alleen een scherm dat wél werkt, stroom die niet inzakt, of juist rust in de auto?
+          Zoek je alleen een scherm dat wél werkt, een DSP die eindelijk goed klinkt, stroom die niet inzakt, of juist rust in de auto?
         </p>
-        <div class="grid cols-3 gelijk">
+        <div class="grid losse gelijk">
           {los.map((pkg) => <PackageCard pkg={pkg} uitgebreid={true} showScores={false} />)}
         </div>
       </div>
