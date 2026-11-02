@@ -160,6 +160,26 @@ const PAKKETTEN_DE = {
     cta: 'Stromversorgung anfragen',
     duur: 'Fertig in etwa 2 Stunden',
   },
+  'inmeten-afstellen': {
+    naam: "Einmessen & Abstimmen",
+    prijs: "415 €",
+    prijsNoot: "Inklusive MwSt.",
+    prijsExcl: "343 € zzgl. MwSt.",
+    tagline: 'Sie haben schon einen DSP. Jetzt fehlt die Abstimmung.',
+    short: 'Ihr vorhandener DSP neu eingemessen und auf Ihr Auto abgestimmt, mit der Messung vorher und nachher auf Papier.',
+    body:
+      'Ein DSP ist nur so gut wie seine Abstimmung. Klingt Ihre Anlage nicht so, wie Sie gehofft hatten, messe ich zuerst, wie sie jetzt klingt, bevor ich etwas verändere. Danach stimme ich Laufzeiten, Frequenzweichen, Phase und Equalizer neu auf die Akustik Ihres Autos ab und messe nach. Beide Messungen bekommen Sie mit, damit Sie selbst sehen, was sich verändert hat. Ich stimme jede DSP-Marke ab.',
+    features: [
+      'Vormessung mit einem kalibrierten Messmikrofon, bevor etwas verändert wird.',
+      'Kontrolle von Anschlüssen, Polarität und Verstärkung.',
+      'Laufzeiten, Frequenzweichen, Phase und Equalizer neu abgestimmt.',
+      'Nachmessung, vorher und nachher in Ihrem Messbericht.',
+      'Batterie und Ladespannung gemessen, die Werte auf dem Auftragsschein.',
+      'Nach zwei Wochen Hören einmal kostenlos nachjustieren.',
+    ],
+    cta: 'Abstimmung anfragen',
+    duur: 'Fertig an einem halben Tag',
+  },
   'akoestische-isolatie': {
     naam: "Akustik-Dämmung",
     prijs: "Preis auf Anfrage",
@@ -308,6 +328,26 @@ const PAKKETTEN_EN = {
     ],
     cta: 'Ask about Battery & Power',
     duur: 'Ready in about 2 hours',
+  },
+  'inmeten-afstellen': {
+    naam: "Measure & Tune",
+    prijs: "€415",
+    prijsNoot: "VAT included",
+    prijsExcl: "€343 excl. VAT",
+    tagline: 'You already have a DSP. Now it needs tuning.',
+    short: 'Your existing DSP measured again and tuned to your car, with the before and after measurement on paper.',
+    body:
+      'A DSP is only as good as its tuning. If your system does not sound the way you hoped, I first measure how it sounds now, before I change anything. Then I set the time alignment, crossovers, phase and equaliser again for the acoustics of your car, and measure once more. You get both measurements, so you can see for yourself what changed. I tune every brand of DSP.',
+    features: [
+      'Measurement with a calibrated microphone before anything is changed.',
+      'Check of connections, polarity and gain.',
+      'Time alignment, crossovers, phase and equaliser tuned again.',
+      'Second measurement, with before and after in your report.',
+      'Battery and charging voltage measured, figures on your job sheet.',
+      'One free fine-tune after two weeks of listening.',
+    ],
+    cta: 'Ask about tuning',
+    duur: 'Ready in half a day',
   },
   'akoestische-isolatie': {
     naam: "Acoustic Insulation",

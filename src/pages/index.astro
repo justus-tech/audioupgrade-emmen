@@ -9,6 +9,7 @@ import OverJustus from '../components/OverJustus.astro';
 import Reviews from '../components/Reviews.astro';
 import NogGeenAuto from '../components/NogGeenAuto.astro';
 import KomLuisteren from '../components/KomLuisteren.astro';
+import DspBand from '../components/DspBand.astro';
 import { REVIEWS } from '../data/reviews.js';
 /* Eigen werk: een Ford in de werkplaats, deuren en dashboard open. */
 import interieurOpen from '../assets/werk/ford-interieur-open.jpg';
@@ -75,14 +76,18 @@ const los = pakkettenVan(LOSSE_OPTIES);
         {audio.map((pkg) => <PackageCard pkg={pkg} />)}
       </div>
 
+      {/* Direct onder de vier pakketten, en zeer opvallend: wie al een DSP
+          heeft, vindt hier het afstelpakket, en wie er nog geen heeft leest
+          waarom de Executive en de Reference er een hebben. */}
+      <div class="mt"><DspBand /></div>
       {/* CarPlay en isolatie gaan niet over geluidskwaliteit maar over gemak
           en over stilte. Daarom apart, met hun eigen kop. */}
       <div class="losse-opties">
         <h3 class="center">Los te bestellen</h3>
         <p class="center" style="margin:0 auto 2.2em;">
-          Zoek je alleen een scherm dat wél werkt, stroom die niet inzakt, of juist rust?
+          Zoek je alleen een scherm dat wél werkt, een DSP die eindelijk goed klinkt, stroom die niet inzakt, of juist rust?
         </p>
-        <div class="grid cols-3 gelijk">
+        <div class="grid losse gelijk">
           {los.map((pkg) => <PackageCard pkg={pkg} showScores={false} />)}
         </div>
       </div>
@@ -136,6 +141,7 @@ const los = pakkettenVan(LOSSE_OPTIES);
         <div class="step">
           <h3>Akoestische DSP-tuning</h3>
           <p>Een dure speaker klinkt nergens naar zonder de juiste afstelling. Wij stemmen looptijden en frequenties exact af op de akoestiek van jóuw specifieke auto.</p>
+          <p style="margin-top:.8em"><a href={pad('/dsp-tuning')}>Zo werkt DSP-tuning →</a></p>
         </div>
       </div>
     </div>

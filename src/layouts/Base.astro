@@ -87,6 +87,12 @@ const MENU = [
   ...(taal === STANDAARDTAAL
     ? [{ href: '/audio-upgrade', label: T.menu.auto }]
     : []),
+  /* De DSP-pagina, alleen in het Nederlands. Op verzoek van Justus
+     (2 november 2026) zeer opvallend: afstellen is winstgevend werk, en
+     wie leest wat een DSP doet, wil er vaak een. */
+  ...(taal === STANDAARDTAAL
+    ? [{ href: '/dsp-tuning', label: 'DSP-tuning' }]
+    : []),
   { sleutel: 'werkwijze', label: T.menu.werkwijze },
   /* Op verzoek van Justus' broer erbij gezet, naast Contact. Zes items passen:
      op een telefoon schuift het menu horizontaal (zie nav.main in global.css),
