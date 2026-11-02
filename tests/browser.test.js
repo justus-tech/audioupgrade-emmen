@@ -3202,6 +3202,133 @@ describe('de werkbon en het autodossier', alsGebouwd, () => {
  * inleest. Twee dingen mogen daarbij nooit gebeuren — zijn instellingen en
  * zijn eigen werk wissen, en alles dubbel in de lijst zetten.
  */
+/**
+ * EEN BESCHADIGDE RESERVEKOPIE MAG NIETS WISSEN.
+ *
+ * Nagespeeld met een reservekopie waarin één regel van de onderdelenlijst
+ * stuk was. Wat Justus toen achter elkaar te zien kreeg:
+ *
+ *   "Teruggezet: 1 onderdeel, 0 offertes, 0 auto's."
+ *   "Dit bestand kon ik niet lezen. Komt het uit Headroom?"
+ *
+ * Die tweede melding is onwaar, en dat is het gevaarlijke eraan. Het bestand
+ * wás gelezen, alles wás vervangen en al weggeschreven, en de offerte en de
+ * auto die erin stonden waren weg. Wie leest dat de app het bestand niet kon
+ * lezen, denkt dat er niets gebeurd is en gaat niet op zoek naar zijn werk.
+ *
+ * Deze tests kijken naar het enige wat telt: staat zijn werk er na afloop nog?
+ */
+describe('een beschadigde reservekopie', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+
+  /* Wat er in de app staat voordat er iets wordt ingelezen. */
+  const EIGEN_WERK = {
+    instellingen: { uurtarief: 8250, factuurVolgnummer: 14 },
+    catalogus: [{ id: 'a1', omschrijving: 'Composet voor', artikelnummer: 'GL-1',
+      inkoopCent: 24000, margePct: 60, uren: 3, toebehoren: [] }],
+    offertes: [{ id: 'o1', nummer: '2026-001', klant: { naam: 'Mark de Vries' }, regels: [] }],
+    dossiers: [{ sleutel: 'vw-golf', naam: 'Volkswagen Golf', vanJaar: 2013, totJaar: 2020 }],
+    sessies: [], concept: null, meting: null, rapporten: [],
+  };
+
+  /* Een reservekopie die er verder helemaal goed uitziet. */
+  const GOEDE_KOPIE = {
+    soort: 'reservekopie',
+    instellingen: { uurtarief: 7500, factuurVolgnummer: 20 },
+    catalogus: [{ id: 'b1', omschrijving: 'Subwoofer', artikelnummer: 'JL-1',
+      inkoopCent: 98926, margePct: 55, uren: 2, toebehoren: [] }],
+    offertes: [], dossiers: [], sessies: [], concept: null, meting: null, rapporten: [],
+  };
+
+  async function open() {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    const meldingen = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    pagina.on('dialog', async (venster) => { meldingen.push(venster.message()); await venster.accept(); });
+    await pagina.goto(paginaUrl('headroom'));
+    await pagina.evaluate((w) => localStorage.setItem('aue-werkbak-v1', JSON.stringify(w)), EIGEN_WERK);
+    await pagina.reload();
+    await pagina.evaluate(() => document.fonts.ready);
+    return { pagina, fouten, meldingen };
+  }
+
+  const opslag = (pagina) =>
+    pagina.evaluate(() => JSON.parse(localStorage.getItem('aue-werkbak-v1') || '{}'));
+
+  async function lees(pagina, bestand) {
+    await pagina.setInputFiles('#wb-import', {
+      name: 'kopie.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(typeof bestand === 'string' ? bestand : JSON.stringify(bestand)),
+    });
+    await pagina.waitForTimeout(400);
+  }
+
+  /* Per geval: waar de rotte regel zit, en hoe de app hem moet noemen. */
+  const STUK = [
+    ['een onderdeel dat null is', { ...GOEDE_KOPIE, catalogus: [null] }, /onderdelen is regel 1/],
+    ['een offerte die tekst is', { ...GOEDE_KOPIE, offertes: [{ id: 'x' }, 'kapot'] }, /offertes is regel 2/],
+    ['een auto die een getal is', { ...GOEDE_KOPIE, dossiers: [42] }, /auto.s is regel 1/],
+    ['een luistersessie die null is', { ...GOEDE_KOPIE, sessies: [null] }, /luistersessies is regel 1/],
+    ['een rapport dat null is', { ...GOEDE_KOPIE, rapporten: [null] }, /rapporten is regel 1/],
+  ];
+
+  for (const [wat, bestand, waarschuwing] of STUK) {
+    test(`${wat}: niets gewijzigd, en hij zegt waar het misgaat`, async () => {
+      const { pagina, fouten, meldingen } = await open();
+      await lees(pagina, bestand);
+
+      const na = await opslag(pagina);
+      assert.equal(na.offertes.length, 1, 'de offerte van Justus is weg');
+      assert.equal(na.dossiers.length, 1, 'de auto van Justus is weg');
+      assert.equal(na.catalogus[0]?.artikelnummer, 'GL-1', 'zijn eigen onderdeel is vervangen');
+      assert.equal(na.instellingen.uurtarief, 8250, 'zijn uurtarief is overschreven');
+
+      const alles = meldingen.join(' | ');
+      assert.match(alles, /beschadigd/i, `geen waarschuwing; hij zag: ${alles}`);
+      assert.match(alles, waarschuwing, `hij hoort te lezen waar het misgaat; hij zag: ${alles}`);
+      assert.doesNotMatch(alles, /Teruggezet/,
+        'hij krijgt te horen dat er is teruggezet terwijl er niets is teruggezet');
+      assert.deepEqual(fouten, [], 'de app liep stuk op het bestand');
+      await pagina.close();
+    });
+  }
+
+  test('een goede reservekopie wordt gewoon teruggezet', async () => {
+    // Zonder deze test zou "alles weigeren" ook groen staan.
+    const { pagina, fouten, meldingen } = await open();
+    await lees(pagina, GOEDE_KOPIE);
+    const na = await opslag(pagina);
+    assert.equal(na.catalogus[0]?.artikelnummer, 'JL-1', 'de kopie is niet teruggezet');
+    assert.equal(na.instellingen.factuurVolgnummer, 20);
+    assert.match(meldingen.join(' | '), /Teruggezet/);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
+  test('een bestand dat geen json is, zegt dat het niet gelezen kon worden', async () => {
+    const { pagina, meldingen } = await open();
+    await lees(pagina, 'dit is geen json {{{');
+    const na = await opslag(pagina);
+    assert.equal(na.offertes.length, 1);
+    assert.match(meldingen.join(' | '), /kon ik niet lezen/i);
+    await pagina.close();
+  });
+
+  test('een aangeleverde lijst met een rotte regel wist ook niets', async () => {
+    // Dit is geen reservekopie maar een aanvulling; die mag al helemaal niets wissen.
+    const { pagina, fouten, meldingen } = await open();
+    await lees(pagina, { catalogus: [{ omschrijving: 'Goed', artikelnummer: 'X1', inkoopCent: 100 }, null] });
+    const na = await opslag(pagina);
+    assert.equal(na.catalogus.length, 1, 'er is iets toegevoegd uit een beschadigd bestand');
+    assert.equal(na.offertes.length, 1);
+    assert.match(meldingen.join(' | '), /beschadigd/i);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+});
+
 describe('een prijslijst inlezen', alsGebouwd, () => {
   const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 

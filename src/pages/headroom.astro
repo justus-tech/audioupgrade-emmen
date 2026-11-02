@@ -3062,9 +3062,53 @@ import { APP } from '../data/app.js';
   $('#wb-import').addEventListener('change', async (e) => {
     const bestand = e.target.files?.[0];
     if (!bestand) return;
+    /* Wat er nu in de opslag staat, zoals het er staat. Gaat het terugzetten
+       halverwege alsnog mis, dan is dit het enige wat hem nog redt. Dit moet
+       buiten de try staan, anders kan de vangnetregel er niet bij. */
+    let vorigeOpslag = null;
+    try { vorigeOpslag = localStorage.getItem(SLEUTEL); } catch (geenOpslag) { /* privemodus */ }
     try {
       const gelezen = JSON.parse(await bestand.text());
       if (!Array.isArray(gelezen.catalogus)) throw new Error('geen eigen bestand');
+
+      /**
+       * EERST KIJKEN OF HET BESTAND HEEL IS, DAN PAS IETS VERVANGEN.
+       *
+       * Nagespeeld met een reservekopie waarin één regel van de
+       * onderdelenlijst stuk was. Wat je toen achter elkaar te zien kreeg:
+       *
+       *   "Teruggezet: 1 onderdeel, 0 offertes, 0 auto's."
+       *   "Dit bestand kon ik niet lezen. Komt het uit Headroom?"
+       *
+       * Die tweede melding is onwaar, en dat is het gevaarlijke eraan. Het
+       * bestand wás gelezen, alles wás vervangen en al weggeschreven, en de
+       * offerte en de auto die erin stonden waren weg. Wie leest dat de app
+       * het bestand niet kon lezen, denkt dat er niets gebeurd is en kijkt
+       * niet verder.
+       *
+       * Nu wordt elke lijst in het bestand eerst nagelopen. Klopt er iets
+       * niet, dan gebeurt er niets en staat er precies waar het misgaat.
+       */
+      const eersteRommel = (lijst) => (Array.isArray(lijst) ? lijst : [])
+        .findIndex((x) => !x || typeof x !== 'object');
+      for (const [naam, lijst] of [
+        ['onderdelen', gelezen.catalogus],
+        ['offertes', gelezen.offertes],
+        ["auto's", gelezen.dossiers],
+        ['luistersessies', gelezen.sessies],
+        ['rapporten', gelezen.rapporten],
+      ]) {
+        const stuk = eersteRommel(lijst);
+        if (stuk >= 0) {
+          alert(
+            `Dit bestand is beschadigd: bij de ${naam} is regel ${stuk + 1} onleesbaar.\n\n`
+            + `Er is niets gewijzigd \u2014 wat er in ${APP.naam} staat is nog heel. `
+            + 'Probeer een andere reservekopie.'
+          );
+          e.target.value = '';
+          return;
+        }
+      }
 
       /**
        * Alleen een bestand dat zichzelf een reservekopie noemt vervangt
@@ -3240,7 +3284,30 @@ import { APP } from '../data/app.js';
       tekenOpgeslagen();
       tekenAlles();
     } catch (err) {
-      alert(`Dit bestand kon ik niet lezen. Komt het uit ${APP.naam}?`);
+      /* Twee heel verschillende gevallen, en ze vragen een ander antwoord.
+         Is er nog niets vervangen, dan klopt "ik kon dit bestand niet lezen".
+         Is er al wél vervangen, dan is dat antwoord onwaar: dan zetten we
+         terug wat er stond en zeggen we wat er echt gebeurd is. */
+      const alVervangen = typeof vorigeOpslag === 'string'
+        && localStorage.getItem(SLEUTEL) !== vorigeOpslag;
+      if (alVervangen) {
+        try {
+          localStorage.setItem(SLEUTEL, vorigeOpslag);
+          alert(
+            'Het terugzetten ging halverwege mis. Ik heb je oude gegevens '
+            + 'teruggezet en laad de app opnieuw, zodat je zeker weet wat je ziet.'
+          );
+          location.reload();
+          return;
+        } catch (herstelFout) {
+          alert(
+            'Het terugzetten ging halverwege mis en terugdraaien lukte ook niet. '
+            + 'Sluit de app NIET af en maak eerst een reservekopie.'
+          );
+        }
+      } else {
+        alert(`Dit bestand kon ik niet lezen. Komt het uit ${APP.naam}?`);
+      }
     }
     e.target.value = '';
   });
