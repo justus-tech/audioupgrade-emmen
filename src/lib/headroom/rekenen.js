@@ -268,7 +268,32 @@ export function totalen(regels = [], inst = STANDAARD_INSTELLINGEN, kortingExclC
   const btwPct = btwVan(inst);
   const korting = Math.min(uit.exclCent, Math.max(0, Math.round(Number(kortingExclCent) || 0)));
   if (korting) {
-    const kortingBtw = Math.round((korting * btwPct) / 100);
+    /**
+     * JE KUNT NOOIT MEER BTW WEGGEVEN DAN JE HEBT GEREKEND.
+     *
+     * De btw op de regels is de som van de btw per regel; de btw op de korting
+     * werd over het hele kortingbedrag in één keer gerekend. Die twee rondden
+     * verschillend af, en bij een korting die (bijna) gelijk was aan het
+     * subtotaal bleef er dan negatieve btw over.
+     *
+     * Nagerekend met gewone bedragen: € 59,07 + € 62,38 + € 65,69 is € 187,14,
+     * met € 187,14 korting. Het totaal werd dan:
+     *
+     *   totaal zonder btw   € 0,00
+     *   btw                 € -0,01
+     *   totaal              € -0,01
+     *
+     * Dus een offerte waarop je alles weggeeft — een coulanceklus, iets
+     * opnieuw doen onder garantie — kwam uit op min één cent. Van de 9600
+     * doorgerekende offertes met een korting ter grootte van het subtotaal
+     * deed 14% dat.
+     *
+     * De grens hieronder lost het bij de bron op: de korting kan nooit meer
+     * btw terugnemen dan er op de regels staat. Daarmee is de btw nooit
+     * negatief en het totaal dus ook niet, en blijft gelden dat de regels bij
+     * elkaar min de korting precies het totaal is.
+     */
+    const kortingBtw = Math.min(uit.btwCent, Math.round((korting * btwPct) / 100));
     uit.kortingExclCent = korting;
     uit.kortingInclCent = korting + kortingBtw;
     uit.exclCent -= korting;

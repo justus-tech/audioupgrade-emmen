@@ -1078,6 +1078,117 @@ describe('korting geven', () => {
   });
 });
 
+/**
+ * ER MAG NERGENS EEN CENT ZOEK RAKEN, EN NERGENS EEN MINBEDRAG STAAN.
+ *
+ * Dit kwam uit een doorrekening van 6000 combinaties van regels, kortingen en
+ * aanbetalingspercentages. Wat eruit kwam: de btw op de regels is de som van
+ * de btw per regel, maar de btw op de korting werd over het hele
+ * kortingbedrag in één keer gerekend. Die twee ronden verschillend af.
+ *
+ * Bij een korting ter grootte van het subtotaal bleef er dan negatieve btw
+ * over. Met gewone bedragen: € 59,07 + € 62,38 + € 65,69 is € 187,14, met
+ * € 187,14 korting gaf dat btw € -0,01 en een totaal van € -0,01. Een
+ * coulanceklus of iets opnieuw doen onder garantie kwam dus uit op min één
+ * cent. Van 9600 doorgerekende offertes met zo'n korting deed 14% dat.
+ *
+ * Deze tests rekenen het veld af in plaats van één geval: als er ooit weer
+ * ergens een cent tussenuit valt, valt er hier iets om.
+ */
+describe('de bedragen lopen altijd rond', () => {
+  const INST = { ...STANDAARD_INSTELLINGEN };
+
+  /* Bedragen die zo gekozen zijn dat afronden pijn doet. */
+  const BEDRAGEN = [1, 2, 3, 7, 33, 99, 101, 999, 1234, 5050, 9999, 12345, 57438, 123456];
+  const AANTALLEN = [1, 2, 3, 7, 13];
+  const PERCENTAGES = [0, 1, 7, 25, 30, 33, 50, 66, 75, 99, 100];
+
+  const regelsVan = (n, basis) => Array.from({ length: n }, (_, i) => ({
+    omschrijving: `Regel ${i + 1}`, aantal: 1, vastExclCent: basis + i * 7,
+  }));
+
+  test('geen enkel bedrag is negatief, met welke korting dan ook', () => {
+    let geteld = 0;
+    for (const n of AANTALLEN) {
+      for (const basis of BEDRAGEN) {
+        const regels = regelsVan(n, basis);
+        const vol = totalen(regels, INST, 0).exclCent;
+        /* Juist de kortingen rond het subtotaal: daar ging het mis. */
+        for (const korting of [0, 1, 1000, vol - 2, vol - 1, vol, vol + 500]) {
+          if (korting < 0) continue;
+          geteld += 1;
+          const t = totalen(regels, INST, korting);
+          assert.ok(t.exclCent >= 0, `totaal zonder btw is negatief bij korting ${korting}`);
+          assert.ok(t.btwCent >= 0,
+            `btw is ${t.btwCent} cent bij ${n} regels vanaf ${basis} en korting ${korting}`);
+          assert.ok(t.inclCent >= 0, `totaal is negatief bij korting ${korting}`);
+        }
+      }
+    }
+    assert.ok(geteld > 300, `te weinig gevallen doorgerekend (${geteld})`);
+  });
+
+  test('regels min korting is precies het totaal', () => {
+    for (const n of AANTALLEN) {
+      for (const basis of BEDRAGEN) {
+        const regels = regelsVan(n, basis);
+        const kaal = totalen(regels, INST, 0);
+        for (const korting of [0, 1, 1000, kaal.exclCent - 1, kaal.exclCent]) {
+          if (korting < 0) continue;
+          const t = totalen(regels, INST, korting);
+          assert.equal(t.exclCent + t.btwCent, t.inclCent, 'excl + btw is niet incl');
+          assert.equal(kaal.inclCent - t.kortingInclCent, t.inclCent,
+            `regels min korting klopt niet bij ${n} regels vanaf ${basis}, korting ${korting}`);
+          assert.equal(kaal.exclCent - t.kortingExclCent, t.exclCent);
+        }
+      }
+    }
+  });
+
+  test('aanbetaling plus eindfactuur is tot de cent het totaal', () => {
+    let geteld = 0;
+    for (const n of AANTALLEN) {
+      for (const basis of BEDRAGEN) {
+        const regels = regelsVan(n, basis);
+        for (const korting of [0, 1234]) {
+          const t = totalen(regels, INST, korting);
+          for (const pct of PERCENTAGES) {
+            geteld += 1;
+            const a = aanbetaling(regels, INST, pct, korting);
+            const e = eindafrekening(regels, INST, korting, a.inclCent);
+            const waar = `${n} regels vanaf ${basis}, korting ${korting}, ${pct}%`;
+
+            assert.equal(a.exclCent + a.btwCent, a.inclCent, `aanbetaling telt niet op: ${waar}`);
+            assert.equal(a.inclCent + a.restInclCent, t.inclCent, `aanbetaling + restant != totaal: ${waar}`);
+            assert.ok(a.inclCent >= 0 && a.exclCent >= 0 && a.btwCent >= 0,
+              `negatief bedrag in de aanbetaling: ${waar}`);
+
+            assert.equal(e.reedsBetaaldInclCent + e.teBetalenInclCent, t.inclCent, `incl loopt niet rond: ${waar}`);
+            assert.equal(e.reedsBetaaldExclCent + e.teBetalenExclCent, t.exclCent, `excl loopt niet rond: ${waar}`);
+            assert.equal(e.reedsBetaaldBtwCent + e.teBetalenBtwCent, t.btwCent, `btw loopt niet rond: ${waar}`);
+            assert.equal(e.teBetalenInclCent, a.restInclCent, `eindfactuur != restant: ${waar}`);
+            assert.equal(e.reedsBetaaldBtwCent, a.btwCent, `btw van de aanbetaling wijkt af: ${waar}`);
+            assert.ok(e.teBetalenInclCent >= 0, `negatieve eindfactuur: ${waar}`);
+          }
+        }
+      }
+    }
+    assert.ok(geteld > 500, `te weinig gevallen doorgerekend (${geteld})`);
+  });
+
+  test('het gevonden geval zelf, met de bedragen erbij', () => {
+    // Dit is de offerte waarmee het boven water kwam. Hij staat er apart bij,
+    // zodat in de foutmelding de echte bedragen staan en niet een lusnummer.
+    const regels = [5907, 6238, 6569].map((c, i) => ({
+      omschrijving: `Regel ${i + 1}`, aantal: 1, vastExclCent: c,
+    }));
+    const t = totalen(regels, INST, 18714);
+    assert.equal(t.exclCent, 0, 'alles weggegeven, dus nul zonder btw');
+    assert.equal(t.btwCent, 0, `de btw is € ${(t.btwCent / 100).toFixed(2)} in plaats van € 0,00`);
+    assert.equal(t.inclCent, 0, `het totaal is € ${(t.inclCent / 100).toFixed(2)} in plaats van € 0,00`);
+  });
+});
+
 describe('de eindafrekening', () => {
   const regels = [{ vastExclCent: 57438 }, { inkoopCent: 24000, margePct: 63, uren: 3 }];
 
