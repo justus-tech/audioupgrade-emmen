@@ -43,6 +43,7 @@ const stempel = (r) =>
     ['Klant', [r.naam, r.plaats].filter(Boolean).join(', ')],
     ['Auto', r.auto],
     ['Pakket', r.pakket],
+    ['Service', r.dienst],
     ['Opgeleverd', maandVan(r.datum)],
   ].filter(([, waarde]) => waarde);
 
@@ -99,7 +100,7 @@ const nummer = (i) => String(i + 1).padStart(2, '0');
             <blockquote>{r.tekst}</blockquote>
             <figcaption>
               <strong>{r.naam}</strong>
-              <span>{[r.auto, r.pakket, maandVan(r.datum)].filter(Boolean).join(' · ')}</span>
+              <span>{[r.auto, r.pakket, r.dienst, maandVan(r.datum)].filter(Boolean).join(' · ')}</span>
             </figcaption>
           </figure>
         ))}
@@ -270,8 +271,12 @@ const nummer = (i) => String(i + 1).padStart(2, '0');
     flex-direction: column;
   }
   .review > .stempel-nr { color: var(--accent-text); margin-bottom: 1rem; }
+  /* Staat er maar één kaart onder het uitgelichte citaat, dan krijgt die op
+     een breed scherm de hele breedte. Zonder grens worden de regels dan
+     twee keer zo lang als prettig leest. */
   .review blockquote {
     margin: 0;
+    max-width: 68ch;
     color: var(--text);
     font-size: 1.02rem;
     line-height: 1.6;

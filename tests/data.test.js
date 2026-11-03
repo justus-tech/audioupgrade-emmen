@@ -817,6 +817,17 @@ describe('reviews', () => {
     }
   });
 
+  /* Een klus is óf een pakket óf een losse service, nooit allebei: dan
+     staan er in het stempel twee dingen die elkaar tegenspreken. */
+  test('pakket of service, niet allebei', () => {
+    for (const r of REVIEWS) {
+      assert.ok(!(r.pakket && r.dienst), `${r.naam}: zowel een pakket als een service`);
+      if (r.dienst !== undefined) {
+        assert.ok(typeof r.dienst === 'string' && r.dienst.trim().length > 0, `${r.naam}: lege service`);
+      }
+    }
+  });
+
   /* Sterren alleen als de klant ze zelf op Google gaf. Een review uit
      WhatsApp heeft er geen, en die verzinnen we er ook niet bij. */
   test('sterren alleen bij een Google-review, en zoals gegeven', () => {

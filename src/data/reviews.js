@@ -46,6 +46,8 @@
  *     auto:    'Volkswagen Golf',    // waar het over ging; mag weg
  *     plaats:  'Emmen',              // optioneel
  *     pakket:  'The OEM+ Executive', // optioneel, precies de naam uit site.js
+ *     dienst:  'Inmeting bestaande DSP', // in plaats van pakket, als het een
+ *                                    // losse klus was; staat als "Service"
  *     datum:   '2026-09',            // jaar en maand van de oplevering
  *     bron:    'google',             // 'google' of 'whatsapp'; optioneel
  *     sterren: 5,                    // alleen bij bron 'google', zoals gegeven
@@ -65,7 +67,7 @@
  */
 export const GOOGLE_REVIEWS = '';
 
-/** @type {{tekst: string, naam: string, auto?: string, plaats?: string, pakket?: string, datum: string, bron?: 'google' | 'whatsapp', sterren?: number}[]} */
+/** @type {{tekst: string, naam: string, auto?: string, plaats?: string, pakket?: string, dienst?: string, datum: string, bron?: 'google' | 'whatsapp', sterren?: number}[]} */
 export const REVIEWS = [
   // Van Google, 5 sterren. Justus gaf op 30 oktober 2026 akkoord om hem te
   // gebruiken en stuurde de volledige tekst, die hier woordelijk staat. De
@@ -76,6 +78,19 @@ export const REVIEWS = [
     auto: 'Škoda Enyaq Coupé RS',
     pakket: 'The OEM+ Executive',
     datum: '2026-10',
+    bron: 'google',
+    sterren: 5,
+  },
+  // Van Google, 5 sterren, geplaatst op 3 november 2026. Justus stuurde de
+  // screenshot zelf om hem op de site te zetten. Woordelijk overgenomen. Geen
+  // pakket: volgens Justus ging het om een bestaande DSP die alleen is
+  // ingemeten. De auto staat niet in de review en is dus weggelaten; de maand
+  // is die van de review.
+  {
+    tekst: 'Justus heeft voor mij alles ingemeten en afgesteld en de audio klinkt nu top, heel kundig persoon en goede uitleg hoe alles werkt.',
+    naam: 'Rutger',
+    dienst: 'Inmeting bestaande DSP',
+    datum: '2026-11',
     bron: 'google',
     sterren: 5,
   },
