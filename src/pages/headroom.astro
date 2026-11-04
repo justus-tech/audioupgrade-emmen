@@ -5511,10 +5511,38 @@ import { APP } from '../data/app.js';
    * `object-fit: contain` maakt het plaatje kleiner in plaats van het bij te
    * knippen. Een grafiek waarvan de onderkant eraf is, is geen meting meer.
    */
-  .mr-beeld { margin: 0 0 10px; display: flex; flex-direction: column; }
+  /**
+   * DE PLEK VOOR DE GRAFIEK IS WAT ER OVERBLIJFT, NIET EEN VAST GETAL.
+   *
+   * Hierboven stond een rekensom met 92 mm voor de kop, de titel, de uitleg
+   * en de voetregel. Dat getal klopt alleen zolang de uitleg kort is. Schrijf
+   * je er meer dan ongeveer 400 tekens in — vijf zinnen over wat je in die
+   * auto aantrof, en dat is niet veel — dan past het niet meer.
+   *
+   * Nagemeten op een blad van 1115 pixels: bij 509 tekens liep er 10 pixels
+   * van het vel af, en bij een toelichting van een alinea of zes 109 pixels.
+   * Dat is ruim een kwart pagina, dus de onderste grafiek en de voetregel
+   * stonden niet meer op het vel waar "2 / 3" onder hoort te staan.
+   *
+   * Nu nemen de twee grafieken samen op wat er over is. Daarbij hoort
+   * `min-height: 0` en `flex-basis: 0`: zonder die twee mag een plaatje niet
+   * kleiner worden dan het zelf wil, en dan groeit het blad alsnog — precies
+   * het geval waar de opmerking hierboven voor waarschuwt. Met allebei erbij
+   * bepaalt het vel de maat van het plaatje en niet andersom. Nagemeten met
+   * een staande, een vierkante en een liggende schermafbeelding, bij een
+   * korte en een lange toelichting: het blijft overal één vel.
+   */
+  .mr-beeld {
+    margin: 0 0 10px;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+  }
   .mr-beeld img, .mr-beeld .mr-leeg {
     width: 100%;
-    height: calc((295mm - 26mm - 92mm) / 2);
+    flex: 1 1 0;
+    min-height: 0;
     box-sizing: border-box;
   }
   .mr-beeld img {

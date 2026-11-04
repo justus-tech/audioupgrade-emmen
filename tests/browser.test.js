@@ -3218,6 +3218,137 @@ describe('de werkbon en het autodossier', alsGebouwd, () => {
  *
  * Deze tests kijken naar het enige wat telt: staat zijn werk er na afloop nog?
  */
+/**
+ * HET MEETRAPPORT BLIJFT OP HET VEL.
+ *
+ * De plek voor elke grafiek was een vaste rekensom met 92 mm voor de kop, de
+ * titel, de uitleg en de voetregel. Dat klopt zolang de uitleg kort is.
+ * Nagemeten op een blad van 1115 pixels: bij 509 tekens toelichting liep er
+ * 10 pixels van het vel af, bij een toelichting van een alinea of zes 109
+ * pixels. Dat is ruim een kwart pagina — de onderste grafiek en de voetregel
+ * stonden dus niet meer op het vel waar "2 / 3" onder hoort te staan, en dat
+ * rapport gaat mee naar de klant.
+ *
+ * Deze tests kruisen de vorm van de schermafbeelding met de lengte van de
+ * toelichting, want die twee vochten met elkaar: het plaatje mocht het blad
+ * niet hoger maken, en de tekst ook niet.
+ */
+describe('het meetrapport past op het papier', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 1100, height: 1400 } };
+
+  /* Schermafbeeldingen in drie vormen. Staand was het geval waar het eerder
+     op misging: een hoog plaatje maakte het blad hoger dan een vel. */
+  const plaat = (b, h) => 'data:image/svg+xml;base64,' + Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${b}" height="${h}">`
+    + `<rect width="${b}" height="${h}" fill="#222"/></svg>`
+  ).toString('base64');
+  const VORMEN = { liggend: plaat(1280, 480), vierkant: plaat(800, 800), staand: plaat(600, 1400) };
+
+  const ZIN = 'De linkervoordeur geeft een resonantie rond 90 Hz en de kofferklep rammelt mee. ';
+  const TEKSTEN = {
+    geen: '',
+    'kort': ZIN.trim(),
+    'een alinea': ZIN.repeat(5).trim(),
+    'een halve pagina': ZIN.repeat(15).trim(),
+    'een hele pagina': ZIN.repeat(30).trim(),
+  };
+
+  const RAPPORT = {
+    soort: 'geluid', nummer: '26-001', datum: '2026-11-04', klant: 'Mark de Vries',
+    kenteken: 'XX99XX', auto: 'Volkswagen Golf', bouwjaar: '2018',
+    meetpositie: 'Oorhoogte bestuurder, deuren dicht', systeem: [], kort: [],
+    faseVoor: '', faseNa: '', faseToelichting: '', accu: { type: '', metingen: {} },
+    accuToelichting: '', nazorg: {},
+  };
+
+  /* Het rapport wordt pas getekend als je op afdrukken tikt, dus die knop
+     moeten we indrukken — met window.print eruit, anders blijft hij hangen. */
+  async function drukAf(meting) {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    pagina.on('dialog', (venster) => venster.accept());
+    await pagina.goto(`${paginaUrl('headroom')}?tab=meting`);
+    await pagina.evaluate((m) => {
+      const s = JSON.parse(localStorage.getItem('aue-werkbak-v1') || '{}');
+      s.meting = m;
+      localStorage.setItem('aue-werkbak-v1', JSON.stringify(s));
+    }, meting);
+    await pagina.reload();
+    await pagina.evaluate(() => { window.print = () => {}; });
+    await pagina.evaluate(() => document.fonts.ready);
+    await pagina.click('#mr-print');
+    await pagina.emulateMedia({ media: 'print' });
+    const uit = await pagina.evaluate(() => {
+      const bladen = [...document.querySelectorAll('.mr-blad')];
+      return bladen.map((b, i) => {
+        const r = b.getBoundingClientRect();
+        let diep = r.top;
+        let wie = '';
+        for (const el of b.querySelectorAll('*')) {
+          const k = el.getBoundingClientRect();
+          if (k.height === 0 || k.width === 0) continue;
+          if (k.bottom > diep) { diep = k.bottom; wie = el.tagName.toLowerCase(); }
+        }
+        return { blad: i + 1, hoogte: Math.round(r.height), eraf: Math.round(diep - r.bottom), diepste: wie };
+      });
+    });
+    await pagina.close();
+    return { bladen: uit, fouten };
+  }
+
+  for (const [vorm, bron] of Object.entries(VORMEN)) {
+    for (const [hoeveel, tekst] of Object.entries(TEKSTEN)) {
+      test(`${vorm} beeld met ${hoeveel} toelichting blijft op het vel`, async () => {
+        const { bladen, fouten } = await drukAf({
+          ...RAPPORT, voorBeeld: bron, naBeeld: bron, responsToelichting: tekst,
+        });
+        assert.ok(bladen.length >= 2, 'er is geen rapport getekend');
+        for (const b of bladen) {
+          assert.ok(b.eraf <= 1,
+            `blad ${b.blad} loopt ${b.eraf}px van het vel (tot in de ${b.diepste})`);
+        }
+        /* Alle bladen even hoog: anders rekent de printer er een extra vel
+           bij terwijl er "2 / 3" onderaan staat. */
+        const hoogtes = [...new Set(bladen.map((b) => b.hoogte))];
+        assert.equal(hoogtes.length, 1, `de bladen zijn niet even hoog: ${hoogtes.join(', ')}`);
+        assert.deepEqual(fouten, []);
+      });
+    }
+  }
+
+  test('de grafiek krimpt mee in plaats van het vel te laten groeien', async () => {
+    // Zonder deze test zou een onzichtbare grafiek ook groen staan.
+    const pagina = await browser.newPage(telefoon);
+    pagina.on('dialog', (venster) => venster.accept());
+    await pagina.goto(`${paginaUrl('headroom')}?tab=meting`);
+    const hoogteBij = async (tekst) => {
+      await pagina.evaluate((m) => {
+        const s = JSON.parse(localStorage.getItem('aue-werkbak-v1') || '{}');
+        s.meting = m;
+        localStorage.setItem('aue-werkbak-v1', JSON.stringify(s));
+      }, { ...RAPPORT, voorBeeld: VORMEN.liggend, naBeeld: VORMEN.liggend, responsToelichting: tekst });
+      await pagina.reload();
+      await pagina.evaluate(() => { window.print = () => {}; });
+      await pagina.evaluate(() => document.fonts.ready);
+      await pagina.click('#mr-print');
+      await pagina.emulateMedia({ media: 'print' });
+      const hoog = await pagina.evaluate(() =>
+        Math.round(document.querySelector('.mr-beeld img').getBoundingClientRect().height));
+      /* Terug naar de schermweergave: in de printweergave is de app zelf
+         verborgen, en dan is de knop bij de volgende meting niet te vinden. */
+      await pagina.emulateMedia({ media: 'screen' });
+      return hoog;
+    };
+    const kort = await hoogteBij(TEKSTEN.kort);
+    const lang = await hoogteBij(TEKSTEN['een halve pagina']);
+    assert.ok(kort > 200, `bij een korte uitleg is de grafiek maar ${kort}px hoog`);
+    assert.ok(lang < kort, `de grafiek krimpt niet mee: ${kort}px bij kort, ${lang}px bij lang`);
+    assert.ok(lang > 40, `de grafiek is met ${lang}px niet meer te lezen`);
+    await pagina.close();
+  });
+});
+
 describe('een beschadigde reservekopie', alsGebouwd, () => {
   const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 
