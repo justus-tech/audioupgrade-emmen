@@ -4116,8 +4116,74 @@ import { APP } from '../data/app.js';
     onthoudRapport();
     bewaarMeting();
     tekenVergeven();
+
+    /* Past het wel op het papier? Zo niet: eerst zeggen, dan pas afdrukken. */
+    const krap = bladenDieNietPassen();
+    if (krap.length) {
+      const welk = krap
+        .map((b) => `blad ${b.nr}${b.kop ? ` (${b.kop})` : ''}: ${b.mm} mm te veel`)
+        .join('\n');
+      const door = confirm(
+        'Er past niet alles op het papier:\n\n' + welk + '\n\n'
+        + 'Wat eronder valt komt niet uit de printer. Kort de toelichting of de '
+        + 'punten in, dan staat alles er weer op.\n\nToch afdrukken?'
+      );
+      if (!door) return;
+    }
     window.print();
   });
+
+  /**
+   * WELKE BLADEN LOPEN VAN HET VEL AF?
+   *
+   * Een blad is 295 mm hoog en groeit niet mee. Op het blad met de grafieken
+   * krimpen die mee met je tekst, maar op het samenvattingsblad en het
+   * accublad staat alleen tekst, en die kan nergens heen.
+   *
+   * Nagemeten: bij ongeveer 640 tekens per kort punt valt er al iets buiten
+   * het samenvattingsblad, en bij 960 tekens per punt ruim een derde pagina.
+   * Op het accublad past de toelichting tot zo'n 1600 tekens. Dat kwam niet
+   * uit een schatting maar uit het rapport zelf opmeten in de browser, en zo
+   * doet deze controle het ook: hij meet het echte blad in plaats van tekens
+   * te tellen. Een tekst met korte regels past namelijk verder dan een lap
+   * tekst van hetzelfde aantal tekens.
+   *
+   * Het rapport staat verborgen tot je afdrukt, en iets wat verborgen is heeft
+   * geen hoogte. Daarom zetten we het heel even buiten beeld neer op de
+   * breedte van een vel papier, meten we, en zetten we het weer terug. Je ziet
+   * er niets van.
+   */
+  function bladenDieNietPassen() {
+    const bak = $('#wb-print');
+    if (!bak) return [];
+    const vorigeStijl = bak.getAttribute('style');
+    bak.style.cssText = 'display:block;position:fixed;left:-10000px;top:0;width:210mm;';
+    const teKrap = [];
+    try {
+      $$('#wb-print .mr-blad').forEach((blad, i) => {
+        const vel = blad.getBoundingClientRect();
+        let diepste = vel.top;
+        for (const el of blad.querySelectorAll('*')) {
+          const k = el.getBoundingClientRect();
+          if (!k.height || !k.width) continue;
+          if (k.bottom > diepste) diepste = k.bottom;
+        }
+        /* Twee pixels speling: afronden in de browser mag geen melding geven. */
+        const over = diepste - vel.bottom;
+        if (over > 2) {
+          teKrap.push({
+            nr: i + 1,
+            kop: blad.querySelector('.mr-h')?.textContent?.trim() || '',
+            mm: Math.max(1, Math.round(over / 3.7795)),
+          });
+        }
+      });
+    } finally {
+      if (vorigeStijl === null) bak.removeAttribute('style');
+      else bak.setAttribute('style', vorigeStijl);
+    }
+    return teKrap;
+  }
 
   /** Een kenteken zonder streepjes en hoofdletters, om mee te vergelijken. */
   const kaalKenteken = (k) => String(k || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();

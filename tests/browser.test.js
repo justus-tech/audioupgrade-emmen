@@ -3349,6 +3349,134 @@ describe('het meetrapport past op het papier', alsGebouwd, () => {
   });
 });
 
+/**
+ * ALS HET NIET PAST, ZEGT HIJ HET VOORDAT JE AFDRUKT.
+ *
+ * Op het blad met de grafieken krimpen die mee met je tekst. Op het
+ * samenvattingsblad en het accublad staat alleen tekst, en die kan nergens
+ * heen: een blad is 295 mm en groeit niet mee.
+ *
+ * Nagemeten: bij ongeveer 640 tekens per kort punt valt er al iets buiten het
+ * samenvattingsblad, bij 960 tekens per punt ruim een derde pagina, en op het
+ * accublad past de toelichting tot zo'n 1600 tekens. Daar valt niets aan te
+ * rekken zonder de tekst te verbergen, en een rapport waarvan de onderkant
+ * ontbreekt is erger dan een rapport dat je eerst inkort. Dus meet de app het
+ * echte blad op en zegt hij wat er niet past, met het blad erbij en hoeveel
+ * millimeter het scheelt.
+ */
+describe('het meetrapport waarschuwt als het niet past', alsGebouwd, () => {
+  const scherm = { viewport: { width: 1100, height: 1400 } };
+  const ZIN = 'De linkervoordeur geeft een resonantie rond 90 Hz en de kofferklep rammelt mee. ';
+  const BEELD = 'data:image/svg+xml;base64,' + Buffer.from(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="480">'
+    + '<rect width="1280" height="480" fill="#222"/></svg>'
+  ).toString('base64');
+
+  const BASIS = {
+    nummer: '26-001', datum: '2026-11-05', klant: 'Mark de Vries', kenteken: 'XX99XX',
+    auto: 'Volkswagen Golf', bouwjaar: '2018', meetpositie: 'Oorhoogte bestuurder',
+    nazorg: {}, systeem: [], kort: [], voorBeeld: '', naBeeld: '', faseVoor: '', faseNa: '',
+    responsToelichting: '', faseToelichting: '', accu: { type: '', metingen: {} },
+    accuToelichting: '',
+  };
+
+  const ACCU_METINGEN = {
+    rustVoor: '12,4', rustNa: '12,7', belastVoor: '11,2',
+    belastNa: '12,1', laadVoor: '13,9', laadNa: '14,4',
+  };
+
+  /** Afdrukken proberen. `akkoord` is wat Justus op de vraag antwoordt. */
+  async function drukAf(meting, { akkoord = true } = {}) {
+    const pagina = await browser.newPage(scherm);
+    const vensters = [];
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    pagina.on('dialog', async (venster) => {
+      vensters.push(venster.message());
+      await (akkoord ? venster.accept() : venster.dismiss());
+    });
+    await pagina.goto(`${paginaUrl('headroom')}?tab=meting`);
+    await pagina.evaluate((m) => {
+      const s = JSON.parse(localStorage.getItem('aue-werkbak-v1') || '{}');
+      s.meting = m;
+      localStorage.setItem('aue-werkbak-v1', JSON.stringify(s));
+    }, meting);
+    await pagina.reload();
+    await pagina.evaluate(() => { window.__afgedrukt = 0; window.print = () => { window.__afgedrukt += 1; }; });
+    await pagina.evaluate(() => document.fonts.ready);
+    await pagina.click('#mr-print');
+    await pagina.waitForTimeout(400);
+    const uit = await pagina.evaluate(() => ({
+      afgedrukt: window.__afgedrukt,
+      verborgen: getComputedStyle(document.querySelector('#wb-print')).display === 'none',
+    }));
+    await pagina.close();
+    return { ...uit, vensters, fouten };
+  }
+
+  test('een gewoon rapport vraagt niets en drukt gewoon af', async () => {
+    const uit = await drukAf({
+      ...BASIS, soort: 'geluid', voorBeeld: BEELD, naBeeld: BEELD,
+      systeem: [{ onderdeel: 'Composet voor', merktype: 'Gladen 165.2', plaats: 'Voordeuren' }],
+      kort: [{ kop: 'Tijd', tekst: 'Het geluid komt nu van voren.' }],
+    });
+    assert.deepEqual(uit.vensters, [], `hij vraagt iets terwijl alles past: ${uit.vensters.join(' | ')}`);
+    assert.equal(uit.afgedrukt, 1, 'er is niet afgedrukt');
+    assert.deepEqual(uit.fouten, []);
+  });
+
+  test('een te vol samenvattingsblad wordt gemeld, met blad en millimeters', async () => {
+    const lap = ZIN.repeat(12).trim();
+    const uit = await drukAf({
+      ...BASIS, soort: 'geluid', voorBeeld: BEELD, naBeeld: BEELD,
+      systeem: Array.from({ length: 5 }, (_, i) => ({
+        onderdeel: `Onderdeel ${i + 1}`, merktype: 'Gladen Mosconi Pro 165.2', plaats: 'Linkervoordeur',
+      })),
+      kort: [{ kop: 'Tijd', tekst: lap }, { kop: 'Klank', tekst: lap }, { kop: 'Balans', tekst: lap }],
+    });
+    const alles = uit.vensters.join(' | ');
+    assert.match(alles, /past niet alles op het papier/i, `geen melding; hij zag: ${alles}`);
+    assert.match(alles, /blad 1/, 'het blad wordt niet genoemd');
+    assert.match(alles, /Jouw systeem/, 'de titel van het blad wordt niet genoemd');
+    assert.match(alles, /\d+ mm te veel/, 'er staat niet bij hoeveel het scheelt');
+    assert.equal(uit.afgedrukt, 1, 'na akkoord hoort hij alsnog af te drukken');
+    assert.deepEqual(uit.fouten, []);
+  });
+
+  test('een te volle accutoelichting wordt gemeld', async () => {
+    const uit = await drukAf({
+      ...BASIS, soort: 'accu',
+      accu: { type: 'Varta AGM 95Ah', metingen: ACCU_METINGEN },
+      accuToelichting: ZIN.repeat(40).trim(),
+    });
+    const alles = uit.vensters.join(' | ');
+    assert.match(alles, /past niet alles op het papier/i, `geen melding; hij zag: ${alles}`);
+    assert.match(alles, /Gemeten aan je accu/, 'het accublad wordt niet bij naam genoemd');
+    assert.deepEqual(uit.fouten, []);
+  });
+
+  test('annuleren drukt niet af', async () => {
+    const uit = await drukAf({
+      ...BASIS, soort: 'accu',
+      accu: { type: 'Varta AGM 95Ah', metingen: ACCU_METINGEN },
+      accuToelichting: ZIN.repeat(40).trim(),
+    }, { akkoord: false });
+    assert.match(uit.vensters.join(' | '), /past niet alles/i);
+    assert.equal(uit.afgedrukt, 0, 'hij drukt af terwijl Justus annuleert');
+  });
+
+  test('het rapport blijft na de meting verborgen', async () => {
+    // De meting zet het rapport heel even buiten beeld neer. Blijft dat zo
+    // staan, dan heeft Justus een lap papier onder zijn app hangen.
+    const uit = await drukAf({
+      ...BASIS, soort: 'accu',
+      accu: { type: 'Varta AGM 95Ah', metingen: ACCU_METINGEN },
+      accuToelichting: ZIN.repeat(40).trim(),
+    });
+    assert.ok(uit.verborgen, 'het rapport staat na het meten nog in beeld');
+  });
+});
+
 describe('een beschadigde reservekopie', alsGebouwd, () => {
   const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 
