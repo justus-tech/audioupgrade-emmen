@@ -3364,6 +3364,108 @@ describe('het meetrapport past op het papier', alsGebouwd, () => {
  * echte blad op en zegt hij wat er niet past, met het blad erbij en hoeveel
  * millimeter het scheelt.
  */
+/**
+ * DE LEGENDA VAN HET BEDRADINGSPLAN BLIJFT BIJ HET SCHEMA.
+ *
+ * De regel die uitlegt wat grijs, oranje en gestippeld betekenen stond als
+ * laatste element van het blad, na de let-op-lijst. Die lijst groeit met elk
+ * onderdeel waarvan het vermogen of de impedantie nog niet bekend is. Bij een
+ * plan met zeven regels werd hij zo lang dat de legenda op het volgende vel
+ * belandde: de uitleg van het schema lag dan op een ander papier dan het
+ * schema zelf. Nagemeten door het plan echt naar A4 te renderen.
+ *
+ * CLAUDE.md zegt het ook met zoveel woorden: uitleg hoort bij het beeld.
+ */
+describe('het bedradingsplan houdt de legenda bij het schema', alsGebouwd, () => {
+  const papier = { viewport: { width: 794, height: 1123 } };
+
+  const regel = (id, omschrijving, soort) => ({
+    id, omschrijving, soort, aantal: 1, inkoopCent: 24000, margePct: 60, uren: 2, toebehoren: [],
+  });
+
+  /* Zeven onderdelen: zo wordt de let-op-lijst lang genoeg om de legenda
+     vroeger van het blad te duwen. */
+  const VOL = [
+    regel('r1', 'Gladen Mosconi Pro 165.2 composet voor', 'speakers-voor'),
+    regel('r2', 'Gladen Mosconi Pro 165 coaxiaal achter', 'speakers-achter'),
+    regel('r3', 'JL Audio 13W7AE subwoofer in eigen kist', 'subwoofer'),
+    regel('r4', 'Musway D8 versterker met DSP', 'versterker'),
+    regel('r5', 'Alpine iLX-F905D met CarPlay', 'carplay'),
+    regel('r6', 'STEG Masterstroke MSK 4-kanaals eindtrap', 'versterker'),
+    regel('r7', 'Gladen RS 08 kofferbaksubwoofer', 'subwoofer'),
+  ];
+
+  async function drukPlanAf(regels) {
+    const pagina = await browser.newPage(papier);
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    pagina.on('dialog', (venster) => venster.accept());
+    await pagina.goto(`${paginaUrl('headroom')}?tab=offerte`);
+    await pagina.evaluate((r) => {
+      const s = JSON.parse(localStorage.getItem('aue-werkbak-v1') || '{}');
+      s.concept = {
+        nummer: '2026-050', datum: '2026-11-06', klant: { naam: 'Mark de Vries' },
+        auto: { kenteken: 'XX99XX', merk: 'Volkswagen', model: 'Golf', bouwjaar: '2018' },
+        regels: r,
+      };
+      localStorage.setItem('aue-werkbak-v1', JSON.stringify(s));
+    }, regels);
+    await pagina.goto(`${paginaUrl('headroom')}?tab=bedrading`);
+    await pagina.evaluate(() => { window.print = () => {}; });
+    await pagina.evaluate(() => document.fonts.ready);
+    await pagina.click('#bd-print');
+    await pagina.emulateMedia({ media: 'print' });
+    const uit = await pagina.evaluate(() => {
+      const schemas = document.querySelector('#wb-print .bd-blad-schemas');
+      const legenda = document.querySelector('#wb-print .bd-legenda');
+      if (!schemas || !legenda) return { schemas: !!schemas, legenda: !!legenda };
+      const s = schemas.getBoundingClientRect();
+      const l = legenda.getBoundingClientRect();
+      return {
+        schemas: true,
+        legenda: true,
+        erin: schemas.contains(legenda),
+        nietAfbreken: getComputedStyle(schemas).breakInside,
+        /* Staat hij onder allebei de kolommen, of naast een ervan? */
+        onderBeide: [...schemas.children]
+          .filter((k) => k !== legenda)
+          .every((k) => l.top >= k.getBoundingClientRect().bottom - 1),
+        afstandTotOnderkant: Math.round(s.bottom - l.bottom),
+      };
+    });
+    await pagina.close();
+    return { ...uit, fouten };
+  }
+
+  test('de legenda staat in hetzelfde blok als de twee schema\'s', async () => {
+    const uit = await drukPlanAf(VOL);
+    assert.ok(uit.schemas, 'er is geen schemablok getekend');
+    assert.ok(uit.legenda, 'de legenda staat niet op het plan');
+    assert.ok(uit.erin,
+      'de legenda staat buiten het schemablok en kan dus op een ander vel belanden');
+    assert.equal(uit.nietAfbreken, 'avoid',
+      'het schemablok mag afbreken, dus beeld en uitleg kunnen alsnog uit elkaar vallen');
+    assert.deepEqual(uit.fouten, []);
+  });
+
+  test('de legenda staat onder allebei de schema\'s, niet naast een ervan', async () => {
+    /* Hij hoort bij het stroomschema en bij het audioschema. Staat hij naast
+       een van de twee, dan lijkt hij maar bij dat ene te horen.
+       Over de breedte doen we geen uitspraak: de site houdt alinea's op 65
+       tekens (`p { max-width: 65ch }` in global.css), en die leesbreedte
+       hoort hier net zo goed te gelden. */
+    const uit = await drukPlanAf(VOL);
+    assert.ok(uit.onderBeide, 'de legenda staat naast een schema in plaats van eronder');
+  });
+
+  test('ook bij een plan met één onderdeel staat hij er', async () => {
+    const uit = await drukPlanAf([regel('r1', 'Composet voor', 'speakers-voor')]);
+    assert.ok(uit.legenda, 'bij een klein plan ontbreekt de legenda');
+    assert.ok(uit.erin);
+    assert.deepEqual(uit.fouten, []);
+  });
+});
+
 describe('het meetrapport waarschuwt als het niet past', alsGebouwd, () => {
   const scherm = { viewport: { width: 1100, height: 1400 } };
   const ZIN = 'De linkervoordeur geeft een resonantie rond 90 Hz en de kofferklep rammelt mee. ';

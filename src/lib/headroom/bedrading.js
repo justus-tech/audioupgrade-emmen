@@ -1465,9 +1465,21 @@ export function bedradingHtml(uitkomst, plan, offerte = {}) {
   return `<div class="bd-blad">`
     + `<h2>Bedradingsplan${offerte.nummer ? ` · offerte ${ontsnap(offerte.nummer)}` : ''}</h2>`
     + `<p class="bd-blad-sub">${ontsnap([auto, offerte.auto?.kenteken, offerte.klant?.naam].filter(Boolean).join(' · '))}</p>`
-    + `<div class="bd-blad-schemas"><div><h3>Stroom</h3>${stroomSchema(uitkomst, plan)}</div><div><h3>Audio</h3>${audioSchema(uitkomst)}</div></div>`
+    /**
+     * DE LEGENDA HOORT BIJ HET BEELD, NIET ONDERAAN HET BLAD.
+     *
+     * Hij stond als laatste element van het blad, na de let-op-lijst. Die
+     * lijst groeit met elk onderdeel waarvan het vermogen of de impedantie
+     * nog niet bekend is. Bij een plan met zeven regels werd hij zo lang dat
+     * de legenda op het volgende vel terechtkwam: de uitleg van wat grijs,
+     * oranje en gestippeld betekenen stond dan op een ander papier dan het
+     * schema waar je het bij nodig hebt.
+     *
+     * Nu staat hij in hetzelfde blok als de twee schema's. Dat blok mag niet
+     * afbreken, dus beeld en uitleg kunnen niet meer uit elkaar vallen.
+     */
+    + `<div class="bd-blad-schemas"><div><h3>Stroom</h3>${stroomSchema(uitkomst, plan)}</div><div><h3>Audio</h3>${audioSchema(uitkomst)}</div><p class="bd-blad-sub bd-legenda">Grijs = bestaand · oranje = nieuw · oranje gestippeld = vervangen. Gestippelde kabel = fabrieksbedrading die blijft.</p></div>`
     + `<h3>Kabels klaarleggen</h3>${kabels}<h3>Zekeringen</h3>${zek}<h3>Let op</h3>${letOp}`
-    + `<p class="bd-blad-sub">Grijs = bestaand · oranje = nieuw · oranje gestippeld = vervangen. Gestippelde kabel = fabrieksbedrading die blijft.</p>`
     + `</div>`
     + `<div class="bd-blad bd-blad-auto">`
     + `<h2>Inbouw in de auto</h2>`

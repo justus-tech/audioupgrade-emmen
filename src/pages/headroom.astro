@@ -5920,6 +5920,8 @@ import { APP } from '../data/app.js';
   .bd-blad h3 { margin: 5mm 0 2mm; font-size: 10pt; text-transform: uppercase; letter-spacing: .08em; }
   .bd-blad-sub { margin: 0; color: var(--text-dim) !important; }
   .bd-blad-schemas { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; break-inside: avoid; }
+  /* De legenda loopt onder allebei de schema's door, niet naast een van beide. */
+  .bd-blad .bd-legenda { grid-column: 1 / -1; margin-top: 3mm; }
   .bd-blad .bd-schema { max-height: 150mm; }
   .bd-blad table { width: 100%; border-collapse: collapse; }
   .bd-blad th, .bd-blad td { padding: 1.5mm 2mm 1.5mm 0; border-bottom: .3mm solid var(--line-strong); text-align: left; vertical-align: top; }
