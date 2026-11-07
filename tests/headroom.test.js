@@ -1776,6 +1776,59 @@ describe('de afspraak voor een luistersessie', () => {
   });
 });
 
+/**
+ * HET ADRES IN DE AGENDA-AFSPRAAK KOMT UIT SITE.JS.
+ *
+ * Het stond hier hard ingetikt, met de komma al ontsnapt:
+ * "LOCATION:Charles Darwinstraat 35\\, 7825 AB Emmen". Vandaag klopte dat,
+ * want het is hetzelfde adres als in site.js. Maar het is wel een tweede plek.
+ *
+ * Nagespeeld: ik heb het adres in site.js op een ander straatnaam gezet.
+ * De offerte, de factuur en de werkbon gingen mee, de agenda-afspraak niet —
+ * die bleef de klant naar het oude adres sturen. Dat is precies het geval dat
+ * eraan komt: CLAUDE.md zegt dat er vanaf september 2026 een eigen loods komt
+ * en dat het adres nog volgt.
+ *
+ * Een klant die naar het verkeerde adres rijdt is een afspraak kwijt, dus dit
+ * moet één bron hebben. Deze test bewaakt dat.
+ */
+describe('het adres in de agenda-afspraak', () => {
+  const item = {
+    nummer: '2026-050', wie: 'Mark de Vries', wat: 'Volkswagen Golf',
+    datum: new Date(2026, 10, 20), tijd: '09:00',
+    besteldag: new Date(2026, 10, 6), telefoon: '06 12 34 56 78',
+  };
+  const locatieregel = () => String(icsVoorKlus(item, { voorbereiding: { dag: [] } }))
+    .split(/\r?\n/)
+    .find((r) => r.startsWith('LOCATION:'));
+
+  test('staat er, en is het adres uit site.js', () => {
+    const regel = locatieregel();
+    assert.ok(regel, 'er staat geen adres in de agenda-afspraak');
+    assert.equal(regel, `LOCATION:${icsTekst(ADRES)}`,
+      'het adres in de agenda is niet hetzelfde als in site.js');
+  });
+
+  test('de komma in het adres is ontsnapt, anders breekt de agenda de regel af', () => {
+    // Een kale komma betekent in een agendabestand "hier begint een nieuwe
+    // waarde". Dan houdt de agenda alleen de straatnaam over.
+    const regel = locatieregel();
+    assert.match(regel, /\\,/, 'de komma in het adres is niet ontsnapt');
+    assert.doesNotMatch(regel.replace(/\\,/g, ''), /,/, 'er staat nog een kale komma in');
+  });
+
+  test('de straatnaam staat nergens los in agenda.js', () => {
+    // Zonder deze test kan er morgen een tweede hard ingetikt adres bij komen,
+    // bijvoorbeeld in een nieuwe soort afspraak.
+    const bron = readFileSync(
+      fileURLToPath(new URL('../src/lib/headroom/agenda.js', import.meta.url)), 'utf8'
+    );
+    const straat = SITE.street.split(' ')[0];
+    assert.ok(!bron.includes(straat),
+      `"${straat}" staat los in agenda.js; haal het uit site.js in plaats daarvan`);
+  });
+});
+
 describe('het agendabestand van een luistersessie', () => {
   const sessie = {
     id: 'a1', voornaam: 'Mark', kenteken: 'XX99XX',

@@ -428,7 +428,7 @@ export function icsVoorKlus(item, { duurUren = 8, voorbereiding = {} } = {}) {
     `DTEND:${icsStempel(item.datum, plusUren(item.tijd, duurUren))}`,
     `SUMMARY:${icsTekst(titel)}`,
     `DESCRIPTION:${omschrijving(voorbereiding.dag || [])}`,
-    'LOCATION:Charles Darwinstraat 35\\, 7825 AB Emmen',
+    `LOCATION:${icsTekst(ADRES)}`,
     'BEGIN:VALARM',
     'TRIGGER:-P7D',
     'ACTION:DISPLAY',
