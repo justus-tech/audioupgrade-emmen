@@ -178,6 +178,40 @@ describe('titels en omschrijvingen', alsGebouwd, () => {
     }
   });
 
+  /**
+   * ELKE TITEL EINDIGT OP " | AUDIO UPGRADE EMMEN".
+   *
+   * CLAUDE.md noemt dit met zoveel woorden een valkuil: op Squarespace werd de
+   * bedrijfsnaam er automatisch achter geplakt, in Astro niet. Een pagina die
+   * hem vergeet valt niet op — in de browser zie je alleen het begin van de
+   * titel — maar in Google staat er dan een resultaat zonder bedrijfsnaam
+   * tussen resultaten die hem wel hebben.
+   *
+   * Op dit moment klopt het op alle pagina's; nagemeten. Deze test is er om
+   * het zo te houden, want een nieuwe pagina is het makkelijkst het moment
+   * waarop het misgaat.
+   */
+  test('elke titel eindigt op de bedrijfsnaam', () => {
+    const staart = ` | ${SITE.name}`;
+    let geteld = 0;
+    for (const [pad, html] of inhoud) {
+      const titel = titelVan(html).trim();
+      geteld += 1;
+      assert.ok(
+        titel.endsWith(staart),
+        `${pad}: de titel eindigt niet op "${staart}" — "${titel}"`
+      );
+      /* En er moet ook iets vóór staan: alleen de bedrijfsnaam zegt niets. */
+      assert.ok(
+        titel.length > staart.length,
+        `${pad}: de titel is alleen de bedrijfsnaam`
+      );
+    }
+    /* Zonder deze ondergrens zou de test ook groen staan als er niets te
+       controleren viel. */
+    assert.ok(geteld > 150, `maar ${geteld} pagina's nagekeken`);
+  });
+
   test('geen twee pagina\'s delen dezelfde titel', () => {
     // Dubbele titels laten Google denken dat het dezelfde pagina is.
     const gezien = new Map();
