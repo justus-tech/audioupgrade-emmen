@@ -86,7 +86,7 @@ const PAKKETTEN_DE = {
       'Batterie und Ladespannung gemessen, die Werte auf dem Auftragsschein.',
     ],
     cta: 'Executive anfragen',
-    duur: 'Ihr Auto bleibt einen Werktag bei uns',
+    duur: 'Ihr Auto bleibt zwei Werktage bei uns',
   },
   'reference-edition': {
     naam: "The Reference Edition",
@@ -238,7 +238,7 @@ const PAKKETTEN_EN = {
       'Battery and charging voltage measured, figures on your job sheet.',
     ],
     cta: 'Ask about Executive',
-    duur: 'Your car stays with us for one working day',
+    duur: 'Your car stays with us for two working days',
   },
   'reference-edition': {
     naam: "The Reference Edition",
@@ -406,7 +406,7 @@ const DE = {
           /* Tekst van main, met één verandering: aan het eind van de dag
              opgehaald worden kan niet als de auto twee tot drie dagen
              blijft staan. Dat was juist de tegenspraak. */
-          'Das hängt vom Paket ab. Eine kabellose CarPlay-Aufrüstung ist in etwa zwei Stunden fertig, Akustische Basis in einem halben Tag und The OEM+ Executive an einem Werktag. The Reference Edition dauert zwei bis drei Tage, denn die Abstimmung braucht Zeit. Bleibt Ihr Auto stehen, fahren wir Sie im Umkreis von fünfzehn Kilometern um Emmen nach Hause und holen Sie wieder ab, sobald es fertig ist.',
+          'Das hängt vom Paket ab. Eine kabellose CarPlay-Aufrüstung ist in etwa zwei Stunden fertig, Akustische Basis in einem halben Tag und The OEM+ Executive an zwei Werktagen. The Reference Edition dauert zwei bis drei Tage, denn die Abstimmung braucht Zeit. Bleibt Ihr Auto stehen, fahren wir Sie im Umkreis von fünfzehn Kilometern um Emmen nach Hause und holen Sie wieder ab, sobald es fertig ist.',
       },
       {
         vraag: 'Passt das auch in mein Auto?',
@@ -622,7 +622,7 @@ const EN = {
           /* Tekst van main, met één verandering: aan het eind van de dag
              opgehaald worden kan niet als de auto twee tot drie dagen
              blijft staan. Dat was juist de tegenspraak. */
-          'It depends on the package. A wireless CarPlay upgrade is done in about two hours, Acoustic Basis in half a day and The OEM+ Executive in one working day. The Reference Edition takes two to three days, because the tuning needs time. If your car stays, we drive you home within fifteen kilometres of Emmen and pick you up once it is ready.',
+          'It depends on the package. A wireless CarPlay upgrade is done in about two hours, Acoustic Basis in half a day and The OEM+ Executive in two working days. The Reference Edition takes two to three days, because the tuning needs time. If your car stays, we drive you home within fifteen kilometres of Emmen and pick you up once it is ready.',
       },
       {
         vraag: 'Will it fit my car?',

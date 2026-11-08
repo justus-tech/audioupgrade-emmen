@@ -395,7 +395,7 @@ export const PACKAGES = [
       'Accu en laadspanning gemeten, met de waarden op je werkbon.',
     ],
     cta: 'Kies Executive',
-    duur: 'Je auto staat één werkdag bij ons',
+    duur: 'Je auto staat twee werkdagen bij ons',
     /* Vier over de hele linie: een DSP-versterker, een verstopte subwoofer
        en een volledige afstemming. De vijf blijft voor de Reference. */
     scores: [
