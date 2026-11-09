@@ -21,7 +21,7 @@
  *
  * Open je Headroom zelf, dan zie je bovenaan de agenda wat eraan komt.
  */
-import { datumNl } from './rekenen.js';
+import { datumNl, totalen } from './rekenen.js';
 import { ADRES } from '../../data/site.js';
 import { autoNaam } from './autos.js';
 
@@ -124,6 +124,9 @@ export function agendaItem(offerte, inst = {}, vandaag = new Date()) {
     status: offerte.status || 'concept',
     datum,
     tijd: offerte.inbouwtijd || '09:00',
+    /* Hoeveel uur werk er in de offerte staat. De agenda-afspraak rekent
+       hiermee uit hoe lang de auto er staat. */
+    uren: totalen(offerte.regels || [], inst).urenTotaal,
     dagen,
     hoeLang: hoeLangNog(dagen),
     besteldag,
@@ -291,9 +294,10 @@ export function googleAgendaLink({
 }
 
 /** De inbouw en de besteldag als twee links naar Google Agenda. */
-export function googleLinksVoorKlus(item, { duurUren = 8, voorbereiding = {} } = {}) {
+export function googleLinksVoorKlus(item, { duurUren = null, voorbereiding = {} } = {}) {
   const wat = [item.auto, item.kenteken].filter(Boolean).join(' · ');
   const titel = `Inbouw ${item.wie}${wat ? ` — ${wat}` : ''}`;
+  const blok = werkBlok(item.datum, item.tijd, duurUren ?? item.uren);
   const regels = (lijst) => [
     `Offerte ${item.nummer}`,
     item.telefoon && `Tel. ${item.telefoon}`,
@@ -308,7 +312,8 @@ export function googleLinksVoorKlus(item, { duurUren = 8, voorbereiding = {} } =
         titel,
         datum: item.datum,
         tijd: item.tijd,
-        eindTijd: plusUren(item.tijd, duurUren),
+        eindDatum: blok.eindDatum,
+        eindTijd: blok.eindTijd,
         uitleg: regels(voorbereiding.dag || []),
         plaats: ADRES,
       }),
@@ -386,6 +391,49 @@ export function googleEmbedUrl(invoer, { achtergrond = '', weergave = 'AGENDA' }
 }
 
 /** De tijd een aantal uren later, voor het einde van de afspraak. */
+/**
+ * HOE LANG DE AUTO ER ECHT STAAT.
+ *
+ * Elke afspraak in de agenda liep van 09:00 tot 17:00, of de klus nu twee uur
+ * was of vier dagen. De app wist het wel — bij elk onderdeel staat hoeveel uur
+ * het kost, en de offerte telt dat op — maar gaf het nooit door.
+ *
+ * Dat kost op twee manieren werk. Bij een korte klus staat je hele dag vol
+ * terwijl er nog een halve dag in past, dus zeg je nee tegen iemand die je had
+ * kunnen helpen. Bij een lange klus staat er één dag in je agenda terwijl de
+ * auto er twee of drie staat, en dan boek je iemand anders op een dag waarop
+ * je al bezet bent. Dat tweede is sinds The OEM+ Executive op twee werkdagen
+ * staat geen uitzondering meer maar de regel.
+ *
+ * Een werkdag is hier acht uur. Past het niet op één dag, dan loopt de
+ * afspraak door naar de volgende dag, en slaat hij zondag over — dan is de
+ * werkplaats dicht (zie OPENINGSTIJDEN in site.js). Begint de klus zelf op een
+ * zondag, dan laten we die dag staan: dat is een keuze die Justus dan zelf
+ * heeft gemaakt, en daar gaat deze rekensom niet over.
+ *
+ * Staan er geen uren in de offerte, dan houden we de werkdag aan die er
+ * altijd al stond. Liever de oude aanname dan een afspraak van nul minuten.
+ */
+export function werkBlok(datum, tijd = '09:00', uren = 0, { dagUren = 8 } = {}) {
+  const start = opMiddernacht(datum);
+  const perDag = Math.max(1, Number(dagUren) || 8);
+  const gevraagd = Math.max(0, Number(uren) || 0);
+  const totaal = gevraagd > 0 ? gevraagd : perDag;
+
+  const dagen = Math.max(1, Math.ceil(totaal / perDag));
+  const restant = totaal - (dagen - 1) * perDag;
+
+  const eind = start ? new Date(start) : null;
+  let teGaan = dagen - 1;
+  while (eind && teGaan > 0) {
+    eind.setDate(eind.getDate() + 1);
+    /* 0 is zondag. Een dag waarop de werkplaats dicht is telt niet mee. */
+    if (eind.getDay() !== 0) teGaan -= 1;
+  }
+
+  return { dagen, eindDatum: eind, eindTijd: plusUren(tijd, restant) };
+}
+
 function plusUren(tijd, uren) {
   const [u, m] = String(tijd).split(':');
   const totaal = Math.min(23 * 60 + 59, (Number(u) || 0) * 60 + (Number(m) || 0) + uren * 60);
@@ -405,7 +453,7 @@ function plusUren(tijd, uren) {
  * werkplaats die altijd in Nederland staat is dat precies goed, en het
  * scheelt een hoop gedoe met zomertijd.
  */
-export function icsVoorKlus(item, { duurUren = 8, voorbereiding = {} } = {}) {
+export function icsVoorKlus(item, { duurUren = null, voorbereiding = {} } = {}) {
   /* Geen klus of geen dag geprikt: dan is er geen afspraak om te maken. Liever
      niets teruggeven dan een bestand met een lege datum erin — dat laatste
      slikt een agenda wél en zet er dan iets raars in. */
@@ -413,6 +461,7 @@ export function icsVoorKlus(item, { duurUren = 8, voorbereiding = {} } = {}) {
   const wat = [item.auto, item.kenteken].filter(Boolean).join(' · ');
   const titel = `Inbouw ${item.wie}${wat ? ` — ${wat}` : ''}`;
   const gestempeld = icsNu();
+  const blok = werkBlok(item.datum, item.tijd, duurUren ?? item.uren);
 
   const omschrijving = (lijst) =>
     icsTekst([`Offerte ${item.nummer}`, item.telefoon && `Tel. ${item.telefoon}`, '', ...lijst]
@@ -425,7 +474,7 @@ export function icsVoorKlus(item, { duurUren = 8, voorbereiding = {} } = {}) {
     `UID:inbouw-${item.nummer}@audioupgradeemmen.nl`,
     `DTSTAMP:${gestempeld}`,
     `DTSTART:${icsStempel(item.datum, item.tijd)}`,
-    `DTEND:${icsStempel(item.datum, plusUren(item.tijd, duurUren))}`,
+    `DTEND:${icsStempel(blok.eindDatum, blok.eindTijd)}`,
     `SUMMARY:${icsTekst(titel)}`,
     `DESCRIPTION:${omschrijving(voorbereiding.dag || [])}`,
     `LOCATION:${icsTekst(ADRES)}`,

@@ -30,7 +30,7 @@ import {
 } from '../src/lib/headroom/voorwaarden.js';
 import {
   agenda, agendaItem, bestelUiterlijk, dagenTussen, opMiddernacht, hoeLangNog,
-  icsVoorKlus, icsBestandsnaam, icsTekst, vouwOp, ontvouw,
+  icsVoorKlus, icsBestandsnaam, icsTekst, vouwOp, ontvouw, werkBlok,
   googleAgendaLink, googleLinksVoorKlus, googleEmbedUrl,
 } from '../src/lib/headroom/agenda.js';
 import { voorbereiding, voorbereidingMetWaarom } from '../src/lib/headroom/voorbereiding.js';
@@ -1792,6 +1792,112 @@ describe('de afspraak voor een luistersessie', () => {
  * Een klant die naar het verkeerde adres rijdt is een afspraak kwijt, dus dit
  * moet één bron hebben. Deze test bewaakt dat.
  */
+/**
+ * DE AFSPRAAK IS ZO LANG ALS HET WERK DUURT.
+ *
+ * Elke afspraak liep van 09:00 tot 17:00, wat voor klus het ook was. De app
+ * wist het wel — bij elk onderdeel staat hoeveel uur het kost en de offerte
+ * telt dat op — maar gaf het nooit door aan de agenda.
+ *
+ * Dat kost op twee manieren werk. Een klus van twee uur zette zijn hele dag
+ * vol, dus zei hij nee tegen iemand die er nog bij had gekund. En een klus van
+ * twee dagen stond als één dag in de agenda, dus boekte hij de tweede dag
+ * iemand anders in. Dat tweede is sinds The OEM+ Executive op twee werkdagen
+ * staat de regel in plaats van de uitzondering.
+ *
+ * Nagemeten voor de reparatie: 2 uur, 16 uur en 24 uur werk gaven alle drie
+ * precies dezelfde afspraak van 09:00 tot 17:00 op één dag.
+ */
+describe('hoe lang de auto in de agenda staat', () => {
+  const INST = { ...STANDAARD_INSTELLINGEN };
+  const VANDAAG = new Date(2026, 10, 9);
+  /* 20 november 2026 is een vrijdag. Daardoor valt dag drie van een lange
+     klus op een zondag, en dat is precies het geval dat we willen zien. */
+  const VRIJDAG = new Date(2026, 10, 20);
+
+  const offerteMet = (uren) => ({
+    nummer: '2026-050', status: 'gegund',
+    klant: { naam: 'Mark de Vries', telefoon: '0612345678' },
+    auto: { merk: 'Volkswagen', model: 'Golf', kenteken: 'XX99XX' },
+    inbouwdatum: VRIJDAG, inbouwtijd: '09:00',
+    regels: uren === null ? [{ omschrijving: 'Nog niet ingevuld', aantal: 1, vastExclCent: 50000 }]
+      : [{ omschrijving: 'Werk', aantal: 1, inkoopCent: 24000, margePct: 60, uren }],
+  });
+
+  const stempels = (uren) => {
+    const ics = String(icsVoorKlus(agendaItem(offerteMet(uren), INST, VANDAAG), {
+      voorbereiding: { dag: [] },
+    }));
+    return {
+      start: ics.match(/DTSTART:(\d+T\d+)/)[1],
+      eind: ics.match(/DTEND:(\d+T\d+)/)[1],
+    };
+  };
+
+  test('een klus van twee uur blokkeert twee uur, niet de hele dag', () => {
+    const { start, eind } = stempels(2);
+    assert.equal(start, '20261120T090000');
+    assert.equal(eind, '20261120T110000', `de afspraak loopt tot ${eind}`);
+  });
+
+  test('een klus van een werkdag loopt tot het eind van die dag', () => {
+    const { eind } = stempels(8);
+    assert.equal(eind, '20261120T170000');
+  });
+
+  test('The OEM+ Executive van twee werkdagen loopt door naar de volgende dag', () => {
+    // Zestien uur werk. Stond dit op één dag, dan boekt hij dag twee dubbel.
+    const { start, eind } = stempels(16);
+    assert.equal(start, '20261120T090000');
+    assert.equal(eind, '20261121T170000', `de tweede dag wordt niet geblokkeerd (${eind})`);
+  });
+
+  test('een halve tweede dag loopt tot halverwege die dag', () => {
+    const { eind } = stempels(12);
+    assert.equal(eind, '20261121T130000');
+  });
+
+  test('een lange klus slaat de zondag over, want dan is de werkplaats dicht', () => {
+    /* 24 uur is drie werkdagen: vrijdag 20, zaterdag 21, en dan niet zondag
+       22 maar maandag 23. */
+    const { eind } = stempels(24);
+    assert.equal(eind, '20261123T170000', `de zondag wordt meegeteld (${eind})`);
+  });
+
+  test('zonder uren in de offerte blijft het de werkdag die er altijd stond', () => {
+    // Liever de oude aanname dan een afspraak van nul minuten.
+    const { start, eind } = stempels(null);
+    assert.equal(start, '20261120T090000');
+    assert.equal(eind, '20261120T170000');
+  });
+
+  test('de Google-link blokkeert dezelfde twee dagen', () => {
+    const links = googleLinksVoorKlus(agendaItem(offerteMet(16), INST, VANDAAG), {
+      voorbereiding: { dag: [] },
+    });
+    const dates = new URL(links.inbouw.url).searchParams.get('dates');
+    assert.equal(dates, '20261120T090000/20261121T170000');
+  });
+
+  test('een klus die later begint loopt ook later af', () => {
+    // De eindtijd moet meebewegen met de starttijd, niet vastzitten op 17:00.
+    const offerte = { ...offerteMet(3), inbouwtijd: '13:00' };
+    const ics = String(icsVoorKlus(agendaItem(offerte, INST, VANDAAG), { voorbereiding: { dag: [] } }));
+    assert.match(ics, /DTSTART:20261120T130000/);
+    assert.match(ics, /DTEND:20261120T160000/);
+  });
+
+  test('werkBlok rekent de dagen zelf ook goed uit', () => {
+    // De rekensom apart, zodat een fout hier niet pas in een ics opvalt.
+    assert.equal(werkBlok(VRIJDAG, '09:00', 2).dagen, 1);
+    assert.equal(werkBlok(VRIJDAG, '09:00', 8).dagen, 1);
+    assert.equal(werkBlok(VRIJDAG, '09:00', 9).dagen, 2);
+    assert.equal(werkBlok(VRIJDAG, '09:00', 16).dagen, 2);
+    assert.equal(werkBlok(VRIJDAG, '09:00', 24).dagen, 3);
+    assert.equal(werkBlok(VRIJDAG, '09:00', 0).dagen, 1, 'nul uur hoort één dag te geven');
+  });
+});
+
 describe('het adres in de agenda-afspraak', () => {
   const item = {
     nummer: '2026-050', wie: 'Mark de Vries', wat: 'Volkswagen Golf',
