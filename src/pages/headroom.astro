@@ -520,6 +520,7 @@ import { APP } from '../data/app.js';
     </div>
 
     <div id="wb-agenda-nu"></div>
+    <div id="wb-agenda-druk"></div>
     <div class="wb-kaart" id="wb-google-kaart">
       <span class="eyebrow">Je Google-agenda</span>
       <div id="wb-google-venster"></div>
@@ -967,6 +968,7 @@ import { APP } from '../data/app.js';
   } from '../lib/headroom/autos.js';
   import {
     agenda, agendaItem, icsVoorKlus, icsBestandsnaam, hoeLangNog, googleLinksVoorKlus,
+    drukkeDagen,
     googleEmbedUrl,
   } from '../lib/headroom/agenda.js';
   import { voorbereidingMetWaarom, voorbereiding } from '../lib/headroom/voorbereiding.js';
@@ -1712,6 +1714,30 @@ import { APP } from '../data/app.js';
       ? `<div class="wb-kaart wb-dringend"><span class="eyebrow">Nu doen</span>` +
         dringend.map((i) => `<p>${zin(i)}</p>`).join('') +
         `</div>`
+      : '';
+
+    /**
+     * DAGEN WAAROP MEER STAAT DAN ERIN PAST.
+     *
+     * De app plande twee klussen op dezelfde dag zonder er iets van te zeggen.
+     * Dat kon al — acht uur naast twee uur op een dinsdag — en sinds een klus
+     * meerdere dagen kan beslaan gebeurt het makkelijker: een klus van twee
+     * werkdagen die op vrijdag begint loopt tot zaterdag, en op die zaterdag
+     * stond al iets anders.
+     *
+     * Alleen melden als het echt niet past: twee klussen van twee uur op een
+     * dag is een goed ingedeelde ochtend en middag, geen fout.
+     */
+    const druk = drukkeDagen([...klussen, ...sessies].filter((i) => i.dagen >= 0));
+    $('#wb-agenda-druk').innerHTML = druk.length
+      ? `<div class="wb-kaart wb-dringend"><span class="eyebrow">Past niet op een dag</span>`
+        + druk.map((d) => {
+          const wie = d.klussen.map((k) => `${ontsnap(k.wie)} (${k.uren} uur)`).join(' en ');
+          return `<p>Op <strong>${ontsnap(datumNl(d.datum))}</strong> staat ${d.uren} uur werk: `
+            + `${wie}. Een werkdag is 8 uur. Zet er een op een andere dag, of zeg de klant `
+            + `vooraf dat het later wordt.</p>`;
+        }).join('')
+        + `</div>`
       : '';
 
     const vak = $('#wb-agenda-lijst');

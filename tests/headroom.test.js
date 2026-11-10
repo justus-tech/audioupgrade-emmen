@@ -29,7 +29,7 @@ import {
   kernpunten, volledigeVoorwaarden, annuleertermijn, zonderOpmaak,
 } from '../src/lib/headroom/voorwaarden.js';
 import {
-  agenda, agendaItem, bestelUiterlijk, dagenTussen, opMiddernacht, hoeLangNog,
+  agenda, agendaItem, bestelUiterlijk, dagenTussen, opMiddernacht, hoeLangNog, drukkeDagen,
   icsVoorKlus, icsBestandsnaam, icsTekst, vouwOp, ontvouw, werkBlok,
   googleAgendaLink, googleLinksVoorKlus, googleEmbedUrl,
 } from '../src/lib/headroom/agenda.js';
@@ -1895,6 +1895,97 @@ describe('hoe lang de auto in de agenda staat', () => {
     assert.equal(werkBlok(VRIJDAG, '09:00', 16).dagen, 2);
     assert.equal(werkBlok(VRIJDAG, '09:00', 24).dagen, 3);
     assert.equal(werkBlok(VRIJDAG, '09:00', 0).dagen, 1, 'nul uur hoort één dag te geven');
+  });
+});
+
+/**
+ * TWEE KLUSSEN OP EEN DAG DIE ER NIET ALLEBEI IN PASSEN.
+ *
+ * De app plande ze zonder er iets van te zeggen. Nagespeeld met vier
+ * offertes: een klus van zestien uur op vrijdag — die loopt door tot
+ * zaterdag — met op diezelfde zaterdag een klus van vier uur, en op dinsdag
+ * een klus van acht uur naast een van twee uur. Twee echte botsingen, en in
+ * de agenda stond alleen netjes onder elkaar wanneer elke klus begint.
+ *
+ * Dat tweede geval kon al voordat klussen meerdere dagen gingen beslaan. Het
+ * eerste is er sindsdien bij gekomen, en dat is geen uitzondering meer nu
+ * The OEM+ Executive twee werkdagen duurt.
+ *
+ * Er wordt op uren gekeken en niet op "zelfde dag": twee klussen van twee uur
+ * is een goed ingedeelde ochtend en middag. Een melding bij elke tweede klus
+ * zou zeuren zijn, en een melding waar je overheen leest is er geen meer.
+ */
+describe('dagen waarop meer staat dan erin past', () => {
+  const INST = { ...STANDAARD_INSTELLINGEN };
+  const VANDAAG = new Date(2026, 10, 10);
+  /* 20 november 2026 is een vrijdag. */
+  const dagNa = (n) => new Date(2026, 10, 20 + n);
+
+  const klus = (nummer, naam, datum, uren) => ({
+    nummer, status: 'gegund', klant: { naam },
+    auto: { merk: 'Volkswagen', model: 'Golf' },
+    inbouwdatum: datum, inbouwtijd: '09:00',
+    regels: [{ omschrijving: 'Werk', aantal: 1, inkoopCent: 24000, margePct: 60, uren }],
+  });
+  const druk = (offertes) => drukkeDagen(agenda(offertes, INST, VANDAAG));
+
+  test('een klus van twee dagen die op de tweede dag botst wordt gemeld', () => {
+    const uit = druk([
+      klus('2026-050', 'Mark de Vries', dagNa(0), 16),
+      klus('2026-051', 'Sanne Jansen', dagNa(1), 4),
+    ]);
+    assert.equal(uit.length, 1, 'de botsing wordt niet gezien');
+    assert.equal(uit[0].uren, 12, `er staat ${uit[0].uren} uur gemeld in plaats van 12`);
+    assert.deepEqual(uit[0].klussen.map((k) => k.nummer), ['2026-050', '2026-051']);
+    assert.equal(uit[0].datum.getDate(), 21, 'de verkeerde dag wordt gemeld');
+  });
+
+  test('acht uur naast twee uur op dezelfde dag wordt gemeld', () => {
+    const uit = druk([
+      klus('2026-052', 'Ronald Bos', dagNa(4), 8),
+      klus('2026-053', 'Peter Smit', dagNa(4), 2),
+    ]);
+    assert.equal(uit.length, 1);
+    assert.equal(uit[0].uren, 10);
+  });
+
+  test('twee korte klussen op een dag worden niet gemeld', () => {
+    // Anders zeurt hij bij elke tweede klus, en daar kijk je overheen.
+    const uit = druk([
+      klus('2026-054', 'Anja', dagNa(5), 2),
+      klus('2026-055', 'Bert', dagNa(5), 3),
+    ]);
+    assert.deepEqual(uit, [], `hij klaagt terwijl 5 uur op een dag gewoon past`);
+  });
+
+  test('klussen netjes na elkaar worden niet gemeld', () => {
+    const uit = druk([
+      klus('2026-056', 'Carla', dagNa(3), 8),
+      klus('2026-057', 'Dirk', dagNa(4), 8),
+    ]);
+    assert.deepEqual(uit, []);
+  });
+
+  test('een lange klus in zijn eentje is geen botsing', () => {
+    // Vier dagen werk is druk, maar het botst met niemand.
+    const uit = druk([klus('2026-058', 'Eva', dagNa(0), 24)]);
+    assert.deepEqual(uit, []);
+  });
+
+  test('zonder uren valt een klus terug op een hele dag, en dan botst hij wel', () => {
+    const zonderUren = {
+      nummer: '2026-059', status: 'gegund', klant: { naam: 'Frank' },
+      auto: { merk: 'VW', model: 'Golf' }, inbouwdatum: dagNa(6), inbouwtijd: '09:00',
+      regels: [{ omschrijving: 'Nog in te vullen', aantal: 1, vastExclCent: 50000 }],
+    };
+    const uit = druk([zonderUren, klus('2026-060', 'Gerda', dagNa(6), 4)]);
+    assert.equal(uit.length, 1, 'een offerte zonder uren telt als nul in plaats van een dag');
+    assert.equal(uit[0].uren, 12);
+  });
+
+  test('een lege agenda geeft niets', () => {
+    assert.deepEqual(drukkeDagen([]), []);
+    assert.deepEqual(drukkeDagen(), []);
   });
 });
 

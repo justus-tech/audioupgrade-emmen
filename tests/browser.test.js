@@ -3466,6 +3466,93 @@ describe('het bedradingsplan houdt de legenda bij het schema', alsGebouwd, () =>
   });
 });
 
+/**
+ * DE AGENDA ZEGT HET ALS ER TE VEEL OP EEN DAG STAAT.
+ *
+ * De app plande twee klussen op dezelfde dag zonder er iets van te zeggen.
+ * Sinds een klus meerdere dagen kan beslaan gebeurt dat makkelijker: een klus
+ * van twee werkdagen die op vrijdag begint loopt tot zaterdag, en op die
+ * zaterdag stond al iets anders.
+ *
+ * De rekensom zelf staat in headroom.test.js. Deze tests kijken of Justus het
+ * ook echt ziet staan op het tabblad Agenda, op zijn telefoon.
+ */
+describe('de agenda waarschuwt bij een te volle dag', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+
+  /* Dagen vooruit, zodat de klus altijd in de toekomst ligt. */
+  const overDagenISO = (n) => {
+    const d = new Date();
+    d.setDate(d.getDate() + n);
+    const twee = (x) => String(x).padStart(2, '0');
+    return `${d.getFullYear()}-${twee(d.getMonth() + 1)}-${twee(d.getDate())}`;
+  };
+
+  const klus = (nummer, naam, dagen, uren) => ({
+    id: nummer, nummer, status: 'gegund', klant: { naam },
+    auto: { merk: 'Volkswagen', model: 'Golf' },
+    inbouwdatum: overDagenISO(dagen), inbouwtijd: '09:00',
+    regels: [{ omschrijving: 'Werk', aantal: 1, inkoopCent: 24000, margePct: 60, uren }],
+  });
+
+  async function opAgenda(offertes) {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    pagina.on('dialog', (venster) => venster.accept());
+    await pagina.goto(`${paginaUrl('headroom')}?tab=agenda`);
+    await pagina.evaluate((o) => {
+      const s = JSON.parse(localStorage.getItem('aue-werkbak-v1') || '{}');
+      s.offertes = o;
+      localStorage.setItem('aue-werkbak-v1', JSON.stringify(s));
+    }, offertes);
+    await pagina.reload();
+    await pagina.evaluate(() => document.fonts.ready);
+    const uit = await pagina.evaluate(() => ({
+      tekst: (document.querySelector('#wb-agenda-druk')?.textContent || '').trim(),
+      breed: document.documentElement.scrollWidth,
+    }));
+    await pagina.close();
+    return { ...uit, fouten };
+  }
+
+  test('een klus van twee dagen die op de tweede dag botst wordt gemeld', async () => {
+    const uit = await opAgenda([
+      klus('2026-050', 'Mark de Vries', 10, 16),
+      klus('2026-051', 'Sanne Jansen', 11, 4),
+    ]);
+    assert.match(uit.tekst, /Past niet op een dag/i, `geen melding; er stond: "${uit.tekst}"`);
+    assert.match(uit.tekst, /12 uur werk/, 'het aantal uren klopt niet');
+    assert.match(uit.tekst, /Mark de Vries/);
+    assert.match(uit.tekst, /Sanne Jansen/);
+    assert.deepEqual(uit.fouten, []);
+  });
+
+  test('twee korte klussen op een dag geven geen melding', async () => {
+    const uit = await opAgenda([
+      klus('2026-054', 'Anja Bakker', 16, 2),
+      klus('2026-055', 'Bert Smit', 16, 3),
+    ]);
+    assert.equal(uit.tekst, '', `hij klaagt terwijl 5 uur op een dag past: "${uit.tekst}"`);
+    assert.deepEqual(uit.fouten, []);
+  });
+
+  test('de melding past op een telefoon', async () => {
+    const uit = await opAgenda([
+      klus('2026-056', 'Mevrouw Alexandra van der Heijden-Oosterbroek', 12, 16),
+      klus('2026-057', 'Sanne Jansen', 13, 4),
+    ]);
+    assert.match(uit.tekst, /Past niet op een dag/i);
+    assert.equal(uit.breed, 390, `de pagina is ${uit.breed} pixels breed geworden`);
+  });
+
+  test('een lege agenda geeft geen melding', async () => {
+    const uit = await opAgenda([]);
+    assert.equal(uit.tekst, '');
+    assert.deepEqual(uit.fouten, []);
+  });
+});
+
 describe('het meetrapport waarschuwt als het niet past', alsGebouwd, () => {
   const scherm = { viewport: { width: 1100, height: 1400 } };
   const ZIN = 'De linkervoordeur geeft een resonantie rond 90 Hz en de kofferklep rammelt mee. ';

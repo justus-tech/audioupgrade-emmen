@@ -144,6 +144,62 @@ export function agenda(offertes = [], inst = {}, vandaag = new Date()) {
     .sort((a, b) => a.datum - b.datum);
 }
 
+/**
+ * DAGEN WAAROP ER MEER STAAT DAN ERIN PAST.
+ *
+ * De app plande twee klussen op dezelfde dag zonder er iets van te zeggen.
+ * Nagespeeld met vier offertes: een klus van zestien uur op vrijdag (die loopt
+ * door tot zaterdag) met daarnaast een klus van vier uur op diezelfde
+ * zaterdag, en op dinsdag een klus van acht uur naast een van twee uur. Twee
+ * echte botsingen, en in de agenda stond alleen netjes onder elkaar wanneer
+ * elke klus begint.
+ *
+ * Dat tweede geval — acht en twee uur op een dag — kon al voordat klussen
+ * meerdere dagen gingen beslaan. Het eerste is er sindsdien bij gekomen.
+ *
+ * WAAROM UREN EN NIET "ZELFDE DAG"
+ * Twee klussen van twee uur op een dag is geen probleem maar een goed
+ * ingedeelde ochtend en middag. Een melding bij elke tweede klus zou dus
+ * zeuren zijn, en een melding waar je overheen leest is geen melding meer.
+ * Daarom telt deze functie de uren per dag en zegt hij alleen iets als het
+ * niet past.
+ *
+ * Een werkdag is hier acht uur, dezelfde aanname als werkBlok(). De
+ * openingstijden zijn er bewust niet in verwerkt: die gaan over wanneer een
+ * klant langs kan komen, niet over hoe lang Justus in de werkplaats staat.
+ */
+export function drukkeDagen(klussen = [], { dagUren = 8 } = {}) {
+  const perDag = Math.max(1, Number(dagUren) || 8);
+  /* Per dag: hoeveel uur erop staat en welke klussen dat zijn. */
+  const dagen = new Map();
+
+  for (const klus of klussen) {
+    if (!klus || !klus.datum) continue;
+    const blok = werkBlok(klus.datum, klus.tijd, klus.uren, { dagUren: perDag });
+    const totaal = Math.max(0, Number(klus.uren) || 0) || perDag;
+
+    const dag = opMiddernacht(klus.datum);
+    let over = totaal;
+    while (dag && over > 0 && dag <= blok.eindDatum) {
+      /* Zondag slaan we over, net als werkBlok: dan is de werkplaats dicht. */
+      if (dag.getDay() !== 0) {
+        const sleutel = dag.toISOString().slice(0, 10);
+        const bestaand = dagen.get(sleutel) || { datum: new Date(dag), uren: 0, klussen: [] };
+        const vandaag = Math.min(perDag, over);
+        bestaand.uren += vandaag;
+        bestaand.klussen.push({ nummer: klus.nummer, wie: klus.wie, uren: vandaag });
+        dagen.set(sleutel, bestaand);
+        over -= vandaag;
+      }
+      dag.setDate(dag.getDate() + 1);
+    }
+  }
+
+  return [...dagen.values()]
+    .filter((d) => d.uren > perDag && d.klussen.length > 1)
+    .sort((a, b) => a.datum - b.datum);
+}
+
 /* ================= HET AGENDABESTAND ================= */
 
 /**
