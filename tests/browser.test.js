@@ -3480,13 +3480,24 @@ describe('het bedradingsplan houdt de legenda bij het schema', alsGebouwd, () =>
 describe('de agenda waarschuwt bij een te volle dag', alsGebouwd, () => {
   const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 
-  /* Dagen vooruit, zodat de klus altijd in de toekomst ligt. */
-  const overDagenISO = (n) => {
+  /**
+   * Een datum in de toekomst, op een vaste weekdag.
+   *
+   * Eerst stond hier "zoveel dagen vooruit", en dat maakte deze tests
+   * afhankelijk van welke dag het vandaag is: zodra de datum op een zondag
+   * viel, telde de werkplaats die dag niet mee en viel de test om op een dag
+   * dat er niets mis was. `n` telt hier in blokken van een week vanaf de
+   * eerstvolgende maandag, zodat elke proef altijd op dezelfde weekdag valt.
+   */
+  const maandagOver = (weken, dagenErbij = 0) => {
     const d = new Date();
-    d.setDate(d.getDate() + n);
+    d.setHours(0, 0, 0, 0);
+    /* Naar de eerstvolgende maandag, en dan nog `weken` weken verder. */
+    d.setDate(d.getDate() + ((8 - d.getDay()) % 7 || 7) + weken * 7 + dagenErbij);
     const twee = (x) => String(x).padStart(2, '0');
     return `${d.getFullYear()}-${twee(d.getMonth() + 1)}-${twee(d.getDate())}`;
   };
+  const overDagenISO = (n) => maandagOver(Math.floor(n / 5), n % 5);
 
   const klus = (nummer, naam, dagen, uren) => ({
     id: nummer, nummer, status: 'gegund', klant: { naam },
@@ -3495,17 +3506,18 @@ describe('de agenda waarschuwt bij een te volle dag', alsGebouwd, () => {
     regels: [{ omschrijving: 'Werk', aantal: 1, inkoopCent: 24000, margePct: 60, uren }],
   });
 
-  async function opAgenda(offertes) {
+  async function opAgenda(offertes, sessies = []) {
     const pagina = await browser.newPage(telefoon);
     const fouten = [];
     pagina.on('pageerror', (e) => fouten.push(e.message));
     pagina.on('dialog', (venster) => venster.accept());
     await pagina.goto(`${paginaUrl('headroom')}?tab=agenda`);
-    await pagina.evaluate((o) => {
+    await pagina.evaluate(([o, ses]) => {
       const s = JSON.parse(localStorage.getItem('aue-werkbak-v1') || '{}');
       s.offertes = o;
+      s.sessies = ses;
       localStorage.setItem('aue-werkbak-v1', JSON.stringify(s));
-    }, offertes);
+    }, [offertes, sessies]);
     await pagina.reload();
     await pagina.evaluate(() => document.fonts.ready);
     const uit = await pagina.evaluate(() => ({
@@ -3544,6 +3556,31 @@ describe('de agenda waarschuwt bij een te volle dag', alsGebouwd, () => {
     ]);
     assert.match(uit.tekst, /Past niet op een dag/i);
     assert.equal(uit.breed, 390, `de pagina is ${uit.breed} pixels breed geworden`);
+  });
+
+  test('twee luistersessies op een dag geven geen melding', async () => {
+    /* Een luistersessie weet zijn duur in minuten, een inbouw in uren. De
+       terugval "weet ik niet, reken een werkdag" pakte die sessies op, en dan
+       telde drie kwartier praten voor acht uur. Twee sessies op een dag werden
+       zo gemeld als zestien uur. */
+    const uit = await opAgenda([], [
+      { id: 's1', voornaam: 'Anja', kenteken: 'XX99XX', datum: overDagenISO(18), tijd: '10:00', duurMinuten: 45 },
+      { id: 's2', voornaam: 'Bert', kenteken: 'YY88YY', datum: overDagenISO(18), tijd: '14:00', duurMinuten: 45 },
+    ]);
+    assert.equal(uit.tekst, '', `anderhalf uur praten wordt gemeld: "${uit.tekst}"`);
+    assert.deepEqual(uit.fouten, []);
+  });
+
+  test('een volle dag met een luistersessie erbij leest als Nederlands', async () => {
+    // "8.75 uur" en "0.75u" leest niemand; het moet uren en minuten zijn.
+    const uit = await opAgenda([klus('2026-061', 'Ronald Bos', 19, 8)], [
+      { id: 's3', voornaam: 'Peter', kenteken: 'XX99XX', datum: overDagenISO(19), tijd: '16:00', duurMinuten: 45 },
+    ]);
+    assert.match(uit.tekst, /Past niet op een dag/i, `geen melding: "${uit.tekst}"`);
+    assert.match(uit.tekst, /8 uur en 45 minuten/, `de uren lezen niet: "${uit.tekst}"`);
+    assert.match(uit.tekst, /Peter \(45 minuten\)/, `de sessie leest niet: "${uit.tekst}"`);
+    assert.doesNotMatch(uit.tekst, /8\.75|0\.75/, 'er staat een punt-getal in de tekst');
+    assert.deepEqual(uit.fouten, []);
   });
 
   test('een lege agenda geeft geen melding', async () => {

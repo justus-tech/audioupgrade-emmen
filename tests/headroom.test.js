@@ -30,6 +30,7 @@ import {
 } from '../src/lib/headroom/voorwaarden.js';
 import {
   agenda, agendaItem, bestelUiterlijk, dagenTussen, opMiddernacht, hoeLangNog, drukkeDagen,
+  urenVanItem,
   icsVoorKlus, icsBestandsnaam, icsTekst, vouwOp, ontvouw, werkBlok,
   googleAgendaLink, googleLinksVoorKlus, googleEmbedUrl,
 } from '../src/lib/headroom/agenda.js';
@@ -1981,6 +1982,76 @@ describe('dagen waarop meer staat dan erin past', () => {
     const uit = druk([zonderUren, klus('2026-060', 'Gerda', dagNa(6), 4)]);
     assert.equal(uit.length, 1, 'een offerte zonder uren telt als nul in plaats van een dag');
     assert.equal(uit[0].uren, 12);
+  });
+
+  /**
+   * EEN LUISTERSESSIE IS GEEN WERKDAG.
+   *
+   * Dit ging mis zodra de melding er stond. Een inbouw weet zijn duur in uren,
+   * een luistersessie in minuten — en die laatste heeft dus geen `uren`-veld.
+   * De terugval "weet ik niet, reken een werkdag" pakte dat op.
+   *
+   * Nagespeeld: twee luistersessies op een dag zijn samen anderhalf uur, maar
+   * de app meldde zestien uur. Een klus van vier uur met een luistersessie
+   * erbij is vier uur drie kwartier; daar maakte de app twaalf uur van en
+   * zette er een waarschuwing bij. Precies het zeuren dat deze melding niet
+   * mag doen — en dus de snelste manier om hem waardeloos te maken.
+   */
+  test('twee luistersessies op een dag zijn geen zestien uur', () => {
+    const sessies = luistersessieItems([
+      { id: 's1', voornaam: 'Anja', kenteken: 'XX99XX', datum: '2026-11-24', tijd: '10:00', duurMinuten: 45 },
+      { id: 's2', voornaam: 'Bert', kenteken: 'YY88YY', datum: '2026-11-24', tijd: '14:00', duurMinuten: 45 },
+    ], VANDAAG);
+    assert.deepEqual(drukkeDagen(sessies), [],
+      'anderhalf uur aan gesprekken wordt gemeld als een te volle dag');
+  });
+
+  test('een klus van vier uur met een luistersessie erbij past gewoon', () => {
+    const items = [
+      ...agenda([klus('2026-061', 'Mark', new Date(2026, 10, 24), 4)], INST, VANDAAG),
+      ...luistersessieItems([
+        { id: 's3', voornaam: 'Sanne', kenteken: 'XX99XX', datum: '2026-11-24', tijd: '14:00', duurMinuten: 45 },
+      ], VANDAAG),
+    ];
+    assert.deepEqual(drukkeDagen(items), []);
+  });
+
+  test('een volle dag met een luistersessie erbij wordt wel gemeld', () => {
+    // Acht uur inbouwen en dan ook nog een klant op bezoek past niet.
+    const items = [
+      ...agenda([klus('2026-062', 'Ronald', new Date(2026, 10, 24), 8)], INST, VANDAAG),
+      ...luistersessieItems([
+        { id: 's4', voornaam: 'Peter', kenteken: 'XX99XX', datum: '2026-11-24', tijd: '16:00', duurMinuten: 45 },
+      ], VANDAAG),
+    ];
+    const uit = drukkeDagen(items);
+    assert.equal(uit.length, 1, 'acht uur plus een sessie wordt niet gemeld');
+    assert.equal(uit[0].uren, 8.75, `er staat ${uit[0].uren} uur gemeld`);
+  });
+
+  test('een klus die op zondag begint telt zijn eigen dag wel mee', () => {
+    /* De lus sloeg elke zondag over, ook de dag waarop de klus zelf begint.
+       De uren van die dag verdwenen dan uit de telling. Dat kwam aan het licht
+       doordat een browsertest omviel zodra zijn datum op een weekend viel: de
+       ene dag meldde hij de botsing, de andere dag niet. 22 november 2026 is
+       een zondag. */
+    const zondag = new Date(2026, 10, 22);
+    const uit = drukkeDagen(agenda([
+      klus('2026-070', 'Mark', zondag, 6),
+      klus('2026-071', 'Sanne', zondag, 4),
+    ], INST, VANDAAG));
+    assert.equal(uit.length, 1, 'tien uur op een zondag wordt niet gezien');
+    assert.equal(uit[0].uren, 10);
+    assert.equal(uit[0].datum.getDay(), 0, 'de gemelde dag is geen zondag');
+  });
+
+  test('urenVanItem kiest de juiste maat', () => {
+    assert.equal(urenVanItem({ duurMinuten: 45 }), 0.75, 'minuten worden niet gelezen');
+    assert.equal(urenVanItem({ uren: 6 }), 6);
+    assert.equal(urenVanItem({}), 8, 'onbekend hoort een werkdag te zijn');
+    assert.equal(urenVanItem({ uren: 0 }), 8);
+    /* Staan ze er allebei, dan wint de minuten-maat: die is preciezer. */
+    assert.equal(urenVanItem({ duurMinuten: 30, uren: 8 }), 0.5);
   });
 
   test('een lege agenda geeft niets', () => {

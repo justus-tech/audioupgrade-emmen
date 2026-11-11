@@ -1728,12 +1728,25 @@ import { APP } from '../data/app.js';
      * Alleen melden als het echt niet past: twee klussen van twee uur op een
      * dag is een goed ingedeelde ochtend en middag, geen fout.
      */
+    /**
+     * Uren zoals je ze uitspreekt. "8.75 uur" leest niemand, en een
+     * luistersessie noem je in minuten en niet in 0,75 uur.
+     */
+    const uurTekst = (n) => {
+      const minuten = Math.round(Number(n) * 60);
+      const uur = Math.floor(minuten / 60);
+      const rest = minuten % 60;
+      if (!uur) return `${rest} minuten`;
+      const uurDeel = `${uur} uur`;
+      return rest ? `${uurDeel} en ${rest} minuten` : uurDeel;
+    };
+
     const druk = drukkeDagen([...klussen, ...sessies].filter((i) => i.dagen >= 0));
     $('#wb-agenda-druk').innerHTML = druk.length
       ? `<div class="wb-kaart wb-dringend"><span class="eyebrow">Past niet op een dag</span>`
         + druk.map((d) => {
-          const wie = d.klussen.map((k) => `${ontsnap(k.wie)} (${k.uren} uur)`).join(' en ');
-          return `<p>Op <strong>${ontsnap(datumNl(d.datum))}</strong> staat ${d.uren} uur werk: `
+          const wie = d.klussen.map((k) => `${ontsnap(k.wie)} (${uurTekst(k.uren)})`).join(' en ');
+          return `<p>Op <strong>${ontsnap(datumNl(d.datum))}</strong> staat ${uurTekst(d.uren)} werk: `
             + `${wie}. Een werkdag is 8 uur. Zet er een op een andere dag, of zeg de klant `
             + `vooraf dat het later wordt.</p>`;
         }).join('')

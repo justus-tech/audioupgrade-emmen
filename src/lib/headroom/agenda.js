@@ -168,6 +168,29 @@ export function agenda(offertes = [], inst = {}, vandaag = new Date()) {
  * openingstijden zijn er bewust niet in verwerkt: die gaan over wanneer een
  * klant langs kan komen, niet over hoe lang Justus in de werkplaats staat.
  */
+export function urenVanItem(item = {}, dagUren = 8) {
+  /**
+   * EEN LUISTERSESSIE IS GEEN WERKDAG.
+   *
+   * Dit ging mis zodra de melding er stond. Een inbouw weet zijn duur in uren,
+   * een luistersessie in minuten — en die laatste heeft dus geen `uren`-veld.
+   * De terugval "weet ik niet, reken een werkdag" pakte dat op, en dan telde
+   * een gesprek van drie kwartier voor acht uur mee.
+   *
+   * Nagespeeld: twee luistersessies op een dag zijn samen anderhalf uur, maar
+   * de app meldde zestien uur. En een klus van vier uur met een luistersessie
+   * erbij is vier uur drie kwartier; de app maakte er twaalf uur van en zette
+   * er een waarschuwing bij. Precies het zeuren dat deze melding niet mag
+   * doen.
+   *
+   * Nu geldt de terugval alleen waar de duur echt onbekend is: een inbouw
+   * zonder uren in de offerte.
+   */
+  if (Number(item.duurMinuten) > 0) return Number(item.duurMinuten) / 60;
+  const uren = Math.max(0, Number(item.uren) || 0);
+  return uren > 0 ? uren : Math.max(1, Number(dagUren) || 8);
+}
+
 export function drukkeDagen(klussen = [], { dagUren = 8 } = {}) {
   const perDag = Math.max(1, Number(dagUren) || 8);
   /* Per dag: hoeveel uur erop staat en welke klussen dat zijn. */
@@ -175,14 +198,25 @@ export function drukkeDagen(klussen = [], { dagUren = 8 } = {}) {
 
   for (const klus of klussen) {
     if (!klus || !klus.datum) continue;
-    const blok = werkBlok(klus.datum, klus.tijd, klus.uren, { dagUren: perDag });
-    const totaal = Math.max(0, Number(klus.uren) || 0) || perDag;
+    const totaal = urenVanItem(klus, perDag);
+    const blok = werkBlok(klus.datum, klus.tijd, totaal, { dagUren: perDag });
 
     const dag = opMiddernacht(klus.datum);
     let over = totaal;
+    let eerste = true;
     while (dag && over > 0 && dag <= blok.eindDatum) {
-      /* Zondag slaan we over, net als werkBlok: dan is de werkplaats dicht. */
-      if (dag.getDay() !== 0) {
+      /**
+       * Zondag slaat hij over, want dan is de werkplaats dicht — behalve als
+       * de klus zelf op een zondag begint. Dat laat werkBlok() ook staan: die
+       * dag heeft Justus zelf gekozen, en dan is het niet aan deze rekensom om
+       * te zeggen dat hij niet bestaat.
+       *
+       * Zonder die uitzondering verdwenen de uren van een zondagklus uit de
+       * telling. Dat kwam aan het licht doordat een test omviel zodra de datum
+       * erin op een weekend viel: de ene dag meldde hij de botsing, de andere
+       * dag niet.
+       */
+      if (eerste || dag.getDay() !== 0) {
         const sleutel = dag.toISOString().slice(0, 10);
         const bestaand = dagen.get(sleutel) || { datum: new Date(dag), uren: 0, klussen: [] };
         const vandaag = Math.min(perDag, over);
@@ -191,11 +225,16 @@ export function drukkeDagen(klussen = [], { dagUren = 8 } = {}) {
         dagen.set(sleutel, bestaand);
         over -= vandaag;
       }
+      eerste = false;
       dag.setDate(dag.getDate() + 1);
     }
   }
 
+  /* Afronden op twee decimalen: optellen van kwartieren geeft anders
+     8.749999999999998, en dat wil je nergens zien staan. */
+  const rond = (n) => Math.round(n * 100) / 100;
   return [...dagen.values()]
+    .map((d) => ({ ...d, uren: rond(d.uren), klussen: d.klussen.map((k) => ({ ...k, uren: rond(k.uren) })) }))
     .filter((d) => d.uren > perDag && d.klussen.length > 1)
     .sort((a, b) => a.datum - b.datum);
 }
