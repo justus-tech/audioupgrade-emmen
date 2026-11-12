@@ -4199,6 +4199,65 @@ describe('korting en eindfactuur', alsGebouwd, () => {
     await pagina.close();
   });
 
+  /**
+   * ALLEEN DE AANBETALING BLIJFT STAAN ALS "AL BETAALD".
+   *
+   * In de app staat precies daarvoor een beschermingsregel, met de uitleg
+   * erbij. Alleen: haal je hem weg, dan bleven alle 1104 tests groen. Dat is
+   * nagegaan door hem er echt uit te halen en de hele ronde te draaien.
+   *
+   * Wat er dan misgaat zit niet op het scherm maar in de opslag, en komt pas
+   * terug op het tabblad Rapport. De eindfactuur zou dan in offerte.factuur
+   * komen, en "wat moet er nog binnenkomen" rekent met offertetotaal min dat
+   * bedrag. Doorgerekend met een offerte van EUR 3.139,95 en 30% aanbetaling:
+   * er zou EUR 941,99 openstaan — precies de aanbetaling die al bínnen is —
+   * in plaats van de EUR 2.197,96 van de eindfactuur die nog moet komen.
+   *
+   * Deze test kijkt dus naar de opslag, en niet naar wat er op het scherm
+   * staat: daar was het namelijk niet aan te zien.
+   */
+  test('na de eindfactuur staat de aanbetaling nog steeds als al betaald', async () => {
+    const { pagina, fouten } = await open();
+    await pagina.fill('#wb-aanbetaling-pct', '30');
+    await pagina.waitForTimeout(150);
+
+    const eerste = pagina.waitForEvent('download');
+    await pagina.click('#wb-factuur');
+    await eerste;
+
+    /* De offerte staat bij het bewaren in de lijst, en zolang je eraan werkt
+       ook als concept. Pak hem waar hij staat, op nummer. */
+    const offerteUitOpslag = (pagina) => pagina.evaluate(() => {
+      const s = JSON.parse(localStorage.getItem('aue-werkbak-v1') || '{}');
+      const uit = [...(s.offertes || []), s.concept].filter(Boolean);
+      return uit.find((o) => o.facturen?.length) || uit.find((o) => o.factuur) || uit[0] || null;
+    });
+    const naAanbetaling = (await offerteUitOpslag(pagina))?.factuur || null;
+    assert.ok(naAanbetaling, 'de aanbetaling is niet onthouden');
+    assert.equal(naAanbetaling.inclCent, 20850, 'de aanbetaling van EUR 208,50 staat er niet');
+
+    await pagina.click('[data-factuur="eind"]');
+    await pagina.waitForTimeout(200);
+    const tweede = pagina.waitForEvent('download');
+    await pagina.click('#wb-factuur');
+    await tweede;
+
+    const bewaard = await offerteUitOpslag(pagina);
+    const naEind = { factuur: bewaard?.factuur || null, facturen: bewaard?.facturen || [] };
+
+    assert.equal(
+      naEind.factuur.inclCent, 20850,
+      `offerte.factuur is overschreven met EUR ${(naEind.factuur.inclCent / 100).toFixed(2)}; `
+      + 'dan rekent het rapport de al betaalde aanbetaling als openstaand'
+    );
+    /* En allebei de facturen moeten wel teruggevonden kunnen worden. */
+    assert.equal(naEind.facturen.length, 2, 'niet allebei de facturen zijn onthouden');
+    assert.deepEqual(naEind.facturen.map((f) => f.soort), ['aanbetaling', 'eind']);
+    assert.deepEqual(naEind.facturen.map((f) => f.inclCent), [20850, 48650]);
+    assert.deepEqual(fouten, []);
+    await pagina.close();
+  });
+
   test('het percentage verdwijnt als je geen aanbetaling maakt', async () => {
     const { pagina } = await open();
     assert.equal(await pagina.isVisible('#wb-pct-veld'), true);
