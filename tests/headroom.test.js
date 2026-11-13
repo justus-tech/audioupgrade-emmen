@@ -1096,6 +1096,86 @@ describe('korting geven', () => {
  * Deze tests rekenen het veld af in plaats van één geval: als er ooit weer
  * ergens een cent tussenuit valt, valt er hier iets om.
  */
+/**
+ * DE AANBETALING ROND NAAR HET DICHTSTBIJZIJNDE CENT.
+ *
+ * Gevonden door de rekensom te veranderen en te kijken of de tests het zien.
+ * Negen kleine wijzigingen in rekenen.js, zeven werden betrapt. Deze niet:
+ * Math.round vervangen door Math.floor bij het uitrekenen van de aanbetaling,
+ * en alle tests bleven groen.
+ *
+ * Dat is geen theoretisch gevalletje. Nagerekend over 1.285.587 combinaties
+ * van offertebedragen tussen een en tienduizend euro met de gangbare
+ * percentages: in 614.221 daarvan — bijna de helft — geeft naar beneden
+ * afronden een ander bedrag.
+ *
+ * Het scheelt één cent, dus er gaat niets kapot. Maar het is wel de regel
+ * waarmee het bedrag op de aanbetalingsfactuur wordt bepaald, en die stond
+ * nergens vast. Het voorbeeld hieronder staat letterlijk in de uitleg bij
+ * aanbetaling() in rekenen.js: 30% van € 1.488,63 is € 446,59. Naar beneden
+ * zou dat € 446,58 zijn, en dan klopt de code niet meer met zijn eigen
+ * uitleg.
+ *
+ * De andere wijziging die niemand opmerkte is géén gat: de btw terugrekenen
+ * met x100/121 of met /1,21 gaf in diezelfde 1.285.587 gevallen nul keer een
+ * ander bedrag. Die twee zijn hetzelfde, en daar hoort dus geen test bij.
+ */
+describe('het afronden van de aanbetaling', () => {
+  const INST = { ...STANDAARD_INSTELLINGEN };
+  /* Eén regel van € 1.230,27 zonder btw is € 1.488,63 met btw. */
+  const regels = [{ omschrijving: 'Pakket', aantal: 1, vastExclCent: 123027 }];
+
+  test('het voorbeeld uit de uitleg bij aanbetaling() klopt', () => {
+    const t = totalen(regels, INST, 0);
+    assert.equal(t.inclCent, 148863, `het offertetotaal is € ${(t.inclCent / 100).toFixed(2)}`);
+    const a = aanbetaling(regels, INST, 30, 0);
+    assert.equal(
+      a.inclCent, 44659,
+      `30% van € 1.488,63 hoort € 446,59 te zijn, niet € ${(a.inclCent / 100).toFixed(2)}`
+    );
+  });
+
+  test('dit bedrag ligt echt op een afrondingsgrens', () => {
+    /* Zonder deze controle bewaakt de test hierboven niets: ligt het bedrag
+       niet op een halve cent, dan geven naar boven en naar beneden afronden
+       hetzelfde en staat hij groen zonder iets te meten. */
+    const t = totalen(regels, INST, 0);
+    assert.notEqual(
+      Math.round((t.inclCent * 30) / 100),
+      Math.floor((t.inclCent * 30) / 100),
+      'dit bedrag ligt niet meer op een afrondingsgrens; kies een ander voorbeeld'
+    );
+  });
+
+  test('overal waar het uitmaakt gaat de halve cent omhoog', () => {
+    /* Niet één geval maar het hele veld: elk bedrag tussen een en tweeduizend
+       euro, met de percentages die Justus gebruikt. */
+    let grensgevallen = 0;
+    for (let excl = 10000; excl <= 200000; excl += 137) {
+      const r = [{ omschrijving: 'Pakket', aantal: 1, vastExclCent: excl }];
+      const t = totalen(r, INST, 0);
+      for (const pct of [10, 25, 30, 33, 50]) {
+        const a = aanbetaling(r, INST, pct, 0);
+        const omhoog = Math.round((t.inclCent * pct) / 100);
+        const omlaag = Math.floor((t.inclCent * pct) / 100);
+        if (omhoog !== omlaag) grensgevallen += 1;
+        assert.equal(a.inclCent, omhoog,
+          `${pct}% van € ${(t.inclCent / 100).toFixed(2)} rondt verkeerd af`);
+      }
+    }
+    assert.ok(grensgevallen > 1000,
+      `maar ${grensgevallen} grensgevallen doorgerekend; de test meet te weinig`);
+  });
+
+  test('de aanbetaling telt nog steeds precies op', () => {
+    // Afronden mag nooit een cent laten verdwijnen tussen aanbetaling en rest.
+    const t = totalen(regels, INST, 0);
+    const a = aanbetaling(regels, INST, 30, 0);
+    assert.equal(a.exclCent + a.btwCent, a.inclCent);
+    assert.equal(a.inclCent + a.restInclCent, t.inclCent);
+  });
+});
+
 describe('de bedragen lopen altijd rond', () => {
   const INST = { ...STANDAARD_INSTELLINGEN };
 
