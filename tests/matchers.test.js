@@ -199,6 +199,45 @@ describe('de patronen onderling', () => {
     return [...new Set(uit)];
   }
 
+  /**
+   * GEEN ENKEL PATROON MAG OP EEN LEEG MODELVELD MATCHEN.
+   *
+   * In matchAuto() staat `if (!benaming) return null;` — stoppen zodra de RDW
+   * geen handelsbenaming teruggeeft. Die regel is weggehaald om te kijken of
+   * de tests het zien, en dat zagen ze niet. Dat bleek terecht: geen van de
+   * 150 patronen matcht op een lege tekst, dus matchAuto geeft dan toch al
+   * niets terug. Die regel is vandaag dus overbodig, en een test die hem
+   * bewaakt zou groen staan zonder iets te meten.
+   *
+   * Wat die regel wél overbodig hóudt, is deze test. Een patroon waarin alles
+   * optioneel is — iets als /X?/ of /(16|18)?/ — matcht namelijk ook een lege
+   * tekst. Komt zo'n patroon erbij, dan krijgt een auto waarvan de RDW het
+   * model niet kent zomaar een modelpagina toegewezen, met de speakermaten en
+   * de stekker van een heel andere auto erop.
+   *
+   * Zo'n patroon is ook op andere manieren te los, dus dit vangt meer dan
+   * alleen dat ene geval.
+   */
+  test('geen enkel patroon matcht een leeg modelveld', () => {
+    const tePloos = [];
+    for (const m of MODELS) {
+      const re = m.matchers.model instanceof RegExp
+        ? m.matchers.model
+        : new RegExp(m.matchers.model);
+      if (re.test('')) tePloos.push(`${m.slug}: ${String(re)}`);
+      /* Een spatie of een streepje is net zo goed "niets ingevuld". */
+      for (const leeg of [' ', '-', '  ']) {
+        if (re.test(leeg)) tePloos.push(`${m.slug} matcht "${leeg}": ${String(re)}`);
+      }
+    }
+    assert.deepEqual(
+      tePloos, [],
+      'deze patronen zijn te los; een auto zonder modelnaam krijgt dan een '
+      + 'willekeurige pagina met de verkeerde speakermaten'
+    );
+    assert.ok(MODELS.length > 100, `maar ${MODELS.length} modellen nagekeken`);
+  });
+
   test('ook de schrijfwijzen uit de patronen zelf matchen één pagina', () => {
     const dubbel = [];
     const elders = [];
