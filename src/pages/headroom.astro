@@ -937,9 +937,21 @@ import { APP } from '../data/app.js';
 <div class="wb-print" id="wb-print" aria-hidden="true"></div>
 
 {/* De belangrijkste knop staat altijd binnen duimbereik. */}
+{/**
+  * DE BALK ZEGT WAAR HET BEDRAG OVER GAAT.
+  *
+  * Er stond alleen "Totaal". Deze balk blijft op elk tabblad staan, en op het
+  * tabblad Rapport leverde dat een scherm op dat zichzelf tegensprak: boven
+  * stond "Omzet incl. btw € 5.203,00" en onderaan, in het grootste
+  * geldlettertype van de pagina, "Totaal € 0,00". Dat laatste is de
+  * offerte waar je aan werkt, maar zo leest het niet.
+  *
+  * De balk zelf blijft staan: hij hoort bij de offerte die open ligt en moet
+  * overal bereikbaar zijn. Alleen het woord erboven zegt nu waar het over gaat.
+  */}
 <div class="wb-balk">
   <div class="wb-balk-som">
-    <span>Totaal</span>
+    <span>Deze offerte</span>
     <strong id="wb-totaal">€ 0,00</strong>
   </div>
   <button type="button" class="btn solid" id="wb-pdf">Pdf &amp; versturen</button>

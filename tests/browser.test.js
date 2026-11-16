@@ -3477,6 +3477,70 @@ describe('het bedradingsplan houdt de legenda bij het schema', alsGebouwd, () =>
  * De rekensom zelf staat in headroom.test.js. Deze tests kijken of Justus het
  * ook echt ziet staan op het tabblad Agenda, op zijn telefoon.
  */
+/**
+ * DE BALK ONDERAAN ZEGT WAAR ZIJN BEDRAG OVER GAAT.
+ *
+ * Die balk blijft op elk tabblad staan. Er stond alleen "Totaal", en op het
+ * tabblad Rapport leverde dat een scherm op dat zichzelf tegensprak: boven
+ * "Omzet incl. btw € 5.203,00", onderaan in het grootste geldlettertype van
+ * de pagina "Totaal € 0,00". Dat laatste is de offerte waar je aan werkt.
+ * Nagespeeld met twee betaalde klussen en geen offerte in bewerking.
+ */
+describe('de balk onderaan', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+
+  async function opTabblad(tab, offertes = []) {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    pagina.on('dialog', (venster) => venster.accept());
+    await pagina.goto(`${paginaUrl('headroom')}?tab=${tab}`);
+    await pagina.evaluate((o) => {
+      const s = JSON.parse(localStorage.getItem('aue-werkbak-v1') || '{}');
+      s.offertes = o;
+      s.concept = null;
+      localStorage.setItem('aue-werkbak-v1', JSON.stringify(s));
+    }, offertes);
+    await pagina.reload();
+    await pagina.evaluate(() => document.fonts.ready);
+    const uit = await pagina.evaluate(() => {
+      const som = document.querySelector('.wb-balk-som');
+      const balk = document.querySelector('.wb-balk');
+      return {
+        label: som?.querySelector('span')?.textContent?.trim() || '',
+        bedrag: som?.querySelector('strong')?.textContent?.trim() || '',
+        opEenRegel: balk ? balk.scrollWidth <= balk.clientWidth + 1 : false,
+        paginaBreed: document.documentElement.scrollWidth,
+      };
+    });
+    await pagina.close();
+    return { ...uit, fouten };
+  }
+
+  test('het bedrag heet niet zomaar "Totaal"', async () => {
+    /* Op het tabblad Rapport staat het naast de omzetcijfers, en dan leest
+       "Totaal" als het totaal van die cijfers. */
+    const uit = await opTabblad('rapport');
+    assert.notEqual(uit.label.toLowerCase(), 'totaal',
+      'de balk zegt "Totaal" naast de omzetcijfers; dat leest als de omzet');
+    assert.match(uit.label.toLowerCase(), /offerte/,
+      `er hoort "offerte" in te staan, er staat "${uit.label}"`);
+    assert.deepEqual(uit.fouten, []);
+  });
+
+  test('het label past op een telefoon, naast de knop', async () => {
+    const uit = await opTabblad('offerte');
+    assert.ok(uit.opEenRegel, 'de balk loopt over; het label is te lang geworden');
+    assert.equal(uit.paginaBreed, 390, `de pagina is ${uit.paginaBreed} pixels breed`);
+  });
+
+  test('hij staat ook op het tabblad Offerte, waar hij hoort', async () => {
+    const uit = await opTabblad('offerte');
+    assert.match(uit.bedrag, /€/, 'er staat geen bedrag in de balk');
+    assert.match(uit.label.toLowerCase(), /offerte/);
+  });
+});
+
 describe('de agenda waarschuwt bij een te volle dag', alsGebouwd, () => {
   const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 
