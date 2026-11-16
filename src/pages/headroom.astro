@@ -720,6 +720,8 @@ import { APP } from '../data/app.js';
     <div class="wb-kaart">
       <span class="eyebrow">Wie en welke auto</span>
       <button type="button" class="wb-link" id="mr-uit-offerte">Overnemen uit de offerte waar je aan werkt</button>
+      {/* Wat die knop heeft gedaan. Zonder dit gebeurde er zichtbaar niets. */}
+      <p class="wb-uitleg" id="mr-overgenomen" hidden></p>
       <div class="wb-veldrij">
         <label>Rapportnummer
           <input type="text" id="mr-nummer" placeholder="26-001" />
@@ -3394,13 +3396,35 @@ import { APP } from '../data/app.js';
     o?.auto?.kenteken || o?.auto?.merk || o?.inbouwdatum || o?.opmerking
   );
 
+  /**
+   * DE DATUM VAN DE OFFERTE ALS TEKST, EN NOOIT MET EEN FOUT.
+   *
+   * Hier stond `offerte.datum.toISOString()`, zonder iets eromheen. Is die
+   * datum er niet of is hij onleesbaar, dan gooit dat "Invalid time value" —
+   * en dan stopt bewaarConcept() of bewaarOfferte() halverwege.
+   *
+   * Dat is geen schoonheidsfoutje. Nagespeeld met een concept zonder datum in
+   * de opslag, zoals dat uit een oudere reservekopie kan komen: je typt een
+   * naam, je ziet hem op het scherm staan, en in de opslag verandert er
+   * niets. De opslag bleef op 299 tekens staan. Je werk is weg zodra je de
+   * app sluit, en het enige teken is een foutmelding die je op een telefoon
+   * nooit te zien krijgt.
+   *
+   * Een offerte zonder datum bestaat niet, dus vandaag is hier het eerlijke
+   * antwoord: dat is de dag waarop je eraan werkt.
+   */
+  function datumTekst(waarde) {
+    const d = waarde instanceof Date ? waarde : new Date(waarde);
+    return (Number.isNaN(d.getTime()) ? new Date() : d).toISOString();
+  }
+
   function bewaarConcept() {
     /* Een echte kopie, geen verwijzing. Met alleen { ...offerte } deelden het
        concept en de offerte hetzelfde bedradingsplan: een wijziging daarin
        veranderde het concept dus al mee, de vergelijking hieronder zag
        "niets veranderd" en er werd niets weggeschreven. */
     const nieuwConcept = heeftInhoud(offerte)
-      ? JSON.parse(JSON.stringify({ ...offerte, datum: offerte.datum.toISOString() }))
+      ? JSON.parse(JSON.stringify({ ...offerte, datum: datumTekst(offerte.datum) }))
       : null;
     /* Niets veranderd? Dan ook niet schrijven. Anders staat de app bij elke
        toetsaanslag de hele opslag opnieuw weg te zetten. */
@@ -3432,7 +3456,9 @@ import { APP } from '../data/app.js';
       staat.instellingen.volgnummer = n + 1;
     }
 
-    const plat = { ...offerte, datum: offerte.datum.toISOString() };
+    /* Zelfde verhaal als bij bewaarConcept(): een onleesbare datum mag het
+       bewaren niet laten omvallen. */
+    const plat = { ...offerte, datum: datumTekst(offerte.datum) };
     if (i >= 0) staat.offertes[i] = plat;
     else staat.offertes.unshift(plat);
     staat.offertes = staat.offertes.slice(0, 200);
@@ -4093,13 +4119,28 @@ import { APP } from '../data/app.js';
    * Scheelt overtypen én typefouten in een kenteken. De regels van de offerte
    * worden meteen de systeemtabel: dat is precies wat erin gaat.
    */
+  /**
+   * OVERNEMEN UIT DE OFFERTE — EN ZEGGEN WAT ER IS OVERGENOMEN.
+   *
+   * Deze knop vulde de velden stilletjes. Stond er niets in de offerte waar je
+   * aan werkt — of lag er helemaal geen offerte open — dan gebeurde er
+   * zichtbaar níéts: geen veld dat verandert, geen melding. Dan tik je nog
+   * eens, en nog eens, en vraag je je af of de app stuk is.
+   *
+   * Nu staat er onder de knop wat hij heeft overgenomen, of waarom er niets
+   * te halen viel.
+   */
   $('#mr-uit-offerte').addEventListener('click', () => {
+    const overgenomen = [];
     const naam = offerte.klant?.naam || offerte.klant?.bedrijf || '';
-    if (naam) meting.klant = naam;
-    if (offerte.auto?.kenteken) meting.kenteken = offerte.auto.kenteken;
+    if (naam) { meting.klant = naam; overgenomen.push(naam); }
+    if (offerte.auto?.kenteken) {
+      meting.kenteken = offerte.auto.kenteken;
+      overgenomen.push(String(offerte.auto.kenteken).toUpperCase());
+    }
     if (offerte.auto?.bouwjaar) meting.bouwjaar = String(offerte.auto.bouwjaar);
     const auto = autoNaam(offerte.auto?.merk, offerte.auto?.model);
-    if (auto) meting.auto = auto;
+    if (auto) { meting.auto = auto; overgenomen.push(auto); }
 
     /* De regels van de offerte als systeemtabel. Alleen wat er echt in de auto
        komt: kabels en montagemateriaal zegt de klant niets. */
@@ -4120,6 +4161,19 @@ import { APP } from '../data/app.js';
        geluidsrapport; anders het accurapport. */
     const passend = rapportenVoor(soortenIn(offerte.regels || []));
     if (passend.length && !passend.some((r) => r.id === meting.soort)) meting.soort = passend[0].id;
+
+    if (uitOfferte.length) {
+      overgenomen.push(`${uitOfferte.length} ${uitOfferte.length === 1 ? 'onderdeel' : 'onderdelen'}`);
+    }
+
+    const vak = $('#mr-overgenomen');
+    if (vak) {
+      vak.hidden = false;
+      vak.textContent = overgenomen.length
+        ? `Overgenomen: ${overgenomen.join(' \u00b7 ')}.`
+        : 'Er valt nog niets over te nemen. Vul op het tabblad Offerte eerst een '
+          + 'klant of een kenteken in, of open een bewaarde offerte.';
+    }
 
     bewaarMeting();
     vulMeting();

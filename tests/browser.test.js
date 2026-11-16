@@ -3486,6 +3486,164 @@ describe('het bedradingsplan houdt de legenda bij het schema', alsGebouwd, () =>
  * de pagina "Totaal € 0,00". Dat laatste is de offerte waar je aan werkt.
  * Nagespeeld met twee betaalde klussen en geen offerte in bewerking.
  */
+/**
+ * EEN OFFERTE ZONDER LEESBARE DATUM MAG HET BEWAREN NIET BREKEN.
+ *
+ * bewaarConcept() en bewaarOfferte() riepen allebei
+ * `offerte.datum.toISOString()` aan zonder iets eromheen. Is die datum er niet
+ * of is hij onleesbaar, dan gooit dat "Invalid time value" en stopt het
+ * bewaren halverwege.
+ *
+ * Nagespeeld met een concept zonder datum in de opslag, zoals dat uit een
+ * oudere reservekopie kan komen: je typt een naam, je ziet hem op het scherm
+ * staan, en in de opslag verandert niets — die bleef op 299 tekens. Je werk is
+ * weg zodra je de app sluit, en het enige teken is een foutmelding die je op
+ * een telefoon nooit te zien krijgt.
+ */
+describe('bewaren met een kapotte datum', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+
+  const ZONDER_DATUM = {
+    id: 'o1', nummer: '2026-040', status: 'concept',
+    klant: { naam: 'Mark de Vries', telefoon: '0612345678' },
+    auto: { merk: 'Volkswagen', model: 'Golf', kenteken: 'XX99XX' },
+    regels: [{ id: 'r1', omschrijving: 'Composet voor', aantal: 1, vastExclCent: 50000, toebehoren: [] }],
+  };
+
+  async function metConcept(concept) {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    pagina.on('dialog', (venster) => venster.accept());
+    await pagina.goto(`${paginaUrl('headroom')}?tab=offerte`);
+    await pagina.evaluate((c) => {
+      const s = JSON.parse(localStorage.getItem('aue-werkbak-v1') || '{}');
+      s.offertes = [];
+      s.concept = c;
+      localStorage.setItem('aue-werkbak-v1', JSON.stringify(s));
+    }, concept);
+    await pagina.reload();
+    await pagina.evaluate(() => document.fonts.ready);
+    await pagina.fill('#wb-naam', 'Mark de Vries-Jansen');
+    await pagina.locator('#wb-naam').blur();
+    await pagina.waitForTimeout(600);
+    const bewaard = await pagina.evaluate(() =>
+      (localStorage.getItem('aue-werkbak-v1') || '').includes('Mark de Vries-Jansen'));
+    await pagina.close();
+    return { bewaard, fouten };
+  }
+
+  test('zonder datum wordt je werk gewoon bewaard', async () => {
+    const uit = await metConcept(ZONDER_DATUM);
+    assert.ok(uit.bewaard, 'wat je typt komt niet in de opslag; je werk is weg bij het afsluiten');
+    assert.deepEqual(uit.fouten, [], `de app gooit een fout: ${uit.fouten.join(' | ')}`);
+  });
+
+  test('met een onleesbare datum ook', async () => {
+    const uit = await metConcept({ ...ZONDER_DATUM, datum: 'geen datum' });
+    assert.ok(uit.bewaard, 'een onleesbare datum laat het bewaren omvallen');
+    assert.deepEqual(uit.fouten, []);
+  });
+
+  test('met een gewone datum blijft het gewoon werken', async () => {
+    // Zonder dit zou "alles maar vervangen door vandaag" ook groen staan.
+    const pagina = await browser.newPage(telefoon);
+    pagina.on('dialog', (venster) => venster.accept());
+    await pagina.goto(`${paginaUrl('headroom')}?tab=offerte`);
+    await pagina.evaluate((c) => {
+      const s = JSON.parse(localStorage.getItem('aue-werkbak-v1') || '{}');
+      s.offertes = [];
+      s.concept = c;
+      localStorage.setItem('aue-werkbak-v1', JSON.stringify(s));
+    }, { ...ZONDER_DATUM, datum: '2026-03-04T00:00:00.000Z' });
+    await pagina.reload();
+    await pagina.evaluate(() => document.fonts.ready);
+    await pagina.fill('#wb-naam', 'Sanne Jansen');
+    await pagina.locator('#wb-naam').blur();
+    await pagina.waitForTimeout(600);
+    const datum = await pagina.evaluate(() => {
+      const s = JSON.parse(localStorage.getItem('aue-werkbak-v1') || '{}');
+      return s.concept?.datum || '';
+    });
+    assert.match(datum, /^2026-03-04/, `de datum is veranderd in ${datum}`);
+    await pagina.close();
+  });
+});
+
+/**
+ * "OVERNEMEN UIT DE OFFERTE" ZEGT WAT HIJ HEEFT GEDAAN.
+ *
+ * Die knop vulde de velden stilletjes. Lag er geen offerte open, of stond er
+ * nog geen klant of kenteken in, dan gebeurde er zichtbaar niets: geen veld
+ * dat verandert, geen melding. Dan tik je nog eens, en vraag je je af of de
+ * app stuk is.
+ */
+describe('overnemen uit de offerte', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+
+  async function neemOver(concept) {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    pagina.on('dialog', (venster) => venster.accept());
+    await pagina.goto(`${paginaUrl('headroom')}?tab=meting`);
+    await pagina.evaluate((c) => {
+      const s = JSON.parse(localStorage.getItem('aue-werkbak-v1') || '{}');
+      s.concept = c;
+      s.meting = null;
+      localStorage.setItem('aue-werkbak-v1', JSON.stringify(s));
+    }, concept);
+    await pagina.reload();
+    await pagina.evaluate(() => document.fonts.ready);
+    await pagina.waitForTimeout(500);
+    await pagina.evaluate(() => document.querySelector('#mr-uit-offerte').click());
+    await pagina.waitForTimeout(300);
+    const uit = await pagina.evaluate(() => ({
+      melding: document.querySelector('#mr-overgenomen')?.hidden
+        ? '' : (document.querySelector('#mr-overgenomen')?.textContent || '').trim(),
+      klant: document.querySelector('#mr-klant').value,
+      breed: document.documentElement.scrollWidth,
+    }));
+    await pagina.close();
+    return { ...uit, fouten };
+  }
+
+  test('zonder offerte zegt hij dat er niets over te nemen valt', async () => {
+    const uit = await neemOver(null);
+    assert.notEqual(uit.melding, '', 'er gebeurt zichtbaar niets');
+    assert.match(uit.melding, /niets over te nemen/i, `er staat: "${uit.melding}"`);
+    assert.deepEqual(uit.fouten, []);
+  });
+
+  test('met een klant en een auto noemt hij wat hij heeft overgenomen', async () => {
+    const uit = await neemOver({
+      nummer: '2026-050', datum: '2026-11-16T00:00:00.000Z', regels: [],
+      klant: { naam: 'Mark de Vries' },
+      auto: { merk: 'Volkswagen', model: 'Golf', kenteken: 'XX99XX', bouwjaar: '2018' },
+    });
+    assert.match(uit.melding, /Overgenomen/, `er staat: "${uit.melding}"`);
+    assert.match(uit.melding, /Mark de Vries/);
+    assert.match(uit.melding, /Volkswagen Golf/);
+    assert.equal(uit.klant, 'Mark de Vries', 'het veld is niet gevuld');
+    assert.equal(uit.breed, 390);
+    assert.deepEqual(uit.fouten, []);
+  });
+
+  test('de onderdelen worden erbij geteld', async () => {
+    const uit = await neemOver({
+      nummer: '2026-050', datum: '2026-11-16T00:00:00.000Z',
+      klant: { naam: 'Sanne Jansen' },
+      auto: { merk: 'Saab', model: '9-3', kenteken: '92DJHG', bouwjaar: '1999' },
+      regels: [
+        { id: 'r1', omschrijving: 'Composet voor', soort: 'speakers-voor', aantal: 1, vastExclCent: 50000 },
+        { id: 'r2', omschrijving: 'Musway D8', soort: 'dsp', aantal: 1, vastExclCent: 80000 },
+      ],
+    });
+    assert.match(uit.melding, /2 onderdelen/, `er staat: "${uit.melding}"`);
+    assert.deepEqual(uit.fouten, []);
+  });
+});
+
 describe('de balk onderaan', alsGebouwd, () => {
   const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 
