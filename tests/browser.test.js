@@ -3500,6 +3500,176 @@ describe('het bedradingsplan houdt de legenda bij het schema', alsGebouwd, () =>
  * weg zodra je de app sluit, en het enige teken is een foutmelding die je op
  * een telefoon nooit te zien krijgt.
  */
+/**
+ * AANPASSEN BLIJFT BIJ HET ONDERDEEL DAT JE OPEN HEBT.
+ *
+ * "Aanpassen" onthield het rangnummer van de regel in de lijst. Haal je
+ * daarna een ánder onderdeel weg, dan schuift de lijst op en wijst dat nummer
+ * naar de verkeerde regel.
+ *
+ * Nagespeeld met drie onderdelen: tik "Aanpassen" bij de derde, haal de
+ * eerste weg, verander de naam, tik "Bewaar". De derde stond er daarna nog
+ * precies zoals hij was en de aangepaste versie kwam er als vierde bij. Haal
+ * je er twee weg, dan ontstond er een gat in de lijst dat als `null` in de
+ * opslag belandde — en daar liep de app op stuk.
+ */
+describe('een onderdeel aanpassen terwijl de lijst verschuift', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+
+  const ONDERDEEL = (naam) => ({
+    omschrijving: naam, toelichting: '', soort: 'speakers-voor', merk: 'Gladen',
+    artikelnummer: naam, leverancier: 'Caraudio', inkoopCent: 20000,
+    uren: 2, toebehoren: [],
+  });
+
+  /* Het laatste onderdeel openen, dan `hoeveelWeg` andere weghalen, dan de
+     naam veranderen en bewaren. */
+  async function speel(hoeveelWeg) {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    pagina.on('dialog', (venster) => venster.accept());
+    await pagina.goto(`${paginaUrl('headroom')}?tab=catalogus`);
+    await pagina.evaluate((lijst) => {
+      localStorage.setItem('aue-werkbak-v1', JSON.stringify({ catalogus: lijst }));
+    }, [ONDERDEEL('Eerste'), ONDERDEEL('Tweede'), ONDERDEEL('Derde')]);
+    await pagina.reload();
+    await pagina.evaluate(() => document.fonts.ready);
+
+    const rijen = pagina.locator('#wb-catalogus .wb-regel');
+    await rijen.last().locator('.wb-bewerk').click();
+    for (let k = 0; k < hoeveelWeg; k++) {
+      await pagina.locator('#wb-catalogus .wb-regel').first().locator('.wb-weg').click();
+      await pagina.waitForTimeout(120);
+    }
+    await pagina.fill('#wb-o-naam', 'Derde aangepast');
+    await pagina.click('#wb-o-bewaar');
+    await pagina.waitForTimeout(250);
+
+    const uit = await pagina.evaluate(() => {
+      let lijst = [];
+      try { lijst = JSON.parse(localStorage.getItem('aue-werkbak-v1') || '{}').catalogus || []; }
+      catch (e) { lijst = ['onleesbaar']; }
+      return lijst.map((o) => (o === null ? '(NULL)' : o?.omschrijving ?? '(leeg)'));
+    });
+
+    /* En werkt de app nog als je hem opnieuw opent? */
+    await pagina.reload();
+    await pagina.evaluate(() => document.fonts.ready);
+    await pagina.waitForTimeout(250);
+    const na = await pagina.evaluate(() =>
+      document.querySelectorAll('#wb-catalogus .wb-regel').length);
+    await pagina.close();
+    return { inOpslag: uit, rijenNaOpenen: na, fouten };
+  }
+
+  test('één ander onderdeel weghalen verandert nog steeds de juiste regel', async () => {
+    const uit = await speel(1);
+    assert.deepEqual(uit.inOpslag, ['Tweede', 'Derde aangepast'],
+      `in de opslag staat ${JSON.stringify(uit.inOpslag)}`);
+    assert.deepEqual(uit.fouten, []);
+  });
+
+  test('twee weghalen laat geen gat achter dat de app omlegt', async () => {
+    const uit = await speel(2);
+    assert.ok(!uit.inOpslag.includes('(NULL)'),
+      `er staat een gat in de opslag: ${JSON.stringify(uit.inOpslag)}`);
+    assert.deepEqual(uit.inOpslag, ['Derde aangepast'],
+      `in de opslag staat ${JSON.stringify(uit.inOpslag)}`);
+    assert.equal(uit.rijenNaOpenen, 1, 'na opnieuw openen staat de lijst er niet goed');
+    assert.deepEqual(uit.fouten, []);
+  });
+
+  test('haal je weg wat je open hebt, dan sluit het formulier', async () => {
+    const pagina = await browser.newPage(telefoon);
+    pagina.on('dialog', (venster) => venster.accept());
+    await pagina.goto(`${paginaUrl('headroom')}?tab=catalogus`);
+    await pagina.evaluate((lijst) => {
+      localStorage.setItem('aue-werkbak-v1', JSON.stringify({ catalogus: lijst }));
+    }, [ONDERDEEL('Eerste'), ONDERDEEL('Tweede')]);
+    await pagina.reload();
+    await pagina.evaluate(() => document.fonts.ready);
+    const rijen = pagina.locator('#wb-catalogus .wb-regel');
+    await rijen.first().locator('.wb-bewerk').click();
+    await pagina.waitForTimeout(150);
+    assert.equal(await pagina.locator('#wb-onderdeel-kop').textContent(), 'Onderdeel aanpassen');
+    await pagina.locator('#wb-catalogus .wb-regel').first().locator('.wb-weg').click();
+    await pagina.waitForTimeout(200);
+    assert.equal(await pagina.locator('#wb-onderdeel-kop').textContent(), 'Onderdeel toevoegen',
+      'het formulier blijft openstaan op een onderdeel dat er niet meer is');
+    await pagina.close();
+  });
+});
+
+/**
+ * ÉÉN BROK ROMMEL IN EEN LIJST LEGT DE APP NIET PLAT.
+ *
+ * Een opslag die in zijn geheel onleesbaar is, ving de app al netjes op. Maar
+ * één `null` tussen de onderdelen was fataal: het tekenen van de
+ * onderdelenknoppen op het tabblad Offerte klapte er halverwege uit, dus je
+ * kon geen onderdeel meer op een offerte zetten, en op het tabblad Onderdelen
+ * stond er één in plaats van twee. Tabbladen wisselen deed het nog wel en
+ * typen werd nog bewaard, dus niets wees erop dat er iets stuk was.
+ */
+describe('rommel tussen de bewaarde gegevens', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+  const ONDERDEEL = (naam) => ({
+    omschrijving: naam, soort: 'speakers-voor', merk: 'Gladen',
+    inkoopCent: 20000, uren: 2, toebehoren: [],
+  });
+
+  async function metOpslag(bak, tab = 'offerte') {
+    const pagina = await browser.newPage(telefoon);
+    const fouten = [];
+    pagina.on('pageerror', (e) => fouten.push(e.message));
+    pagina.on('dialog', (venster) => venster.accept());
+    await pagina.goto(`${paginaUrl('headroom')}?tab=${tab}`);
+    await pagina.evaluate((b) => {
+      localStorage.setItem('aue-werkbak-v1', JSON.stringify(b));
+    }, bak);
+    await pagina.reload();
+    await pagina.evaluate(() => document.fonts.ready);
+    await pagina.waitForTimeout(350);
+    const uit = await pagina.evaluate(() => ({
+      knoppen: document.querySelectorAll('#wb-onderdelen .wb-toevoeg').length,
+      rijen: document.querySelectorAll('#wb-catalogus .wb-regel').length,
+      alarm: (document.querySelector('#wb-alarm:not([hidden])')?.textContent || '').trim(),
+      breed: document.documentElement.scrollWidth,
+    }));
+    await pagina.close();
+    return { ...uit, fouten };
+  }
+
+  test('een null tussen de onderdelen laat de andere twee staan', async () => {
+    const uit = await metOpslag({ catalogus: [ONDERDEEL('Eerste'), null, ONDERDEEL('Tweede')] });
+    assert.deepEqual(uit.fouten, [], `de app gooit een fout: ${uit.fouten.join(' | ')}`);
+    assert.equal(uit.knoppen, 2,
+      `er staan ${uit.knoppen} onderdelen om op te tikken in plaats van 2`);
+    assert.equal(uit.breed, 390);
+  });
+
+  test('en de app zegt eerlijk dat er iets is overgeslagen', async () => {
+    const uit = await metOpslag({ catalogus: [ONDERDEEL('Eerste'), null] });
+    assert.match(uit.alarm, /niet te lezen/i, `de balk zegt: "${uit.alarm}"`);
+  });
+
+  test('een kapotte regel in het concept laat de rest heel', async () => {
+    const uit = await metOpslag({
+      catalogus: [ONDERDEEL('Eerste')],
+      concept: { nummer: '2026-010', regels: [null], klant: {}, auto: {} },
+    });
+    assert.deepEqual(uit.fouten, [], `de app gooit een fout: ${uit.fouten.join(' | ')}`);
+    assert.equal(uit.knoppen, 1);
+  });
+
+  test('zonder rommel komt die balk niet omhoog', async () => {
+    // Anders zou "altijd waarschuwen" ook groen staan.
+    const uit = await metOpslag({ catalogus: [ONDERDEEL('Eerste'), ONDERDEEL('Tweede')] });
+    assert.equal(uit.alarm, '', `er staat onnodig een balk: "${uit.alarm}"`);
+    assert.equal(uit.knoppen, 2);
+  });
+});
+
 describe('bewaren met een kapotte datum', alsGebouwd, () => {
   const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 

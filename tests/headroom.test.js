@@ -732,6 +732,18 @@ describe('het autodossier', () => {
     );
     assert.equal(dossierNaam({ sleutel: 'x', naam: 'Zonder jaren' }), 'Zonder jaren');
   });
+
+  test('zonder naam en zonder sleutel zegt hij niet "undefined"', () => {
+    /* Door het formulier kan dit niet, want daar is een naam verplicht. Uit
+       een reservekopie van een andere Headroom wel — en dan stond het woord
+       "undefined" in de lijst op het tabblad Auto's. */
+    for (const kaal of [{}, { vanJaar: 2015 }, { naam: '', sleutel: '' }]) {
+      const naam = dossierNaam(kaal);
+      assert.doesNotMatch(naam, /undefined|null|\[object/,
+        `er staat "${naam}" in de lijst`);
+      assert.ok(naam.length > 0, 'er staat helemaal niets');
+    }
+  });
 });
 
 describe('de werkbon', () => {

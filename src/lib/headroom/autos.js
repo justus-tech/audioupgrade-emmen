@@ -189,13 +189,21 @@ export function zoekDossier(dossiers = [], sleutel, bouwjaar) {
   return vanModel.find((d) => !d.vanJaar && !d.totJaar) || null;
 }
 
-/** Hoe een dossier in een lijstje heet: "Volkswagen Golf (2013-2020)". */
+/**
+ * Hoe een dossier in een lijstje heet: "Volkswagen Golf (2013-2020)".
+ *
+ * Staat er geen naam én geen sleutel in, dan kwam hier het woord "undefined"
+ * uit — en dat stond zo in de lijst op het tabblad Auto's. Door het formulier
+ * kan dat niet gebeuren (een naam is daar verplicht), maar uit een
+ * reservekopie van een andere Headroom wél. Liever eerlijk "Naamloos model"
+ * dan een woord uit de machinekamer.
+ */
 export function dossierNaam(dossier) {
   if (!dossier) return '';
   const jaren = dossier.vanJaar || dossier.totJaar
     ? ` (${dossier.vanJaar || '…'}-${dossier.totJaar || 'nu'})`
     : '';
-  return `${dossier.naam || dossier.sleutel}${jaren}`;
+  return `${dossier.naam || dossier.sleutel || 'Naamloos model'}${jaren}`;
 }
 
 /**

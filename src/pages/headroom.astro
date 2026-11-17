@@ -1023,6 +1023,9 @@ import { APP } from '../data/app.js';
   const SLEUTEL_ONLEESBAAR = `${SLEUTEL}-onleesbaar`;
   /* De ruwe tekst die niet te lezen was, zolang dit tabblad open staat. */
   let onleesbaar = null;
+  /* Hoeveel losse brokken rommel er bij het inlezen zijn overgeslagen. Zie
+     alleenEchte() in laden(). */
+  let overgeslagen = 0;
   /**
    * Wat dit tabblad als laatste in de opslag zag staan.
    *
@@ -1123,19 +1126,57 @@ import { APP } from '../data/app.js';
       if (!gelezen || typeof gelezen !== 'object' || Array.isArray(gelezen)) {
         throw new Error('dit is geen offertebak');
       }
-      return {
+      /**
+       * ÉÉN BROK ROMMEL IN EEN LIJST MAG DE APP NIET PLATLEGGEN.
+       *
+       * Een opslag die in zijn geheel onleesbaar is, vangt de app hierboven
+       * netjes op: apart zetten, oranje balk, verder met een lege bak. Maar
+       * stond er één kapot ding tússen je onderdelen, dan ging het mis zonder
+       * dat er iets te zien was.
+       *
+       * Nagespeeld met één `null` in de onderdelenlijst: het tekenen van de
+       * onderdelenknoppen op het tabblad Offerte klapte er halverwege uit.
+       * Je kon geen onderdeel meer op een offerte zetten, en op het tabblad
+       * Onderdelen stond er één in plaats van twee. Tabbladen wisselen deed
+       * het nog wel en typen werd nog bewaard, dus niets wees erop dat er
+       * iets stuk was.
+       *
+       * Dus gaat alles wat geen gewoon gegeven is eruit, en zeggen we hoeveel.
+       * Beter één onderdeel kwijt dan een app die niet werkt.
+       */
+      let weg = 0;
+      const alleenEchte = (lijst) => {
+        const erin = Array.isArray(lijst) ? lijst : [];
+        const goed = erin.filter((x) => x && typeof x === 'object' && !Array.isArray(x));
+        weg += erin.length - goed.length;
+        return goed;
+      };
+      /* Een offerte kan zelf heel zijn terwijl er een kapotte regel in staat. */
+      const schoonOfferte = (o) => {
+        if (!o || typeof o !== 'object' || o.regels === undefined) return o;
+        if (!Array.isArray(o.regels)) {
+          weg += 1;
+          return { ...o, regels: [] };
+        }
+        const goed = alleenEchte(o.regels);
+        return goed.length === o.regels.length ? o : { ...o, regels: goed };
+      };
+
+      const staatUit = {
         instellingen: { ...STANDAARD_INSTELLINGEN, ...(gelezen.instellingen || {}) },
-        catalogus: Array.isArray(gelezen.catalogus) ? gelezen.catalogus : [],
-        offertes: metKenmerk(gelezen.offertes),
+        catalogus: alleenEchte(gelezen.catalogus),
+        offertes: metKenmerk(gelezen.offertes).map(schoonOfferte),
         /* Opslag van vóór de autodossiers heeft dit veld nog niet. */
-        dossiers: Array.isArray(gelezen.dossiers) ? gelezen.dossiers : [],
+        dossiers: alleenEchte(gelezen.dossiers),
         /* En van vóór de luistersessies dit veld niet. */
-        sessies: Array.isArray(gelezen.sessies) ? gelezen.sessies : [],
-        concept: gelezen.concept || null,
+        sessies: alleenEchte(gelezen.sessies),
+        concept: schoonOfferte(gelezen.concept || null),
         /* Opslag van vóór het meetrapport heeft dit veld nog niet. */
         meting: gelezen.meting || null,
-        rapporten: Array.isArray(gelezen.rapporten) ? gelezen.rapporten : [],
+        rapporten: alleenEchte(gelezen.rapporten),
       };
+      overgeslagen = weg;
+      return staatUit;
     } catch (e) {
       /* Er stond wél iets, maar het is niet te lezen. Opzijzetten en melden;
          de app gaat leeg verder zodat je kunt blijven werken. */
@@ -1218,8 +1259,29 @@ import { APP } from '../data/app.js';
     /* Twee tabbladen die langs elkaar heen werken lost zichzelf ook niet op:
        die melding blijft staan tot je vernieuwt. */
     if (anderTabblad) { meldAnderTabblad(); return; }
+    /* En overgeslagen rommel lost zichzelf ook niet op: die melding hoort te
+       blijven staan tot je hem gezien hebt. */
+    if (overgeslagen) { meldOvergeslagen(); return; }
     const balk = $('#wb-alarm');
     if (balk) balk.hidden = true;
+  }
+
+  /**
+   * De melding dat er bij het inlezen iets is overgeslagen.
+   *
+   * De knop is de standaardknop — een reservekopie — want dat is hier het
+   * nuttigste: dan heb je vast wat er nog wél is voordat je gaat zoeken wat
+   * er mist.
+   */
+  function meldOvergeslagen() {
+    if (!overgeslagen) return;
+    alarmAan(
+      `Bij het openen ${overgeslagen === 1 ? 'was één ding' : `waren ${overgeslagen} dingen`} `
+      + 'in je bewaarde werk niet te lezen; die staan er nu niet meer bij. Al het '
+      + 'andere is er gewoon. Kijk je onderdelen en modellen na, en maak eerst een '
+      + 'reservekopie.',
+      { kop: 'Niet alles was te lezen.' },
+    );
   }
 
   /** De melding over onleesbare opslag, zodra het scherm er klaar voor is. */
@@ -1362,6 +1424,21 @@ import { APP } from '../data/app.js';
 
   let offerte = nieuweOfferte();
   let voorkeuren = new Set();
+  /**
+   * HET ONDERDEEL DAT JE AAN HET AANPASSEN BENT — HET DING ZELF, NIET ZIJN PLEK.
+   *
+   * Hier stond het rangnummer in de lijst. Haal je daarna een ánder onderdeel
+   * weg, dan schuift de lijst op en wijst dat nummer naar de verkeerde regel.
+   *
+   * Nagespeeld met drie onderdelen. Ik tikte op "Aanpassen" bij de derde, haalde
+   * daarna de eerste weg, veranderde de naam en tikte op "Bewaar". Uitkomst:
+   * de derde stond er nog precies zoals hij was, en de aangepaste versie kwam
+   * er als víérde bij. Haalde ik er twee weg, dan kwam er een gat in de lijst
+   * dat als `null` in de opslag belandde — en daar liep de app op stuk.
+   *
+   * Het ding zelf kan niet opschuiven. Daarom bewaren we het onderdeel, en
+   * zoeken we bij het bewaren op waar het nú staat.
+   */
   let bewerktOnderdeel = null;
 
   const melden = (tekst) => { $('#wb-auto-melding').textContent = tekst; };
@@ -2586,7 +2663,7 @@ import { APP } from '../data/app.js';
           <button type="button" class="wb-link wb-weg">Weghalen</button>
         </div>`;
       rij.querySelector('.wb-bewerk').addEventListener('click', () => {
-        bewerktOnderdeel = i;
+        bewerktOnderdeel = onderdeel;
         $('#wb-o-naam').value = onderdeel.omschrijving || '';
         $('#wb-o-toelichting').value = onderdeel.toelichting || '';
         $('#wb-o-soort').value = onderdeel.soort || 'overig';
@@ -2614,6 +2691,10 @@ import { APP } from '../data/app.js';
           + 'moet je dan opnieuw opzoeken.'
         )) return;
         staat.catalogus.splice(i, 1);
+        /* Haal je weg wat je net aan het aanpassen was, dan hoort het
+           formulier niet te blijven staan: er is niets meer om in te vullen,
+           en op "Bewaar" tikken zou het onderdeel weer terugzetten. */
+        if (bewerktOnderdeel === onderdeel) leegOnderdeelFormulier();
         opslaan();
         tekenCatalogus();
         tekenOnderdeelknoppen();
@@ -2725,8 +2806,18 @@ import { APP } from '../data/app.js';
       alert('Geef het onderdeel eerst een naam.');
       return;
     }
-    if (bewerktOnderdeel != null) staat.catalogus[bewerktOnderdeel] = onderdeel;
-    else staat.catalogus.push(onderdeel);
+    const plek = bewerktOnderdeel ? staat.catalogus.indexOf(bewerktOnderdeel) : -1;
+    if (plek >= 0) {
+      staat.catalogus[plek] = onderdeel;
+    } else {
+      /* Was je iets aan het aanpassen dat er niet meer is — weggehaald in een
+         ander tabblad bijvoorbeeld — dan zeggen we dat, in plaats van het er
+         stil als nieuw bij te zetten. */
+      if (bewerktOnderdeel) {
+        alert('Dit onderdeel staat niet meer in je catalogus. Het komt er nu als nieuw onderdeel bij.');
+      }
+      staat.catalogus.push(onderdeel);
+    }
     opslaan();
     leegOnderdeelFormulier();
     tekenCatalogus();
@@ -2753,6 +2844,9 @@ import { APP } from '../data/app.js';
   }
 
   /* ================= AUTO'S: HET DOSSIER PER MODEL ================= */
+  /* Zelfde verhaal als bij bewerktOnderdeel hierboven: het dossier zelf, niet
+     zijn plek in de lijst. Een rangnummer wijst naar de verkeerde auto zodra
+     je er een andere tussenuit haalt. */
   let bewerktDossier = null;
 
   /** De sleutel en het dossier die bij de auto op de offerte horen. */
@@ -2876,8 +2970,15 @@ import { APP } from '../data/app.js';
       alert('Geef het model eerst een naam, bijvoorbeeld "Volkswagen Golf".');
       return;
     }
-    if (bewerktDossier != null) staat.dossiers[bewerktDossier] = dossier;
-    else staat.dossiers.push(dossier);
+    const plek = bewerktDossier ? staat.dossiers.indexOf(bewerktDossier) : -1;
+    if (plek >= 0) {
+      staat.dossiers[plek] = dossier;
+    } else {
+      if (bewerktDossier) {
+        alert('Dit model staat niet meer in je lijst. Het komt er nu als nieuw model bij.');
+      }
+      staat.dossiers.push(dossier);
+    }
     opslaan();
     bewerktDossier = null;
     vulDossierFormulier(leegDossier());
@@ -2912,7 +3013,7 @@ import { APP } from '../data/app.js';
           <button type="button" class="wb-link wb-weg">Weghalen</button>
         </div>`;
       rij.querySelector('.wb-bewerk').addEventListener('click', () => {
-        bewerktDossier = i;
+        bewerktDossier = dossier;
         vulDossierFormulier(dossier);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
@@ -2926,6 +3027,12 @@ import { APP } from '../data/app.js';
           + `${stand.totaal} gegevens) is dan weg.`
         )) return;
         staat.dossiers.splice(i, 1);
+        /* Net als bij de onderdelen: wat je weghaalt hoort niet in het
+           formulier te blijven staan. */
+        if (bewerktDossier === dossier) {
+          bewerktDossier = null;
+          vulDossierFormulier(leegDossier());
+        }
         opslaan();
         tekenDossiers();
         tekenDossierMelding();
@@ -4939,6 +5046,7 @@ import { APP } from '../data/app.js';
   haalWerkTerug();
   /* Pas hier, want nu staat het scherm er en is de balk te vullen. */
   meldOnleesbaar();
+  meldOvergeslagen();
 
   tekenAfspraken();
   tekenAlles();
