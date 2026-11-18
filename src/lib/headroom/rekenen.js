@@ -409,19 +409,56 @@ export function offertenummer(volgnummer, datum = new Date()) {
  *    Andersom kan er een cent verschil ontstaan tussen de regel en het
  *    totaal op de factuur, en dat is precies waar een boekhouder over belt.
  *
+ * 3. Het bedrag zonder btw is hetzelfde déél van het offertebedrag zonder
+ *    btw. Hier werd het teruggerekend uit het bedrag inclusief btw, met
+ *    x100/121. Dat lijkt hetzelfde, maar dat is het niet: de btw op de
+ *    offerte wordt per regel afgerond en dan opgeteld, en die optelling kun
+ *    je niet met één deling terugdraaien.
+ *
+ *    Wat dat kostte, nagespeeld met een offerte van € 1.911,83 (€ 1.580,03
+ *    plus € 331,80 btw) en een aanbetaling van 100%:
+ *
+ *      op de offerte            zonder btw € 1.580,03   btw € 331,80
+ *      op de aanbetaling 100%   zonder btw € 1.580,02   btw € 331,81
+ *
+ *    Een rekening voor precies dezelfde klus met een andere btw dan de
+ *    offerte. En op de eindfactuur bleef er dan dit over:
+ *
+ *      Bedrag zonder btw  € 0,01     Btw 21%  -€ 0,01     Te betalen € 0,00
+ *
+ *    Een eindfactuur met een negatieve btw erop. Dat gebeurde bij ruim een op
+ *    de vijf offertes met een aanbetaling van 100%.
+ *
  * Over de btw zelf: bij een vooruitbetaling is de btw verschuldigd op het
  * moment dat het geld binnenkomt. De aanbetalingsfactuur vermeldt hem dus,
  * en de eindfactuur rekent alleen nog over het restant.
  */
+/**
+ * Van een bedrag inclusief btw: welk deel daarvan is het bedrag zonder btw?
+ *
+ * Niet terugrekenen met x100/121, maar hetzelfde deel nemen van het
+ * offertebedrag zonder btw. Zo komt er bij het hele bedrag precies het hele
+ * offertebedrag uit, en bij een deel een deel dat daarmee klopt. Zowel de
+ * aanbetaling als de eindafrekening gebruikt deze regel, want anders kunnen
+ * die twee onderling een cent gaan schelen.
+ */
+function deelZonderBtw(t, inclDeelCent) {
+  if (t.inclCent <= 0) return 0;
+  return Math.round((t.exclCent * inclDeelCent) / t.inclCent);
+}
+
 export function aanbetaling(regels = [], inst = STANDAARD_INSTELLINGEN, percentage, kortingExclCent = 0) {
   const t = totalen(regels, inst, kortingExclCent);
   const pct = Math.min(100, Math.max(0, Number(
     percentage ?? inst.aanbetalingPct ?? STANDAARD_INSTELLINGEN.aanbetalingPct
   ) || 0));
-  const btwPct = btwVan(inst);
 
   const inclCent = Math.round((t.inclCent * pct) / 100);
-  const exclCent = Math.round((inclCent * 100) / (100 + btwPct));
+  /* Hetzelfde deel van het offertebedrag zonder btw — zie punt 3 hierboven.
+     Bij 100% komt er dan precies het offertebedrag uit, met precies de btw
+     die op de offerte staat. eindafrekening() rekent met dezelfde regel,
+     zodat de twee facturen onderling ook kloppen. */
+  const exclCent = deelZonderBtw(t, inclCent);
 
   return {
     pct,
@@ -485,11 +522,13 @@ export function eindafrekening(
   regels = [], inst = STANDAARD_INSTELLINGEN, kortingExclCent = 0, reedsBetaaldInclCent = 0
 ) {
   const t = totalen(regels, inst, kortingExclCent);
-  const btwPct = btwVan(inst);
 
   /* Nooit meer aftrekken dan er staat: een negatieve eindfactuur bestaat niet. */
   const betaaldIncl = Math.min(t.inclCent, Math.max(0, Math.round(Number(reedsBetaaldInclCent) || 0)));
-  const betaaldExcl = Math.round((betaaldIncl * 100) / (100 + btwPct));
+  /* Dezelfde regel als in aanbetaling(): hetzelfde deel van het bedrag zonder
+     btw. Hier stond x100/121, en daardoor hield de eindfactuur bij een
+     aanbetaling van 100% een cent zonder btw over met -€ 0,01 btw erbij. */
+  const betaaldExcl = deelZonderBtw(t, betaaldIncl);
 
   const teBetalenIncl = t.inclCent - betaaldIncl;
   const teBetalenExcl = t.exclCent - betaaldExcl;

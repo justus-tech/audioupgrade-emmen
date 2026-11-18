@@ -1282,6 +1282,119 @@ describe('de bedragen lopen altijd rond', () => {
   });
 });
 
+/**
+ * EEN AANBETALING VAN 100% IS PRECIES DE OFFERTE — OOK DE BTW-REGEL.
+ *
+ * Het bedrag zonder btw werd op de factuur teruggerekend uit het bedrag
+ * inclusief btw, met x100/121. Dat lijkt hetzelfde als het offertebedrag
+ * zonder btw, maar dat is het niet: de btw op de offerte wordt per regel
+ * afgerond en dan opgeteld, en die optelling kun je niet met één deling
+ * terugdraaien.
+ *
+ * Nagespeeld met een offerte van € 1.911,83 en een aanbetaling van 100%:
+ *
+ *   op de offerte            zonder btw € 1.580,03   btw € 331,80
+ *   op de aanbetaling 100%   zonder btw € 1.580,02   btw € 331,81
+ *
+ * Een rekening voor precies dezelfde klus met een andere btw erop dan de
+ * offerte. En op de eindfactuur bleef dit staan:
+ *
+ *   Bedrag zonder btw  € 0,01     Btw 21%  -€ 0,01     Te betalen € 0,00
+ *
+ * Een eindfactuur met een negatieve btw. Van 270.000 doorgerekende
+ * combinaties ging het er in 16.679 mis — bij een aanbetaling van 100% ruim
+ * een op de vijf, en bij heel kleine bedragen ook bij andere percentages.
+ *
+ * De oude controle hiernaast keek of de bedragen samen rondliepen, en dat
+ * deden ze: incl, excl en btw telden alle drie precies op. Wat hij niet deed
+ * was kijken of elk los bedrag ook kán bestaan.
+ */
+describe('de btw op de facturen klopt met de offerte', () => {
+  const INST = { ...STANDAARD_INSTELLINGEN };
+
+  test('het gevonden geval zelf, met de bedragen erbij', () => {
+    const regels = [
+      { omschrijving: 'Composet voor', aantal: 1, vastExclCent: 45001 },
+      { omschrijving: 'DSP-versterker', aantal: 1, vastExclCent: 78002 },
+      { omschrijving: 'Demping voordeuren', aantal: 2, vastExclCent: 17500 },
+    ];
+    const t = totalen(regels, INST, 0);
+    assert.equal(t.inclCent, 191183, `het offertetotaal is ${euro(t.inclCent)}`);
+    assert.equal(t.exclCent, 158003);
+    assert.equal(t.btwCent, 33180);
+    /* Zonder deze controle bewaakt de test niets: valt het terugrekenen hier
+       toevallig goed uit, dan staat hij groen zonder iets te meten. */
+    assert.notEqual(Math.round((t.inclCent * 100) / 121), t.exclCent,
+      'dit bedrag ligt niet meer op een afrondingsgrens; kies een ander voorbeeld');
+
+    const a = aanbetaling(regels, INST, 100, 0);
+    assert.equal(a.exclCent, t.exclCent,
+      `de factuur zegt ${euro(a.exclCent)} zonder btw, de offerte ${euro(t.exclCent)}`);
+    assert.equal(a.btwCent, t.btwCent,
+      `de factuur zegt ${euro(a.btwCent)} btw, de offerte ${euro(t.btwCent)}`);
+
+    const e = eindafrekening(regels, INST, 0, a.inclCent);
+    assert.equal(e.teBetalenInclCent, 0);
+    assert.equal(e.teBetalenBtwCent, 0, `de eindfactuur drukt ${euro(e.teBetalenBtwCent)} btw af`);
+    assert.equal(e.teBetalenExclCent, 0, `de eindfactuur drukt ${euro(e.teBetalenExclCent)} zonder btw af`);
+  });
+
+  test('geen enkel bedrag op een factuur kan negatief zijn', () => {
+    /* Het hele veld langs: drie btw-tarieven, bedragen die op een
+       afrondingsgrens liggen, met en zonder korting, alle percentages. */
+    let grensgevallen = 0;
+    let geteld = 0;
+    for (const btwPct of [0, 9, 21]) {
+      const inst = { ...STANDAARD_INSTELLINGEN, btwPct };
+      for (const basis of [1, 2, 99, 1234, 45000, 78003, 999999]) {
+        /* Meer regels is meer afrondingen om op te tellen, en juist die
+           optelling kan een deling niet terugdraaien. */
+        for (const aantalRegels of [1, 3, 5]) {
+          const regels = Array.from({ length: aantalRegels }, (_, i) => ({
+            omschrijving: `Regel ${i + 1}`, aantal: 1 + (i % 3), vastExclCent: basis + i * 37,
+          }));
+          const vol = totalen(regels, inst, 0).exclCent;
+          for (const korting of [0, 1, 1234, Math.max(0, vol - 1)]) {
+            const t = totalen(regels, inst, korting);
+            if (t.exclCent * btwPct !== 0 && t.inclCent - t.exclCent !== Math.round((t.exclCent * btwPct) / 100)) {
+              grensgevallen += 1;
+            }
+            for (const pct of [0, 1, 7, 25, 30, 33, 50, 66.67, 75, 99, 100]) {
+              geteld += 1;
+              const a = aanbetaling(regels, inst, pct, korting);
+              const e = eindafrekening(regels, inst, korting, a.inclCent);
+              const waar = `btw ${btwPct}%, ${aantalRegels} regels vanaf ${basis}, korting ${korting}, ${pct}%`;
+
+              assert.ok(a.exclCent >= 0 && a.btwCent >= 0 && a.inclCent >= 0,
+                `negatief bedrag op de aanbetaling (${euro(a.exclCent)} + ${euro(a.btwCent)}): ${waar}`);
+              assert.ok(
+                e.teBetalenExclCent >= 0 && e.teBetalenBtwCent >= 0 && e.teBetalenInclCent >= 0,
+                `negatief bedrag op de eindfactuur (${euro(e.teBetalenExclCent)} + `
+                + `${euro(e.teBetalenBtwCent)}): ${waar}`
+              );
+              /* De eindfactuur drukt af wat er al betaald is. Dat moet
+                 hetzelfde zijn als wat op de aanbetalingsfactuur stond. */
+              assert.equal(e.reedsBetaaldExclCent, a.exclCent, `het al betaalde bedrag zonder btw wijkt af: ${waar}`);
+              assert.equal(e.reedsBetaaldBtwCent, a.btwCent, `de al betaalde btw wijkt af: ${waar}`);
+
+              if (pct === 100) {
+                assert.equal(a.exclCent, t.exclCent, `100% is niet het offertebedrag zonder btw: ${waar}`);
+                assert.equal(a.btwCent, t.btwCent, `100% heeft niet de btw van de offerte: ${waar}`);
+                assert.equal(e.teBetalenInclCent, 0, `na 100% staat er nog ${euro(e.teBetalenInclCent)} open: ${waar}`);
+              }
+            }
+          }
+        }
+      }
+    }
+    assert.ok(geteld > 2000, `te weinig gevallen doorgerekend (${geteld})`);
+    /* Zonder optelbare afrondingen bewaakt deze test niets: dan geeft
+       terugrekenen met een deling hetzelfde antwoord en staat hij groen. */
+    assert.ok(grensgevallen > 20,
+      `maar ${grensgevallen} offertes waarin de btw-afrondingen optellen; de test meet te weinig`);
+  });
+});
+
 describe('de eindafrekening', () => {
   const regels = [{ vastExclCent: 57438 }, { inkoopCent: 24000, margePct: 63, uren: 3 }];
 
