@@ -3513,6 +3513,111 @@ describe('het bedradingsplan houdt de legenda bij het schema', alsGebouwd, () =>
  * je er twee weg, dan ontstond er een gat in de lijst dat als `null` in de
  * opslag belandde — en daar liep de app op stuk.
  */
+/**
+ * DE STATUSKNOP IS MET EEN DUIM TE RAKEN.
+ *
+ * Bij een bewaarde offerte staat de stand in een pilletje, en daarop tikken
+ * zet hem een stap verder: concept, verstuurd, aanbetaald, gefactureerd,
+ * betaald. Dat is met opzet zo gemaakt, om het met olie aan je handen te
+ * kunnen doen zonder een menu open te klappen.
+ *
+ * Nagemeten op 390 pixels was dat pilletje 20 pixels hoog — ongeveer drie en
+ * een halve millimeter. De knop "Openen" ernaast in dezelfde rij is 40 pixels.
+ * De knop die juist voor vette vingers bedoeld was, was dus de kleinste van de
+ * twee, en hij bepaalt wel of een klus als betaald meetelt in de omzetcijfers
+ * op het tabblad Rapport.
+ *
+ * Op het tabblad Klanten is hetzelfde pilletje géén knop maar een label. Dat
+ * blijft klein: daar valt niets te raken.
+ */
+describe('de statusknop bij een bewaarde offerte', alsGebouwd, () => {
+  const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+
+  const BAK = {
+    instellingen: { iban: 'NL00BANK0123456789' },
+    offertes: [{
+      id: 'o1', nummer: '2026-001', status: 'concept', datum: '2026-11-01T00:00:00.000Z',
+      klant: { naam: 'Jan Jansen', telefoon: '0612345678' },
+      auto: { kenteken: 'XX99XX', merk: 'BMW', model: '320i' },
+      regels: [{ id: 'r1', omschrijving: 'Composet voor', aantal: 1, vastExclCent: 50000 }],
+    }],
+  };
+
+  async function metOffertes(tab) {
+    const pagina = await browser.newPage(telefoon);
+    pagina.on('dialog', (venster) => venster.accept());
+    await pagina.goto(`${paginaUrl('headroom')}?tab=${tab}`);
+    await pagina.evaluate((b) => {
+      localStorage.setItem('aue-werkbak-v1', JSON.stringify(b));
+    }, BAK);
+    await pagina.reload();
+    await pagina.evaluate(() => document.fonts.ready);
+    await pagina.waitForTimeout(350);
+    return pagina;
+  }
+
+  test('hij is net zo groot als de knop ernaast', async () => {
+    const pagina = await metOffertes('offerte');
+    const uit = await pagina.evaluate(() => {
+      const chip = document.querySelector('#wb-opgeslagen button.wb-status')
+        || document.querySelector('button.wb-status');
+      const open = chip?.parentElement?.querySelector('.wb-open-offerte');
+      const h = (el) => (el ? Math.round(el.getBoundingClientRect().height) : 0);
+      return { chip: h(chip), open: h(open), tekst: chip?.textContent?.trim() || '',
+        breed: document.documentElement.scrollWidth };
+    });
+    assert.equal(uit.tekst, 'concept', 'de statusknop staat er niet');
+    assert.ok(uit.chip >= 40,
+      `de statusknop is ${uit.chip} pixels hoog; met een duim raak je dat niet`);
+    assert.ok(uit.chip >= uit.open,
+      `de statusknop (${uit.chip}px) is kleiner dan "Openen" ernaast (${uit.open}px)`);
+    assert.equal(uit.breed, 390, `de pagina is ${uit.breed} pixels breed geworden`);
+    await pagina.close();
+  });
+
+  test('en hij doet nog steeds wat hij deed', async () => {
+    const pagina = await metOffertes('offerte');
+    const stand = () => pagina.evaluate(() => {
+      const bak = JSON.parse(localStorage.getItem('aue-werkbak-v1') || '{}');
+      return {
+        opslag: bak.offertes?.[0]?.status,
+        scherm: document.querySelector('button.wb-status')?.textContent?.trim(),
+      };
+    });
+    assert.deepEqual(await stand(), { opslag: 'concept', scherm: 'concept' });
+    await pagina.locator('button.wb-status').first().click();
+    await pagina.waitForTimeout(250);
+    assert.deepEqual(await stand(), { opslag: 'verstuurd', scherm: 'verstuurd' },
+      'tikken op de status zet hem niet meer een stap verder');
+    await pagina.locator('button.wb-status').first().click();
+    await pagina.waitForTimeout(250);
+    assert.deepEqual(await stand(), { opslag: 'aanbetaald', scherm: 'aanbetaald' });
+    await pagina.close();
+  });
+
+  test('op Klanten blijft hetzelfde pilletje een klein label', async () => {
+    /* Daar is het geen knop. Werd dat ook groot, dan werd die lijst twee keer
+       zo lang zonder dat er iets te tikken valt. */
+    const pagina = await metOffertes('klanten');
+    await pagina.evaluate(() => document.querySelector('#kl-lijst [data-klant]')?.click());
+    await pagina.waitForTimeout(250);
+    await pagina.evaluate(() => document.querySelector('[data-kltab="offertes"]')?.click());
+    await pagina.waitForTimeout(250);
+    const uit = await pagina.evaluate(() => {
+      const label = document.querySelector('#kl-inhoud span.wb-status');
+      return {
+        gevonden: !!label,
+        h: label ? Math.round(label.getBoundingClientRect().height) : 0,
+        breed: document.documentElement.scrollWidth,
+      };
+    });
+    assert.ok(uit.gevonden, 'het statuslabel staat niet op het tabblad Klanten');
+    assert.ok(uit.h < 30, `het label is ${uit.h} pixels hoog geworden; het hoort klein te blijven`);
+    assert.equal(uit.breed, 390);
+    await pagina.close();
+  });
+});
+
 describe('een onderdeel aanpassen terwijl de lijst verschuift', alsGebouwd, () => {
   const telefoon = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 

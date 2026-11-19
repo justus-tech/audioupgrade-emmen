@@ -5364,6 +5364,33 @@ import { APP } from '../data/app.js';
   }
   .wb-status.af { border-color: var(--accent); color: var(--accent-text); }
 
+  /**
+   * HETZELFDE PILLETJE IS OP ÉÉN PLEK EEN KNOP — EN DAN MOET JE HEM KUNNEN RAKEN.
+   *
+   * Op het tabblad Klanten is dit een label: daar staat alleen wat de stand
+   * is. Bij een bewaarde offerte is het een knop, en daar tikt hij de stand
+   * een stap verder: concept, verstuurd, aanbetaald, gefactureerd, betaald.
+   * Dat is met opzet zo gemaakt, om het met olie aan je handen te kunnen doen
+   * zonder een menu open te klappen.
+   *
+   * Nagemeten op 390 pixels was dat pilletje 20 pixels hoog — ongeveer drie
+   * en een halve millimeter. De knop "Openen" ernaast in dezelfde rij is 40
+   * pixels. Een knop die bedoeld is voor vette vingers was dus de kleinste van
+   * de twee, en hij bepaalt wel of een klus als betaald meetelt in je
+   * omzetcijfers op het tabblad Rapport.
+   *
+   * Nu is hij net zo groot als de andere pilknoppen in de app (.wb-chip, 40
+   * pixels), en zie je ook dat het er een is. Het label op Klanten blijft klein.
+   */
+  button.wb-status {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0 14px;
+    background: transparent;
+    cursor: pointer;
+  }
+
   .wb-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
   .wb-chip {
     min-height: 40px;
