@@ -13,7 +13,7 @@ import {
   subImpedantie, eindImpedantie, versterkerStroom, leesVermogen, leesSpoelen,
   leegPlan, nieuwComponent, planUitOfferte, bouwPlan, stroomSchema, audioSchema,
   zoekDing, bedradingHtml, kabellijst, autoMaten, routeTussen, inbouwSchema, inbouwLijst,
-  plekkenVan, GEMIDDELDE_AUTO, waaromGeenKabel, MAX_VERLIES, KOPER,
+  plekkenVan, GEMIDDELDE_AUTO, waaromGeenKabel, MAX_VERLIES, KOPER, zekeringType,
 } from '../src/lib/headroom/bedrading.js';
 
 /** Een plan met een 4-kanaals versterker, een monoblok en een sub. */
@@ -97,6 +97,133 @@ describe('de zekering beschermt de kabel', () => {
  * En bij een tak stond er helemaal niets: alleen een streepje bij "Dikte",
  * met de zekering er wél bij. Dan sta je bij de auto te gokken.
  */
+/**
+ * EEN VERSTERKER WAAR GEEN ZEKERING VOOR BESTAAT.
+ *
+ * Boven de 300 A houdt de lijst op: zo'n zekering kun je niet kopen.
+ * kiesZekering() geeft dan niets terug, en dat werd verderop niet
+ * opgevangen. De soort werd wél ingevuld, en omdat er geen getal was kwam de
+ * kleinste soort eruit.
+ *
+ * Nagespeeld met een monoblok van 3400 W, dat is 308 A. In de
+ * zekeringenlijst stond: waarde "—", soort "ATC-steekzekering". Een
+ * steekzekering uit het zekeringkastje, op een tak die driehonderd ampère
+ * trekt. Op de hoofdplek stond "mini-ANL", de kleinste van de twee die daar
+ * kunnen. En bij de kabel stond letterlijk "Zekering op het blok: null A
+ * ATC-steekzekering".
+ *
+ * Wie de onderdelenlijst naloopt leest dus een soort die te koop is, en
+ * koopt hem. Dit is precies het soort fout waar deze hele testbak voor is:
+ * op papier ziet het er goed uit en in de auto smelt het.
+ */
+describe('een versterker waar geen zekering voor bestaat', () => {
+  function planMetMonoblok(watt) {
+    const plan = leegPlan();
+    nieuwComponent(plan, 'versterker', {
+      naam: 'Monoblok', kanalen: '1', wattPerKanaal: String(watt), klasse: 'D',
+    });
+    nieuwComponent(plan, 'versterker', {
+      naam: 'Vierkanaals', kanalen: '4', wattPerKanaal: '80', klasse: 'D',
+    });
+    return plan;
+  }
+
+  test('zonder waarde noemt de zekering ook geen soort', () => {
+    assert.equal(zekeringType(null), '—');
+    assert.equal(zekeringType(null, 'hoofd'), '—');
+    assert.equal(zekeringType(0, 'hoofd'), '—');
+    assert.equal(zekeringType(undefined), '—');
+    /* En met een waarde gewoon als vanouds. */
+    assert.equal(zekeringType(30), 'ATC-steekzekering');
+    assert.equal(zekeringType(60), 'mini-ANL');
+    assert.equal(zekeringType(60, 'hoofd'), 'mini-ANL');
+    assert.equal(zekeringType(150, 'hoofd'), 'ANL');
+  });
+
+  test('de zekeringenlijst noemt geen soort die je kunt kopen', () => {
+    const u = bouwPlan(planMetMonoblok(3400));
+    const zonderWaarde = u.zekeringen.filter((z) => z.waardeA == null);
+    assert.ok(zonderWaarde.length >= 2,
+      'dit plan hoort zekeringen te hebben die niet te berekenen zijn');
+    for (const z of zonderWaarde) {
+      assert.equal(z.type, '—',
+        `zekering zonder waarde heet "${z.type}" bij "${z.beschermt}"`);
+    }
+  });
+
+  test('nergens staat het woord null op de tekening', () => {
+    const leesbaar = [];
+    const loop = (o) => {
+      if (Array.isArray(o)) return o.forEach(loop);
+      if (o && typeof o === 'object') return Object.values(o).forEach(loop);
+      if (typeof o === 'string') leesbaar.push(o);
+    };
+    for (const watt of [3400, 5000]) {
+      const u = bouwPlan(planMetMonoblok(watt));
+      loop({ k: u.knopen, c: u.kabels, z: u.zekeringen, w: u.waarschuwingen });
+    }
+    const raar = leesbaar.filter((r) => /\bnull\b|\bundefined\b|\bNaN\b/.test(r));
+    assert.deepEqual(raar, [], `op de tekening staat: "${raar[0] || ''}"`);
+  });
+
+  test('en er staat bij dat deze versterker zijn eigen voeding vraagt', () => {
+    const u = bouwPlan(planMetMonoblok(5000));
+    const fouten = u.waarschuwingen.filter((w) => w.ernst === 'fout').map((w) => w.tekst);
+    assert.ok(fouten.length, 'geen enkele foutmelding bij een versterker van 450 A');
+    assert.ok(fouten.some((t) => /geen enkele zekering|eigen ontwerp|eigen voeding/i.test(t)),
+      `de meldingen zeggen niet wat er aan de hand is: ${fouten.join(' | ')}`);
+  });
+
+  test('over het hele veld geen zekering zonder waarde met een soort erbij', () => {
+    /* Niet één plan maar alle combinaties die een werkplaats tegenkomt:
+       twee soorten koper, drie plekken voor de versterkers, een tot drie
+       versterkers, van vijftig tot tweeduizend watt per kanaal. */
+    let geteld = 0;
+    let grensgevallen = 0;
+    for (const koper of ['ofc', 'cca']) {
+      for (const versterkerPlek of ['kofferbak', 'interieur', 'motorruimte']) {
+        for (const aantal of [1, 2, 3]) {
+          for (const watt of [50, 100, 300, 500, 1000, 2000]) {
+            const plan = leegPlan();
+            plan.koper = koper;
+            plan.versterkerPlek = versterkerPlek;
+            for (let i = 0; i < aantal; i++) {
+              nieuwComponent(plan, 'versterker', {
+                naam: `Versterker ${i + 1}`, kanalen: i === 0 ? '4' : '1',
+                wattPerKanaal: String(watt), klasse: 'D',
+              });
+            }
+            geteld += 1;
+            const u = bouwPlan(plan);
+            const waar = `${koper}, ${versterkerPlek}, ${aantal}x ${watt}W`;
+            if (u.zekeringen.some((z) => z.waardeA == null)) grensgevallen += 1;
+            for (const z of u.zekeringen) {
+              if (z.waardeA == null) {
+                assert.equal(z.type, '—', `zekering zonder waarde heet "${z.type}" — ${waar}`);
+              } else {
+                assert.ok(ZEKERINGEN.includes(z.waardeA),
+                  `zekering van ${z.waardeA} A bestaat niet — ${waar}`);
+                assert.notEqual(z.type, '—', `zekering van ${z.waardeA} A zonder soort — ${waar}`);
+              }
+            }
+            for (const k of u.kabels) {
+              if (!k.maat || !k.zekeringA) continue;
+              const mag = k.maat.maxA * KOPER[koper].belast;
+              assert.ok(mag >= k.zekeringA,
+                `zekering ${k.zekeringA} A op een kabel die ${Math.round(mag)} A mag ("${k.naam}") — ${waar}`);
+            }
+          }
+        }
+      }
+    }
+    assert.ok(geteld >= 100, `te weinig plannen doorgerekend (${geteld})`);
+    /* Zonder plannen die boven de grootste zekering uitkomen meet de test
+       hierboven niets. */
+    assert.ok(grensgevallen > 5,
+      `maar ${grensgevallen} plannen komen boven de grootste zekering uit; de test meet te weinig`);
+  });
+});
+
 describe('waarom er geen kabel past', () => {
   test('te veel stroom heet stroom, te lang heet lengte', () => {
     const dikste = VOEDING[VOEDING.length - 1];

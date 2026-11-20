@@ -146,10 +146,29 @@ export function kiesZekering(stroomA) {
   return ZEKERINGEN.find((z) => z >= a) ?? null;
 }
 
-/** Welk soort zekering(houder) bij die waarde hoort. */
+/**
+ * Welk soort zekering(houder) bij die waarde hoort.
+ *
+ * GEEN WAARDE IS GEEN SOORT.
+ *
+ * kiesZekering() geeft niets terug zodra een versterker meer vraagt dan de
+ * grootste zekering die je kunt kopen (300 A). De soort werd dan toch
+ * ingevuld, en omdat er geen getal was kwam de kleinste soort eruit.
+ *
+ * Nagespeeld met een monoblok van 3400 W (308 A). In de zekeringenlijst
+ * stond: waarde "—", soort "ATC-steekzekering" — een steekzekering uit het
+ * zekeringkastje, op een tak die driehonderd ampère trekt. Op de hoofdplek
+ * stond om dezelfde reden "mini-ANL", de kleinste van de twee die daar
+ * kunnen. Wie de onderdelenlijst naloopt leest dus een soort die te koop is
+ * en koopt hem.
+ *
+ * Is er geen waarde, dan hoort er ook geen soort te staan.
+ */
 export function zekeringType(waardeA, rol = 'tak') {
-  if (rol === 'hoofd') return waardeA >= 100 ? 'ANL' : 'mini-ANL';
-  return waardeA <= 40 ? 'ATC-steekzekering' : 'mini-ANL';
+  const a = Number(waardeA);
+  if (!Number.isFinite(a) || a <= 0) return '—';
+  if (rol === 'hoofd') return a >= 100 ? 'ANL' : 'mini-ANL';
+  return a <= 40 ? 'ATC-steekzekering' : 'mini-ANL';
 }
 
 /** Spanningsverlies in volt over een stuk kabel heen en terug. */
@@ -786,9 +805,14 @@ export function bouwPlan(plan, { dossier = null, auto = {} } = {}) {
             zekeringA: zekA, stroomA: takStroom, lengteM: takTotaal,
             maxVerlies: MAX_VERLIES.tak, koper,
           });
-          meld('fout', waaromTak === 'stroom'
-            ? `De zekering naar ${c.naam} is ${zekA} A. Dat is meer dan één kabel van ${voedingNaam(dikste)} veilig draagt: deze versterker vraagt zijn eigen voeding.`
-            : `Plus en massa naar ${c.naam} zijn samen ${komma(takTotaal)} m. Bij ${Math.round(takStroom)} A verliest zelfs ${voedingNaam(dikste)} daarover meer dan de ${komma(MAX_VERLIES.tak, 2)} V die over een tak mag. Zet het verdeelblok dichter bij de versterker, of zoek een massapunt dichterbij.`,
+          /* Is er helemaal geen zekering voor deze stroom te koop, dan is dát
+             het verhaal — niet "de zekering is null A", wat er stond. */
+          const geenZekering = !zekA;
+          meld('fout', geenZekering
+            ? `${c.naam} vraagt ${Math.round(takStroom)} A. Daar bestaat geen enkele zekering voor: de grootste die je kunt kopen is ${ZEKERINGEN[ZEKERINGEN.length - 1]} A. Deze versterker vraagt een eigen ontwerp met zijn eigen voeding.`
+            : waaromTak === 'stroom'
+              ? `De zekering naar ${c.naam} is ${zekA} A. Dat is meer dan één kabel van ${voedingNaam(dikste)} veilig draagt: deze versterker vraagt zijn eigen voeding.`
+              : `Plus en massa naar ${c.naam} zijn samen ${komma(takTotaal)} m. Bij ${Math.round(takStroom)} A verliest zelfs ${voedingNaam(dikste)} daarover meer dan de ${komma(MAX_VERLIES.tak, 2)} V die over een tak mag. Zet het verdeelblok dichter bij de versterker, of zoek een massapunt dichterbij.`,
             c.id);
         }
       }
@@ -805,7 +829,11 @@ export function bouwPlan(plan, { dossier = null, auto = {} } = {}) {
           rijen: [
             ['Dikte', takMaat ? voedingNaam(takMaat) : 'nog niet te berekenen'],
             ['Lengte', `${komma(takLengte)} m`],
-            ['Zekering op het blok', v.ontwerpA ? `${zekA} A ${zekeringType(zekA)}` : '—'],
+            /* Zonder waarde geen "null A" op de tekening: dan staat er wat er
+               aan de hand is. */
+            ['Zekering op het blok', zekA
+              ? `${zekA} A ${zekeringType(zekA)}`
+              : (v.ontwerpA ? 'nog niet te berekenen' : '—')],
             ['Spanningsverlies', takMaat ? `${komma(verlies(v.stroomA ?? v.ontwerpA, takLengte + massaLengte, takMaat.mm2, koper), 2)} V` : '—'],
           ],
           uitleg: ['Een korte tak van het verdeelblok naar één versterker. Dunner dan de hoofdkabel mag, zolang de zekering op het blok erbij past.'],
