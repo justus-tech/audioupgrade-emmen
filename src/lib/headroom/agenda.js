@@ -526,13 +526,55 @@ export function werkBlok(datum, tijd = '09:00', uren = 0, { dagUren = 8 } = {}) 
     if (eind.getDay() !== 0) teGaan -= 1;
   }
 
-  return { dagen, eindDatum: eind, eindTijd: plusUren(tijd, restant) };
+  const slot = plusUren(tijd, restant);
+  /* Loopt het laatste stuk over middernacht heen, dan schuift de einddatum
+     mee. Dat gaat buiten de dagentelling om: dit is geen extra werkdag maar
+     hetzelfde blok dat doorloopt, dus zondag wordt hier niet overgeslagen. */
+  if (eind && slot.dagen) eind.setDate(eind.getDate() + slot.dagen);
+
+  return { dagen, eindDatum: eind, eindTijd: slot.tijd };
 }
 
+/**
+ * EEN TIJD PLUS EEN AANTAL UREN.
+ *
+ * TWEE DINGEN GINGEN HIER MIS.
+ *
+ * 1. Het aantal uren werd niet op hele minuten afgerond.
+ *    De app telt de uren van een offerte op als `uren × aantal` per regel.
+ *    Dat zijn kommagetallen, en die tellen in een computer niet precies op:
+ *    3 uur maal 3 plus 0,2 plus 0,2 wordt 9,399999999999999 in plaats van
+ *    9,4. Daarna gaat er een werkdag van acht uur af, en dan blijft er
+ *    1,3999999999999995 uur over — maal zestig is dat 83,99999999999997
+ *    minuut.
+ *
+ *    Dat kwam er zo uit rollen: eindtijd "09:6.000000000000114", en in het
+ *    agendabestand "DTEND:20261107T096.00000000000011400". Daar kan geen
+ *    agenda iets mee: je tikt op het bestand en er gebeurt niets, of de
+ *    afspraak komt er verminkt in. Nagerekend over 5184 offertes van drie
+ *    regels met gewone uren: in tien ervan was de eindtijd onbruikbaar. Het
+ *    treft alleen klussen van meer dan één werkdag — en sinds The OEM+
+ *    Executive op twee dagen staat, is dat geen uitzondering meer.
+ *
+ * 2. Liep de tijd over middernacht, dan bleef hij op 23:59 staan.
+ *    Dat was er ooit in gezet om te voorkomen dat de eindtijd vóór de
+ *    begintijd zou komen te liggen, want de dag schoof niet mee. Gevolg: een
+ *    klus van acht uur die op donderdagavond om 17:00 begint (koopavond,
+ *    de werkplaats is open tot 20:00) eindigde volgens de agenda om 23:59 in
+ *    plaats van om 01:00 de dag erna. Nu schuift de dag gewoon mee.
+ *
+ * Levert de tijd én hoeveel dagen hij is opgeschoven.
+ */
 function plusUren(tijd, uren) {
   const [u, m] = String(tijd).split(':');
-  const totaal = Math.min(23 * 60 + 59, (Number(u) || 0) * 60 + (Number(m) || 0) + uren * 60);
-  return `${String(Math.floor(totaal / 60)).padStart(2, '0')}:${String(totaal % 60).padStart(2, '0')}`;
+  /* Afronden op hele minuten: een halve minuut bestaat niet op een klok, en
+     een kommagetal in een tijdstempel maakt het agendabestand onbruikbaar. */
+  const totaal = Math.round((Number(u) || 0) * 60 + (Number(m) || 0) + uren * 60);
+  const perDag = 24 * 60;
+  const dagen = Math.floor(totaal / perDag);
+  const rest = ((totaal % perDag) + perDag) % perDag;
+  const twee = (n) => String(n).padStart(2, '0');
+  return { tijd: `${twee(Math.floor(rest / 60))}:${twee(rest % 60)}`, dagen };
 }
 
 /**

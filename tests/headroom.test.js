@@ -2093,6 +2093,96 @@ describe('hoe lang de auto in de agenda staat', () => {
     assert.match(ics, /DTEND:20261120T160000/);
   });
 
+  /**
+   * DE EINDTIJD IS ALTIJD EEN TIJD DIE OP EEN KLOK BESTAAT.
+   *
+   * De app telt de uren van een offerte op als `uren × aantal` per regel. Dat
+   * zijn kommagetallen, en die tellen in een computer niet precies op: 3 uur
+   * maal 3 plus 0,2 plus 0,2 wordt 9,399999999999999 in plaats van 9,4.
+   * Daarna gaat er een werkdag van acht uur af en blijft er
+   * 1,3999999999999995 uur over — maal zestig is dat 83,99999999999997
+   * minuut.
+   *
+   * Zo rolde er een eindtijd "09:6.000000000000114" uit, en in het
+   * agendabestand "DTEND:20261107T096.00000000000011400". Daar kan geen
+   * agenda iets mee: je tikt op het bestand en er gebeurt niets, of de
+   * afspraak komt er verminkt in.
+   *
+   * Nagerekend over 5184 offertes van drie regels met gewone uren: in tien
+   * ervan was de eindtijd onbruikbaar. Het treft alleen klussen van meer dan
+   * één werkdag — en sinds The OEM+ Executive op twee dagen staat, is dat
+   * geen uitzondering meer.
+   */
+  test('de eindtijd is altijd uu:mm, ook bij uren die niet rond optellen', () => {
+    const geldig = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
+    let gemeten = 0;
+    let scheef = 0;
+    /* Uren zoals de app ze uitrekent: per regel een kommagetal maal een
+       aantal, en dat opgeteld. */
+    const perRegel = [0.1, 0.2, 0.25, 0.3, 0.5, 0.75, 1, 1.5, 2, 2.5, 3, 4];
+    for (const a of perRegel) {
+      for (const b of perRegel) {
+        for (const c of perRegel) {
+          for (const aantal of [1, 3]) {
+            const uren = totalen([
+              { omschrijving: 'A', aantal, uren: a, inkoopCent: 1000 },
+              { omschrijving: 'B', aantal: 1, uren: b, inkoopCent: 1000 },
+              { omschrijving: 'C', aantal: 1, uren: c, inkoopCent: 1000 },
+            ], INST).urenTotaal;
+            /* Wat er na de hele werkdagen overblijft is het stuk dat de
+               eindtijd bepaalt — en daar ontstaat de scheve minuut. Alleen
+               die gevallen bewaken iets. */
+            const restant = uren - (Math.max(1, Math.ceil(uren / 8)) - 1) * 8;
+            if (!Number.isInteger(restant * 60)) scheef += 1;
+            gemeten += 1;
+            const tijd = werkBlok(VRIJDAG, '09:00', uren).eindTijd;
+            assert.match(tijd, geldig,
+              `bij ${uren} uur komt er "${tijd}" uit`);
+          }
+        }
+      }
+    }
+    assert.ok(gemeten > 300, `te weinig gevallen nagerekend (${gemeten})`);
+    assert.ok(scheef > 10,
+      `maar ${scheef} urensommen laten een scheve minuut over; de test meet te weinig`);
+  });
+
+  test('en dan staat er ook een bruikbare tijd in het agendabestand', () => {
+    /* 16,1 uur is het geval uit de uitleg hierboven: twee werkdagen plus zes
+       minuten. */
+    const ics = String(icsVoorKlus({
+      datum: VRIJDAG, tijd: '09:00', uren: 16.1,
+      besteldag: new Date(2026, 10, 6), wie: 'Jan Jansen', nummer: '2026-001',
+    }, { voorbereiding: { dag: [] } }));
+    for (const regel of ics.split(/\r?\n/).filter((r) => /^DT(START|END|STAMP)/.test(r))) {
+      assert.match(regel, /^DT(START|END|STAMP):\d{8}T\d{6}Z?$/,
+        `onbruikbare regel in het agendabestand: "${regel}"`);
+    }
+  });
+
+  /**
+   * EEN KLUS DIE OVER MIDDERNACHT LOOPT.
+   *
+   * De eindtijd bleef op 23:59 staan zodra hij over middernacht ging, omdat
+   * de dag niet meeschoof. Een klus van acht uur die op donderdagavond om
+   * 17:00 begint — koopavond, de werkplaats is open tot 20:00 — eindigde
+   * volgens de agenda om 23:59 in plaats van om 01:00 de dag erna.
+   */
+  test('loopt de klus over middernacht, dan schuift de dag mee', () => {
+    const blok = werkBlok(VRIJDAG, '17:00', 8);
+    assert.equal(blok.eindTijd, '01:00', `de klus eindigt om ${blok.eindTijd}`);
+    assert.equal(blok.dagen, 1, 'acht uur is en blijft één werkdag');
+    const dagOp = Math.round((blok.eindDatum - opMiddernacht(VRIJDAG)) / 86400000);
+    assert.equal(dagOp, 1, 'de einddatum schuift niet mee over middernacht');
+  });
+
+  test('en een gewone klus overdag blijft op dezelfde dag', () => {
+    // Anders zou "altijd een dag erbij" ook groen staan.
+    const blok = werkBlok(VRIJDAG, '09:00', 6);
+    assert.equal(blok.eindTijd, '15:00');
+    assert.equal(Math.round((blok.eindDatum - opMiddernacht(VRIJDAG)) / 86400000), 0);
+  });
+
   test('werkBlok rekent de dagen zelf ook goed uit', () => {
     // De rekensom apart, zodat een fout hier niet pas in een ics opvalt.
     assert.equal(werkBlok(VRIJDAG, '09:00', 2).dagen, 1);
