@@ -372,7 +372,7 @@ export const ONDERDELEN = [
     uitleg:
       'Het hart van de installatie. Geeft de speakers het vermogen waarvoor ze gemaakt zijn en corrigeert met tijdcorrectie het feit dat je dichter bij de linkerdeur zit dan bij de rechter. Onzichtbaar weggewerkt.',
     x: 302, y: 486,
-    pakketten: ['oem-plus-executive', 'reference-edition', 'competitie-show'],
+    pakketten: ['oem-plus-executive', 'reference-edition', 'competitie-show', 'inmeten-afstellen'],
   },
   {
     id: 'sub',

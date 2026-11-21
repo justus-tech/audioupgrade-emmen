@@ -227,8 +227,8 @@ describe('merken', () => {
 });
 
 describe('pakketten en prijzen', () => {
-  test('alle zeven pakketten staan er', () => {
-    assert.equal(PACKAGES.length, 7);
+  test('alle acht pakketten staan er', () => {
+    assert.equal(PACKAGES.length, 8);
   });
 
   // De site toont de pakketten in twee groepen: vier audiopakketten in één
@@ -357,6 +357,9 @@ describe('pakketten en prijzen', () => {
       // Losse optie, met een vaste prijs: 'prijs op aanvraag' kost Justus werk
       // en klanten haken erop af.
       'accu-voeding': '€ 395,00',
+      // Voor wie al een DSP heeft: vier uur werk op € 85 per uur zonder btw,
+      // naar boven afgerond. Op verzoek van Justus, 2 november 2026.
+      'inmeten-afstellen': '€ 415,00',
       'akoestische-isolatie': 'Prijs op aanvraag',
     };
     for (const p of PACKAGES) {
