@@ -120,6 +120,70 @@ export function bouwOfferte(invoer) {
     ? Math.min(subtotaalExclCent, Math.max(0, naarCent(invoer.kortingExcl)))
     : kortingNaarExcl(invoer.kortingIncl, subtotaalExclCent, Boolean(invoer.zakelijk), BTW_PCT);
 
+  /**
+   * DE KORTING MOET ER OOK EXACT OP KOMEN.
+   *
+   * Voor een regel controleert dit script dat al: wijkt het bedrag op de pdf
+   * een cent af van wat je hebt ingetikt, dan stopt het en stelt het een
+   * splitsing voor. Voor de korting deed het dat niet, en die staat net zo
+   * zichtbaar op de offerte.
+   *
+   * Hoe dat misgaat: een korting die je inclusief btw intikt wordt
+   * teruggerekend naar exclusief, en op de pdf komt daar weer btw bij. Die
+   * heen-en-terugweg valt niet altijd op hetzelfde bedrag uit. Nagerekend met
+   * kortingen van vijf euro tot het offertetotaal: 55 van de 319 kwamen
+   * anders op de offerte te staan — en daar zitten de allergewoonste
+   * bedragen bij:
+   *
+   *   korting EUR 10,00  ->  op de offerte EUR 9,99
+   *   korting EUR 100,00 ->  op de offerte EUR 99,99
+   *   korting EUR 170,00 ->  op de offerte EUR 170,01
+   *
+   * Met 21% btw bestaat EUR 100,00 gewoon niet als korting: het dichtstbij
+   * haalbare is EUR 99,99 of EUR 100,01. Daar is niets aan te rekenen, maar
+   * je hoort het wel te weten voordat de offerte de deur uit gaat. Stond er
+   * een `verwachtTotaalIncl` in het invulblad, dan liep je verderop tegen een
+   * melding over het totaal aan die de oorzaak niet noemde; stond die er
+   * niet, dan ging het verschil mee de deur uit.
+   *
+   * Een zakelijke klant leest zijn bedragen exclusief btw, en dan is er geen
+   * heen-en-terugweg: die controle slaan we over. Net als bij een percentage,
+   * want daar is geen bedrag afgesproken om aan vast te houden.
+   */
+  const kortingTekst = String(invoer.kortingIncl ?? '');
+  if (invoer.kortingExcl == null && kortingTekst.trim() && !kortingTekst.includes('%') && !invoer.zakelijk) {
+    const bedoeld = naarCent(kortingTekst);
+    const subtotaalInclCent = totalen(regels, STANDAARD_INSTELLINGEN, 0).inclCent;
+    /* Meer korting dan de offerte groot is wordt terecht afgetopt; dat is
+       geen afrondingsverschil. */
+    if (bedoeld > 0 && bedoeld <= subtotaalInclCent) {
+      /* Wat er straks echt op de pdf komt te staan. */
+      const opDeOfferte = (cent) => totalen(
+        regels, STANDAARD_INSTELLINGEN,
+        kortingNaarExcl(String(cent / 100).replace('.', ','), subtotaalExclCent, false, BTW_PCT)
+      ).kortingInclCent;
+      const komtUitOp = opDeOfferte(bedoeld);
+      if (komtUitOp !== bedoeld) {
+        /* De naaste bedragen die wél precies op de offerte komen. */
+        const haalbaar = [];
+        for (let stap = 1; stap <= 10 && !haalbaar.length; stap += 1) {
+          for (const kandidaat of [bedoeld - stap, bedoeld + stap]) {
+            if (kandidaat > 0 && kandidaat <= subtotaalInclCent && opDeOfferte(kandidaat) === kandidaat) {
+              haalbaar.push(kandidaat);
+            }
+          }
+        }
+        throw new Error(
+          `de korting van ${euroKort(bedoeld)} komt op de offerte uit op ${euroKort(komtUitOp)}.`
+          + (haalbaar.length
+            ? `\n  Met ${BTW_PCT}% btw bestaat dat bedrag niet als korting; neem ${haalbaar.map(euroKort).join(' of ')}.`
+            : '\n  Kies een korting die een paar cent hoger of lager ligt.')
+          + '\n  Of schrijf "kortingExcl" als je het bedrag zonder btw wilt vastzetten.'
+        );
+      }
+    }
+  }
+
   const offerte = {
     nummer: invoer.nummer,
     datum,

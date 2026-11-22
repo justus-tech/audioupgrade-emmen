@@ -129,6 +129,99 @@ describe('de offerte opbouwen', () => {
     assert.equal(tB.kortingExclCent, 50000);
   });
 
+  /**
+   * DE KORTING KOMT ER OOK EXACT OP, OF HET SCRIPT STOPT.
+   *
+   * Voor een regel deed het script dat al: wijkt het bedrag op de pdf een
+   * cent af van wat je intikte, dan stopt het en stelt het een splitsing
+   * voor. Voor de korting niet, en die staat net zo zichtbaar op de offerte.
+   *
+   * Een korting die je inclusief btw intikt wordt teruggerekend naar
+   * exclusief, en op de pdf komt daar weer btw bij. Die heen-en-terugweg valt
+   * niet altijd op hetzelfde bedrag uit. Nagerekend met kortingen van vijf
+   * euro tot het offertetotaal: 55 van de 319 kwamen anders op de offerte, en
+   * daar zitten de allergewoonste bedragen bij:
+   *
+   *   korting EUR 10,00  ->  op de offerte EUR 9,99
+   *   korting EUR 100,00 ->  op de offerte EUR 99,99
+   *   korting EUR 170,00 ->  op de offerte EUR 170,01
+   *
+   * Met 21% btw bestaat EUR 100,00 niet als korting: het dichtstbij haalbare
+   * is EUR 99,99 of EUR 100,01. Daar is niets aan te rekenen, maar je hoort
+   * het te weten voordat de offerte de deur uit gaat.
+   */
+  test('een korting die een cent verschuift komt er niet doorheen', () => {
+    assert.throws(
+      () => bouwOfferte({ ...basis, kortingIncl: '100,00' }),
+      (fout) => {
+        assert.match(fout.message, /korting van € 100,00/);
+        assert.match(fout.message, /€ 99,99/, 'de melding noemt niet welk bedrag wél kan');
+        assert.match(fout.message, /€ 100,01/);
+        return true;
+      }
+    );
+  });
+
+  test('en het bedrag dat hij voorstelt werkt ook echt', () => {
+    const offerte = bouwOfferte({ ...basis, kortingIncl: '99,99' });
+    const t = totalen(offerte.regels, STANDAARD_INSTELLINGEN, offerte.kortingExclCent);
+    assert.equal(t.kortingInclCent, 9999, 'de voorgestelde korting komt zelf niet exact uit');
+    assert.equal(t.inclCent, 159500 - 9999);
+  });
+
+  test('een korting die wel klopt gaat gewoon door', () => {
+    // Anders zou "altijd weigeren" ook groen staan.
+    for (const bedrag of ['50,00', '300,00', '500,00']) {
+      const offerte = bouwOfferte({ ...basis, kortingIncl: bedrag });
+      const t = totalen(offerte.regels, STANDAARD_INSTELLINGEN, offerte.kortingExclCent);
+      assert.equal(t.kortingInclCent, naarCent(bedrag), `${bedrag} komt er niet exact op`);
+    }
+  });
+
+  test('een percentage, een bedrag zonder btw en een bedrijf gaan altijd door', () => {
+    /* Bij een percentage is er geen afgesproken bedrag om aan vast te houden,
+       bij kortingExcl zet je het zelf vast, en een bedrijf leest zijn
+       bedragen exclusief btw — dan is er geen heen-en-terugweg. */
+    assert.ok(bouwOfferte({ ...basis, kortingIncl: '10%' }).kortingExclCent > 0);
+    assert.ok(bouwOfferte({ ...basis, kortingExcl: '82,64' }).kortingExclCent > 0);
+    assert.ok(bouwOfferte({ ...basis, zakelijk: true, kortingIncl: '100,00' }).kortingExclCent > 0);
+  });
+
+  test('een korting groter dan de offerte wordt afgetopt, niet geweigerd', () => {
+    /* Dat is geen afrondingsverschil maar een terechte begrenzing. */
+    const offerte = bouwOfferte({ ...basis, kortingIncl: '9999,00' });
+    const t = totalen(offerte.regels, STANDAARD_INSTELLINGEN, offerte.kortingExclCent);
+    assert.equal(t.inclCent, 0);
+  });
+
+  test('geen enkele korting komt stilletjes anders op de offerte', () => {
+    /* Het hele veld: elke ronde korting van vijf euro tot het offertetotaal.
+       Elk bedrag gaat óf exact door, óf het script stopt. Een derde uitkomst
+       — er stilletjes een cent naast — mag niet bestaan. */
+    let doorgelaten = 0;
+    let geweigerd = 0;
+    for (let cent = 500; cent <= 159500; cent += 500) {
+      const bedrag = `${Math.floor(cent / 100)},${String(cent % 100).padStart(2, '0')}`;
+      let offerte = null;
+      try {
+        offerte = bouwOfferte({ ...basis, kortingIncl: bedrag });
+      } catch (fout) {
+        geweigerd += 1;
+        assert.match(fout.message, /korting/, `de melding gaat niet over de korting: ${fout.message}`);
+        continue;
+      }
+      doorgelaten += 1;
+      const t = totalen(offerte.regels, STANDAARD_INSTELLINGEN, offerte.kortingExclCent);
+      assert.equal(t.kortingInclCent, cent,
+        `korting ${bedrag} werd doorgelaten maar komt op de offerte uit op ${t.kortingInclCent} cent`);
+    }
+    assert.ok(doorgelaten > 200, `te weinig kortingen doorgelaten (${doorgelaten})`);
+    /* Zonder weigeringen bewaakt deze test niets: dan zou elk bedrag toevallig
+       exact uitkomen en meet hij de controle niet. */
+    assert.ok(geweigerd > 20,
+      `maar ${geweigerd} kortingen geweigerd; de test meet de controle niet`);
+  });
+
   test('met kortingExcl schrijf je het bedrag zonder twijfel op', () => {
     const offerte = bouwOfferte({ ...basis, kortingExcl: '250,00' });
     assert.equal(offerte.kortingExclCent, 25000);
