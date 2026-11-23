@@ -319,7 +319,7 @@ export const PACKAGES = [
     // Het kale bedrag, voor de machineleesbare gegevens. Zie Base.astro.
     bedrag: 695,
     priceNote: 'Inclusief BTW & Montage',
-    priceExcl: '€ 574,- excl. btw',
+    priceExcl: '€ 574,38 excl. btw',
     short: 'Draadloze Apple CarPlay en Android Auto, naadloos in je originele scherm.',
     body: 'Het perfecte pakket om af te rekenen met verouderde autonavigatie en lelijke losse telefoonhouders. Wij integreren Apple CarPlay en Android Auto 100% naadloos in je huidige systeem. Je bedient Flitsmeister, Spotify en Google Maps gewoon via het originele beeldscherm en stuurwiel.',
     features: [
@@ -348,7 +348,7 @@ export const PACKAGES = [
     price: '€ 995,00',
     bedrag: 995,
     priceNote: 'Inclusief BTW & Montage',
-    priceExcl: '€ 822,- excl. btw',
+    priceExcl: '€ 822,31 excl. btw',
     short: 'De perfecte upgrade voor rust in de cabine en loepzuivere details.',
     body: 'Het perfecte pakket om de zwakke papieren fabrieksspeakers te elimineren. We vervangen de luidsprekers voorin door een krachtige 2-weg componentenset. Maar we doen meer dan dat: de voordeuren worden voorzien van tweelaags premium dempingsmateriaal.',
     features: [
@@ -383,7 +383,7 @@ export const PACKAGES = [
     price: '€ 2.195,00',
     bedrag: 2195,
     priceNote: 'Inclusief BTW & Montage',
-    priceExcl: '€ 1.814,- excl. btw',
+    priceExcl: '€ 1.814,05 excl. btw',
     short: 'Voor de veelrijder en echte autoliefhebber die het maximale eist met 0% laadruimteverlies.',
     body: 'Voor de veelrijder en ondernemer. Dit is niet zomaar een speakerupgrade; dit is een totale herziening van je akoestiek. Het hart van dit systeem is een geavanceerde digitale signaalprocessor (DSP). Hiermee sturen we elke luidspreker actief aan en corrigeren we de looptijden van het geluid, zodat je letterlijk in het midden van de muziek zit. Aangevuld met een onzichtbare, voelbare subwoofer.',
     features: [
@@ -427,7 +427,7 @@ export const PACKAGES = [
     price: '€ 3.695,00',
     bedrag: 3695,
     priceNote: 'Inclusief BTW & Montage',
-    priceExcl: '€ 3.054,- excl. btw',
+    priceExcl: '€ 3.053,72 excl. btw',
     /**
      * Het label stond eerst op The OEM+ Executive en zei "Meest gekozen".
      * Twee dingen daaraan veranderd, en het tweede is het belangrijkst:
@@ -578,7 +578,7 @@ export const PACKAGES = [
     price: '€ 395,00',
     bedrag: 395,
     priceNote: 'Inclusief BTW & Montage',
-    priceExcl: '€ 326,- excl. btw',
+    priceExcl: '€ 326,45 excl. btw',
     short: 'Een gezonde accu en zware voeding, zodat je installatie krijgt waar hij om vraagt.',
     body: 'Een DSP-versterker met subwoofer vraagt meer stroom dan de fabrieksbedrading ooit hoefde te leveren. Zakt de spanning in, dan hoor je dat als slappe bas en zie je het als dimmende koplampen. Wij vervangen de accu door een AGM-accu die bij je auto past, melden hem aan bij het accubeheer zodat hij ook goed geladen wordt, trekken een dikkere hoofdkabel met zekering en versterken de massaverbinding. Voor en na meten we de spanning, en die waarden komen op je werkbon te staan.',
     features: [

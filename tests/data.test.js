@@ -364,6 +364,77 @@ describe('pakketten en prijzen', () => {
     }
   });
 
+  /**
+   * HET BEDRAG ZONDER BTW IS GEEN APART GETAL.
+   *
+   * Naast de all-in prijs staat op elke pakketkaart wat het zonder btw is.
+   * Dat getal stond met de hand ingetikt, drie keer per pakket: in site.js
+   * voor het Nederlands en in paginas.js voor het Duits en het Engels. Vijf
+   * pakketten maal drie talen is vijftien losse getallen die alle vijftien uit
+   * één bedrag te rekenen zijn — en dan lopen ze uit elkaar.
+   *
+   * Dat was ook gebeurd. Nagerekend tegen de all-in prijs:
+   *
+   *   € 695,00    stond als € 574,-     is € 574,38    (38 cent te laag)
+   *   € 995,00    stond als € 822,-     is € 822,31    (31 cent te laag)
+   *   € 2.195,00  stond als € 1.814,-   is € 1.814,05  (5 cent te laag)
+   *   € 3.695,00  stond als € 3.054,-   is € 3.053,72  (28 cent te HOOG)
+   *   € 395,00    stond als € 326,-     is € 326,45    (45 cent te laag)
+   *
+   * Vier naar beneden afgekapt en één naar boven: niemand hield ze bij. Een
+   * zakelijke klant leest juist dat bedrag, en krijgt daarna een offerte waar
+   * het echte bedrag op staat. Over 38 cent belt niemand, maar het is wel een
+   * prijs die niet klopt met de prijs eronder.
+   *
+   * Deze test rekent ze alle vijftien na uit de all-in prijs van hetzelfde
+   * pakket in dezelfde taal. Wijzigt er een prijs, dan klapt hij tot het
+   * bedrag zonder btw mee is bijgewerkt.
+   */
+  test('het bedrag zonder btw klopt met de all-in prijs, in alle drie de talen', () => {
+    const BTW = 21;
+    /* Hetzelfde terugrekenen als in de app: eerst het bedrag zonder btw
+       afronden, want dat is wat er straks op de offerte komt. */
+    const exclVan = (inclCent) => Math.round(inclCent / (1 + BTW / 100));
+
+    /* "€ 2.195,00" en "2.195 €" lezen we met punt als duizendtal en komma als
+       decimaal; "€2,195.05" juist omgekeerd. */
+    const leesBedrag = (tekst, engels) => {
+      const m = String(tekst).match(engels ? /([\d,]+)(?:\.(\d{2}))?/ : /([\d.]+)(?:,(\d{2}))?/);
+      if (!m) return null;
+      const heel = Number(m[1].replace(engels ? /,/g : /\./g, ''));
+      if (!Number.isFinite(heel)) return null;
+      return heel * 100 + Number(m[2] || 0);
+    };
+
+    const talen = [
+      { naam: 'Nederlands', engels: false, van: (pkg) => ({ prijs: pkg.price, excl: pkg.priceExcl }) },
+      { naam: 'Duits', engels: false, van: (pkg) => PAGINAS.de.pakketten[pkg.slug] || {} },
+      { naam: 'Engels', engels: true, van: (pkg) => PAGINAS.en.pakketten[pkg.slug] || {} },
+    ];
+
+    let nagerekend = 0;
+    for (const pkg of PACKAGES) {
+      for (const taal of talen) {
+        const velden = taal.van(pkg);
+        const prijs = velden.prijs ?? velden.price;
+        const excl = velden.prijsExcl ?? velden.excl;
+        /* "Prijs op aanvraag" en de regel "inclusief btw en montage" hebben
+           geen bedrag om na te rekenen. */
+        if (!excl || !/\d/.test(String(excl)) || !prijs || !/\d/.test(String(prijs))) continue;
+        const inclCent = leesBedrag(prijs, taal.engels);
+        const exclCent = leesBedrag(excl, taal.engels);
+        assert.ok(inclCent && exclCent, `${pkg.slug} (${taal.naam}): bedrag niet te lezen uit "${prijs}" / "${excl}"`);
+        nagerekend += 1;
+        assert.equal(
+          exclCent, exclVan(inclCent),
+          `${pkg.slug} (${taal.naam}): "${excl}" hoort ${(exclVan(inclCent) / 100).toFixed(2)} te zijn bij een all-in prijs van "${prijs}"`
+        );
+      }
+    }
+    assert.ok(nagerekend >= 15,
+      `maar ${nagerekend} bedragen nagerekend; er horen er vijftien te zijn (vijf pakketten maal drie talen)`);
+  });
+
   test('elk pakket heeft de tekst die de kaart nodig heeft', () => {
     for (const p of PACKAGES) {
       for (const veld of ['name', 'tagline', 'short', 'body', 'cta', 'duur']) {

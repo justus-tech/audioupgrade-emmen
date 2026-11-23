@@ -35,7 +35,7 @@ const PAKKETTEN_DE = {
     naam: "Kabelloses CarPlay Upgrade",
     prijs: "ab 695 €",
     prijsNoot: "Inklusive MwSt. und Einbau",
-    prijsExcl: "574 € zzgl. MwSt.",
+    prijsExcl: "574,38 € zzgl. MwSt.",
     tagline: 'Apple CarPlay & Android Auto',
     short: 'Kabelloses Apple CarPlay und Android Auto, nahtlos in Ihrem Originaldisplay.',
     body:
@@ -54,7 +54,7 @@ const PAKKETTEN_DE = {
     naam: "Akustik-Basis",
     prijs: "995 €",
     prijsNoot: "Inklusive MwSt. und Einbau",
-    prijsExcl: "822 € zzgl. MwSt.",
+    prijsExcl: "822,31 € zzgl. MwSt.",
     tagline: 'Ruhe im Innenraum, klar am Telefon.',
     short: 'Die Grundlage: Ruhe im Innenraum und Details, die Sie vorher nicht gehört haben.',
     body:
@@ -72,7 +72,7 @@ const PAKKETTEN_DE = {
     naam: "The OEM+ Executive",
     prijs: "2.195 €",
     prijsNoot: "Inklusive MwSt. und Einbau",
-    prijsExcl: "1.814 € zzgl. MwSt.",
+    prijsExcl: "1.814,05 € zzgl. MwSt.",
     tagline: '0% Kofferraumverlust. 100% Dynamik.',
     short: 'Für Vielfahrer und echte Autoliebhaber, die das Maximum wollen — ohne Kofferraum zu verlieren.',
     body:
@@ -92,7 +92,7 @@ const PAKKETTEN_DE = {
     naam: "The Reference Edition",
     prijs: "3.695 €",
     prijsNoot: "Inklusive MwSt. und Einbau",
-    prijsExcl: "3.054 € zzgl. MwSt.",
+    prijsExcl: "3.053,72 € zzgl. MwSt.",
     tagline: 'Kompromisslose audiophile Perfektion.',
     short: 'Audiophile Perfektion für alle, die sich weigern, Kompromisse zu machen.',
     body:
@@ -145,7 +145,7 @@ const PAKKETTEN_DE = {
     naam: "Batterie & Stromversorgung",
     prijs: "395 €",
     prijsNoot: "Inklusive MwSt. und Einbau",
-    prijsExcl: "326 € zzgl. MwSt.",
+    prijsExcl: "326,45 € zzgl. MwSt.",
     tagline: 'Strom, der nicht einbricht.',
     short: 'Eine gesunde Batterie und eine kräftige Stromversorgung, damit Ihre Anlage bekommt, was sie braucht.',
     body:
@@ -184,7 +184,7 @@ const PAKKETTEN_EN = {
     naam: "Wireless CarPlay Upgrade",
     prijs: "from €695",
     prijsNoot: "VAT and fitting included",
-    prijsExcl: "€574 excl. VAT",
+    prijsExcl: "€574.38 excl. VAT",
     tagline: 'Apple CarPlay & Android Auto',
     short: 'Wireless Apple CarPlay and Android Auto, seamlessly in your original screen.',
     body:
@@ -203,7 +203,7 @@ const PAKKETTEN_EN = {
     naam: "Acoustic Foundation",
     prijs: "€995",
     prijsNoot: "VAT and fitting included",
-    prijsExcl: "€822 excl. VAT",
+    prijsExcl: "€822.31 excl. VAT",
     tagline: 'Quiet inside, clear on the phone.',
     short: 'The foundation: a quiet cabin and detail you have not heard before.',
     body:
@@ -224,7 +224,7 @@ const PAKKETTEN_EN = {
     naam: "The OEM+ Executive",
     prijs: "€2,195",
     prijsNoot: "VAT and fitting included",
-    prijsExcl: "€1,814 excl. VAT",
+    prijsExcl: "€1,814.05 excl. VAT",
     tagline: '0% boot space lost. 100% dynamics.',
     short: 'For high-mileage drivers who want the maximum without giving up boot space.',
     body:
@@ -244,7 +244,7 @@ const PAKKETTEN_EN = {
     naam: "The Reference Edition",
     prijs: "€3,695",
     prijsNoot: "VAT and fitting included",
-    prijsExcl: "€3,054 excl. VAT",
+    prijsExcl: "€3,053.72 excl. VAT",
     tagline: 'Audiophile perfection, no compromises.',
     short: 'Audiophile perfection for those who refuse to compromise.',
     body:
@@ -294,7 +294,7 @@ const PAKKETTEN_EN = {
     naam: "Battery & Power",
     prijs: "€395",
     prijsNoot: "VAT and fitting included",
-    prijsExcl: "€326 excl. VAT",
+    prijsExcl: "€326.45 excl. VAT",
     tagline: 'Power that does not sag.',
     short: 'A healthy battery and heavy wiring, so your system gets what it asks for.',
     body:
