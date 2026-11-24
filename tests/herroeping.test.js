@@ -12,7 +12,8 @@ import assert from 'node:assert/strict';
 import {
   herroepingPdf, herroepingBestandsnaam, hoortErBij,
 } from '../src/lib/headroom/herroeping.js';
-import { kernpunten, volledigeVoorwaarden } from '../src/lib/headroom/voorwaarden.js';
+import { kernpunten, volledigeVoorwaarden, annuleertermijn } from '../src/lib/headroom/voorwaarden.js';
+import { ALGEMENE_VOORWAARDEN } from '../src/data/juridisch.js';
 import { offertePdf } from '../src/lib/headroom/offerte-pdf.js';
 import { factuurPdf } from '../src/lib/headroom/factuur.js';
 import { STANDAARD_INSTELLINGEN } from '../src/lib/headroom/rekenen.js';
@@ -315,6 +316,79 @@ describe('de punten op de voorkant zeggen hetzelfde als artikel 4', () => {
        zelf komen. Zou de app het vinkje vanzelf aanzetten, dan beweert de
        offerte iets wat de klant nooit heeft gevraagd. */
     assert.match(artikel4(), /voorgedrukt vinkje of een standaardinstelling geldt niet als verzoek/);
+  });
+});
+
+/**
+ * DE ANNULEERTERMIJN STAAT MAAR OP ÉÉN PLEK.
+ *
+ * Op de voorkant van de offerte staat "afzeggen kan kosteloos tot X dagen
+ * voor de afgesproken dag, daarna 25%", en achterop staan de volledige
+ * voorwaarden waarin diezelfde termijn staat. Die twee moeten hetzelfde
+ * getal noemen: het gaat over een kwart van het offertebedrag.
+ *
+ * Daarom leest kernpunten() dat getal uit artikel "Annulering" in plaats van
+ * het ergens apart in te tikken. Maar de terugval stond op 7 terwijl de
+ * voorwaarden 14 zeggen — op twee plekken: in annuleertermijn() voor als het
+ * lezen mislukt, en als standaardwaarde van kernpunten() voor als een
+ * aanroeper hem vergeet mee te geven.
+ *
+ * Zover is het niet gekomen: de offerte en de factuur geven hem altijd mee en
+ * de tekst matcht. Maar `kernpunten({})` zei wél "7 dagen", en het lezen hangt
+ * aan één zinsnede: één herformulering in de voorwaarden zette elke offerte
+ * stil op 7 dagen, met 14 dagen op het blad erachter. Deze tests houden die
+ * twee aan elkaar.
+ */
+describe('de annuleertermijn op de offerte en in de voorwaarden', () => {
+  /* Wat er werkelijk in artikel "Annulering" staat, los van de app. */
+  const uitDeVoorwaarden = () => {
+    const artikel = ALGEMENE_VOORWAARDEN.artikelen
+      .find((a) => /annulering/i.test(a.kop));
+    const tekst = [...(artikel?.alineas || []), ...(artikel?.lijst || [])].join(' ');
+    const m = tekst.match(/tot uiterlijk (\d+) dagen/);
+    return { artikel, tekst, getal: m ? Number(m[1]) : null };
+  };
+
+  test('de voorwaarden noemen de termijn zelf, dus de terugval is niet in gebruik', () => {
+    const { artikel, getal } = uitDeVoorwaarden();
+    assert.ok(artikel, 'er is geen artikel over annulering meer');
+    assert.ok(getal, 'de zinsnede "tot uiterlijk … dagen" staat niet meer in de voorwaarden; '
+      + 'dan valt annuleertermijn() terug op een getal dat niemand meer nakijkt');
+  });
+
+  test('annuleertermijn() geeft precies dat getal terug', () => {
+    assert.equal(annuleertermijn(), uitDeVoorwaarden().getal);
+  });
+
+  test('en kernpunten noemt het ook zonder dat je het meegeeft', () => {
+    /* Hier stond 7 als standaard. Een nieuwe aanroeper die dit vergeet levert
+       dan een blad op dat zichzelf tegenspreekt. */
+    const dagen = uitDeVoorwaarden().getal;
+    const zin = kernpunten({}).find((p) => /Afzeggen of verzetten/.test(p));
+    assert.ok(zin, 'de annuleringszin staat niet meer in de punten');
+    assert.match(zin, new RegExp(`kosteloos tot ${dagen} dagen`),
+      `de zin zegt iets anders dan de voorwaarden: "${zin.slice(0, 80)}"`);
+  });
+
+  test('en op de offerte zelf staat achterop hetzelfde als voorop', () => {
+    /* De sterkste controle: één pdf, met de punten op de voorkant en de
+       volledige voorwaarden als bijlage erachter. */
+    const bytes = offertePdf({
+      ...OFFERTE, voorwaardenBijlage: true,
+      regels: [{ id: 'r1', omschrijving: 'Werk', aantal: 1, vastExclCent: 100000 }],
+    }, STANDAARD_INSTELLINGEN).naarBytes();
+    const tekst = [...Buffer.from(bytes).toString('latin1')
+      .matchAll(/\(((?:\\.|[^\\)])*)\) Tj/g)]
+      .map((m) => m[1].replace(/\\(.)/g, '$1'))
+      .join(' ')
+      .replace(/\s+/g, ' ');
+
+    const voorop = tekst.match(/Afzeggen of verzetten kan kosteloos tot (\d+) dagen/);
+    const achterop = tekst.match(/annuleren of verzetten van een inbouwafspraak is mogelijk tot uiterlijk (\d+) dagen/);
+    assert.ok(voorop, 'de annuleringszin staat niet op de voorkant van de offerte');
+    assert.ok(achterop, 'het artikel over annulering staat niet in de bijlage');
+    assert.equal(voorop[1], achterop[1],
+      `voorop staat ${voorop[1]} dagen en achterop ${achterop[1]} dagen`);
   });
 });
 

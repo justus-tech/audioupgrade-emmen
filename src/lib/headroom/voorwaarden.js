@@ -67,7 +67,10 @@ export function kernpunten({
   startDirect = false,
   zakelijk = false,
   alleenWerk = false,
-  annuleerDagen = 7,
+  /* Niet een los getal maar de termijn uit de eigen voorwaarden: anders kan
+     een aanroeper die dit vergeet een blad opleveren waarop de zin en de
+     voorwaarden erachter een andere termijn noemen. */
+  annuleerDagen = annuleertermijn(),
 } = {}) {
   const punten = [];
   const prijzen = zakelijk
@@ -223,9 +226,28 @@ export function volledigeVoorwaarden() {
   };
 }
 
-/** Hoeveel dagen je kosteloos kunt afzeggen, volgens de eigen voorwaarden. */
+/**
+ * Hoeveel dagen je kosteloos kunt afzeggen, volgens de eigen voorwaarden.
+ *
+ * DE TERUGVAL STOND OP 7 EN DE VOORWAARDEN ZEGGEN 14.
+ *
+ * Dat getal wordt uit artikel "Annulering" gelezen, en dat is goed: één bron.
+ * Maar lukt dat lezen niet, dan stond er 7. En dan zou er op de offerte
+ * "afzeggen kan kosteloos tot 7 dagen voor de afgesproken dag" komen te staan
+ * met, op hetzelfde blad, de voorwaarden erachter waarin 14 dagen staat.
+ * Twee termijnen die elkaar tegenspreken op één papier, over een bedrag van
+ * 25% van de offerte.
+ *
+ * Zover is het nooit gekomen: de offerte en de factuur geven dit getal altijd
+ * mee en de tekst matcht. Maar het lezen hangt aan één zinsnede ("tot
+ * uiterlijk 14 dagen"), en één herformulering in de voorwaarden zou elke
+ * offerte stil op 7 zetten. Daarom is de terugval nu hetzelfde getal als in
+ * de voorwaarden, en bewaakt een test dat het lezen echt lukt.
+ */
+const ANNULEER_DAGEN = 14;
+
 export function annuleertermijn() {
   const tekst = (artikel('Annulering')?.lijst || []).join(' ');
   const m = tekst.match(/tot uiterlijk (\d+) dagen/);
-  return m ? Number(m[1]) : 7;
+  return m ? Number(m[1]) : ANNULEER_DAGEN;
 }
