@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 import {
   euro, naarCent, getalOfNiets, regelPrijs, totalen, marge, offertenummer, datumNl, geldigTot,
   stuklijst, soortenIn, aanbetaling, eindafrekening, kortingNaarExcl, factuurnummer,
-  STANDAARD_INSTELLINGEN, SOORTEN, BTW_PCT,
+  STANDAARD_INSTELLINGEN, SOORTEN, BTW_PCT, btwVan,
 } from '../src/lib/headroom/rekenen.js';
 import { nieuwPdf, naarPdfTekens, breedteVan, breekAf, A4 } from '../src/lib/headroom/pdf.js';
 import { ONDERGRENS } from '../src/lib/headroom/opmaak.js';
@@ -2966,6 +2966,118 @@ describe('het rapport', () => {
     assert.equal(leeg.omzet.gemiddeldInclCent, 0);
     assert.equal(leeg.conversie.pct, 0);
     assert.deepEqual(leeg.perSoort, []);
+  });
+});
+
+/**
+ * HET PERCENTAGE OP HET PAPIER IS HET PERCENTAGE DAT GEREKEND IS.
+ *
+ * De offerte, de factuur en het rapport zetten het btw-tarief ook op papier.
+ * Dat deden ze met `inst.btwPct` rechtstreeks, terwijl er gerekend wordt met
+ * btwVan() — dat is een tweede bron, en daarmee kon er een ander getal op het
+ * blad staan dan er gerekend was.
+ *
+ * Nagespeeld met instellingen zoals ze uit een oudere reservekopie kunnen
+ * komen; het bedrag was elke keer netjes 21% maar erboven stond:
+ *
+ *   btwPct: null    ->  "Btw null%: EUR 210,00"
+ *   btwPct: ""      ->  "Btw %: EUR 210,00"
+ *   btwPct: "NaN"   ->  "Btw NaN%: EUR 210,00"
+ *   btwPct: "21%"   ->  "Btw 21%%: EUR 210,00"
+ *
+ * De woorden null en NaN op de factuur van een klant. Via het
+ * instellingenscherm komt zo'n waarde er niet in — dat maakt er een net getal
+ * van — maar via een reservekopie of opslag van een oudere versie wel: die
+ * worden over de standaard heen gelegd zoals ze zijn. Nagemeten in de app:
+ * zet je `{"instellingen":{"btwPct":null}}` in de opslag, dan staat er null in
+ * de instellingen en is het veld leeg.
+ */
+describe('het btw-tarief op papier', () => {
+  const ROMMEL = ['', null, undefined, 'NaN', '21%', 'eenentwintig', ' 21 ', {}, []];
+  const ECHT = [0, 9, 21, '9', '21'];
+
+  const offerte = {
+    nummer: '2026-042', datum: new Date(2026, 8, 18), geldigTot: new Date(2026, 9, 18),
+    klant: { naam: 'Jan Jansen', adres: 'Hoofdstraat 1' },
+    auto: { kenteken: 'XX99XX', merk: 'BMW', model: '320i' },
+    regels: [{ id: 'r1', omschrijving: 'Werk', aantal: 1, vastExclCent: 100000 }],
+    voorwaardenBijlage: false,
+  };
+
+  const lopend = (bytes) => [...Buffer.from(bytes).toString('latin1')
+    .matchAll(/\(((?:\\.|[^\\)])*)\) Tj/g)]
+    .map((m) => m[1].replace(/\\(.)/g, '$1'))
+    .join(' ')
+    .replace(/\s+/g, ' ');
+
+  const papieren = (btwPct) => {
+    const inst = { ...STANDAARD_INSTELLINGEN, btwPct, iban: 'NL00BANK0123456789' };
+    const vandaag = new Date(2026, 8, 20);
+    return {
+      inst,
+      offerte: lopend(offertePdf({ ...offerte, zakelijk: true }, inst).naarBytes()),
+      factuur: lopend(factuurPdf(offerte, inst, {
+        soort: 'aanbetaling', nummer: '2026-F001', datum: offerte.datum, percentage: 30,
+      }).naarBytes()),
+      rapport: lopend(rapportPdf(rapport([{
+        nummer: '2026-001', status: 'betaald', inbouwdatum: '2026-09-05',
+        datum: '2026-09-01T10:00:00.000Z',
+        regels: [{ omschrijving: 'Werk', soort: 'carplay', aantal: 1, vastExclCent: 100000, inkoopCent: 20000 }],
+      }], inst, periodes(vandaag)[0]), inst, vandaag).naarBytes()),
+    };
+  };
+
+  test('btwVan leest een echt tarief, en valt alleen terug op rommel', () => {
+    for (const goed of ECHT) {
+      assert.equal(btwVan({ btwPct: goed }), Number(goed),
+        `btwPct ${JSON.stringify(goed)} hoort ${goed} te blijven`);
+    }
+    for (const fout of ROMMEL) {
+      assert.equal(btwVan({ btwPct: fout }), BTW_PCT,
+        `btwPct ${JSON.stringify(fout)} hoort op het standaardtarief terug te vallen`);
+    }
+    assert.equal(btwVan(undefined), BTW_PCT);
+    assert.equal(btwVan({}), BTW_PCT);
+  });
+
+  test('geen enkel document zet rommel als percentage op papier', () => {
+    for (const fout of ROMMEL) {
+      const p = papieren(fout);
+      for (const [waar, tekst] of [['offerte', p.offerte], ['factuur', p.factuur], ['rapport', p.rapport]]) {
+        assert.match(tekst, /Btw 21%/,
+          `de ${waar} noemt het tarief niet als 21% bij btwPct ${JSON.stringify(fout)}`);
+        assert.doesNotMatch(tekst, /Btw (null|undefined|NaN|%|21%%| 21 %)/,
+          `de ${waar} zet "${(tekst.match(/Btw [^:,. ]*/) || [''])[0]}" op papier bij btwPct ${JSON.stringify(fout)}`);
+      }
+    }
+  });
+
+  test('en een tarief dat er bewust staat komt er wél op', () => {
+    /* Anders zou "altijd 21% afdrukken" ook groen staan. 9% bestaat (lage
+       tarief) en 0% ook, bij levering over de grens. */
+    for (const tarief of [9, 0]) {
+      const p = papieren(tarief);
+      for (const [waar, tekst] of [['offerte', p.offerte], ['factuur', p.factuur], ['rapport', p.rapport]]) {
+        assert.match(tekst, new RegExp(`Btw ${tarief}%`),
+          `de ${waar} zet ${tarief}% niet op papier`);
+      }
+    }
+  });
+
+  test('het bedrag op het papier hoort bij dat percentage', () => {
+    /* De sterkste: lees het percentage én het bedrag van de offerte en kijk
+       of ze bij elkaar passen. Een blad dat 9% zegt en 21% rekent is erger
+       dan een blad met "null" erop. */
+    for (const btwPct of [...ECHT, ...ROMMEL]) {
+      const inst = { ...STANDAARD_INSTELLINGEN, btwPct };
+      const t = totalen(offerte.regels, inst, 0);
+      const tekst = lopend(offertePdf({ ...offerte, zakelijk: true }, inst).naarBytes());
+      const m = tekst.match(/Btw (\d+)%/);
+      assert.ok(m, `geen leesbaar percentage op de offerte bij btwPct ${JSON.stringify(btwPct)}`);
+      const gezegd = Number(m[1]);
+      assert.equal(t.btwCent, Math.round((t.exclCent * gezegd) / 100),
+        `de offerte zegt ${gezegd}% maar rekent ${euro(t.btwCent)} over ${euro(t.exclCent)}`);
+    }
   });
 });
 

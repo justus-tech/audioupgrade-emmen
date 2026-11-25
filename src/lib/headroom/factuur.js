@@ -37,7 +37,7 @@ import {
 } from './opmaak.js';
 import { kernpunten, annuleertermijn } from './voorwaarden.js';
 import {
-  euro, aanbetaling, eindafrekening, datumNl, geldigTot, STANDAARD_INSTELLINGEN,
+  euro, aanbetaling, eindafrekening, datumNl, geldigTot, btwVan, STANDAARD_INSTELLINGEN,
 } from './rekenen.js';
 
 /** Waar de bedragen rechts uitgelijnd staan. */
@@ -228,7 +228,7 @@ export function factuurPdf(offerte, inst = STANDAARD_INSTELLINGEN, opties = {}) 
     ]);
   }
   totaalregels.push(['Bedrag zonder btw', euro(teBetalenExclCent)]);
-  totaalregels.push([`Btw ${inst.btwPct ?? 21}%`, euro(teBetalenBtwCent)]);
+  totaalregels.push([`Btw ${btwVan(inst)}%`, euro(teBetalenBtwCent)]);
 
   for (const [label, bedrag] of totaalregels) {
     ruimte(18);

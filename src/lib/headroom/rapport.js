@@ -20,7 +20,7 @@
  * vraagt "wat heb ik in september gedraaid".
  */
 import {
-  totalen, marge, soortenIn, SOORTEN, STANDAARD_INSTELLINGEN, euro, datumNl,
+  totalen, marge, soortenIn, SOORTEN, STANDAARD_INSTELLINGEN, euro, datumNl, btwVan,
 } from './rekenen.js';
 import { opMiddernacht } from './agenda.js';
 import { nieuwPdf, breekAf } from './pdf.js';
@@ -282,7 +282,7 @@ export function rapportPdf(r, inst = STANDAARD_INSTELLINGEN, vandaag = new Date(
   const o = r.omzet;
   blok(`Omzet ${r.periode?.kop || ''}`.trim(), o.aantal ? [
     ['Omzet excl. btw', euro(o.exclCent), `Over ${o.aantal} klus${o.aantal === 1 ? '' : 'sen'}.`],
-    [`Btw ${inst.btwPct}%`, euro(o.btwCent)],
+    [`Btw ${btwVan(inst)}%`, euro(o.btwCent)],
     ['Omzet incl. btw', euro(o.inclCent)],
     ['Inkoop', euro(o.inkoopCent)],
     ['Marge', euro(o.margeCent), `${o.margePct.toFixed(1).replace('.', ',')}% van de omzet.`],

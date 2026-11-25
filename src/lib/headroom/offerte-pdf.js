@@ -27,7 +27,7 @@ import { kernpunten, annuleertermijn } from './voorwaarden.js';
    mis, en dan staat er op een werkbon een ander kenteken dan op de site. */
 import { formatteerKenteken } from '../match.js';
 import { autoNaam } from './autos.js';
-import { euro, regelPrijs, totalen, datumNl, STANDAARD_INSTELLINGEN } from './rekenen.js';
+import { euro, regelPrijs, totalen, datumNl, btwVan, STANDAARD_INSTELLINGEN } from './rekenen.js';
 
 /**
  * De offerte tekenen. Levert een pdf-document op; vraag daar `naarBlob()`
@@ -208,7 +208,7 @@ export function offertePdf(offerte, inst = STANDAARD_INSTELLINGEN) {
     doc.tekst('Subtotaal excl. btw', labelX, y, { grootte: 9.5, kleur: KLEUR.zacht, uitlijnen: 'rechts' });
     doc.tekst(euro(t.exclCent), RECHTS, y, { grootte: 9.5, kleur: KLEUR.inkt, uitlijnen: 'rechts' });
     y += 15;
-    doc.tekst(`Btw ${inst.btwPct}%`, labelX, y, { grootte: 9.5, kleur: KLEUR.zacht, uitlijnen: 'rechts' });
+    doc.tekst(`Btw ${btwVan(inst)}%`, labelX, y, { grootte: 9.5, kleur: KLEUR.zacht, uitlijnen: 'rechts' });
     doc.tekst(euro(t.btwCent), RECHTS, y, { grootte: 9.5, kleur: KLEUR.inkt, uitlijnen: 'rechts' });
     y += 12;
   }
@@ -224,8 +224,8 @@ export function offertePdf(offerte, inst = STANDAARD_INSTELLINGEN) {
   y += 14;
   doc.tekst(
     zakelijk
-      ? `Inclusief montage. Btw ${inst.btwPct}%: ${euro(t.btwCent)}.`
-      : `Inclusief montage en ${inst.btwPct}% btw (${euro(t.btwCent)}).`,
+      ? `Inclusief montage. Btw ${btwVan(inst)}%: ${euro(t.btwCent)}.`
+      : `Inclusief montage en ${btwVan(inst)}% btw (${euro(t.btwCent)}).`,
     RECHTS, y, { grootte: 8, kleur: KLEUR.zacht, uitlijnen: 'rechts' }
   );
   y += 30;

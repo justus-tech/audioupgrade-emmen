@@ -112,8 +112,28 @@ export function naarCent(invoer) {
  *
  * Een 0 die er bewust staat blijft 0: 0% btw bestaat, bijvoorbeeld bij
  * levering over de grens.
+ *
+ * WAAROM DIT NAAR BUITEN GAAT
+ * De offerte, de factuur en het rapport zetten het tarief ook op papier, en
+ * die deden dat met `inst.btwPct` rechtstreeks. Dat is een tweede bron, en
+ * daarmee kon er een ander getal op het blad staan dan er gerekend was.
+ * Nagespeeld met instellingen uit een oudere reservekopie:
+ *
+ *   btwPct: null    ->  "Btw null%: EUR 210,00"      gerekend met 21%
+ *   btwPct: ""      ->  "Btw %: EUR 210,00"          gerekend met 21%
+ *   btwPct: "NaN"   ->  "Btw NaN%: EUR 210,00"       gerekend met 21%
+ *   btwPct: "21%"   ->  "Btw 21%%: EUR 210,00"       gerekend met 21%
+ *
+ * De woorden null, NaN en undefined op de factuur van een klant, met een
+ * bedrag ernaast dat wél klopt. Zulke instellingen komen er niet via het
+ * instellingenscherm in — dat maakt er een net getal van — maar wel via een
+ * reservekopie of opslag van een oudere versie: die worden over de standaard
+ * heen gelegd zoals ze zijn.
+ *
+ * Eén bron dus: wat hier uitkomt is wat er gerekend wordt én wat er op het
+ * papier staat.
  */
-function btwVan(inst) {
+export function btwVan(inst) {
   const n = getalOfNiets(inst?.btwPct);
   return n === null ? BTW_PCT : n;
 }
