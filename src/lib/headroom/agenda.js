@@ -21,7 +21,7 @@
  *
  * Open je Headroom zelf, dan zie je bovenaan de agenda wat eraan komt.
  */
-import { datumNl, totalen } from './rekenen.js';
+import { datumNl, totalen, getalOfNiets } from './rekenen.js';
 import { ADRES } from '../../data/site.js';
 import { autoNaam } from './autos.js';
 
@@ -101,7 +101,25 @@ export function agendaItem(offerte, inst = {}, vandaag = new Date()) {
   const datum = opMiddernacht(offerte.inbouwdatum);
   if (!datum) return null;
 
-  const bestelDagen = Math.round(Number(inst.bestelDagen)) || 14;
+  /**
+   * NUL BESTELDAGEN IS EEN KEUZE, GEEN LEEG VELD.
+   *
+   * Hier stond `Math.round(Number(inst.bestelDagen)) || 14`. Die `||` kijkt
+   * niet of er een getal staat maar of het getal waar is, en 0 is dat niet.
+   * Zet je de instelling dus op 0 — "ik bestel op de dag zelf", wat kan als je
+   * het op voorraad hebt — dan werd dat stil 14.
+   *
+   * Nagespeeld met een inbouw op 6 december en de instelling op 0: de agenda
+   * zette "uiterlijk bestellen" op 22 november en meldde "nu bestellen", net
+   * als bij 14 dagen. Dat is twee weken te vroeg, en zodra die dag voorbij is
+   * zet de agenda de klus op "te laat" terwijl er niets te laat is.
+   *
+   * getalOfNiets() is hier het juiste gereedschap: dat zegt "ik kon er geen
+   * getal in lezen" en laat een 0 die er bewust staat staan. Dezelfde keuze
+   * als bij het btw-tarief in rekenen.js.
+   */
+  const gelezen = getalOfNiets(inst.bestelDagen);
+  const bestelDagen = gelezen === null ? 14 : Math.max(0, Math.round(gelezen));
   const besteldag = bestelUiterlijk(datum, bestelDagen);
   const dagen = dagenTussen(vandaag, datum);
   const bestelDagenTot = dagenTussen(vandaag, besteldag);

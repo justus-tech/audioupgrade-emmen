@@ -236,6 +236,44 @@ describe('de offerte opbouwen', () => {
     assert.equal(bouwOfferte({ ...basis, opAfstand: true }).opAfstand, true);
   });
 
+  /**
+   * EEN GELDIGHEIDSDUUR VAN NUL DAGEN IS EEN TIKFOUT, GEEN KEUZE.
+   *
+   * Hier stond `Number(invoer.geldigDagen) || STANDAARD_INSTELLINGEN.geldigDagen`,
+   * en die `||` maakte van een 0 stil dertig dagen. Een offerte die vandaag al
+   * verloopt wil niemand versturen, maar er stil een maand van maken is ook
+   * niet goed: dan staat er iets anders op de offerte dan in het invulblad.
+   */
+  test('een geldigheidsduur onder één dag wordt geweigerd', () => {
+    for (const waarde of [0, -5, 'x', '0']) {
+      assert.throws(
+        () => bouwOfferte({ ...basis, geldigDagen: waarde }),
+        (fout) => {
+          assert.match(fout.message, /geldigDagen/);
+          assert.match(fout.message, /minstens één dag/i);
+          return true;
+        },
+        `geldigDagen ${JSON.stringify(waarde)} hoort geweigerd te worden`
+      );
+    }
+  });
+
+  test('een gewone geldigheidsduur gaat door, en weglaten geeft de standaard', () => {
+    // Anders zou "altijd weigeren" ook groen staan.
+    const dagen = (invoer) => {
+      const o = bouwOfferte(invoer);
+      return Math.round((o.geldigTot - o.datum) / 86400000);
+    };
+    assert.equal(dagen({ ...basis, geldigDagen: 1 }), 1);
+    assert.equal(dagen({ ...basis, geldigDagen: 60 }), 60);
+    assert.equal(dagen({ ...basis, geldigDagen: '45' }), 45, 'een getal als tekst hoort te werken');
+    const zonder = { ...basis };
+    delete zonder.geldigDagen;
+    assert.equal(dagen(zonder), STANDAARD_INSTELLINGEN.geldigDagen);
+    assert.equal(dagen({ ...basis, geldigDagen: '' }), STANDAARD_INSTELLINGEN.geldigDagen,
+      'een leeg veld is hetzelfde als weglaten');
+  });
+
   test('een laag offertenummer wordt geweigerd', () => {
     // 2026-001 leest alsof het zijn eerste offerte van het jaar is.
     assert.throws(() => bouwOfferte({ ...basis, nummer: '2026-001' }), /laag nummer/);

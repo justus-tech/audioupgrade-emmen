@@ -2992,6 +2992,59 @@ describe('het rapport', () => {
  * zet je `{"instellingen":{"btwPct":null}}` in de opslag, dan staat er null in
  * de instellingen en is het veld leeg.
  */
+/**
+ * NUL BESTELDAGEN IS EEN KEUZE, GEEN LEEG VELD.
+ *
+ * De instelling "uiterlijk bestellen" werd gelezen met
+ * `Math.round(Number(inst.bestelDagen)) || 14`. Die `||` kijkt niet of er een
+ * getal staat maar of het getal waar is, en 0 is dat niet. Zet je de
+ * instelling dus op 0 — "ik bestel op de dag zelf", wat kan als je het op
+ * voorraad hebt — dan werd dat stil 14.
+ *
+ * Nagemeten in de app met een inbouw op 6 december en de instelling op 0: de
+ * agenda zette "uiterlijk bestellen" op 22 november en meldde "nu bestellen",
+ * precies hetzelfde als bij 14 dagen. Dat is twee weken te vroeg, en zodra
+ * die dag voorbij is zet de agenda de klus op "te laat" terwijl er niets te
+ * laat is.
+ */
+describe('de besteldagen uit de instellingen', () => {
+  const INBOUW = '2026-12-06';
+  const VANDAAG = new Date(2026, 10, 26);
+  const klus = {
+    nummer: '2026-001', status: 'aanbetaald', inbouwdatum: INBOUW,
+    klant: { naam: 'Jan Jansen' }, regels: [],
+  };
+  const besteldagVan = (bestelDagen) => agendaItem(klus, { bestelDagen }, VANDAAG)
+    .besteldag.toISOString().slice(0, 10);
+
+  test('nul dagen betekent de inbouwdag zelf', () => {
+    assert.equal(besteldagVan(0), INBOUW,
+      'met 0 besteldagen hoort de besteldag de inbouwdag te zijn');
+    /* En dan is er niets dringend: de melding "nu bestellen" hoort pas als
+       die dag in zicht is. */
+    assert.equal(agendaItem(klus, { bestelDagen: 0 }, VANDAAG).bestellen, 'straks');
+  });
+
+  test('een gewoon aantal werkt zoals het altijd deed', () => {
+    assert.equal(besteldagVan(3), '2026-12-03');
+    assert.equal(besteldagVan(7), '2026-11-29');
+    assert.equal(besteldagVan(14), '2026-11-22');
+    assert.equal(besteldagVan('7'), '2026-11-29', 'een getal als tekst hoort ook te werken');
+  });
+
+  test('en zonder leesbaar getal valt hij terug op veertien dagen', () => {
+    for (const leeg of [undefined, null, '', '   ', 'x']) {
+      assert.equal(besteldagVan(leeg), '2026-11-22',
+        `bij ${JSON.stringify(leeg)} hoort de gebruikelijke termijn te gelden`);
+    }
+  });
+
+  test('een negatief getal of een halve dag wordt netjes rechtgetrokken', () => {
+    assert.equal(besteldagVan(-5), INBOUW, 'bestellen ná de inbouw bestaat niet');
+    assert.equal(besteldagVan(2.6), '2026-12-03', 'een halve dag rondt naar een hele');
+  });
+});
+
 describe('het btw-tarief op papier', () => {
   const ROMMEL = ['', null, undefined, 'NaN', '21%', 'eenentwintig', ' 21 ', {}, []];
   const ECHT = [0, 9, 21, '9', '21'];

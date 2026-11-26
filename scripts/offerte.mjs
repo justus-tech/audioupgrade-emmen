@@ -184,10 +184,30 @@ export function bouwOfferte(invoer) {
     }
   }
 
+  /**
+   * EEN GELDIGHEIDSDUUR VAN NUL DAGEN IS EEN TIKFOUT, GEEN KEUZE.
+   *
+   * Hier stond `Number(invoer.geldigDagen) || STANDAARD_INSTELLINGEN.geldigDagen`,
+   * en die `||` maakte van een 0 stil dertig dagen. Een offerte die vandaag al
+   * verloopt wil niemand versturen, maar stil een maand ervan maken is ook niet
+   * goed: dan staat er iets anders op de offerte dan in het invulblad. Zoals
+   * bij de bedragen: liever stoppen en het zeggen.
+   */
+  const geldigDagen = invoer.geldigDagen == null || String(invoer.geldigDagen).trim() === ''
+    ? STANDAARD_INSTELLINGEN.geldigDagen
+    : Number(invoer.geldigDagen);
+  if (!Number.isFinite(geldigDagen) || geldigDagen < 1) {
+    throw new Error(
+      `"geldigDagen": ${JSON.stringify(invoer.geldigDagen)} kan niet. Een offerte is minstens `
+      + 'één dag geldig; laat het veld weg voor de gebruikelijke '
+      + `${STANDAARD_INSTELLINGEN.geldigDagen} dagen.`
+    );
+  }
+
   const offerte = {
     nummer: invoer.nummer,
     datum,
-    geldigTot: geldigTot(datum, Number(invoer.geldigDagen) || STANDAARD_INSTELLINGEN.geldigDagen),
+    geldigTot: geldigTot(datum, geldigDagen),
     zakelijk: Boolean(invoer.zakelijk),
     klant: invoer.klant || {},
     auto: invoer.auto || {},
