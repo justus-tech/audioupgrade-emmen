@@ -36,7 +36,7 @@ import { whatsappLink } from '../whatsapp.js';
 import { formatteerKenteken } from '../match.js';
 import { qrSvg } from '../qr.js';
 import { LICHT } from '../../data/brand.js';
-import { datumNl } from './rekenen.js';
+import { datumNl, datumVeld } from './rekenen.js';
 
 /**
  * De twee soorten rapport, en bij welk werk ze horen.
@@ -125,7 +125,10 @@ export function leegRapport(soort = 'geluid') {
   return {
     soort,
     nummer: '',
-    datum: new Date().toISOString().slice(0, 10),
+    /* Niet via toISOString(): die geeft de dag in Greenwich, en tussen
+       middernacht en één uur 's nachts is dat hier de dag ervóór. Dan staat
+       er een verkeerde datum op het blad dat de klant meekrijgt. */
+    datum: datumVeld(),
     klant: '',
     kenteken: '',
     auto: '',

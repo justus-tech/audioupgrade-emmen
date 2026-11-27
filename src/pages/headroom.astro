@@ -968,7 +968,7 @@ import { APP } from '../data/app.js';
   import {
     SOORTEN, STANDAARD_INSTELLINGEN, euro, naarCent, getalOfNiets, regelPrijs, totalen, marge,
     offertenummer, geldigTot, stuklijst, aanbetaling, eindafrekening,
-    factuurnummer, kortingNaarExcl, datumNl, soortenIn,
+    factuurnummer, kortingNaarExcl, datumNl, datumVeld, soortenIn,
   } from '../lib/headroom/rekenen.js';
   import { offertePdf, pdfBestandsnaam } from '../lib/headroom/offerte-pdf.js';
   import {
@@ -1326,10 +1326,7 @@ import { APP } from '../data/app.js';
     const adres = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = adres;
-    const nu = new Date();
-    const twee = (n) => String(n).padStart(2, '0');
-    const vandaag = `${nu.getFullYear()}-${twee(nu.getMonth() + 1)}-${twee(nu.getDate())}`;
-    link.download = `${APP.naam.toLowerCase()}-onleesbaar-${vandaag}.json`;
+    link.download = `${APP.naam.toLowerCase()}-onleesbaar-${datumVeld()}.json`;
     link.click();
     URL.revokeObjectURL(adres);
   }
@@ -3195,12 +3192,10 @@ import { APP } from '../data/app.js';
     const adres = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = adres;
-    /* De lokale datum, niet die van Greenwich: tussen middernacht en twee uur
-       's nachts heette de reservekopie anders een dag ouder dan hij is. */
-    const nu = new Date();
-    const twee = (n) => String(n).padStart(2, '0');
-    const vandaag = `${nu.getFullYear()}-${twee(nu.getMonth() + 1)}-${twee(nu.getDate())}`;
-    link.download = `${APP.naam.toLowerCase()}-${vandaag}.json`;
+    /* datumVeld() en niet toISOString(): die laatste rekent in Greenwich, en
+       dan heet de reservekopie tussen middernacht en twee uur 's nachts een
+       dag ouder dan hij is. Zie de uitleg bij datumVeld(). */
+    link.download = `${APP.naam.toLowerCase()}-${datumVeld()}.json`;
     link.click();
     URL.revokeObjectURL(adres);
   });

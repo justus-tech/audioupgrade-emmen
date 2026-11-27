@@ -592,6 +592,32 @@ export function datumNl(datum = new Date()) {
   ].join('-');
 }
 
+/**
+ * DATUM ALS 2026-09-15 — ZOALS EEN DATUMVELD EN EEN BESTANDSNAAM HEM WILLEN.
+ *
+ * Dit lijkt hetzelfde als `datum.toISOString().slice(0, 10)`, en dat is het
+ * niet. toISOString() rekent in Greenwich, en hier is het een of twee uur
+ * later. Tussen middernacht en één uur 's nachts (in de zomer twee) geeft die
+ * truc dus de dag ervóór.
+ *
+ * In deze map is dat al twee keer eerder misgegaan, allebei met een
+ * bestandsnaam: een reservekopie die een dag ouder heette dan hij was, en een
+ * agendabestand voor een luistersessie op 7 oktober dat
+ * "luistersessie-2026-10-06" heette. Op de derde plek stond het nog, en daar
+ * was het erger dan een bestandsnaam: een nieuw meetrapport begon met
+ * `new Date().toISOString().slice(0, 10)` als datum, en die datum staat op het
+ * blad dat de klant meekrijgt. Nagerekend over een etmaal in Amsterdam: één
+ * uur van de 24 zette de verkeerde dag op het rapport, in de zomer twee.
+ *
+ * Daarom staat het nu één keer hier, uit de plaatselijke onderdelen.
+ */
+export function datumVeld(datum = new Date()) {
+  const d = new Date(datum);
+  if (Number.isNaN(d.getTime())) return '';
+  const twee = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${twee(d.getMonth() + 1)}-${twee(d.getDate())}`;
+}
+
 /** De datum waarop de offerte verloopt. */
 export function geldigTot(datum, dagen) {
   const d = new Date(datum);

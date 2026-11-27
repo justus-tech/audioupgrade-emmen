@@ -27,6 +27,7 @@ import {
   icsTekst, icsStempel, icsNu, icsBestand, opMiddernacht, dagenTussen, hoeLangNog,
   googleAgendaLink,
 } from './agenda.js';
+import { datumVeld } from './rekenen.js';
 
 const DAGEN = ['zondag', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag'];
 const MAANDEN = [
@@ -180,9 +181,9 @@ export function luistersessieBestandsnaam(sessie = {}) {
   const d = opMiddernacht(sessie.datum);
   /* Niet via toISOString(). opMiddernacht() geeft middernacht hier, en dat is
      in Greenwich de dag ervóór — een sessie op 7 oktober kreeg zo een bestand
-     dat luistersessie-2026-10-06 heette. Daarom uit de lokale onderdelen. */
-  const twee = (n) => String(n).padStart(2, '0');
-  const dag = d ? `${d.getFullYear()}-${twee(d.getMonth() + 1)}-${twee(d.getDate())}` : '';
+     dat luistersessie-2026-10-06 heette. datumVeld() rekent met de
+     plaatselijke onderdelen; zie de uitleg daar. */
+  const dag = d ? datumVeld(d) : '';
   const plaat = String(sessie.kenteken || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
   return ['luistersessie', dag, plaat].filter(Boolean).join('-') + '.ics';
 }

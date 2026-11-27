@@ -13,11 +13,12 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
   euro, naarCent, getalOfNiets, regelPrijs, totalen, marge, offertenummer, datumNl, geldigTot,
   stuklijst, soortenIn, aanbetaling, eindafrekening, kortingNaarExcl, factuurnummer,
-  STANDAARD_INSTELLINGEN, SOORTEN, BTW_PCT, btwVan,
+  STANDAARD_INSTELLINGEN, SOORTEN, BTW_PCT, btwVan, datumVeld,
 } from '../src/lib/headroom/rekenen.js';
 import { nieuwPdf, naarPdfTekens, breedteVan, breekAf, A4 } from '../src/lib/headroom/pdf.js';
 import { ONDERGRENS } from '../src/lib/headroom/opmaak.js';
@@ -3007,6 +3008,76 @@ describe('het rapport', () => {
  * die dag voorbij is zet de agenda de klus op "te laat" terwijl er niets te
  * laat is.
  */
+/**
+ * DE DATUM VAN VANDAAG IS DE DATUM HIER, NIET DIE IN GREENWICH.
+ *
+ * `datum.toISOString().slice(0, 10)` lijkt de datum te geven en doet dat
+ * niet: toISOString() rekent in Greenwich, en hier is het een uur later (in
+ * de zomer twee). Tussen middernacht en dat uur geeft die truc dus de dag
+ * ervóór.
+ *
+ * In deze map ging dat al twee keer eerder mis, allebei met een bestandsnaam:
+ * een reservekopie die een dag ouder heette dan hij was, en een
+ * agendabestand voor een luistersessie op 7 oktober dat
+ * "luistersessie-2026-10-06" heette. Op de derde plek stond het nog, en daar
+ * was het erger: een nieuw meetrapport begon ermee als datum, en die datum
+ * staat op het blad dat de klant meekrijgt.
+ *
+ * Nagerekend over een etmaal in Amsterdam met een vaste klok: om 00:30 zette
+ * het rapport 26 november terwijl het hier 27 november was. In de zomer is
+ * dat venster twee uur.
+ */
+describe('vandaag is vandaag, ook net na middernacht', () => {
+  const twee = (n) => String(n).padStart(2, '0');
+  const lokaal = (d) => `${d.getFullYear()}-${twee(d.getMonth() + 1)}-${twee(d.getDate())}`;
+
+  test('datumVeld geeft de plaatselijke dag, elk uur van het etmaal', () => {
+    /* Dit geldt in elke tijdzone, dus ook op de machine die de tests draait. */
+    for (let u = 0; u < 24; u += 1) {
+      const d = new Date(2026, 10, 27, u, 30, 0);
+      assert.equal(datumVeld(d), lokaal(d), `om ${twee(u)}:30 klopt de dag niet`);
+    }
+    /* En over een maandgrens en een schrikkeldag heen. */
+    assert.equal(datumVeld(new Date(2026, 11, 31, 23, 30)), '2026-12-31');
+    assert.equal(datumVeld(new Date(2028, 1, 29, 0, 30)), '2028-02-29');
+    assert.equal(datumVeld('geen datum'), '', 'onleesbaar hoort leeg te zijn, niet NaN-NaN-NaN');
+  });
+
+  test('een nieuw meetrapport krijgt de dag van hier, ook om half één \'s nachts', () => {
+    /**
+     * Deze test draait in een eigen node met de klok op 00:30 Amsterdamse tijd
+     * gezet. Dat moet in een apart proces: de tijdzone van een draaiend
+     * proces is niet betrouwbaar te wijzigen, en zonder die tijdzone zou de
+     * test op een machine die in Greenwich staat groen blijven terwijl de
+     * fout er nog in zit.
+     */
+    const script = `
+      const EchteDate = Date;
+      const vast = new EchteDate('2026-11-26T23:30:00Z');   // 00:30 in Amsterdam
+      class Vaste extends EchteDate {
+        constructor(...a) { return a.length ? new EchteDate(...a) : new EchteDate(vast); }
+        static now() { return vast.getTime(); }
+      }
+      globalThis.Date = Vaste;
+      const { leegRapport } = await import('${new URL('../src/lib/headroom/meetrapport.js', import.meta.url).href}');
+      process.stdout.write(leegRapport('geluid').datum);
+    `;
+    const uit = execFileSync(process.execPath, ['--input-type=module', '-e', script], {
+      env: { ...process.env, TZ: 'Europe/Amsterdam' },
+      encoding: 'utf8',
+    });
+    assert.equal(uit, '2026-11-27',
+      `om 00:30 Amsterdamse tijd begint het rapport met ${uit} in plaats van 2026-11-27`);
+  });
+
+  test('en de meting zelf gebruikt diezelfde dag', () => {
+    /* Niet alleen het veld: ook wat er in het bestand en op het blad staat. */
+    const r = leegRapport('geluid');
+    assert.equal(r.datum, datumVeld(), 'het rapport begint met een andere dag dan vandaag');
+    assert.match(r.datum, /^\d{4}-\d{2}-\d{2}$/);
+  });
+});
+
 describe('de besteldagen uit de instellingen', () => {
   const INBOUW = '2026-12-06';
   const VANDAAG = new Date(2026, 10, 26);
