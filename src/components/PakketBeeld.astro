@@ -242,6 +242,37 @@ const id = (naam) => `${slug}-${naam}`;
       </g>
     )}
 
+    {slug === 'inmeten-afstellen' && (
+      <g>
+        {/* Links de meetmicrofoon op zijn statief, op de plek van je hoofd:
+            een slanke buis met de kop naar het dashboard. */}
+        <path d="M70 118 C70 112 76 108 84 108 L172 104 C178 104 182 108 182 113 L182 123 C182 128 178 132 172 132 L84 128 C76 128 70 124 70 118 Z" class="vlak" />
+        <path d="M60 118 C60 110 66 106 72 106 L76 107 C72 110 70 114 70 118 C70 122 72 126 76 129 L72 130 C66 130 60 126 60 118 Z" fill="var(--accent)" />
+        <g class="dun">
+          <path d="M98 110v16M104 110v16" />
+        </g>
+        {/* De statiefklem en de poot naar beneden. */}
+        <path d="M150 132 L146 150 L154 150 Z" class="paneel" />
+        <path d="M150 150 L150 214 M150 214 L118 228 M150 214 L182 228" class="rand" />
+
+        {/* De kabel naar de laptop. */}
+        <path d="M182 118 C230 118 236 168 280 168" class="lijn" />
+
+        {/* Het scherm met de meting: grijs gestippeld de doellijn, grijs de
+            meting van voor, oranje die van na. Een schets, geen meting. */}
+        <path d="M282 36 L594 36 C600 36 604 40 604 46 L604 186 C604 192 600 196 594 196 L282 196 C276 196 272 192 272 186 L272 46 C272 40 276 36 282 36 Z" class="vlak" />
+        <path d="M290 52 L586 52 L586 180 L290 180 Z" class="scherm" />
+        <g class="dun" opacity=".35">
+          <path d="M327 52v128M364 52v128M401 52v128M438 52v128M475 52v128M512 52v128M549 52v128" />
+        </g>
+        <path d="M298 112 L578 112" class="doel" />
+        <path d="M298 150 C318 146 330 92 352 96 C370 100 378 132 398 128 C420 124 430 98 452 104 C472 110 480 80 500 76 C520 72 530 128 552 138 C564 144 572 150 578 156" class="rand" opacity=".55" />
+        <path d="M298 104 C320 100 338 108 360 110 C390 113 420 111 450 112 C480 113 510 110 530 113 C550 116 566 122 578 128" class="curve" />
+        {/* Voet van de laptop. */}
+        <path d="M252 206 L624 206 C624 212 618 216 610 216 L266 216 C258 216 252 212 252 206 Z" class="paneel" />
+      </g>
+    )}
+
     {slug === 'akoestische-isolatie' && (
       <g>
         <defs>

@@ -20,6 +20,9 @@ const VAST = [
   ['/', 1.0],
   ['/upgrades', 0.9],
   ['/audio-upgrade', 0.8],
+  // Het brein van elke installatie: afstellen voor wie al een DSP heeft,
+  // en de reden om er een te nemen voor wie dat nog niet heeft.
+  ['/dsp-tuning', 0.9],
   ['/werkwijze', 0.7],
   ['/over-ons', 0.7],
   ['/contact', 0.7],
