@@ -14,6 +14,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { qrSvg } from '../src/lib/qr.js';
 import { fileURLToPath } from 'node:url';
 import {
   euro, naarCent, getalOfNiets, regelPrijs, totalen, marge, offertenummer, datumNl, geldigTot,
@@ -3354,6 +3355,62 @@ describe('het maximum van vijf systeemregels staat op één plek', () => {
     );
     assert.match(bron, /SYSTEEM_MAX,?\n?\s*\} from '\.\.\/lib\/headroom\/meetrapport\.js'/);
     assert.doesNotMatch(bron, /const SYSTEEM_MAX\s*=/, 'de app bepaalt het maximum weer zelf');
+  });
+});
+
+/**
+ * DE QR-CODE IS EEN GEMAK, HET RAPPORT IS HET WERK.
+ *
+ * Op het laatste blad staat een QR-code die een WhatsApp opent met het
+ * kenteken er al in. Die code wordt hier zelf getekend, en qrSvg() gooit een
+ * fout zodra de tekst niet meer in de grootste code past die deze app maakt —
+ * dat is bij 213 tekens. Het berichtje zelf is er 113, dus er is honderd
+ * tekens ruimte, en in die ruimte staat het kenteken.
+ *
+ * Nagemeten: vanaf ongeveer 150 tekens kenteken klapte meetrapportHtml()
+ * eruit. En die wordt in de app aangeroepen zonder iets eromheen, in dezelfde
+ * regel die het blad vult — dus geen rapport, geen melding, niets.
+ *
+ * Zo'n kenteken typt niemand; dat is het punt niet. Het nummer, het
+ * e-mailadres en het adres staan er in letters naast, dus zonder vierkantje is
+ * het rapport nog volledig. Een gemak mag het werk niet meenemen.
+ */
+describe('het rapport blijft heel als de QR-code niet lukt', () => {
+  const rapportMet = (kenteken) => ({
+    ...leegRapport('geluid'), nummer: '26-001', klant: 'Jan Jansen', kenteken,
+  });
+  const bladen = (html) => (html.match(/class="mr-blad"/g) || []).length;
+  const koppen = (html) => [...html.matchAll(/<h2 class="mr-h">(.*?)<\/h2>/g)].map((m) => m[1]);
+
+  test('bij een gewoon kenteken staat de code er gewoon', () => {
+    const html = meetrapportHtml(rapportMet('XX99XX'), { qr: '' });
+    assert.match(html, /class="mr-qr"/, 'het vierkantje staat niet op het rapport');
+    assert.match(html, /<svg/, 'er is geen tekening van een code');
+    assert.match(html, /Scan met je camera/);
+  });
+
+  test('bij een kenteken dat niet in de code past komt het rapport er nog uit', () => {
+    const lang = 'X'.repeat(150);
+    const gewoon = meetrapportHtml(rapportMet('XX99XX'), { qr: '' });
+    let html;
+    assert.doesNotThrow(() => { html = meetrapportHtml(rapportMet(lang), { qr: '' }); },
+      'het hele rapport klapt eruit op een kenteken dat te lang is voor de QR-code');
+    assert.equal(bladen(html), bladen(gewoon), 'er ontbreken bladen');
+    assert.deepEqual(koppen(html), koppen(gewoon), 'er ontbreken koppen');
+    /* Geen vierkantje, en dan ook niet het bijschrift erbij: "scan met je
+       camera" zonder code is onzin. */
+    assert.doesNotMatch(html, /class="mr-qr"/);
+    assert.doesNotMatch(html, /Scan met je camera/);
+    /* En de gegevens om contact op te nemen staan er nog wel, in letters. */
+    assert.match(html, /WhatsApp en telefoon/);
+    assert.match(html, /E-mail/);
+  });
+
+  test('qrSvg zelf blijft wel zeggen dat het niet past', () => {
+    /* De code mag niet stil een onleesbaar vierkantje maken: wie hem
+       rechtstreeks aanroept hoort de fout te krijgen. */
+    assert.doesNotThrow(() => qrSvg('a'.repeat(213)));
+    assert.throws(() => qrSvg('a'.repeat(214)), /te lang/i);
   });
 });
 

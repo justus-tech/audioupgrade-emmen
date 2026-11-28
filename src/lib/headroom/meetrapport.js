@@ -430,9 +430,32 @@ function bladNazorg(rapport, soortNaam, nr, totaal, qr) {
   const link = whatsappLink(
     `ik heb een vraag over mijn installatie${rapport.kenteken ? ` (${formatteerKenteken(rapport.kenteken, rapport.bouwjaar)})` : ''}.`
   );
-  /* Zwart op wit, want een QR-code moet contrast hebben. Oranje modules scannen
-     op papier een stuk slechter. */
-  const code = qr || qrSvg(link, { kleur: LICHT.text, titel: 'Stuur een WhatsApp naar Audio Upgrade Emmen' });
+  /**
+   * Zwart op wit, want een QR-code moet contrast hebben. Oranje modules
+   * scannen op papier een stuk slechter.
+   *
+   * EN: EEN CODE DIE NIET LUKT MAG HET RAPPORT NIET MEENEMEN.
+   *
+   * qrSvg() gooit een fout zodra de tekst niet meer in de grootste code past
+   * die deze app maakt — dat is bij 213 tekens. Het berichtje zelf is er 113,
+   * dus er is honderd tekens ruimte, en in die ruimte staat het kenteken.
+   * Nagemeten: vanaf ongeveer 150 tekens kenteken klapte meetrapportHtml()
+   * eruit, en dan komt er geen rapport meer — geen blad, geen melding, niets.
+   *
+   * Zo'n kenteken typt niemand, maar dat is het punt niet: de code is een
+   * gemak en het rapport is het werk. Het nummer, het e-mailadres en het adres
+   * staan er in letters naast, dus zonder vierkantje is het rapport nog
+   * volledig. Lukt de code niet, dan blijft die plek dus leeg en gaat de rest
+   * gewoon door.
+   */
+  let code = qr;
+  if (!code) {
+    try {
+      code = qrSvg(link, { kleur: LICHT.text, titel: 'Stuur een WhatsApp naar Audio Upgrade Emmen' });
+    } catch (e) {
+      code = '';
+    }
+  }
 
   return `<section class="mr-blad">
     ${bladkop(rapport, soortNaam)}
@@ -455,10 +478,10 @@ function bladNazorg(rapport, soortNaam, nr, totaal, qr) {
         </div>
         <p class="mr-klein-los">Uitsluitend op afspraak. Bel even voor het hek.</p>
       </div>
-      <div class="mr-qr">
+      ${code ? `<div class="mr-qr">
         ${code}
         <span>Scan met je camera<br />en stel je vraag</span>
-      </div>
+      </div>` : ''}
     </div>
     ${bladvoet(nr, totaal)}
   </section>`;
